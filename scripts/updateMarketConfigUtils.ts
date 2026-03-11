@@ -23,6 +23,7 @@ function getRiskOracleManagedBaseKeys() {
 const KEEPER_MANAGED_BASE_KEYS_ARBITRUM = [
   keys.MAX_FUNDING_FACTOR_PER_SECOND,
   keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+  keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
   keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
 ];
 
@@ -70,6 +71,7 @@ const processMarkets = async ({
       [
         keys.MAX_FUNDING_FACTOR_PER_SECOND,
         keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+        keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
         keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       ].includes(baseKey) &&
       includeFunding
@@ -493,6 +495,14 @@ const processMarkets = async ({
       encodeData(["address"], [marketToken]),
       marketConfig.fundingIncreaseFactorPerSecond,
       `fundingIncreaseFactorPerSecond ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minFundingIncreaseRatePerSecond,
+      `minFundingIncreaseRatePerSecond ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(

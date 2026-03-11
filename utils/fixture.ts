@@ -108,6 +108,7 @@ async function setup() {
   const swapOrderExecutor = await hre.ethers.getContract("SwapOrderExecutor");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
+  const simulationRouter = await hre.ethers.getContract("SimulationRouter");
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
@@ -120,6 +121,7 @@ async function setup() {
   const multichainClaimsRouter = await hre.ethers.getContract("MultichainClaimsRouter");
   const bridgeOutFromControllerUtils = await hre.ethers.getContract("BridgeOutFromControllerUtils");
   const relayUtils = await hre.ethers.getContract("RelayUtils");
+  const signatureUtils = await hre.ethers.getContract("SignatureUtils");
   const oracle = await hre.ethers.getContract("Oracle");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
@@ -148,6 +150,7 @@ async function setup() {
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
   const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
+  const staticOracleProvider = await hre.ethers.getContract("StaticOracleProvider");
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const claimVault = await hre.ethers.getContract("ClaimVault");
   const claimUtils = await hre.ethers.getContract("ClaimUtils");
@@ -326,6 +329,7 @@ async function setup() {
       swapOrderExecutor,
       router,
       exchangeRouter,
+      simulationRouter,
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
@@ -338,6 +342,7 @@ async function setup() {
       multichainClaimsRouter,
       bridgeOutFromControllerUtils,
       relayUtils,
+      signatureUtils,
       oracle,
       gmOracleProvider,
       chainlinkPriceFeedProvider,
@@ -414,6 +419,7 @@ async function setup() {
       mockRewardRouterV2,
       mockGovToken,
       mockGmxVester,
+      staticOracleProvider,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

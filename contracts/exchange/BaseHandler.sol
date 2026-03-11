@@ -3,6 +3,8 @@
 pragma solidity ^0.8.0;
 
 import "../event/EventEmitter.sol";
+import "../data/DataStoreOps.sol";
+
 import "../oracle/IOracle.sol";
 import "../oracle/OracleModule.sol";
 import "../role/RoleModule.sol";
@@ -13,6 +15,7 @@ import "../chain/Chain.sol";
 
 contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     EventEmitter public immutable eventEmitter;
+    using DataStoreOps for DataStore;
 
     constructor(
         RoleStore _roleStore,
@@ -24,7 +27,7 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     }
 
     receive() external payable {
-        address wnt = dataStore.getAddress(Keys.WNT);
+        address wnt = dataStore.getAddressValueFromDataStore(Keys.WNT);
         if (msg.sender != wnt) {
             revert Errors.InvalidNativeTokenSender(msg.sender);
         }
@@ -34,7 +37,7 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         uint256 createdAtTime,
         string memory requestType
     ) internal view {
-        uint256 requestExpirationTime = dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+        uint256 requestExpirationTime = dataStore.getUintValueFromDataStore(Keys.REQUEST_EXPIRATION_TIME);
         uint256 requestAge = Chain.currentTimestamp() - createdAtTime;
         if (requestAge < requestExpirationTime) {
             revert Errors.RequestNotYetCancellable(requestAge, requestExpirationTime, requestType);
@@ -54,7 +57,7 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     }
 
     function validateDataListLength(uint256 dataLength) internal view {
-        uint256 maxDataLength = dataStore.getUint(Keys.MAX_DATA_LENGTH);
+        uint256 maxDataLength = dataStore.getUintValueFromDataStore(Keys.MAX_DATA_LENGTH);
         if (dataLength > maxDataLength) {
             revert Errors.MaxDataListLengthExceeded(dataLength, maxDataLength);
         }

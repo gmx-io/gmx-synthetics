@@ -25,5 +25,7 @@
   "ClaimVault_1": 1755765475,
   "ContributorHandler_1": 1761770214,
   "MockTimelockV1": 1763068970,
-  "FeeDistributorVault_1": 1763069805
+  "FeeDistributorVault_1": 1763069805,
+  "EdgeDataStreamVerifier_6": 1771919856,
+  "EdgeDataStreamProvider_6": 1771919860
 }

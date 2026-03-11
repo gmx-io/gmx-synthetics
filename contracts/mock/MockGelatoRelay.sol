@@ -8,6 +8,7 @@ import "../exchange/IOrderHandler.sol";
 import "../order/OrderVault.sol";
 import "../router/Router.sol";
 import "../router/relay/GelatoRelayRouter.sol";
+import "../router/relay/SignatureUtils.sol";
 
 contract MockGelatoRelayRouter is GelatoRelayRouter {
     struct Nested {
@@ -32,12 +33,12 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         bytes32 key,
         address account,
         uint256 chainId
-    ) external view {
+    ) external {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _handleSignature(structHash, relayParams.signature, account, chainId);
     }
 
-    function testSimpleSignature(address account, bytes calldata signature, uint256 chainId) external view {
+    function testSimpleSignature(address account, bytes calldata signature, uint256 chainId) external {
         bytes32 structHash = keccak256(abi.encode(keccak256(bytes("PrimaryStruct(address account)")), account));
         _handleSignature(structHash, signature, account, chainId);
     }
@@ -47,7 +48,7 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         address account,
         bytes calldata signature,
         uint256 chainId
-    ) external view {
+    ) external {
         bytes32 nestedStructHash = keccak256(
             abi.encode(keccak256(bytes("Nested(uint256 foo,bool bar)")), nested.foo, nested.bar)
         );
@@ -66,7 +67,7 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         address account,
         bytes calldata signature,
         uint256 chainId
-    ) external view {
+    ) external {
         bytes32 structHash = keccak256(
             abi.encode(
                 keccak256(bytes("PrimaryStruct(address account,address[] array)")),
@@ -77,16 +78,25 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         _handleSignature(structHash, signature, account, chainId);
     }
 
+    // @dev Test function specifically for EIP-6492 signatures
+    // @param account The expected signer (may be a counterfactual contract address)
+    // @param signature The EIP-6492 wrapped signature or regular signature
+    // @param chainId The chain ID for domain separator
+    function testEIP6492Signature(address account, bytes calldata signature, uint256 chainId) external {
+        bytes32 structHash = keccak256(abi.encode(keccak256(bytes("PrimaryStruct(address account)")), account));
+        _handleSignature(structHash, signature, account, chainId);
+    }
+
     function _handleSignature(
         bytes32 structHash,
         bytes calldata signature,
         address account,
         uint256 chainId
-    ) internal view {
+    ) internal {
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(chainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
 
-        RelayUtils.validateSignature(
+        SignatureUtils.validateSignature(
             domainSeparator,
             digest,
             signature,

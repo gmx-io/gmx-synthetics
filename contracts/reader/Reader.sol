@@ -72,7 +72,7 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (Position.Props[] memory) {
-        return ReaderPositionUtils.getAccountPositions(dataStore, account, start, end);
+        return ReaderUtils.getAccountPositions(dataStore, account, start, end);
     }
 
     function getPositionInfo(
