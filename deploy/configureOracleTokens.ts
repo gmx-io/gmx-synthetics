@@ -46,8 +46,7 @@ const func = async ({ gmx, deployments, network }: HardhatRuntimeEnvironment) =>
 
     if (priceFeed.stablePrice) {
       const stablePriceKey = keys.stablePriceKey(token.address);
-      const stablePrice = priceFeed.stablePrice.div(expandDecimals(1, token.decimals));
-      await setUintIfDifferent(stablePriceKey, stablePrice, `${tokenSymbol} stable price`);
+      await setUintIfDifferent(stablePriceKey, priceFeed.stablePrice, `${tokenSymbol} stable price`);
     }
 
     await setUintIfDifferent(
