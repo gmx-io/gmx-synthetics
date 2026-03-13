@@ -20,6 +20,7 @@ import {
   sendBatch,
   sendCancelOrder,
   sendCreateOrder,
+  sendCreateTwapOrder,
   sendRemoveSubaccount,
   sendUpdateOrder,
 } from "../../../utils/relay/subaccountGelatoRelay";
@@ -835,6 +836,59 @@ describe("SubaccountGelatoRelayRouter", () => {
       await logGasUsage({
         tx,
         label: "gelatoRelayRouter.createOrder with swap",
+      });
+    });
+  });
+
+  describe("createTwapOrder", () => {
+    it("creates twap orders and updates subaccount action count", async () => {
+      await enableSubaccount();
+
+      const twapCount = 3;
+      const interval = 300;
+      const executionFee = createOrderParams.params.numbers.executionFee;
+      const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
+      const collateralDeltaAmountTwap = collateralDeltaAmount.mul(twapCount);
+      const executionFeeTwap = executionFee.mul(twapCount);
+      const subaccountActionCountKey = keys.subaccountActionCountKey(
+        user1.address,
+        user0.address,
+        keys.SUBACCOUNT_ORDER_ACTION
+      );
+
+      createOrderParams.feeParams.feeAmount = executionFeeTwap.add(createOrderParams.gelatoRelayFeeAmount);
+      createOrderParams.params.numbers.validFromTime = 100;
+
+      const tx = await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount,
+        interval,
+      });
+
+      expect(await getOrderCount(dataStore)).eq(twapCount);
+      expect(await dataStore.getUint(subaccountActionCountKey)).eq(twapCount);
+      expect(await wnt.allowance(user1.address, router.address)).eq(
+        expandDecimals(1, 18).sub(createOrderParams.feeParams.feeAmount).sub(collateralDeltaAmountTwap)
+      );
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
+
+      const orderKeys = await getOrderKeys(dataStore, 0, twapCount);
+      for (let i = 0; i < twapCount; i++) {
+        const order = await reader.getOrder(dataStore.address, orderKeys[i]);
+
+        expect(order.addresses.account).eq(user1.address);
+        expect(order.addresses.receiver).eq(user1.address);
+        expect(order.addresses.callbackContract).eq(user2.address);
+        expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+        expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
+        expect(order.numbers.executionFee).eq(executionFee);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+        expect(order.numbers.validFromTime).eq(100 + i * interval);
+      }
+
+      await logGasUsage({
+        tx,
+        label: "subaccountGelatoRelayRouter.createTwapOrder",
       });
     });
   });
