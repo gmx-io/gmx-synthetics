@@ -2485,7 +2485,7 @@ const config: {
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
-      maxOpenInterest: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(100_000),
       maxPoolUsdForDeposit: decimalToFloat(3_300_000),
 
       maxLongTokenPoolAmount: expandDecimals(1818, 18),
