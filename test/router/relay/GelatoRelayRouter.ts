@@ -1177,6 +1177,258 @@ describe("GelatoRelayRouter", () => {
   });
 
   describe("createTwapOrder", () => {
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    });
+
+    it("InsufficientRelayFee", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeAmount = 1;
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientRelayFee");
+    });
+
+    it("InsufficientExecutionFee", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 15);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee");
+    });
+
+    it("UnsupportedRelayFeeToken", async () => {
+      createOrderParams.gelatoRelayFeeToken = usdc.address;
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "UnsupportedRelayFeeToken");
+    });
+
+    it("InvalidSignature", async () => {
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          signature: INVALID_SIGNATURE,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          signer: ethers.Wallet.createRandom(),
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+    });
+
+    it("InvalidUserDigest", async () => {
+      createOrderParams.params.numbers.executionFee = expandDecimals(1, 15);
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        userNonce: 0,
+        twapCount: 3,
+        interval: 300,
+      });
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          userNonce: 0,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
+    });
+
+    it("DeadlinePassed", async () => {
+      createOrderParams.params.numbers.executionFee = expandDecimals(1, 15);
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          deadline: 5,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          deadline: 0,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await time.setNextBlockTimestamp(9999999100);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          deadline: 9999999099,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await time.setNextBlockTimestamp(9999999200);
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        deadline: 9999999200,
+        twapCount: 3,
+        interval: 300,
+      });
+    });
+
+    it("relay fee insufficient allowance", async () => {
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          tokenPermits: [],
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWith("ERC20: insufficient allowance");
+    });
+
+    it("InvalidPermitSpender", async () => {
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user0,
+        user2.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          tokenPermits: [tokenPermit],
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidPermitSpender");
+    });
+
+    it("UnexpectedRelayFeeToken", async () => {
+      await usdc.connect(user0).approve(router.address, expandDecimals(1000, 18));
+      createOrderParams.feeParams.feeToken = usdc.address;
+      createOrderParams.feeParams.feeAmount = expandDecimals(10, 18);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "UnexpectedRelayFeeToken");
+    });
+
+    it("UnexpectedRelayFeeTokenAfterSwap", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeSwapPath = [ethUsdMarket.marketToken];
+      createOrderParams.oracleParams = {
+        tokens: [usdc.address, wnt.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "UnexpectedRelayFeeTokenAfterSwap");
+    });
+
+    it("InvalidTwapCount", async () => {
+      createOrderParams.params.numbers.executionFee = expandDecimals(1, 15);
+      createOrderParams.feeParams.feeAmount = createOrderParams.gelatoRelayFeeAmount.add(expandDecimals(1, 15));
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 1,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidTwapCount");
+    });
+
+    it("InvalidInterval", async () => {
+      createOrderParams.params.numbers.executionFee = expandDecimals(1, 15);
+      createOrderParams.feeParams.feeAmount = createOrderParams.gelatoRelayFeeAmount.add(expandDecimals(2, 15));
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 2,
+          interval: 0,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidInterval");
+    });
+
+    it("execution fee should not be capped", async () => {
+      const twapCount = 2;
+      const executionFee = bigNumberify("99000000000000000");
+
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      await dataStore.setUint(keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR, decimalToFloat(1, 10));
+
+      createOrderParams.params.numbers.executionFee = executionFee;
+      createOrderParams.feeParams.feeAmount = executionFee.mul(twapCount).add(createOrderParams.gelatoRelayFeeAmount);
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount,
+        interval: 300,
+      });
+
+      const orderKeys = await getOrderKeys(dataStore, 0, twapCount);
+      for (const orderKey of orderKeys) {
+        const order = await reader.getOrder(dataStore.address, orderKey);
+        expect(order.numbers.executionFee).eq(executionFee);
+      }
+    });
+
     it("creates twap orders and sends relayer fee", async () => {
       const twapCount = 3;
       const interval = 300;
@@ -1228,10 +1480,86 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
+    it("minified digest signature", async () => {
+      const twapCount = 2;
+      const interval = 300;
+      const executionFee = expandDecimals(2, 15);
+
+      createOrderParams.params.numbers.executionFee = executionFee;
+      createOrderParams.feeParams.feeAmount = executionFee.mul(twapCount).add(createOrderParams.gelatoRelayFeeAmount);
+
+      const relayParams = await getRelayParams({ ...createOrderParams, userNonce: 1 });
+      const signature = await getCreateTwapOrderSignature({
+        signer: user0,
+        relayParams,
+        verifyingContract: gelatoRelayRouter.address,
+        params: createOrderParams.params,
+        twapCount,
+        interval,
+        chainId,
+      });
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        userNonce: 1,
+        signature,
+        twapCount,
+        interval,
+      });
+
+      const relayParams2 = await getRelayParams({ ...createOrderParams, userNonce: 2 });
+      const signature2 = await getCreateTwapOrderSignature({
+        signer: user0,
+        relayParams: relayParams2,
+        verifyingContract: gelatoRelayRouter.address,
+        params: createOrderParams.params,
+        twapCount,
+        interval,
+        chainId,
+        minified: true,
+      });
+
+      expect(signature2).not.eq(
+        await getCreateTwapOrderSignature({
+          signer: user0,
+          relayParams: relayParams2,
+          verifyingContract: gelatoRelayRouter.address,
+          params: createOrderParams.params,
+          twapCount,
+          interval,
+          chainId,
+        })
+      );
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          userNonce: 2,
+          signature,
+          twapCount,
+          interval,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        userNonce: 2,
+        signature: signature2,
+        twapCount,
+        interval,
+      });
+
+      expect(await getOrderCount(dataStore)).eq(4);
+    });
+
     it("includes twapCount and interval in the signature", async () => {
       const twapCount = 2;
       const interval = 300;
       const userNonce = 4242;
+      createOrderParams.params.numbers.executionFee = expandDecimals(1, 15);
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(twapCount)
+        .add(createOrderParams.gelatoRelayFeeAmount);
       const relayParams = await getRelayParams({
         ...createOrderParams,
         userNonce,

@@ -94,6 +94,7 @@ export async function getCreateTwapOrderSignature({
   twapCount,
   interval,
   chainId,
+  minified = false,
 }: {
   signer: ethers.Signer;
   relayParams: RelayParams;
@@ -104,6 +105,7 @@ export async function getCreateTwapOrderSignature({
   twapCount: BigNumberish;
   interval: BigNumberish;
   chainId: BigNumberish;
+  minified?: boolean;
 }) {
   const types = {
     CreateTwapOrder: [
@@ -166,7 +168,7 @@ export async function getCreateTwapOrderSignature({
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
   };
 
-  return signTypedData(signer, domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData, minified);
 }
 
 export async function getBatchSignature({
