@@ -116,31 +116,44 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
             address rewardTracker = _getAddressInfoForChain(chainId, REWARD_TRACKER);
 
             if (chainId == mockChainId) {
-                uint256 feeAmountGmxCurrentChain = _getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
-                    _getFeeDistributorVaultBalance(gmx);
+                uint256 feeAmountGmxCurrentChain = (
+                    feeReceiver == address(feeDistributorVault)
+                        ? _getUint(Keys.withdrawableBuybackTokenAmountKey(gmx))
+                        : IERC20(gmx).balanceOf(feeReceiver)
+                ) + _getFeeDistributorVaultBalance(gmx);
                 uint256 stakedGmx = IERC20(rewardTracker).totalSupply();
                 _setUint(Keys2.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmxCurrentChain);
                 _setUint(Keys2.feeDistributorStakedGmxKey(chainId), stakedGmx);
                 continue;
             }
 
+            address feeReceiverTargetChain = _getAddressInfoForChain(chainId, Keys.FEE_RECEIVER);
+            address feeDistributorVaultTargetChain = _getAddressInfoForChain(chainId, FEE_DISTRIBUTOR_VAULT);
             address gmxTargetChain = _getAddressInfoForChain(chainId, GMX);
             uint32 layerZeroChainId = uint32(_getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
             uint256 readRequestIndex = targetChainIndex * 3;
-            readRequestInputs[readRequestIndex] = _setReadRequestInput(
-                layerZeroChainId,
-                _getAddressInfoForChain(chainId, DATASTORE),
-                abi.encodeWithSelector(
-                    DataStore.getUint.selector,
-                    Keys.withdrawableBuybackTokenAmountKey(gmxTargetChain)
-                )
-            );
+            if (feeReceiverTargetChain == feeDistributorVaultTargetChain) {
+                readRequestInputs[readRequestIndex] = _setReadRequestInput(
+                    layerZeroChainId,
+                    _getAddressInfoForChain(chainId, DATASTORE),
+                    abi.encodeWithSelector(
+                        DataStore.getUint.selector,
+                        Keys.withdrawableBuybackTokenAmountKey(gmxTargetChain)
+                    )
+                );
+            } else {
+                readRequestInputs[readRequestIndex] = _setReadRequestInput(
+                    layerZeroChainId,
+                    gmxTargetChain,
+                    abi.encodeWithSelector(IERC20.balanceOf.selector, feeDistributorVaultTargetChain)
+                );
+            }
             readRequestIndex++;
 
             readRequestInputs[readRequestIndex] = _setReadRequestInput(
                 layerZeroChainId,
                 gmxTargetChain,
-                abi.encodeWithSelector(IERC20.balanceOf.selector, _getAddressInfoForChain(chainId, Keys.FEE_RECEIVER))
+                abi.encodeWithSelector(IERC20.balanceOf.selector, feeReceiverTargetChain)
             );
             readRequestIndex++;
 
@@ -454,28 +467,20 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         );
         uint256 wntForTreasury = totalWntBalance - wntForChainlink;
 
-        // calculate the remaining WNT for Treasury, validate the calculated amount and adjust if necessary
-        uint256 remainingWnt = totalWntBalance - wntForChainlink - wntForTreasury;
-
-        if (wntForKeepers > remainingWnt) {
-            uint256 additionalWntForKeeper = wntForKeepers - remainingWnt;
-            if (additionalWntForKeeper > wntForTreasury) {
-                uint256 maxWntFromTreasury = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
-                uint256 additionalWntFromTreasury = additionalWntForKeeper - wntForTreasury;
-                if (additionalWntFromTreasury > maxWntFromTreasury) {
-                    revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
-                }
-                IERC20(wnt).transferFrom(
-                    _getAddressInfo(TREASURY),
-                    address(feeDistributorVault),
-                    additionalWntFromTreasury
-                );
-                wntForTreasury = 0;
-            } else {
-                wntForTreasury -= additionalWntForKeeper;
+        if (wntForKeepers > wntForTreasury) {
+            uint256 maxWntFromTreasury = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
+            uint256 additionalWntFromTreasury = wntForKeepers - wntForTreasury;
+            if (additionalWntFromTreasury > maxWntFromTreasury) {
+                revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
             }
+            IERC20(wnt).transferFrom(
+                _getAddressInfo(TREASURY),
+                address(feeDistributorVault),
+                additionalWntFromTreasury
+            );
+            wntForTreasury = 0;
         } else {
-            wntForTreasury += (remainingWnt - wntForKeepers);
+            wntForTreasury -= wntForKeepers;
         }
         return (wntForKeepers, wntForChainlink, wntForTreasury);
     }

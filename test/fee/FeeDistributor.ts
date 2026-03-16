@@ -51,6 +51,8 @@ describe("FeeDistributor", function () {
     user4,
     user5,
     user6,
+    user7,
+    user8,
     signer0,
     signer1,
     signer2,
@@ -101,8 +103,23 @@ describe("FeeDistributor", function () {
       mockVaultV1,
     } = fixture.contracts);
 
-    ({ wallet, user0, user1, user2, user3, user4, user5, user6, signer0, signer1, signer2, signer3, signer4 } =
-      fixture.accounts);
+    ({
+      wallet,
+      user0,
+      user1,
+      user2,
+      user3,
+      user4,
+      user5,
+      user6,
+      user7,
+      user8,
+      signer0,
+      signer1,
+      signer2,
+      signer3,
+      signer4,
+    } = fixture.accounts);
 
     mockRewardDistributor = await deployContract("MockRewardDistributorV1", []);
     mockLzReadResponseChainA = await deployContract("MockLzReadResponse", []);
@@ -322,7 +339,8 @@ describe("FeeDistributor", function () {
       value: expandDecimals(10_000, 18).sub(expandDecimals(5, 15)),
     });
 
-    await wnt.mint(feeDistributorVault.address, expandDecimals(1_000, 18));
+    await wnt.mint(feeHandler.address, expandDecimals(1_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(wnt.address), expandDecimals(1_000, 18));
 
     await wnt.mint(user6.address, expandDecimals(1, 18));
     await wnt.connect(user6).approve(feeDistributor.address, expandDecimals(1, 18));
@@ -706,7 +724,7 @@ describe("FeeDistributor", function () {
 
     const keeper1BalancePreDistribute = await hre.ethers.provider.getBalance(user2.address);
     const keeper2BalancePreDistribute = await hre.ethers.provider.getBalance(user3.address);
-    const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
+    const totalWntBalance = await wnt.balanceOf(feeHandler.address);
     const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
 
     const distributeTx = await feeDistributor.distribute();
@@ -868,7 +886,7 @@ describe("FeeDistributor", function () {
 
     const keeper1BalancePreDistribute = await hre.ethers.provider.getBalance(user2.address);
     const keeper2BalancePreDistribute = await hre.ethers.provider.getBalance(user3.address);
-    const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
+    const totalWntBalance = await wnt.balanceOf(feeHandler.address);
     const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
 
     const distributeTx = await feeDistributor.distribute();
@@ -1032,7 +1050,7 @@ describe("FeeDistributor", function () {
 
     const keeper1BalancePreDistribute = await hre.ethers.provider.getBalance(user2.address);
     const keeper2BalancePreDistribute = await hre.ethers.provider.getBalance(user3.address);
-    const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
+    const totalWntBalance = await wnt.balanceOf(feeHandler.address);
     const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
 
     const distributeTx = await feeDistributor.distribute();
@@ -1075,7 +1093,235 @@ describe("FeeDistributor", function () {
     expect(gmxFeesDistributed).to.eq(0);
   });
 
-  it("WNT for V1 keeper costs and referral rewards shortfall covered by WNT from treasury", async () => {
+  it("FEE_DISTRIBUTOR_DISTRIBUTE_FEES = false and FEE_RECEIVER != FeeDistributorVault", async function () {
+    await config.setBool(keys.FEE_DISTRIBUTOR_DISTRIBUTE_FEES, "0x", false);
+
+    const feeWithdrawer = await deployContract("MockFeeWithdrawer", [feeDistributorVault.address]);
+
+    feeDistributor = await deployContract(
+      "FeeDistributor",
+      [
+        roleStore.address,
+        feeDistributorVault.address,
+        feeWithdrawer.address,
+        dataStore.address,
+        eventEmitter.address,
+        multichainReader.address,
+        gmx.address,
+        wnt.address,
+      ],
+      {
+        libraries: {
+          "contracts/fee/FeeDistributorUtils.sol:FeeDistributorUtils": feeDistributorUtils.address,
+        },
+      }
+    );
+
+    await grantRole(roleStore, feeDistributor.address, "CONTROLLER");
+    await grantRole(roleStore, wallet.address, "FEE_KEEPER");
+
+    await config.setBool(
+      keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
+      encodeData(["address"], [feeDistributor.address]),
+      "true"
+    );
+    await config.setAddress(
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
+      encodeData(["uint256", "bytes32"], [chainIdA, keys.FEE_RECEIVER]),
+      user7.address
+    );
+    await dataStore.setAddress(keys.FEE_RECEIVER, feeWithdrawer.address);
+    await config.setAddress(
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
+      encodeData(["uint256", "bytes32"], [chainIdC, keys.FEE_RECEIVER]),
+      user8.address
+    );
+
+    await feeHandler.withdrawFees(wnt.address);
+
+    distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
+    expect(distributionState).to.eq(0);
+
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
+    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await feeHandler.withdrawFees(gmx.address);
+
+    await gmx.mint(wallet.address, expandDecimals(200_000, 18));
+    await gmx.approve(mockGmxAdapterB.address, expandDecimals(80_000, 18));
+    let sendParam = {
+      dstEid: eidA,
+      to: addressToBytes32(user0.address),
+      amountLD: expandDecimals(40_000, 18),
+      minAmountLD: expandDecimals(40_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    let feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
+    let nativeFee = feeQuote.nativeFee;
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
+
+    sendParam = {
+      dstEid: eidA,
+      to: addressToBytes32(user7.address),
+      amountLD: expandDecimals(10_000, 18),
+      minAmountLD: expandDecimals(10_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
+    nativeFee = feeQuote.nativeFee;
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
+
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+
+    sendParam = {
+      dstEid: eidC,
+      to: addressToBytes32(user1.address),
+      amountLD: expandDecimals(10_000, 18),
+      minAmountLD: expandDecimals(10_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
+    nativeFee = feeQuote.nativeFee;
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
+
+    sendParam = {
+      dstEid: eidC,
+      to: addressToBytes32(user8.address),
+      amountLD: expandDecimals(20_000, 18),
+      minAmountLD: expandDecimals(20_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
+    nativeFee = feeQuote.nativeFee;
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
+
+    await wallet.sendTransaction({
+      to: feeDistributor.address,
+      value: expandDecimals(1, 18),
+    });
+
+    const feeReceiverAmountBeforeBridgingA = await gmxA.balanceOf(user0.address);
+    const feeReceiverAmountBeforeBridgingB = await gmx.balanceOf(feeDistributorVault.address);
+    const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
+
+    const tx = await feeDistributor.initiateDistribute();
+    const receipt = await tx.wait();
+    const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
+    const timestamp = block.timestamp;
+
+    distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
+
+    const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[4].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[1].parsedEventData;
+
+    const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
+    const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
+    const feeAmountGmxC = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdC));
+    const totalFeeAmountGmx = await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX);
+
+    const stakedGmxA = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainIdA));
+    const stakedGmxB = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainIdB));
+    const stakedGmxC = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainIdC));
+    const totalStakedGmx = await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
+
+    const feeReceiverAmountAfterBridgingA = await gmxA.balanceOf(user0.address);
+    const feeReceiverAmountAfterBridgingB = await gmx.balanceOf(feeDistributorVault.address);
+    const feeReceiverAmountAfterBridgingC = await gmxC.balanceOf(user1.address);
+
+    expect(distributionState).to.eq(3);
+
+    expect(readResponseTimestamp).to.equal(timestamp);
+
+    expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
+    expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(0, 18));
+
+    expect(feeAmountGmxA).to.equal(expandDecimals(50_000, 18));
+    expect(feeAmountGmxB).to.equal(expandDecimals(160_000, 18));
+    expect(feeAmountGmxC).to.equal(expandDecimals(30_000, 18));
+    expect(totalFeeAmountGmx).to.equal(expandDecimals(240_000, 18));
+
+    expect(stakedGmxA).to.equal(expandDecimals(3_000_000, 18));
+    expect(stakedGmxB).to.equal(expandDecimals(6_000_000, 18));
+    expect(stakedGmxC).to.equal(expandDecimals(3_000_000, 18));
+    expect(totalStakedGmx).to.equal(expandDecimals(12_000_000, 18));
+
+    expect(feeReceiverAmountBeforeBridgingA).to.equal(expandDecimals(40_000, 18));
+    expect(feeReceiverAmountBeforeBridgingB).to.equal(expandDecimals(120_000, 18));
+    expect(feeReceiverAmountBeforeBridgingC).to.equal(expandDecimals(10_000, 18));
+
+    expect(feeReceiverAmountAfterBridgingA).to.equal(expandDecimals(40_000, 18));
+    expect(feeReceiverAmountAfterBridgingB).to.equal(expandDecimals(160_000, 18));
+    expect(feeReceiverAmountAfterBridgingC).to.equal(expandDecimals(10_000, 18));
+
+    const keeper1BalancePreDistribute = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2BalancePreDistribute = await hre.ethers.provider.getBalance(user3.address);
+    const totalWntBalance = await wnt.balanceOf(feeWithdrawer.address);
+    const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
+
+    const distributeTx = await feeDistributor.distribute();
+    const distributeReceipt = await distributeTx.wait();
+    const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
+    const lastDistributionTime = await mockRewardDistributor.lastDistributionTime();
+
+    distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
+
+    const keeperCosts = await dataStore.getUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+
+    const keeper1Balance = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2Balance = await hre.ethers.provider.getBalance(user3.address);
+    const keeper3Balance = await hre.ethers.provider.getBalance(user4.address);
+
+    const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
+    const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
+    const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
+    const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
+    const wntForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
+    let wntForTreasury = totalWntBalance.sub(wntForChainlink);
+    const remainingWnt = totalWntBalance.sub(wntForKeepers).sub(wntForChainlink).sub(wntForTreasury);
+    wntForTreasury = wntForTreasury.add(remainingWnt);
+    const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
+    const gmxBalancePostDistribute = await gmx.balanceOf(mockRewardTracker.address);
+    const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
+
+    expect(distributionState).to.eq(0);
+    expect(lastDistributionTime).to.eq(0);
+
+    expect(keeper1Balance).to.eq(keeperCosts[0]);
+    expect(keeper2Balance).to.eq(keeperCosts[1]);
+    expect(keeper3Balance).gte(keeperCosts[2]);
+
+    expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
+    expect(distributeEventData.wntForChainlink).to.eq(wntForChainlink);
+    expect(distributeEventData.wntForTreasury).to.eq(wntForTreasury);
+    expect(distributeEventData.feeAmountGmx).to.eq(feeAmountGmx);
+
+    expect(gmxFeesDistributed).to.eq(0);
+  });
+
+  it("WNT for keeper costs shortfall covered by WNT from treasury", async () => {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
@@ -1096,9 +1342,9 @@ describe("FeeDistributor", function () {
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
 
-    await wnt.burn(feeDistributorVault.address, await wnt.balanceOf(feeDistributorVault.address));
-
-    await wnt.mint(feeDistributorVault.address, expandDecimals(1, 17));
+    await wnt.burn(feeHandler.address, await wnt.balanceOf(feeHandler.address));
+    await wnt.mint(feeHandler.address, expandDecimals(1, 17));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(wnt.address), expandDecimals(1, 17));
 
     await wallet.sendTransaction({
       to: feeDistributor.address,
@@ -1122,7 +1368,7 @@ describe("FeeDistributor", function () {
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
     const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
 
-    const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
+    const totalWntBalance = await wnt.balanceOf(feeHandler.address);
 
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
     const wntForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
