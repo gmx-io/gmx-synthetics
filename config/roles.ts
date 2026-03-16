@@ -131,6 +131,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
       "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107": true, // general_keeper_4
       "0xB10e24b211D2321B12B21C52EaC38AC6e00799Cc": true, // general_keeper_5
+      "0xc5e038d696d9cB757fFdf53AA34e515D0e42f7cd": true, // general_keeper_6
     },
   };
 
@@ -138,7 +139,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     mainnet: {
       "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
       "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3": true, // claim_admin_2
-      "0xc5e038d696d9cB757fFdf53AA34e515D0e42f7cd": true, // claim_admin_3
     },
   };
 
