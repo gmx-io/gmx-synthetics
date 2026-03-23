@@ -358,13 +358,18 @@ export function encodeBridgeOutDataList(
   minAmountOut: BigNumberish,
   secondaryProvider?: string,
   secondaryProviderData?: string,
-  secondaryMinAmountOut?: BigNumberish
+  secondaryMinAmountOut?: BigNumberish,
+  bridgeFee?: { feeToken: string; feeAmount: BigNumberish; feeSwapPath: string[] },
+  secondaryBridgeFee?: { feeToken: string; feeAmount: BigNumberish; feeSwapPath: string[] }
 ): string[] {
+  const defaultBridgeFee = { feeToken: ethers.constants.AddressZero, feeAmount: 0, feeSwapPath: [] };
   let actionData;
   if (secondaryProviderData) {
+    const _bridgeFee = bridgeFee || defaultBridgeFee;
+    const _secondaryBridgeFee = secondaryBridgeFee || defaultBridgeFee;
     actionData = ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(uint256 desChainId, uint256 deadline, address provider, bytes providerData, uint256 minAmountOut, address secondaryProvider, bytes secondaryProviderData, uint256 secondaryMinAmountOut)",
+        "tuple(uint256 desChainId, uint256 deadline, address provider, bytes providerData, uint256 minAmountOut, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath) bridgeFee, address secondaryProvider, bytes secondaryProviderData, uint256 secondaryMinAmountOut, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath) secondaryBridgeFee)",
       ],
       [
         [
@@ -373,16 +378,33 @@ export function encodeBridgeOutDataList(
           provider,
           providerData,
           minAmountOut,
+          [_bridgeFee.feeToken, _bridgeFee.feeAmount, _bridgeFee.feeSwapPath],
           secondaryProvider,
           secondaryProviderData,
           secondaryMinAmountOut,
+          [_secondaryBridgeFee.feeToken, _secondaryBridgeFee.feeAmount, _secondaryBridgeFee.feeSwapPath],
         ],
       ]
     );
   } else {
+    const _bridgeFee = bridgeFee || defaultBridgeFee;
     actionData = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "uint256", "address", "bytes", "uint256"],
-      [desChainId, deadline, provider, providerData, minAmountOut]
+      [
+        "uint256",
+        "uint256",
+        "address",
+        "bytes",
+        "uint256",
+        "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
+      ],
+      [
+        desChainId,
+        deadline,
+        provider,
+        providerData,
+        minAmountOut,
+        [_bridgeFee.feeToken, _bridgeFee.feeAmount, _bridgeFee.feeSwapPath],
+      ]
     );
   }
 

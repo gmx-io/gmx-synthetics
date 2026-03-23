@@ -494,6 +494,7 @@ library Errors {
     error InvalidRecoveredSigner(string signatureType, address recovered, address recoveredFromMinified, address expectedSigner);
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
+    error UnexpectedBridgeFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
     error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay
     error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);

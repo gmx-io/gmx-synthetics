@@ -86,12 +86,19 @@ interface IRelayUtils {
         uint256[] amounts;
     }
 
+    struct BridgeFeeParams {
+        address feeToken;
+        uint256 feeAmount;
+        address[] feeSwapPath;
+    }
+
     struct BridgeOutParams {
         address token;
         uint256 amount;
         uint256 minAmountOut;
         address provider;
         bytes data; // provider specific data e.g. dstEid
+        BridgeFeeParams bridgeFee;
     }
 
     // @note all params except account should be part of the corresponding struct hash

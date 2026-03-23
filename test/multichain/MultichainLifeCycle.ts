@@ -472,6 +472,11 @@ describe("MultichainLifeCycle", () => {
       minAmountOut: 0,
       provider: mockStargatePoolUsdc.address,
       data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
+      bridgeFee: {
+        feeToken: ethers.constants.AddressZero,
+        feeAmount: 0,
+        feeSwapPath: [],
+      },
     };
 
     const bridgeOutParams: Parameters<typeof sendBridgeOut>[0] = {
