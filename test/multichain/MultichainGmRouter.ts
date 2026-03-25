@@ -679,6 +679,101 @@ describe("MultichainGmRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(0);
       });
 
+      it("cross-chain withdrawal with bridge fee swap via bridgeOutFromController", async () => {
+        await handleDeposit(fixture, {
+          create: {
+            longTokenAmount: expandDecimals(10, 18), // 10 WETH
+            shortTokenAmount: expandDecimals(50_000, 6), // 50,000 USDC
+          },
+        });
+
+        // Set atomic swap fee factor (required for the bridge fee swap)
+        const atomicSwapFeeFactor = percentageToFloat("1%");
+        await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+
+        // Step 1: Same-chain deposit to get GM tokens into user's multichain balance
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+        // user1 now has 95,000 GM in multichain balance
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+          expandDecimals(95_000, 18)
+        );
+
+        // Step 2: Set up cross-chain withdrawal with bridge fee swap
+        const srcChainId = 1;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolNative.SRC_EID()), srcChainId);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // Bridge in USDC for bridge fee (10 USDC) and WNT for relay fee
+        const bridgeFeeUsdc = expandDecimals(10, 6);
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeFeeUsdc });
+        await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+        // For the bridge fee swap: USDC-->WNT via ethUsdMarket
+        const bridgeFee = {
+          feeToken: usdc.address,
+          feeAmount: bridgeFeeUsdc,
+          feeSwapPath: [ethUsdMarket.marketToken],
+        };
+        const defaultBridgeFee = { feeToken: ethers.constants.AddressZero, feeAmount: 0, feeSwapPath: [] };
+
+        // Encode dataList with dual-path encoding to include bridgeFee
+        // WNT bridge-out uses mockStargatePoolNative, USDC bridge-out uses mockStargatePoolUsdc with bridgeFee
+        createWithdrawalParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId, // desChainId
+          deadline,
+          mockStargatePoolNative.address, // primary provider (for WNT / long token)
+          providerData,
+          0, // minAmountOut
+          mockStargatePoolUsdc.address, // secondary provider (for USDC / short token)
+          providerData, // secondaryProviderData
+          0, // secondaryMinAmountOut
+          defaultBridgeFee, // no bridgeFee for WNT (it's already WNT)
+          bridgeFee // bridgeFee for USDC bridge-out: swap USDC-->WNT for LZ fee
+        );
+
+        // Set cross-chain params — chainId must match srcChainId for EIP-712 domain
+        createWithdrawalParams.srcChainId = srcChainId;
+        createWithdrawalParams.chainId = srcChainId;
+
+        // Add WNT for bridge-out fees (LZ fees for both WNT and USDC bridge-outs)
+        const bridgeOutFeeWnt = await mockStargatePoolNative.BRIDGE_OUT_FEE();
+        const bridgeOutFeeUsdc = await mockStargatePoolUsdc.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, amount: bridgeOutFeeWnt.add(bridgeOutFeeUsdc) });
+
+        await sendCreateWithdrawal(createWithdrawalParams);
+
+        // Execute withdrawal — triggers bridgeOutFromController --> _bridgeOut --> _swapBridgeFeeIfNeeded
+        const { logs } = await executeWithdrawal(fixture, {
+          gasUsageLabel: "executeWithdrawal with bridge fee swap",
+        });
+
+        // Both bridge-outs succeeded
+        const bridgeActionLogs = logs.filter((log) => log.parsedEventInfo?.eventName === "MultichainBridgeAction");
+        const bridgeFailedLogs = logs.filter(
+          (log) => log.parsedEventInfo?.eventName === "MultichainBridgeActionFailed"
+        );
+        expect(bridgeActionLogs.length).to.eq(2); // WNT + USDC bridge-outs succeeded
+        expect(bridgeFailedLogs.length).to.eq(0);
+
+        // GM tokens fully withdrawn
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(0);
+
+        // USDC bridged out, WNT has residual (execution fee refund + swap output surplus)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+
+        // LZ fees paid to both pools
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolNative.address)).to.eq(bridgeOutFeeWnt);
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolUsdc.address)).to.eq(bridgeOutFeeUsdc);
+
+        // Verify the bridge fee swap happened
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.not.eq(undefined);
+      });
+
       it("cross-chain deposit with bridge fee swap via bridgeOutFromController", async () => {
         const mockStargatePoolGM = mockStargatePoolUsdc;
 
