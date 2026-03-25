@@ -5494,11 +5494,11 @@ const config: {
       minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
 
-      maxOpenInterest: decimalToFloat(5001),
-      maxPoolUsdForDeposit: decimalToFloat(250_100), // 7_500_000
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(5_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
     },
     {
       tokens: { indexToken: "WETH", longToken: "USDm", shortToken: "USDm" },
@@ -5524,11 +5524,11 @@ const config: {
       minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
 
-      maxOpenInterest: decimalToFloat(5001),
-      maxPoolUsdForDeposit: decimalToFloat(250_100), // 7_500_000
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(5_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
     },
     {
       tokens: { indexToken: "SOL", longToken: "USDm", shortToken: "USDm" },
@@ -5554,11 +5554,11 @@ const config: {
       minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
 
-      maxOpenInterest: decimalToFloat(5001),
-      maxPoolUsdForDeposit: decimalToFloat(250_100), // 7_500_000
+      maxOpenInterest: decimalToFloat(200_000),
+      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
     },
     {
       // Short-lived swap-only pool for Megaeth launch (USDM as gas payment token)
