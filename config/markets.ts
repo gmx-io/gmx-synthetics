@@ -5468,6 +5468,7 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(12_000_000),
+      isDisabled: true,
     },
     {
       tokens: { indexToken: "BTC", longToken: "USDm", shortToken: "USDm" },
