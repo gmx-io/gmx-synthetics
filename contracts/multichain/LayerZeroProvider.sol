@@ -15,13 +15,14 @@ import "../data/DataStore.sol";
 import "../utils/Cast.sol";
 import "../gas/GasUtils.sol";
 import "../deposit/DepositStoreUtils.sol";
-import "../glv/GlvUtils.sol";
 
 import "./IMultichainProvider.sol";
 import "./IMultichainGmRouter.sol";
 import "./IMultichainGlvRouter.sol";
 import "./IMultichainOrderRouter.sol";
+import "./IMultichainStakingRouter.sol";
 
+import "./LayerZeroProviderUtils.sol";
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
 
@@ -52,6 +53,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     IMultichainGmRouter public immutable multichainGmRouter;
     IMultichainGlvRouter public immutable multichainGlvRouter;
     IMultichainOrderRouter public immutable multichainOrderRouter;
+    IMultichainStakingRouter public immutable multichainStakingRouter;
 
     constructor(
         DataStore _dataStore,
@@ -60,7 +62,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         MultichainVault _multichainVault,
         IMultichainGmRouter _multichainGmRouter,
         IMultichainGlvRouter _multichainGlvRouter,
-        IMultichainOrderRouter _multichainOrderRouter
+        IMultichainOrderRouter _multichainOrderRouter,
+        IMultichainStakingRouter _multichainStakingRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
@@ -68,6 +71,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         multichainGmRouter = _multichainGmRouter;
         multichainGlvRouter = _multichainGlvRouter;
         multichainOrderRouter = _multichainOrderRouter;
+        multichainStakingRouter = _multichainStakingRouter;
     }
 
     /**
@@ -151,19 +155,20 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
             /// @dev relayParams.fee.feeToken must default to WNT when feeSwapPath is not being used
             /// otherwise reverts with UnexpectedRelayFeeToken
-            if (actionType == ActionType.Deposit) {
-                _handleDeposit(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.GlvDeposit) {
-                _handleGlvDeposit(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.SetTraderReferralCode) {
-                _handleSetTraderReferralCode(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.RegisterCode) {
-                _handleRegisterCode(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.Withdrawal) {
-                _handleWithdrawal(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.GlvWithdrawal) {
-                _handleGlvWithdrawal(account, srcChainId, actionType, actionData);
-            }
+            LayerZeroProviderUtils.dispatchAction(
+                LayerZeroProviderUtils.DispatchContracts(
+                    multichainGmRouter,
+                    multichainGlvRouter,
+                    multichainOrderRouter,
+                    multichainStakingRouter,
+                    dataStore,
+                    eventEmitter
+                ),
+                account,
+                srcChainId,
+                actionType,
+                actionData
+            );
         }
     }
 
@@ -334,25 +339,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         return (account, srcChainId, amountLD, data);
     }
 
-    function _areValidTransferRequests(IRelayUtils.TransferRequests memory transferRequests) private pure returns (bool) {
-        if (
-            transferRequests.tokens.length != transferRequests.receivers.length ||
-            transferRequests.tokens.length != transferRequests.amounts.length
-        ) {
-            return false;
-        }
-        for (uint256 i = 0; i < transferRequests.tokens.length; i++) {
-            if (
-                transferRequests.tokens[i] == address(0) ||
-                transferRequests.receivers[i] == address(0) ||
-                transferRequests.amounts[i] == 0
-            ) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     function _handleNativeTopUp(
         address account,
         uint256 srcChainId,
@@ -378,195 +364,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             account,
             srcChainId
         );
-    }
-
-    /// @dev long/short tokens are deposited from user's multichain balance
-    /// GM tokens are minted and transferred to user's multichain balance
-    function _handleDeposit(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            IRelayUtils.TransferRequests memory transferRequests,
-            IDepositUtils.CreateDepositParams memory depositParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
-
-        if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateDepositGasLimit(dataStore);
-            _validateGasLeft(estimatedGasLimit);
-
-            try multichainGmRouter.createDeposit(
-                relayParams,
-                account,
-                srcChainId,
-                transferRequests,
-                depositParams
-            ) {
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
-    }
-
-    /// @dev long/short/GM tokens are deposited from user's multichain balance
-    /// GLV tokens are minted and transferred to user's multichain balance
-    function _handleGlvDeposit(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            IRelayUtils.TransferRequests memory transferRequests,
-            IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvDepositUtils.CreateGlvDepositParams));
-
-        if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateGlvDepositGasLimit(dataStore);
-            _validateGasLeft(estimatedGasLimit);
-
-            try multichainGlvRouter.createGlvDeposit(
-                relayParams,
-                account,
-                srcChainId,
-                transferRequests,
-                glvDepositParams
-            ) {
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
-    }
-
-    /// @dev `account` is expected to be `msg.sender` from the source chain, as
-    /// MultichainOrderRouter would use it to validate the signature.
-    function _handleSetTraderReferralCode(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            bytes32 referralCode
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
-
-        uint256 estimatedGasLimit = GasUtils.estimateSetTraderReferralCodeGasLimit(dataStore);
-        _validateGasLeft(estimatedGasLimit);
-
-        try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
-        } catch Error(string memory reason) {
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-        }
-    }
-
-    /// @dev `account` is expected to be `msg.sender` from the source chain, as
-    /// MultichainOrderRouter would use it to validate the signature.
-    function _handleRegisterCode(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            bytes32 referralCode
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
-
-        uint256 estimatedGasLimit = GasUtils.estimateRegisterCodeGasLimit(dataStore);
-        _validateGasLeft(estimatedGasLimit);
-
-        try multichainOrderRouter.registerCode(relayParams, account, srcChainId, referralCode) {
-        } catch Error(string memory reason) {
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-        }
-    }
-
-    function _handleWithdrawal(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            IRelayUtils.TransferRequests memory transferRequests,
-            IWithdrawalUtils.CreateWithdrawalParams memory withdrawalParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IWithdrawalUtils.CreateWithdrawalParams));
-
-        if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateWithdrawalGasLimit(dataStore);
-            _validateGasLeft(estimatedGasLimit);
-
-            try multichainGmRouter.createWithdrawal(
-                relayParams,
-                account,
-                srcChainId,
-                transferRequests,
-                withdrawalParams
-            ) {
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
-    }
-
-    function _handleGlvWithdrawal(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            IRelayUtils.TransferRequests memory transferRequests,
-            IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory glvWithdrawalParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvWithdrawalUtils.CreateGlvWithdrawalParams));
-
-        if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateGlvWithdrawalGasLimit(dataStore);
-            _validateGasLeft(estimatedGasLimit);
-
-            try multichainGlvRouter.createGlvWithdrawal(
-                relayParams,
-                account,
-                srcChainId,
-                transferRequests,
-                glvWithdrawalParams
-            ) {
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
-    }
-
-    function _validateGasLeft(uint256 estimatedGasLimit) internal view {
-        uint256 gas = gasleft();
-        if (gas < estimatedGasLimit) {
-            revert Errors.InsufficientGasLeft(gas, estimatedGasLimit);
-        }
     }
 
     /**

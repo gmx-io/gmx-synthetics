@@ -120,4 +120,13 @@ interface IRelayUtils {
         UpdateOrderParams[] updateOrderParamsList;
         bytes32[] cancelOrderKeys;
     }
+
+    struct HandleStakingRewardsParams {
+        bool shouldClaimGmx;
+        bool shouldStakeGmx;
+        bool shouldClaimEsGmx;
+        bool shouldStakeEsGmx;
+        bool shouldStakeMultiplierPoints;
+        bool shouldClaimWeth;
+    }
 }

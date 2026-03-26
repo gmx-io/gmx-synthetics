@@ -466,6 +466,9 @@ library Errors {
     // Reader errors
     error EmptyMarketPrice(address market);
 
+    // GmxAccountWalletFactory errors
+    error InvalidWallet(address wallet);
+
     // Multichain errors
     error InvalidTransferRequestsLength();
     error EmptyMultichainTransferInAmount(address account, address token);
