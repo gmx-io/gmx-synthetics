@@ -18,6 +18,7 @@ import "../../router/Router.sol";
 import "../../token/TokenUtils.sol";
 import "../../gas/GasUtils.sol";
 
+import "./EIP6492Deployer.sol";
 import "./RelayUtils.sol";
 import "./SignatureUtils.sol";
 
@@ -393,7 +394,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             digest,
             relayParams.signature,
             account,
-            "call"
+            "call",
+            EIP6492Deployer(dataStore.getAddress(Keys.EIP6492_DEPLOYER))
         );
     }
 
