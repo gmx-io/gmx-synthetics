@@ -278,14 +278,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         if (relayParams.fee.feeSwapPath.length != 0) {
+            uint256 relayFeeUsd = relayParams.fee.feeAmount * oracle.getPrimaryPrice(relayParams.fee.feeToken).max;
+
+            // general cap on relay fee swap size to limit oracle mispricing extraction
+            uint256 maxRelayFeeSwapUsd = contracts.dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD);
+            if (relayFeeUsd > maxRelayFeeSwapUsd) {
+                revert Errors.MaxRelayFeeSwapExceeded(relayFeeUsd, maxRelayFeeSwapUsd);
+            }
+
             if (isSubaccount) {
                 // a malicious subaccount could create a large swap with a negative price impact
                 // and then execute a personal swap with a positive price impact
                 // to mitigate this, we limit the max relay fee swap size for subaccounts
-                uint256 maxRelayFeeSwapUsd = contracts.dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT);
-                uint256 relayFeeUsd = relayParams.fee.feeAmount * oracle.getPrimaryPrice(relayParams.fee.feeToken).max;
-                if (relayFeeUsd > maxRelayFeeSwapUsd) {
-                    revert Errors.MaxRelayFeeSwapForSubaccountExceeded(relayFeeUsd, maxRelayFeeSwapUsd);
+                uint256 maxRelayFeeSwapUsdForSubaccount = contracts.dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT);
+                if (relayFeeUsd > maxRelayFeeSwapUsdForSubaccount) {
+                    revert Errors.MaxRelayFeeSwapForSubaccountExceeded(relayFeeUsd, maxRelayFeeSwapUsdForSubaccount);
                 }
             }
 

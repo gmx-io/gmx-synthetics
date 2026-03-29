@@ -156,6 +156,7 @@ describe("MultichainOrderRouter", () => {
           shortTokenAmount: usdcAmount,
         },
       });
+      await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(10000));
     });
 
     it("creates multichain order and sends relayer fee", async () => {
