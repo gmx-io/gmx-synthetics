@@ -762,6 +762,26 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 11_600,
     },
+    XAU: {
+      negativePositionImpactFactor: exponentToFloat("3e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    XAG: {
+      negativePositionImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_015,
+    },
+    XPT: {
+      negativePositionImpactFactor: exponentToFloat("1e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_015,
+    },
+    XPD: {
+      negativePositionImpactFactor: exponentToFloat("2e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_037,
+    },
   },
   botanix: {
     "BTC:pBTC:pBTC": {

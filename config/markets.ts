@@ -5219,6 +5219,132 @@ const config: {
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
+    {
+      tokens: { indexToken: "XAU", longToken: "WETH", shortToken: "USDC.SG" },
+      virtualTokenIdForIndexToken: hashString("PERP:XAU/USD"),
+      virtualMarketId: hashString("SPOT:XAU/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactFactor: exponentToFloat("3e-9"),
+      positivePositionImpactFactor: exponentToFloat("2e-9"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("2.5%"),
+      positiveMaxPositionImpactFactor: percentageToFloat("2.5%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage for liquidation
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.22e-9"),
+
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+
+      maxOpenInterest: decimalToFloat(5_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(7_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(5_000, 18), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+    },
+    {
+      tokens: { indexToken: "XAG", longToken: "WETH", shortToken: "USDC.SG" },
+      virtualTokenIdForIndexToken: hashString("PERP:XAG/USD"),
+      virtualMarketId: hashString("SPOT:XAG/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-9"),
+      positivePositionImpactFactor: exponentToFloat("3.33e-9"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("2.5%"),
+      positiveMaxPositionImpactFactor: percentageToFloat("2.5%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage for liquidation
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.22e-9"),
+
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+
+      maxOpenInterest: decimalToFloat(5_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(7_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(5_000, 18), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+    },
+    {
+      tokens: { indexToken: "XPT", longToken: "WETH", shortToken: "USDC.SG" },
+      virtualTokenIdForIndexToken: hashString("PERP:XPT/USD"),
+      virtualMarketId: hashString("SPOT:XPT/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("1e-8"),
+      positivePositionImpactFactor: exponentToFloat("6.66e-9"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("5%"),
+      positiveMaxPositionImpactFactor: percentageToFloat("5%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("2%"), // 50x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.11e-8"),
+
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+
+      maxLongTokenPoolAmount: expandDecimals(2_000, 18), // ~4M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x max open interest)
+    },
+    {
+      tokens: { indexToken: "XPD", longToken: "WETH", shortToken: "USDC.SG" },
+      virtualTokenIdForIndexToken: hashString("PERP:XPD/USD"),
+      virtualMarketId: hashString("SPOT:XPD/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("2e-8"),
+      positivePositionImpactFactor: exponentToFloat("1.33e-8"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("5%"),
+      positiveMaxPositionImpactFactor: percentageToFloat("5%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("2%"), // 50x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.11e-8"),
+
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+
+      maxLongTokenPoolAmount: expandDecimals(2_000, 18), // ~4M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x max open interest)
+    },
   ],
   arbitrumGoerli: [
     {

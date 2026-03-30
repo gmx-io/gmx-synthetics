@@ -1662,6 +1662,30 @@ const config: {
         stablePrice: decimalToFloat(1),
       },
     },
+    XAU: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000332d678cdc95604058871774641e47841f68474316a1366433401722ad64c",
+      dataStreamFeedDecimals: 18,
+    },
+    XAG: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003df2295a030fae13d6764627bee0e4101be1b39f7e6a33deb9207b1c92bff",
+      dataStreamFeedDecimals: 18,
+    },
+    XPT: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003c9769ffbb96b88785cf5e6ba9974eb447ff0d00d6b722f57842b033c5acd",
+      dataStreamFeedDecimals: 18,
+    },
+    XPD: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00033d2059d23ee3e105d2d9a885c1afd7686a4d32767a8b6ba99316ebe0a50b",
+      dataStreamFeedDecimals: 18,
+    },
   },
   arbitrumGoerli: {
     WETH: {
