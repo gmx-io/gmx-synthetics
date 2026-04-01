@@ -373,6 +373,35 @@ describe("MultichainTransferRouter", () => {
       bridgeOutParams.signature = undefined;
       await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
     });
+
+    it("should revert if bridge output is below minAmountOut", async () => {
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+
+      const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount.add(bridgeOutFee) });
+
+      const srcChainId = 1;
+      bridgeOutParams.srcChainId = srcChainId;
+      await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+      await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+      // minAmountOut exceeds what Stargate would deliver (mock returns amountLD as amountReceivedLD)
+      bridgeOutParams.params.minAmountOut = bridgeOutAmount.add(1);
+      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientBridgeOutputAmount"
+      );
+
+      // with valid minAmountOut, bridge succeeds
+      bridgeOutParams.params.minAmountOut = bridgeOutAmount;
+      bridgeOutParams.userNonce = undefined;
+      bridgeOutParams.signature = undefined;
+      await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
+    });
   });
 
   describe("transferOut", () => {
