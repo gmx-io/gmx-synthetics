@@ -121,6 +121,7 @@ describe("MultichainSubaccountRouter", () => {
     await impersonateAccount(GELATO_RELAY_ADDRESS);
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
 
+    await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(10000));
     await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(100));
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
