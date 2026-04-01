@@ -321,7 +321,7 @@ describe("FeeDistributor", function () {
       expandDecimals(5, 15),
       expandDecimals(4, 15),
     ]);
-    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 15));
+    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 15));
     await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
@@ -744,12 +744,12 @@ describe("FeeDistributor", function () {
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
-    const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
+    const feesForKeepers = sentToKeeper1.add(sentToKeeper2);
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
-    const wntForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
-    let wntForTreasury = totalWntBalance.sub(wntForChainlink);
-    const remainingWnt = totalWntBalance.sub(wntForKeepers).sub(wntForChainlink).sub(wntForTreasury);
-    wntForTreasury = wntForTreasury.add(remainingWnt);
+    const feesForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
+    let feesForTreasury = totalWntBalance.sub(feesForChainlink);
+    const remainingSecondaryFeeToken = totalWntBalance.sub(feesForKeepers).sub(feesForChainlink).sub(feesForTreasury);
+    feesForTreasury = feesForTreasury.add(remainingSecondaryFeeToken);
     const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
     const gmxBalancePostDistribute = await gmx.balanceOf(mockRewardTracker.address);
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
@@ -761,9 +761,9 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
-    expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
-    expect(distributeEventData.wntForChainlink).to.eq(wntForChainlink);
-    expect(distributeEventData.wntForTreasury).to.eq(wntForTreasury);
+    expect(distributeEventData.feesForKeepers).to.eq(feesForKeepers);
+    expect(distributeEventData.feesForChainlink).to.eq(feesForChainlink);
+    expect(distributeEventData.feesForTreasury).to.eq(feesForTreasury);
     expect(distributeEventData.feeAmountGmx).to.eq(feeAmountGmx);
 
     expect(gmxFeesDistributed).to.eq(feeAmountGmx);
@@ -906,12 +906,12 @@ describe("FeeDistributor", function () {
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
-    const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
+    const feesForKeepers = sentToKeeper1.add(sentToKeeper2);
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
-    const wntForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
-    let wntForTreasury = totalWntBalance.sub(wntForChainlink);
-    const remainingWnt = totalWntBalance.sub(wntForKeepers).sub(wntForChainlink).sub(wntForTreasury);
-    wntForTreasury = wntForTreasury.add(remainingWnt);
+    const feesForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
+    let feesForTreasury = totalWntBalance.sub(feesForChainlink);
+    const remainingSecondaryFeeToken = totalWntBalance.sub(feesForKeepers).sub(feesForChainlink).sub(feesForTreasury);
+    feesForTreasury = feesForTreasury.add(remainingSecondaryFeeToken);
     const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
     const gmxBalancePostDistribute = await gmx.balanceOf(mockRewardTracker.address);
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
@@ -923,9 +923,9 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
-    expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
-    expect(distributeEventData.wntForChainlink).to.eq(wntForChainlink);
-    expect(distributeEventData.wntForTreasury).to.eq(wntForTreasury);
+    expect(distributeEventData.feesForKeepers).to.eq(feesForKeepers);
+    expect(distributeEventData.feesForChainlink).to.eq(feesForChainlink);
+    expect(distributeEventData.feesForTreasury).to.eq(feesForTreasury);
     expect(distributeEventData.feeAmountGmx).to.eq(feeAmountGmx);
 
     expect(gmxFeesDistributed).to.eq(feeAmountGmx);
@@ -1068,12 +1068,12 @@ describe("FeeDistributor", function () {
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
-    const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
+    const feesForKeepers = sentToKeeper1.add(sentToKeeper2);
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
-    const wntForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
-    let wntForTreasury = totalWntBalance.sub(wntForChainlink);
-    const remainingWnt = totalWntBalance.sub(wntForKeepers).sub(wntForChainlink).sub(wntForTreasury);
-    wntForTreasury = wntForTreasury.add(remainingWnt);
+    const feesForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
+    let feesForTreasury = totalWntBalance.sub(feesForChainlink);
+    const remainingSecondaryFeeToken = totalWntBalance.sub(feesForKeepers).sub(feesForChainlink).sub(feesForTreasury);
+    feesForTreasury = feesForTreasury.add(remainingSecondaryFeeToken);
     const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
     const gmxBalancePostDistribute = await gmx.balanceOf(mockRewardTracker.address);
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
@@ -1085,9 +1085,9 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
-    expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
-    expect(distributeEventData.wntForChainlink).to.eq(wntForChainlink);
-    expect(distributeEventData.wntForTreasury).to.eq(wntForTreasury);
+    expect(distributeEventData.feesForKeepers).to.eq(feesForKeepers);
+    expect(distributeEventData.feesForChainlink).to.eq(feesForChainlink);
+    expect(distributeEventData.feesForTreasury).to.eq(feesForTreasury);
     expect(distributeEventData.feeAmountGmx).to.eq(feeAmountGmx);
 
     expect(gmxFeesDistributed).to.eq(0);
@@ -1138,6 +1138,7 @@ describe("FeeDistributor", function () {
     );
 
     await feeHandler.withdrawFees(wnt.address);
+    await feeWithdrawer.setWithdrawableAmount(wnt.address, expandDecimals(1_000, 18));
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     expect(distributionState).to.eq(0);
@@ -1151,6 +1152,7 @@ describe("FeeDistributor", function () {
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
     await feeHandler.withdrawFees(gmx.address);
+    await feeWithdrawer.setWithdrawableAmount(gmx.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(200_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(80_000, 18));
@@ -1296,12 +1298,12 @@ describe("FeeDistributor", function () {
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
-    const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
+    const feesForKeepers = sentToKeeper1.add(sentToKeeper2);
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
-    const wntForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
-    let wntForTreasury = totalWntBalance.sub(wntForChainlink);
-    const remainingWnt = totalWntBalance.sub(wntForKeepers).sub(wntForChainlink).sub(wntForTreasury);
-    wntForTreasury = wntForTreasury.add(remainingWnt);
+    const feesForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
+    let feesForTreasury = totalWntBalance.sub(feesForChainlink);
+    const remainingSecondaryFeeToken = totalWntBalance.sub(feesForKeepers).sub(feesForChainlink).sub(feesForTreasury);
+    feesForTreasury = feesForTreasury.add(remainingSecondaryFeeToken);
     const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
     const gmxBalancePostDistribute = await gmx.balanceOf(mockRewardTracker.address);
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
@@ -1313,9 +1315,9 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
-    expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
-    expect(distributeEventData.wntForChainlink).to.eq(wntForChainlink);
-    expect(distributeEventData.wntForTreasury).to.eq(wntForTreasury);
+    expect(distributeEventData.feesForKeepers).to.eq(feesForKeepers);
+    expect(distributeEventData.feesForChainlink).to.eq(feesForChainlink);
+    expect(distributeEventData.feesForTreasury).to.eq(feesForTreasury);
     expect(distributeEventData.feeAmountGmx).to.eq(feeAmountGmx);
 
     expect(gmxFeesDistributed).to.eq(0);
@@ -1366,31 +1368,31 @@ describe("FeeDistributor", function () {
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
-    const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
+    const feesForKeepers = sentToKeeper1.add(sentToKeeper2);
 
     const totalWntBalance = await wnt.balanceOf(feeHandler.address);
 
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
-    const wntForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
-    const wntForTreasuryPre = totalWntBalance.sub(wntForChainlink);
+    const feesForChainlink = totalWntBalance.mul(chainlinkFactor).div(FLOAT_PRECISION);
+    const feesForTreasuryPre = totalWntBalance.sub(feesForChainlink);
 
-    const remainingWntBeforeV1KeeperCosts = totalWntBalance.sub(wntForChainlink).sub(wntForTreasuryPre);
+    const remainingFeesBeforeV1KeeperCosts = totalWntBalance.sub(feesForChainlink).sub(feesForTreasuryPre);
 
-    const additionalWntFromTreasury = wntForKeepers.sub(remainingWntBeforeV1KeeperCosts).sub(wntForTreasuryPre);
+    const additionalFeesFromTreasury = feesForKeepers.sub(remainingFeesBeforeV1KeeperCosts).sub(feesForTreasuryPre);
 
-    const maxWntFromTreasury = dataStore.getUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
+    const maxFeesFromTreasury = dataStore.getUint(keys.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY);
 
     const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
 
     await expect(feeDistributor.distribute()).to.be.revertedWithCustomError(
       errorsContract,
-      "MaxWntFromTreasuryExceeded",
+      "MaxFeesFromTreasuryExceeded",
       // @ts-expect-error: types don't reflect 3rd and 4th argument support
-      maxWntFromTreasury,
-      additionalWntFromTreasury
+      maxFeesFromTreasury,
+      additionalFeesFromTreasury
     );
 
-    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
+    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
 
     const treasuryBalancePre = await wnt.balanceOf(user6.address);
 
@@ -1404,9 +1406,9 @@ describe("FeeDistributor", function () {
     const sentFromTreasury = treasuryBalancePre.sub(treasuryBalanceAfter);
 
     expect(sentFromTreasury).is.greaterThan(0);
-    expect(sentFromTreasury).to.equal(additionalWntFromTreasury);
+    expect(sentFromTreasury).to.equal(additionalFeesFromTreasury);
 
-    const wntForTreasury = 0;
+    const feesForTreasury = 0;
 
     const keeper1Balance = await hre.ethers.provider.getBalance(user2.address);
     const keeper2Balance = await hre.ethers.provider.getBalance(user3.address);
@@ -1418,9 +1420,9 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
-    expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
-    expect(distributeEventData.wntForChainlink).to.eq(wntForChainlink);
-    expect(distributeEventData.wntForTreasury).to.eq(wntForTreasury);
+    expect(distributeEventData.feesForKeepers).to.eq(feesForKeepers);
+    expect(distributeEventData.feesForChainlink).to.eq(feesForChainlink);
+    expect(distributeEventData.feesForTreasury).to.eq(feesForTreasury);
     expect(distributeEventData.feeAmountGmx).to.eq(feeAmountGmx);
   });
 
@@ -1727,7 +1729,7 @@ describe("FeeDistributor", function () {
       expandDecimals(4, 15),
     ]);
     await dataStoreD.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [true, false, true]);
-    await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
+    await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
     await configD.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await configD.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmxD.address]), expandDecimals(5, 17));
 

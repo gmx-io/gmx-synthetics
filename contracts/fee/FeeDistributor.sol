@@ -36,7 +36,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     MultichainReader internal immutable multichainReader;
 
     address internal immutable gmx;
-    address internal immutable wnt;
+    address internal immutable secondaryFeeToken;
 
     receive() external payable {}
 
@@ -48,7 +48,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         EventEmitter _eventEmitter,
         MultichainReader _multichainReader,
         address _gmx,
-        address _wnt
+        address _secondaryFeeToken
     ) RoleModule(_roleStore) {
         feeDistributorVault = _feeDistributorVault;
         feeWithdrawer = _feeWithdrawer;
@@ -56,7 +56,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         eventEmitter = _eventEmitter;
         multichainReader = _multichainReader;
         gmx = _gmx;
-        wnt = _wnt;
+        secondaryFeeToken = _secondaryFeeToken;
     }
 
     // @dev withdraw the specified 'amount' of native token from this contract to 'receiver'
@@ -308,25 +308,25 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _validateReadResponseTimestamp(_getUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
         _validateDistributionNotCompleted();
 
-        // withdraw any remaining WNT fees via the feeWithdrawer
-        feeWithdrawer.withdrawFees(wnt);
+        // withdraw any remaining secondaryFeeToken fees via the feeWithdrawer
+        feeWithdrawer.withdrawFees(secondaryFeeToken);
 
-        // calculate the WNT that needs to be sent to the keepers, chainlink and treasury
-        (uint256 wntForKeepers, uint256 wntForChainlink, uint256 wntForTreasury) = _calculateWntAmounts();
+        // calculate the amount of secondaryFeeToken that needs to be sent to the keepers, chainlink and treasury
+        (uint256 feesForKeepers, uint256 feesForChainlink, uint256 feesForTreasury) = _calculateFeeAmounts();
 
         // retrieve the amount of GMX to be paid out to GMX token stakers
         uint256 feeAmountGmx = _getUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid));
 
-        _distributeFees(wntForKeepers, wntForChainlink, wntForTreasury, feeAmountGmx, treasuryAddress);
+        _distributeFees(feesForKeepers, feesForChainlink, feesForTreasury, feeAmountGmx, treasuryAddress);
 
         _setUint(Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
         _setDistributionState(uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(4);
-        _setUintItem(eventData, 0, "wntForKeepers", wntForKeepers);
-        _setUintItem(eventData, 1, "wntForChainlink", wntForChainlink);
-        _setUintItem(eventData, 2, "wntForTreasury", wntForTreasury);
+        _setUintItem(eventData, 0, "feesForKeepers", feesForKeepers);
+        _setUintItem(eventData, 1, "feesForChainlink", feesForChainlink);
+        _setUintItem(eventData, 2, "feesForTreasury", feesForTreasury);
         _setUintItem(eventData, 3, "feeAmountGmx", feeAmountGmx);
         _emitFeeDistributionEvent("FeeDistributionCompleted", eventData);
     }
@@ -427,79 +427,83 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         return totalGmxBridgedOut;
     }
 
-    function _calculateWntAmounts() internal returns (uint256, uint256, uint256) {
-        // calculate the WNT that needs to be sent to each keeper
+    function _calculateFeeAmounts() internal returns (uint256, uint256, uint256) {
+        // calculate the amount of secondaryFeeToken that needs to be sent to each keeper
         address[] memory keepers = dataStore.getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256[] memory keepersTargetBalance = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
         if (keepers.length != keepersTargetBalance.length) {
             revert Errors.KeeperArrayLengthMismatch(keepers.length, keepersTargetBalance.length);
         }
 
-        uint256 wntForKeepers;
+        uint256 feesForKeepers;
         for (uint256 i; i < keepers.length; i++) {
             uint256 keeperTargetBalance = keepersTargetBalance[i];
             uint256 keeperBalance = keepers[i].balance;
             if (keeperTargetBalance > keeperBalance) {
-                wntForKeepers += (keeperTargetBalance - keeperBalance);
+                feesForKeepers += (keeperTargetBalance - keeperBalance);
             }
         }
 
-        // calculate WNT costs and transfer to appropriate addresses
-        uint256 totalWntBalance = _getFeeDistributorVaultBalance(wnt);
+        // calculate secondaryFeeToken fee amounts and transfer to appropriate addresses
+        uint256 totalSecondaryFeeTokenBalance = _getFeeDistributorVaultBalance(secondaryFeeToken);
 
-        // calculate the WNT for chainlink costs and amount of WNT to be sent to the treasury
-        uint256 wntForChainlink = Precision.applyFactor(
-            totalWntBalance,
+        // calculate the amount of secondaryFeeToken for chainlink costs and to be sent to the treasury
+        uint256 feesForChainlink = Precision.applyFactor(
+            totalSecondaryFeeTokenBalance,
             _getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
         );
-        uint256 wntForTreasury = totalWntBalance - wntForChainlink;
+        uint256 feesForTreasury = totalSecondaryFeeTokenBalance - feesForChainlink;
 
-        if (wntForKeepers > wntForTreasury) {
-            uint256 maxWntFromTreasury = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
-            uint256 additionalWntFromTreasury = wntForKeepers - wntForTreasury;
-            if (additionalWntFromTreasury > maxWntFromTreasury) {
-                revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
+        if (feesForKeepers > feesForTreasury) {
+            uint256 maxFeesFromTreasury = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY);
+            uint256 additionalFeesFromTreasury = feesForKeepers - feesForTreasury;
+            if (additionalFeesFromTreasury > maxFeesFromTreasury) {
+                revert Errors.MaxFeesFromTreasuryExceeded(maxFeesFromTreasury, additionalFeesFromTreasury);
             }
-            IERC20(wnt).transferFrom(
+            IERC20(secondaryFeeToken).transferFrom(
                 _getAddressInfo(TREASURY),
                 address(feeDistributorVault),
-                additionalWntFromTreasury
+                additionalFeesFromTreasury
             );
-            wntForTreasury = 0;
+            feesForTreasury = 0;
         } else {
-            wntForTreasury -= wntForKeepers;
+            feesForTreasury -= feesForKeepers;
         }
-        return (wntForKeepers, wntForChainlink, wntForTreasury);
+        return (feesForKeepers, feesForChainlink, feesForTreasury);
     }
 
     function _distributeFees(
-        uint256 wntForKeepers,
-        uint256 wntForChainlink,
-        uint256 wntForTreasury,
+        uint256 feesForKeepers,
+        uint256 feesForChainlink,
+        uint256 feesForTreasury,
         uint256 feeAmountGmx,
         address treasuryAddress
     ) internal {
-        // transfer the WNT that needs to be sent to each keeper
+        // transfer the amount of secondaryFeeToken that needs to be sent to each keeper
         address[] memory keepers = dataStore.getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256[] memory keepersTargetBalance = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
-        uint256 wntToKeepers;
+        uint256 feesToKeepers;
         for (uint256 i; i < keepers.length; i++) {
             address keeper = keepers[i];
             uint256 keeperBalance = keeper.balance;
             uint256 keeperTargetBalance = keepersTargetBalance[i];
             if (keeperBalance < keeperTargetBalance) {
-                uint256 wntToKeeper = keeperTargetBalance - keeperBalance;
-                feeDistributorVault.transferOutNativeToken(keeper, wntToKeeper);
-                wntToKeepers += wntToKeeper;
+                uint256 feesToKeeper = keeperTargetBalance - keeperBalance;
+                if (secondaryFeeToken == _getAddress(Keys.WNT)) {
+                    feeDistributorVault.transferOutNativeToken(keeper, feesToKeeper);
+                } else {
+                    _transferOut(secondaryFeeToken, keeper, feesToKeeper);
+                }
+                feesToKeepers += feesToKeeper;
             }
         }
-        if (wntForKeepers != wntToKeepers) {
-            revert Errors.KeeperAmountMismatch(wntForKeepers, wntToKeepers);
+        if (feesForKeepers != feesToKeepers) {
+            revert Errors.KeeperAmountMismatch(feesForKeepers, feesToKeepers);
         }
 
-        // transfer the WNT for chainlink costs and WNT for the treasury
-        _transferOut(wnt, _getAddressInfo(CHAINLINK), wntForChainlink);
-        _transferOut(wnt, treasuryAddress, wntForTreasury);
+        // transfer the secondaryFeeToken allocated for chainlink costs and for the treasury
+        _transferOut(secondaryFeeToken, _getAddressInfo(CHAINLINK), feesForChainlink);
+        _transferOut(secondaryFeeToken, treasuryAddress, feesForTreasury);
 
         address rewardTracker = _getAddressInfoForChain(block.chainid, REWARD_TRACKER);
         address distributor = IRewardTracker(rewardTracker).distributor();

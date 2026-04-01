@@ -50,8 +50,8 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
     // @dev key for FeeDistributor chainlink factor used to determine total chainlink fees paid
     bytes32 public constant FEE_DISTRIBUTOR_CHAINLINK_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAINLINK_FACTOR"));
-    // @dev key for max WNT amount from treasury to cover keeper costs
-    bytes32 public constant FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY"));
+    // @dev key for max secondaryFeeToken amount from treasury to cover keeper costs
+    bytes32 public constant FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY"));
     // @dev key for whether or not weekly fees should be distributed
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTE_FEES = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTE_FEES"));
 

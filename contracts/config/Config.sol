@@ -551,7 +551,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
 
         allowedBaseKeys[Keys.BUYBACK_BATCH_AMOUNT] = true;
-        allowedBaseKeys[Keys.BUYBACK_GMX_FACTOR] = true;
+        allowedBaseKeys[Keys.BUYBACK_PRIMARY_TOKEN_FACTOR] = true;
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_AGE] = true;
 
@@ -588,7 +588,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES] = true;
 
         allowedBaseKeys[Keys2.CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS] = true;

@@ -20,7 +20,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     using EventUtils for EventUtils.UintItems;
 
     struct FeeAmounts {
-        uint256 gmx;
+        uint256 primaryBuybackToken;
         uint256 wnt;
     }
 
@@ -30,7 +30,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     IVaultV1 public immutable vaultV1;
-    address public immutable gmx;
+    address public immutable primaryBuybackToken;
 
     constructor(
         RoleStore _roleStore,
@@ -38,12 +38,12 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         IVaultV1 _vaultV1,
-        address _gmx
+        address _primaryBuybackToken
     ) RoleModule(_roleStore) OracleModule(_oracle) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         vaultV1 = _vaultV1;
-        gmx = _gmx;
+        primaryBuybackToken = _primaryBuybackToken;
     }
 
     // @dev withdraw fees in buybackTokens from this contract
@@ -142,7 +142,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
             }
 
             feeAmounts = _getFeeAmounts(version, feeAmount);
-            feeAmount = buybackToken == gmx ? feeAmounts.gmx : feeAmounts.wnt;
+            feeAmount = buybackToken == primaryBuybackToken ? feeAmounts.primaryBuybackToken : feeAmounts.wnt;
             availableFeeAmount = availableFeeAmount + feeAmount;
         }
 
@@ -198,7 +198,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
 
         FeeAmounts memory feeAmounts = _getFeeAmounts(version, feeAmount);
 
-        _incrementAvailableFeeAmount(feeToken, gmx, feeAmounts.gmx);
+        _incrementAvailableFeeAmount(feeToken, primaryBuybackToken, feeAmounts.primaryBuybackToken);
         _incrementAvailableFeeAmount(feeToken, wnt, feeAmounts.wnt);
     }
 
@@ -233,11 +233,11 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     }
 
     function _getFeeAmounts(uint256 version, uint256 feeAmount) internal view returns (FeeAmounts memory) {
-        uint256 gmxFactor = _getUint(Keys.buybackGmxFactorKey(version));
+        uint256 tokenAFactor = _getUint(Keys.buybackPrimaryTokenFactorKey(version));
         FeeAmounts memory feeAmounts;
 
-        feeAmounts.gmx = Precision.applyFactor(feeAmount, gmxFactor);
-        feeAmounts.wnt = feeAmount - feeAmounts.gmx;
+        feeAmounts.primaryBuybackToken = Precision.applyFactor(feeAmount, tokenAFactor);
+        feeAmounts.wnt = feeAmount - feeAmounts.primaryBuybackToken;
         return feeAmounts;
     }
 
@@ -256,13 +256,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         uint256 feeTokenPrice = oracle.getPrimaryPrice(feeToken).max;
         uint256 buybackTokenPrice = oracle.getPrimaryPrice(buybackToken).min;
 
-        return _getMaxFeeTokenAmount(
-            feeToken,
-            buybackToken,
-            batchSize,
-            feeTokenPrice,
-            buybackTokenPrice
-        );
+        return _getMaxFeeTokenAmount(feeToken, buybackToken, batchSize, feeTokenPrice, buybackTokenPrice);
     }
 
     function _getMaxFeeTokenAmount(

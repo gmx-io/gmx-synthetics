@@ -475,8 +475,8 @@ library Keys {
     bytes32 public constant BUYBACK_BATCH_AMOUNT = keccak256(abi.encode("BUYBACK_BATCH_AMOUNT"));
     // @dev key for the buyback available fees
     bytes32 public constant BUYBACK_AVAILABLE_FEE_AMOUNT = keccak256(abi.encode("BUYBACK_AVAILABLE_FEE_AMOUNT"));
-    // @dev key for the buyback gmx fee factor used in calculating fees by GMX/WNT
-    bytes32 public constant BUYBACK_GMX_FACTOR = keccak256(abi.encode("BUYBACK_GMX_FACTOR"));
+    // @dev key for the buyback primary token fee factor used in calculating fees by primaryBuybackToken/WNT
+    bytes32 public constant BUYBACK_PRIMARY_TOKEN_FACTOR = keccak256(abi.encode("BUYBACK_PRIMARY_TOKEN_FACTOR"));
     // @dev key for the FeeHandler max price impact when buying back fees
     bytes32 public constant BUYBACK_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("BUYBACK_MAX_PRICE_IMPACT_FACTOR"));
     // @dev key for the maximum price delay in seconds when buying back fees
@@ -2277,12 +2277,12 @@ library Keys {
         ));
     }
 
-    // @dev key for the buyback gmx fee factor
+    // @dev key for the buyback primary token fee factor
     // @param version the version for which to retrieve the fee numerator
-    // @return key for buyback gmx fee factor for a given version
-    function buybackGmxFactorKey(uint256 version) internal pure returns (bytes32) {
+    // @return key for buyback primary token fee factor for a given version
+    function buybackPrimaryTokenFactorKey(uint256 version) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            BUYBACK_GMX_FACTOR,
+           BUYBACK_PRIMARY_TOKEN_FACTOR,
             version
         ));
     }
