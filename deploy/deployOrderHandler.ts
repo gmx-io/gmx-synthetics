@@ -16,7 +16,7 @@ const constructorContracts = [
 ];
 const contractName = "OrderHandler";
 
-const requireMockTimelock = !["arbitrum", "avalanche", "botanix"].includes(hre.network.name);
+const requireMockTimelock = !["arbitrum", "avalanche", "botanix", "megaEth"].includes(hre.network.name);
 
 const func = createDeployFunction({
   contractName: contractName,

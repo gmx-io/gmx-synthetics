@@ -14,6 +14,7 @@ type OracleRealPriceFeed = {
   stablePriceUsd?: BigNumberish;
   deploy?: never;
   initPrice?: never;
+  customFeedDescription?: string;
 };
 
 type OracleTestPriceFeed = {
@@ -23,6 +24,7 @@ type OracleTestPriceFeed = {
   stablePriceUsd?: BigNumberish;
   deploy: true;
   initPrice: string;
+  customFeedDescription?: string;
 };
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
@@ -1153,6 +1155,41 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    AR: {
+      synthetic: true,
+      decimals: 12, // https://www.arweave.org/yellow-paper.pdf (winston units)
+      dataStreamFeedId: "0x0003e9203edf4b8903234a85043f0a4bba6d976b6a10123c0eaee57b245ef3b4",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    DASH: {
+      synthetic: true,
+      decimals: 8, // bitcoin fork
+      dataStreamFeedId: "0x00030af2822a97c3a29f256449ddf8390cbf052452d93bcd5a55ddc2e6bece22",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    SYRUP: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x643C4E15d7d62Ad0aBeC4a9BD4b001aA3Ef52d66#readProxyContract
+      dataStreamFeedId: "0x0003e2c8ee282f518aee9efd1e14a5fd51da7a0e3207041f5db1785d0729cd1d",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    JTO: {
+      synthetic: true,
+      decimals: 9, // https://solscan.io/token/jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL
+      dataStreamFeedId: "0x00031b01b4e8d1ae01b7045c41518048ec38afcf486a2b3f876036dede607735",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    CHZ: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x3506424f91fd33084466f402d5d97f05f8e3b4af#readContract
+      dataStreamFeedId: "0x000308c666c2adb7e67738ced80cfc711c364e8980032f612578ab1a83022a93",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     "GLV [WETH-USDC]": {
       address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
       decimals: 18,
@@ -1168,6 +1205,49 @@ const config: {
       dataStreamFeedId: "0x000389b9405ab00e6af390557003b0e3dfff6b22cd069819397e39837aeb63c8",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 2,
+    },
+    // deprecated, use XAUT.v2 instead
+    XAUT: {
+      synthetic: true,
+      decimals: 6,
+      dataStreamFeedId: "0x0003b8b3f33c4c06a7947e86c5b4db4ef0991637d9821b9cdf897c0b5d488468",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    "XAUT.v2": {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003b8b3f33c4c06a7947e86c5b4db4ef0991637d9821b9cdf897c0b5d488468",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    IP: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e994b96b6929f62f9118707113da2baa8dd3fb6916c0d521da82896c86b1",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    LIT: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00033b02ff589d0d5693a4603c172a625440c02039611b0f6e7e80ab985dbd8c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    CC: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003111e1c2212376d4c196bf7635919e4b28368809dda6f515c396453d53770",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MET: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003024c8e73e74f3f43352a1745975eeb5cd0a2b9d310f8da2d13d518544c00",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
   },
   avalanche: {
@@ -1452,6 +1532,64 @@ const config: {
       },
     },
   },
+  megaEth: {
+    WETH: {
+      address: "0x4200000000000000000000000000000000000006",
+      decimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9",
+      dataStreamFeedDecimals: 18,
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+      priceFeed: {
+        address: "0xC3E01CC87A99A48081282F6566E1286fccC80d36",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    USDm: {
+      address: "0xFAfDdbb3FC7688494971a79cc65DCa3EF82079E7",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003ea225e4b8cfc71e2f3cf853d07dbd144047f1c2dd8aecedd846749784a29",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
+      priceFeed: {
+        address: "0xdFe0063491d9DeD8F8abCdd7AE04238A1e70D270",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+        stablePriceUsd: decimalToFloat(1),
+        customFeedDescription: "USDM-USD (USDtb Underlying)",
+      },
+    },
+    BTC: {
+      synthetic: true,
+      decimals: 8,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0xc6E3007B597f6F5a6330d43053D1EF73cCbbE721",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    SOL: {
+      synthetic: true,
+      decimals: 9,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x53c05390FdfDB63526Ac0814825093A68eaddC87",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+  },
   arbitrumSepolia: {
     WETH: {
       address: "0x980b62da83eff3d4576c647993b0c1d7faf17c73", // not verified
@@ -1508,20 +1646,7 @@ const config: {
         address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
         decimals: 8,
         heartbeatDuration: 144 * 60 * 60,
-        stablePrice: decimalToFloat(1),
-      },
-    },
-    "USDT.SG": {
-      address: "0x095f40616FA98Ff75D1a7D0c68685c5ef806f110", // Stargate USDT
-      decimals: 6,
-      transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
-      dataStreamFeedDecimals: 18,
-      priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
-        decimals: 8,
-        heartbeatDuration: 144 * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
     },
   },

@@ -134,7 +134,11 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         FeatureUtils.validateFeature(_dataStore, Keys.cancelGlvWithdrawalFeatureDisabledKey(address(this)));
 
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
-        validateRequestCancellation(glvWithdrawal.updatedAtTime(), "GlvWithdrawal");
+
+        if (!roleStore.hasRole(msg.sender, Role.ORDER_KEEPER)) {
+            // allow keepers to cancel glvWithdrawals even if requestExpirationTime is not passed
+            validateRequestCancellation(glvWithdrawal.updatedAtTime(), "GlvWithdrawal");
+        }
 
         GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
             dataStore: dataStore,

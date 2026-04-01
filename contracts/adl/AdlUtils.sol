@@ -66,7 +66,7 @@ library AdlUtils {
     // where auto-deleveraging is required
     //
     // This function checks the pending profit state and updates an isAdlEnabled
-    // flag to avoid having to repeatedly validate whether auto-deleveraging is required
+    // flag. This flag is using for early return and signal if ADL is not enabled.
     //
     // Once the pending profit has been reduced below the threshold this function can
     // be called again to clear the flag

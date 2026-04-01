@@ -14,6 +14,7 @@ const stablecoinSymbols = {
   DAI: true,
   "DAI.e": true,
   USDe: true,
+  USDm: true,
 };
 
 const BASIS_POINTS_DIVISOR = 10_000;
@@ -611,6 +612,61 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_000,
     },
+    AR: {
+      negativePositionImpactFactor: exponentToFloat("1.3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_011,
+    },
+    DASH: {
+      negativePositionImpactFactor: exponentToFloat("3.89e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_019,
+    },
+    SYRUP: {
+      negativePositionImpactFactor: exponentToFloat("5.65e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_986,
+    },
+    JTO: {
+      negativePositionImpactFactor: exponentToFloat("3.52e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_978,
+    },
+    CHZ: {
+      negativePositionImpactFactor: exponentToFloat("3.93e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    XAUT: {
+      negativePositionImpactFactor: exponentToFloat("1.07e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_965,
+    },
+    "XAUT.v2": {
+      negativePositionImpactFactor: exponentToFloat("1.07e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_965,
+    },
+    IP: {
+      negativePositionImpactFactor: exponentToFloat("1.25e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_006,
+    },
+    LIT: {
+      negativePositionImpactFactor: exponentToFloat("2.51e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_940,
+    },
+    CC: {
+      negativePositionImpactFactor: exponentToFloat("5.85e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    MET: {
+      negativePositionImpactFactor: exponentToFloat("3.44e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_021,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -727,11 +783,44 @@ const recommendedMarketConfig = {
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
     },
   },
+  megaEth: {
+    "WETH:WETH:WETH": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    BTC: {
+      negativePositionImpactFactor: exponentToFloat("1.93e-7"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 11_987,
+    },
+    "WETH:USDm:USDm": {
+      negativePositionImpactFactor: exponentToFloat("3.06e-8"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    SOL: {
+      negativePositionImpactFactor: exponentToFloat("8.51e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "WETH:USDm": {
+      negativeSwapImpactFactor: exponentToFloat("3e-7"),
+      expectedSwapImpactRatio: 12_000,
+    },
+  },
 };
 
 const configTokenMapping = {
   arbitrum: {
     "WBTC.e": "BTC",
+  },
+  megaEth: {
+    WETH: "WETH:USDm",
   },
 };
 

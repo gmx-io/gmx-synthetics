@@ -609,6 +609,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.RELAY_FEE_ADDRESS] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
 
         allowedBaseKeys[Keys2.MULTICHAIN_READ_CHANNEL] = true;

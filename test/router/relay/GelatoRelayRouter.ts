@@ -110,6 +110,8 @@ describe("GelatoRelayRouter", () => {
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
 
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
+
+    await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(10000));
   });
 
   let createOrderParams: Parameters<typeof sendCreateOrder>[0];
@@ -1105,8 +1107,8 @@ describe("GelatoRelayRouter", () => {
     }
 
     it("swap relay fee", async () => {
-      // relay fee swap size should not be validated for non-subaccount orders
-      // so set the threshold to 0 to make sure swaps work correctly
+      // MAX_RELAY_FEE_SWAP_USD is set in beforeEach to allow relay fee swaps
+      // MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT is not relevant for non-subaccount orders
       expect(await dataStore.getUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT)).eq(0);
 
       await handleDeposit(fixture, {

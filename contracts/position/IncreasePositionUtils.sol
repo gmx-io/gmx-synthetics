@@ -166,27 +166,11 @@ library IncreasePositionUtils {
         PositionUtils.updateOpenInterest(
             params,
             params.order.sizeDeltaUsd().toInt256(),
-            cache.baseSizeDeltaInTokens.toInt256()
+            cache.baseSizeDeltaInTokens.toInt256(),
+            prices
         );
 
         if (params.order.sizeDeltaUsd() > 0) {
-            // reserves are only validated if the sizeDeltaUsd is more than zero
-            // this helps to ensure that deposits of collateral into positions
-            // should still succeed even if pool tokens are fully reserved
-            MarketUtils.validateReserve(
-                params.contracts.dataStore,
-                params.market,
-                prices,
-                params.order.isLong()
-            );
-
-            MarketUtils.validateOpenInterestReserve(
-                params.contracts.dataStore,
-                params.market,
-                prices,
-                params.order.isLong()
-            );
-
             PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
                 params.position.sizeInUsd(), // positionSizeInUsd
                 params.position.collateralAmount(), // positionCollateralAmount

@@ -1,9 +1,11 @@
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import { expandDecimals } from "../utils/math";
 import { setPriceFeedPayload, timelockWriteMulticall } from "../utils/timelock";
 import * as keys from "../utils/keys";
 
 const expectedPhases = ["signal", "finalize"];
+const predecessor = ethers.constants.HashZero;
+const salt = ethers.constants.HashZero;
 
 async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -71,7 +73,9 @@ async function main() {
         priceFeed.heartbeatDuration,
         stablePrice
       );
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads, predecessor, salt])
+      );
     }
   }
 

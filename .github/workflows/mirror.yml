@@ -1,0 +1,26 @@
+name: Mirroring
+on:
+  push:
+    branches:
+      - main
+      - updates
+      - dev
+
+jobs:
+  mirror_to_target:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout mirror
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Commit and push to the mirror
+        uses: jeffreyc/copy-commit-to-another-repo@v1.0.0
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.MIRROR_PAT }}
+        with:
+          destination: 'gmx-io/gmx-synthetics'
+          #branch: '${{ github.ref_name }}'
+          #exclude: '"workflows","fuzz","fuzzy"'
+          #include: '"audits","config","contracts","deploy","deployments","docs","scripts","test","utils"'

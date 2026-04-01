@@ -18,7 +18,7 @@ async function main() {
     const longToken = tokens[market.tokens.longToken];
     const shortToken = tokens[market.tokens.shortToken];
 
-    const marketTokenAddress = await getMarketTokenAddress(
+    const marketTokenAddress = getMarketTokenAddress(
       indexToken.address,
       longToken.address,
       shortToken.address,

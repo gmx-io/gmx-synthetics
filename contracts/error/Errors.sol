@@ -483,6 +483,7 @@ library Errors {
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
     error InsufficientFee(uint256 feeProvided, uint256 feeRequired);
+    error InsufficientBridgeOutputAmount(uint256 outputAmount, uint256 minAmountOut);
 
     enum SignatureType {
         Call,
@@ -520,6 +521,7 @@ library Errors {
     error RelayEmptyBatch();
     error RelayCalldataTooLong(uint256 calldataLength);
     error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
+    error MaxRelayFeeSwapExceeded(uint256 feeUsd, uint256 maxFeeUsd);
     error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 
     error RemovalShouldNotBeSkipped(bytes32 listKey, bytes32 entityKey);
