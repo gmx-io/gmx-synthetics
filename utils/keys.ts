@@ -288,7 +288,7 @@ export const MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT = hashString("MAX_TOTAL_CONTRIBU
 
 export const BUYBACK_BATCH_AMOUNT = hashString("BUYBACK_BATCH_AMOUNT");
 export const BUYBACK_AVAILABLE_FEE_AMOUNT = hashString("BUYBACK_AVAILABLE_FEE_AMOUNT");
-export const BUYBACK_GMX_FACTOR = hashString("BUYBACK_GMX_FACTOR");
+export const BUYBACK_PRIMARY_TOKEN_FACTOR = hashString("BUYBACK_PRIMARY_TOKEN_FACTOR");
 export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMPACT_FACTOR");
 export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
@@ -952,8 +952,8 @@ export function buybackAvailableFeeAmountKey(feeToken: string, swapToken: string
   return hashData(["bytes32", "address", "address"], [BUYBACK_AVAILABLE_FEE_AMOUNT, feeToken, swapToken]);
 }
 
-export function buybackGmxFactorKey(version: number) {
-  return hashData(["bytes32", "uint256"], [BUYBACK_GMX_FACTOR, version]);
+export function buybackPrimaryTokenFactorKey(version: number) {
+  return hashData(["bytes32", "uint256"], [BUYBACK_PRIMARY_TOKEN_FACTOR, version]);
 }
 
 export function buybackMaxPriceImpactFactorKey(token: string) {
