@@ -101,7 +101,8 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
             digest,
             signature,
             account,
-            "call"
+            "call",
+            EIP6492Deployer(dataStore.getAddress(Keys.EIP6492_DEPLOYER))
         );
     }
 }

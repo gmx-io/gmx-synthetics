@@ -5,6 +5,7 @@ import { _TypedDataEncoder } from "ethers/lib/utils";
 import { deployContract } from "../../../utils/deploy";
 import { deployFixture } from "../../../utils/fixture";
 import { errorsContract } from "../../../utils/error";
+import { EIP6492_DEPLOYER } from "../../../utils/keys";
 
 const EIP6492_MAGIC_BYTES = "0x6492649264926492649264926492649264926492649264926492649264926492";
 
@@ -477,6 +478,15 @@ describe("Smart Wallet Signatures", () => {
       await expect(
         mockContract.testEIP6492Signature(expectedWalletAddress, wrappedSignature, chainId)
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+    });
+  });
+
+  describe("EIP6492Deployer wiring", () => {
+    it("should have EIP6492Deployer address set in DataStore", async () => {
+      const deployerAddress = await dataStore.getAddress(EIP6492_DEPLOYER);
+      expect(deployerAddress).to.not.equal(ethers.constants.AddressZero);
+      const code = await ethers.provider.getCode(deployerAddress);
+      expect(code).to.not.equal("0x");
     });
   });
 });
