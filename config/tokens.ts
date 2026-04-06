@@ -1640,27 +1640,38 @@ const config: {
       address: "0x095f40616FA98Ff75D1a7D0c68685c5ef806f110", // Stargate USDT
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
+      dataStreamFeedId: "0x00032874077216155926e26c159c1c20a572921371d9de605fe9633e48d136f9", // USDT
       dataStreamFeedDecimals: 18,
       priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
+        address: "0x80EDee6f667eCc9f63a0a6f55578F870651f06A4", // USDT
         decimals: 8,
         heartbeatDuration: 144 * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
     },
-    "USDT.SG": {
-      address: "0x095f40616FA98Ff75D1a7D0c68685c5ef806f110", // Stargate USDT
-      decimals: 6,
-      transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
+    XAU: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000332d678cdc95604058871774641e47841f68474316a1366433401722ad64c",
       dataStreamFeedDecimals: 18,
-      priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
-        decimals: 8,
-        heartbeatDuration: 144 * 60 * 60,
-        stablePrice: decimalToFloat(1),
-      },
+    },
+    XAG: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003df2295a030fae13d6764627bee0e4101be1b39f7e6a33deb9207b1c92bff",
+      dataStreamFeedDecimals: 18,
+    },
+    XPT: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003c9769ffbb96b88785cf5e6ba9974eb447ff0d00d6b722f57842b033c5acd",
+      dataStreamFeedDecimals: 18,
+    },
+    XPD: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00033d2059d23ee3e105d2d9a885c1afd7686a4d32767a8b6ba99316ebe0a50b",
+      dataStreamFeedDecimals: 18,
     },
   },
   arbitrumGoerli: {

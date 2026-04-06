@@ -227,6 +227,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           createGlvMarketConfig("WETH", 15_000_000, 1),
           createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.0),
+          createGlvMarketConfig("XAU", 5_000_000, 1),
+          createGlvMarketConfig("XAG", 5_000_000, 1),
+          createGlvMarketConfig("XPT", 2_000_000, 1),
+          createGlvMarketConfig("XPD", 2_000_000, 1),
         ],
       },
     ],
