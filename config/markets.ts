@@ -1767,7 +1767,7 @@ const config: {
       openInterestReserveFactor: percentageToFloat("150%"), // default is 90%
 
       positionImpactPoolDistributionRate: expandDecimals(747, 6 + 30).div(SECONDS_PER_DAY), // 747 TIA / day gross (~$263/day gross, ~$248/day net to GLV)
-      minPositionImpactPoolAmount: expandDecimals(1059, 6), // leave ~10% = 1059 TIA
+      minPositionImpactPoolAmount: expandDecimals(7754, 6),
 
       maxOpenInterest: decimalToFloat(500_000),
 
@@ -2557,7 +2557,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
       positionImpactPoolDistributionRate: expandDecimals(311, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(3772, 18), // above current bucket, pauses distribution
+      minPositionImpactPoolAmount: expandDecimals(3772, 18),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3926,7 +3926,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2m USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(6671, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(80836, 18), // above current bucket, pauses distribution
+      minPositionImpactPoolAmount: expandDecimals(80836, 18),
     },
     {
       tokens: { indexToken: "WELL", longToken: "WETH", shortToken: "USDC" },
@@ -4075,7 +4075,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_376_000, 6), // ~2.37M USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(1265, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(37293, 18), // above current bucket, pauses distribution
+      minPositionImpactPoolAmount: expandDecimals(3989, 18),
     },
     {
       tokens: { indexToken: "0G", longToken: "WBTC.e", shortToken: "USDC" },
@@ -4199,7 +4199,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(900_000, 6), // ~0.9M USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(3946, 18 + 30).div(SECONDS_PER_DAY), // 3946 SKY / day gross (~$290/day gross, ~$290/day net to GLV)
-      minPositionImpactPoolAmount: expandDecimals(5590, 18), // leave ~10% = 5590 SKY
+      minPositionImpactPoolAmount: expandDecimals(41497, 18),
     },
     {
       tokens: { indexToken: "ZEC", longToken: "WBTC.e", shortToken: "USDC" },
