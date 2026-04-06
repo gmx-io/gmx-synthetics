@@ -84,6 +84,93 @@ export async function getCreateOrderSignature({
   return signTypedData(signer, domain, types, typedData, minified);
 }
 
+export async function getCreateTwapOrderSignature({
+  signer,
+  relayParams,
+  subaccountApproval = undefined,
+  account,
+  verifyingContract,
+  params,
+  twapCount,
+  interval,
+  chainId,
+  minified = false,
+}: {
+  signer: ethers.Signer;
+  relayParams: RelayParams;
+  subaccountApproval?: SubaccountApproval;
+  account?: string;
+  verifyingContract: string;
+  params: any;
+  twapCount: BigNumberish;
+  interval: BigNumberish;
+  chainId: BigNumberish;
+  minified?: boolean;
+}) {
+  const types = {
+    CreateTwapOrder: [
+      { name: "account", type: "address" },
+      { name: "params", type: "CreateOrderParams" },
+      { name: "twapCount", type: "uint256" },
+      { name: "interval", type: "uint256" },
+      { name: "relayParams", type: "bytes32" },
+      { name: "subaccountApproval", type: "bytes32" },
+    ],
+    CreateOrderParams: [
+      { name: "addresses", type: "CreateOrderAddresses" },
+      { name: "numbers", type: "CreateOrderNumbers" },
+      { name: "orderType", type: "uint256" },
+      { name: "decreasePositionSwapType", type: "uint256" },
+      { name: "isLong", type: "bool" },
+      { name: "shouldUnwrapNativeToken", type: "bool" },
+      { name: "autoCancel", type: "bool" },
+      { name: "referralCode", type: "bytes32" },
+      { name: "dataList", type: "bytes32[]" },
+    ],
+    CreateOrderAddresses: [
+      { name: "receiver", type: "address" },
+      { name: "cancellationReceiver", type: "address" },
+      { name: "callbackContract", type: "address" },
+      { name: "uiFeeReceiver", type: "address" },
+      { name: "market", type: "address" },
+      { name: "initialCollateralToken", type: "address" },
+      { name: "swapPath", type: "address[]" },
+    ],
+    CreateOrderNumbers: [
+      { name: "sizeDeltaUsd", type: "uint256" },
+      { name: "initialCollateralDeltaAmount", type: "uint256" },
+      { name: "triggerPrice", type: "uint256" },
+      { name: "acceptablePrice", type: "uint256" },
+      { name: "executionFee", type: "uint256" },
+      { name: "callbackGasLimit", type: "uint256" },
+      { name: "minOutputAmount", type: "uint256" },
+      { name: "validFromTime", type: "uint256" },
+    ],
+  };
+
+  const domain = getDomain(chainId, verifyingContract);
+  const typedData = {
+    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    params: {
+      addresses: params.addresses,
+      numbers: params.numbers,
+      orderType: params.orderType,
+      decreasePositionSwapType: params.decreasePositionSwapType,
+      isLong: params.isLong,
+      shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
+      autoCancel: false,
+      referralCode: params.referralCode,
+      dataList: params.dataList,
+    },
+    twapCount,
+    interval,
+    relayParams: hashRelayParams(relayParams),
+    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
+  };
+
+  return signTypedData(signer, domain, types, typedData, minified);
+}
+
 export async function getBatchSignature({
   signer,
   relayParams,
