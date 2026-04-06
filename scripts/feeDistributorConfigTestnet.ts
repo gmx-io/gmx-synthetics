@@ -188,6 +188,8 @@ async function setupTestData(
   const gmx = MintableToken.attach(contracts.gmx);
   const wnt = MintableToken.attach(contracts.wnt);
   const esGmx = MintableToken.attach(contracts.esGmx);
+  const feeVault = await ethers.getContract("FeeVault");
+  const feeVaultAddress = await feeVault.getAddress();
 
   const MockRewardTrackerV1 = await getFactory(deployer, "MockRewardTrackerV1");
   const mockExtendedGmxTracker = MockRewardTrackerV1.attach(contracts.mockExtendedGmxTracker);
@@ -202,15 +204,15 @@ async function setupTestData(
   console.log(`Set withdrawable GMX: ${ethers.utils.formatEther(scenario.withdrawableBuybackAmount)}`);
   await delay(txDelay);
 
-  // Mint GMX to FeeHandler
-  let currentBalance = await gmx.balanceOf(contracts.feeHandler);
+  // Mint GMX to FeeVault
+  let currentBalance = await gmx.balanceOf(feeVaultAddress);
   if (currentBalance > ZERO) {
-    await gmx.burn(contracts.feeHandler, currentBalance);
-    console.log(`Burned GMX in FeeHandler: ${ethers.utils.formatEther(currentBalance)}`);
+    await gmx.burn(feeVaultAddress, currentBalance);
+    console.log(`Burned GMX in FeeVault: ${ethers.utils.formatEther(currentBalance)}`);
     await delay(txDelay);
   }
-  await gmx.mint(contracts.feeHandler, scenario.withdrawableBuybackAmount);
-  console.log(`Minted GMX to FeeHandler: ${ethers.utils.formatEther(scenario.withdrawableBuybackAmount)}`);
+  await gmx.mint(feeVaultAddress, scenario.withdrawableBuybackAmount);
+  console.log(`Minted GMX to FeeVault: ${ethers.utils.formatEther(scenario.withdrawableBuybackAmount)}`);
   await delay(txDelay);
 
   // Mint GMX to FeeDistributorVault

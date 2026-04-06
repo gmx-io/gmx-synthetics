@@ -16,7 +16,7 @@ import "../chain/Chain.sol";
 contract OracleModuleTest is OracleModule {
     using Uint256Mask for Uint256Mask.Mask;
 
-    constructor(Oracle _oracle) OracleModule(_oracle) {}
+    constructor(IOracle _oracle) OracleModule(_oracle) {}
 
     function withOraclePricesTest(
         OracleUtils.SetPricesParams memory oracleParams
