@@ -2954,7 +2954,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(839, 18 + 30).div(SECONDS_PER_DAY), // 839 FET / day gross (~$189/day gross, ~$186/day net to GLV)
-      minPositionImpactPoolAmount: expandDecimals(8025, 18), // above current bucket, pauses distribution
+      minPositionImpactPoolAmount: expandDecimals(1189, 18), // restore active min
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3926,7 +3926,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2m USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(6671, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(9450, 18), // restore active min
+      minPositionImpactPoolAmount: expandDecimals(77685, 18), // above current bucket, pauses distribution
     },
     {
       tokens: { indexToken: "WELL", longToken: "WETH", shortToken: "USDC" },
@@ -4075,7 +4075,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_376_000, 6), // ~2.37M USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(1265, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(36464, 18), // above current bucket, pauses distribution
+      minPositionImpactPoolAmount: expandDecimals(3989, 18), // restore active min
     },
     {
       tokens: { indexToken: "0G", longToken: "WBTC.e", shortToken: "USDC" },
