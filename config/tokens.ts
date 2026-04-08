@@ -1249,6 +1249,33 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    // RWA and Commodities
+    GOLD: {
+      // XAU
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003cee5f549828ad1e7a7325f3244956ec493223b3408dd47a30499759ae4cd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    SILVER: {
+      // XAG
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e17a3db8679890f061d82e651e584c815fb35012ea5613593c322c598d9f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xC56765f04B248394CF1619D20dB8082Edbfa75b1",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
   },
   avalanche: {
     "BTC.b": {
