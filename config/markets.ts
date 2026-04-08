@@ -6117,7 +6117,6 @@ export default async function (hre: HardhatRuntimeEnvironment, marketState?: Mar
     console.log("markets with state only are processed (%s)", markets.length);
 
     if (marketState === MarketState.Closed) {
-      console.log(markets[0].closedState);
       markets = markets?.map((m) => ({ ...m, ...m.closedState }));
     }
   }
