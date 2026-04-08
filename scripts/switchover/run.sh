@@ -36,9 +36,9 @@ SCRIPT_NAME="$(basename "$SCRIPT" .sh)"
 CHAIN_DIR="$(basename "$(dirname "$SCRIPT")")"
 TIMESTAMP="$(date +%Y-%m-%d_%H-%M-%S)"
 
-LOG_DIR="$REPO_DIR/logs/switchover"
+LOG_DIR="$REPO_DIR/logs/switchover/$CHAIN_DIR"
 mkdir -p "$LOG_DIR"
-LOG_FILE="$LOG_DIR/${CHAIN_DIR}.log"
+LOG_FILE="$LOG_DIR/${SCRIPT_NAME}.log"
 
 send_telegram() {
   local message="$1"
