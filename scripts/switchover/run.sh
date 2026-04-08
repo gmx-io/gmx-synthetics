@@ -3,6 +3,11 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$REPO_DIR"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+nvm use > /dev/null 2>&1
 ENV_FILE="$REPO_DIR/.env"
 
 if [ ! -f "$ENV_FILE" ]; then
