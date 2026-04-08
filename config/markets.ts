@@ -5332,7 +5332,7 @@ const config: {
 
       closedState: {
         ...fundingRateConfig_High,
-        ...borrowingRateConfig_LowMax_WithLowerBase,
+        ...borrowingRateConfig_HighMax_WithHigherBase,
 
         negativePositionImpactFactor: exponentToFloat("3e-9"),
         positivePositionImpactFactor: exponentToFloat("2e-9"),
@@ -5345,10 +5345,10 @@ const config: {
 
         maxPositionImpactFactorForLiquidations: bigNumberify(0),
 
-        minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage for liquidation
-        minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage for liquidation
+        minCollateralFactor: percentageToFloat("2%"),
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
 
-        maxOpenInterest: decimalToFloat(5_000_000),
+        maxOpenInterest: decimalToFloat(100),
       },
     },
     {
