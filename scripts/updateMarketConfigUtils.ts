@@ -4,6 +4,7 @@ import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
+import { MarketState } from "../config/markets";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [
   keys.MAX_OPEN_INTEREST,
@@ -710,6 +711,7 @@ const processMarkets = async ({
 export async function updateMarketConfig({
   write = false,
   market = undefined,
+  marketState = undefined,
   includeRiskOracleBaseKeys = false,
   includeKeeperBaseKeys = false,
   includeFunding = false,
@@ -727,7 +729,7 @@ export async function updateMarketConfig({
 
   const generalConfig = await hre.gmx.getGeneral();
   const tokens = await hre.gmx.getTokens();
-  const markets = await hre.gmx.getMarkets();
+  const markets = await hre.gmx.getMarkets(marketState);
 
   const dataStore = await hre.ethers.getContract("DataStore");
 
