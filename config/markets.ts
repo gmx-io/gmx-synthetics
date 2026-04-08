@@ -5,8 +5,8 @@ import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percenta
 import { hashString } from "../utils/hash";
 import { SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
 
-export enum MarketState {
-  Open = "open",
+export enum MarketHours {
+  Regular = "regular",
   Closed = "closed",
 }
 
@@ -18,7 +18,6 @@ export type ClosedMarketConfig = {
 
   negativeMaxPositionImpactFactor: BigNumberish;
   positiveMaxPositionImpactFactor: BigNumberish;
-  maxPositionImpactFactorForLiquidations: BigNumberish;
 
   minCollateralFactor: BigNumberish;
   minCollateralFactorForLiquidation: BigNumberish;
@@ -5343,8 +5342,6 @@ const config: {
         negativeMaxPositionImpactFactor: percentageToFloat("2.5%"),
         positiveMaxPositionImpactFactor: percentageToFloat("2.5%"),
 
-        maxPositionImpactFactorForLiquidations: bigNumberify(0),
-
         minCollateralFactor: percentageToFloat("2%"),
         minCollateralFactorForLiquidation: percentageToFloat("1%"),
 
@@ -6107,16 +6104,16 @@ function fillLongShortValues(market, key, longKey, shortKey) {
   }
 }
 
-export default async function (hre: HardhatRuntimeEnvironment, marketState?: MarketState) {
+export default async function (hre: HardhatRuntimeEnvironment, marketHours?: MarketHours) {
   let markets = config[hre.network.name];
   const tokens = await hre.gmx.getTokens();
   const defaultMarketConfig = hre.network.name === "hardhat" ? hardhatBaseMarketConfig : baseMarketConfig;
 
-  if (marketState) {
+  if (marketHours) {
     markets = markets?.filter((m) => m.closedState !== undefined);
     console.log("markets with state only are processed (%s)", markets.length);
 
-    if (marketState === MarketState.Closed) {
+    if (marketHours === MarketHours.Closed) {
       markets = markets?.map((m) => ({ ...m, ...m.closedState }));
     }
   }

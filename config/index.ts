@@ -3,7 +3,7 @@ import _ from "lodash";
 import { extendEnvironment } from "hardhat/config";
 
 import tokensConfig from "./tokens";
-import marketsConfig, { MarketState } from "./markets";
+import marketsConfig, { MarketHours } from "./markets";
 import glvsConfig from "./glvs";
 import oracleConfig from "./oracle";
 import generalConfig from "./general";
@@ -23,8 +23,8 @@ extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
     getTokens: _.memoize(async () => tokensConfig(hre)),
     getOracle: _.memoize(async () => oracleConfig(hre)),
     getMarkets: _.memoize(
-      async (marketState?: MarketState) => marketsConfig(hre, marketState),
-      (marketState) => marketState ?? ""
+      async (marketHours?: MarketHours) => marketsConfig(hre, marketHours),
+      (marketHours) => marketHours ?? ""
     ),
     getGlvs: _.memoize(async () => glvsConfig(hre)),
     getGeneral: _.memoize(async () => generalConfig(hre)),
