@@ -5,14 +5,12 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 RUN_SH="$REPO_DIR/scripts/switchover/run.sh"
 
-# CRON_ENTRIES="
-# 0 * * * *  $RUN_SH $REPO_DIR/scripts/switchover/arbitrumSepolia/XAU_open.sh
-# 30 * * * *  $RUN_SH $REPO_DIR/scripts/switchover/arbitrumSepolia/XAU_closed.sh
-# "
-# XAU (arbitrumSepolia): open every 10 min at :00, closed every 10 min at :05
+# XAU (arbitrumSepolia)
+# Weekly: closed Fri 20:45 UTC, open Sun 22:15 UTC
+# Daily Mon-Thu: closed 20:45 UTC, open 22:15 UTC
 CRON_ENTRIES="
-0,10,20,30,40,50 * * * *  $RUN_SH $REPO_DIR/scripts/switchover/arbitrumSepolia/XAU_open.sh
-5,15,25,35,45,55 * * * *  $RUN_SH $REPO_DIR/scripts/switchover/arbitrumSepolia/XAU_closed.sh
+45 20 * * 1-5  $RUN_SH $REPO_DIR/scripts/switchover/arbitrumSepolia/XAU_closed.sh
+15 22 * * 0,1-4  $RUN_SH $REPO_DIR/scripts/switchover/arbitrumSepolia/XAU_open.sh
 "
 
 # remove old switchover entries, append new ones

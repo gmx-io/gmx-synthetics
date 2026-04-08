@@ -54,6 +54,7 @@ send_telegram() {
 
 echo "" >> "$LOG_FILE"
 echo "$(date) [$CHAIN_DIR/$SCRIPT_NAME] Starting" | tee -a "$LOG_FILE"
+send_telegram "⏳ <b>${SCRIPT_NAME}</b> (${CHAIN_DIR}) starting..." "true"
 
 RUN_OUTPUT=$(mktemp)
 bash "$SCRIPT" > "$RUN_OUTPUT" 2>&1 || true
