@@ -4629,7 +4629,10 @@ const config: {
       reserveFactor: percentageToFloat("255%"),
       openInterestReserveFactor: percentageToFloat("250%"),
       maxPnlFactorForTraders: percentageToFloat("75%"),
-      maxPnlFactorForDeposits: percentageToFloat("75%"), // NOTE: not in risk params, added to satisfy validation (maxPnlFactorForDeposits == maxPnlFactorForTraders)
+      maxPnlFactorForDeposits: percentageToFloat("75%"),
+      maxPnlFactorForAdl: percentageToFloat("70%"),
+      minPnlFactorAfterAdl: percentageToFloat("65%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("60%"),
 
       maxOpenInterest: decimalToFloat(5_000_000),
       maxPoolUsdForDeposit: decimalToFloat(7_500_000),
@@ -4661,7 +4664,10 @@ const config: {
       reserveFactor: percentageToFloat("255%"),
       openInterestReserveFactor: percentageToFloat("250%"),
       maxPnlFactorForTraders: percentageToFloat("75%"),
-      maxPnlFactorForDeposits: percentageToFloat("75%"), // NOTE: not in risk params, added to satisfy validation (maxPnlFactorForDeposits == maxPnlFactorForTraders)
+      maxPnlFactorForDeposits: percentageToFloat("75%"),
+      maxPnlFactorForAdl: percentageToFloat("70%"),
+      minPnlFactorAfterAdl: percentageToFloat("65%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("60%"),
 
       maxOpenInterest: decimalToFloat(5_000_000),
       maxPoolUsdForDeposit: decimalToFloat(7_500_000),
