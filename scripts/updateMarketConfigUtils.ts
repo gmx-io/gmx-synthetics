@@ -826,7 +826,8 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
     });
 
     if (!market) {
-      throw new Error(`Market with id ${supportedMarketToken} not found`);
+      console.warn(`WARN: Risk oracle market with id ${supportedMarketToken} not found in config, skipping`);
+      return;
     }
 
     supported.add(market);
