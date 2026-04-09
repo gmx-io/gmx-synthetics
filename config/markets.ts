@@ -4674,7 +4674,7 @@ const config: {
         negativePositionImpactFactor: exponentToFloat("3.0e-9"),
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
-        minCollateralFactor: percentageToFloat("4%"),
+        minCollateralFactor: percentageToFloat("5%"),
         minCollateralFactorForLiquidation: percentageToFloat("1%"),
 
         maxOpenInterest: decimalToFloat(2_500_000),
@@ -4721,7 +4721,7 @@ const config: {
         negativePositionImpactFactor: exponentToFloat("5.0e-9"),
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
-        minCollateralFactor: percentageToFloat("4%"),
+        minCollateralFactor: percentageToFloat("5%"),
         minCollateralFactorForLiquidation: percentageToFloat("1%"),
 
         maxOpenInterest: decimalToFloat(2_500_000),
