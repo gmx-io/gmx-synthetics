@@ -112,8 +112,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("CHZ", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LIT", arbitrum_ethUsdcDefaultCap, 1),
           // RWA and Commodities
-          // createGlvMarketConfig("GOLD", arbitrum_ethUsdcDefaultCap, 1), // XAU
-          // createGlvMarketConfig("SILVER", arbitrum_ethUsdcDefaultCap, 1), // XAG
+          createGlvMarketConfig("GOLD", arbitrum_ethUsdcDefaultCap, 1), // XAU
+          createGlvMarketConfig("SILVER", arbitrum_ethUsdcDefaultCap, 1), // XAG
         ],
       },
       {
