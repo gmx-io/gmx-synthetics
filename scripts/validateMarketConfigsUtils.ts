@@ -667,6 +667,17 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_021,
     },
+    // RWA and Commodities
+    GOLD: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    SILVER: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
   },
   avalanche: {
     "BTC.b": {

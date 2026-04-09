@@ -1249,6 +1249,23 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    // RWA and Commodities
+    GOLD: {
+      // XAU
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003cee5f549828ad1e7a7325f3244956ec493223b3408dd47a30499759ae4cd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    SILVER: {
+      // XAG
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e17a3db8679890f061d82e651e584c815fb35012ea5613593c322c598d9f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {

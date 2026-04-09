@@ -12,7 +12,7 @@ function getMarketHours(): MarketHours | undefined {
     return value as MarketHours;
   }
 
-  throw new Error(`Invalid MARKET_STATE: "${value}". Expected "${MarketHours.Regular}" or "${MarketHours.Closed}".`);
+  throw new Error(`Invalid MARKET_STATE: "${value}". Expected "${MarketHours.OnHours}" or "${MarketHours.OffHours}".`);
 }
 
 async function main() {
