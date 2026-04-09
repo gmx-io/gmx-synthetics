@@ -1,5 +1,5 @@
 #!/bin/bash
 
 MARKET=0x0000000000000000000000000000000000000002 \
-MARKET_STATE=regular \
+MARKET_STATE=onHours \
 npx hardhat run scripts/updateMarketConfig.ts --network arbitrumSepolia

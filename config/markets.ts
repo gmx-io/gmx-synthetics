@@ -6,8 +6,8 @@ import { hashString } from "../utils/hash";
 import { SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
 
 export enum MarketHours {
-  Regular = "regular",
-  Closed = "closed",
+  OnHours = "onHours",
+  OffHours = "offHours",
 }
 
 export type ClosedMarketConfig = {
@@ -6208,7 +6208,7 @@ export default async function (hre: HardhatRuntimeEnvironment, marketHours?: Mar
     markets = markets?.filter((m) => m.closedState !== undefined);
     console.log("markets with state only are processed (%s)", markets.length);
 
-    if (marketHours === MarketHours.Closed) {
+    if (marketHours === MarketHours.OffHours) {
       markets = markets?.map((m) => ({ ...m, ...m.closedState }));
     }
   }
