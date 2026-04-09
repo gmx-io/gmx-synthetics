@@ -5,6 +5,32 @@ import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percenta
 import { hashString } from "../utils/hash";
 import { SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
 
+export enum MarketHours {
+  Regular = "regular",
+  Closed = "closed",
+}
+
+export type ClosedMarketConfig = {
+  negativePositionImpactFactor: BigNumberish;
+  positivePositionImpactFactor: BigNumberish;
+  negativePositionImpactExponentFactor: BigNumberish;
+  positivePositionImpactExponentFactor: BigNumberish;
+
+  negativeMaxPositionImpactFactor: BigNumberish;
+  positiveMaxPositionImpactFactor: BigNumberish;
+
+  minCollateralFactor: BigNumberish;
+  minCollateralFactorForLiquidation: BigNumberish;
+  minCollateralFactorForOpenInterestMultiplier?: BigNumberish;
+  minCollateralFactorForOpenInterestMultiplierLong?: BigNumberish;
+  minCollateralFactorForOpenInterestMultiplierShort?: BigNumberish;
+
+  maxOpenInterest: BigNumberish;
+  maxOpenInterestForLongs?: BigNumberish;
+  maxOpenInterestForShorts?: BigNumberish;
+} & FundingRateConfig &
+  BorrowingRateConfig;
+
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
   reserveFactorLongs?: BigNumberish;
@@ -138,6 +164,8 @@ export type BaseMarketConfig = {
   virtualTokenIdForIndexToken?: string;
 
   isDisabled?: boolean;
+
+  closedState?: ClosedMarketConfig;
 };
 
 export type SpotMarketConfig = Partial<BaseMarketConfig> & {
@@ -5300,6 +5328,25 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(5_000, 18), // ~10M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+
+      closedState: {
+        ...fundingRateConfig_High,
+        ...borrowingRateConfig_HighMax_WithHigherBase,
+
+        negativePositionImpactFactor: exponentToFloat("3e-9"),
+        positivePositionImpactFactor: exponentToFloat("2e-9"),
+
+        negativePositionImpactExponentFactor: exponentToFloat("1e0"),
+        positivePositionImpactExponentFactor: exponentToFloat("1e0"),
+
+        negativeMaxPositionImpactFactor: percentageToFloat("2.5%"),
+        positiveMaxPositionImpactFactor: percentageToFloat("2.5%"),
+
+        minCollateralFactor: percentageToFloat("2%"),
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(100),
+      },
     },
     {
       tokens: { indexToken: "XAG", longToken: "WETH", shortToken: "USDC.SG" },
@@ -6035,6 +6082,19 @@ const config: {
 };
 
 function fillLongShortValues(market, key, longKey, shortKey) {
+  const hasBase = market[key] !== undefined;
+  const hasLong = market[longKey] !== undefined;
+  const hasShort = market[shortKey] !== undefined;
+
+  if (hasBase && (hasLong || hasShort)) {
+    const marketLabel = `${market.tokens.indexToken ?? "SPOT-ONLY"} [${market.tokens.longToken}-${
+      market.tokens.shortToken
+    }]`;
+    throw new Error(
+      `${marketLabel}: has both "${key}" and "${hasLong ? longKey : shortKey}". Use one or the other, not both.`
+    );
+  }
+
   if (market[longKey] === undefined) {
     market[longKey] = market[key];
   }
@@ -6044,13 +6104,25 @@ function fillLongShortValues(market, key, longKey, shortKey) {
   }
 }
 
-export default async function (hre: HardhatRuntimeEnvironment) {
-  const markets = config[hre.network.name];
+export default async function (hre: HardhatRuntimeEnvironment, marketHours?: MarketHours) {
+  let markets = config[hre.network.name];
   const tokens = await hre.gmx.getTokens();
   const defaultMarketConfig = hre.network.name === "hardhat" ? hardhatBaseMarketConfig : baseMarketConfig;
+
+  if (marketHours) {
+    markets = markets?.filter((m) => m.closedState !== undefined);
+    console.log("markets with state only are processed (%s)", markets.length);
+
+    if (marketHours === MarketHours.Closed) {
+      markets = markets?.map((m) => ({ ...m, ...m.closedState }));
+    }
+  }
+
   if (markets) {
+    const result = [];
     const seen = new Set<string>();
-    for (const market of markets) {
+    for (const originalMarket of markets) {
+      const market = { ...originalMarket };
       const tokenSymbols = Object.values(market.tokens);
       const tokenSymbolsKey = tokenSymbols.join(":");
       if (seen.has(tokenSymbolsKey)) {
@@ -6140,7 +6212,10 @@ export default async function (hre: HardhatRuntimeEnvironment) {
         "borrowingExponentFactorForLongs",
         "borrowingExponentFactorForShorts"
       );
+
+      result.push(market);
     }
+    return result;
   }
   return markets;
 }
