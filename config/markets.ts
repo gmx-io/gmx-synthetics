@@ -13,11 +13,11 @@ export enum MarketHours {
 export type ClosedMarketConfig = {
   negativePositionImpactFactor: BigNumberish;
   positivePositionImpactFactor: BigNumberish;
-  negativePositionImpactExponentFactor: BigNumberish;
-  positivePositionImpactExponentFactor: BigNumberish;
+  negativePositionImpactExponentFactor?: BigNumberish;
+  positivePositionImpactExponentFactor?: BigNumberish;
 
-  negativeMaxPositionImpactFactor: BigNumberish;
-  positiveMaxPositionImpactFactor: BigNumberish;
+  negativeMaxPositionImpactFactor?: BigNumberish;
+  positiveMaxPositionImpactFactor?: BigNumberish;
 
   minCollateralFactor: BigNumberish;
   minCollateralFactorForLiquidation: BigNumberish;
@@ -28,8 +28,8 @@ export type ClosedMarketConfig = {
   maxOpenInterest: BigNumberish;
   maxOpenInterestForLongs?: BigNumberish;
   maxOpenInterestForShorts?: BigNumberish;
-} & FundingRateConfig &
-  BorrowingRateConfig;
+} & Partial<FundingRateConfig> &
+  Partial<BorrowingRateConfig>;
 
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
@@ -4667,6 +4667,18 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(4_430, 18), // ~10M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        negativePositionImpactFactor: exponentToFloat("3.0e-9"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("4%"),
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(2_500_000),
+      },
     },
     {
       tokens: { indexToken: "SILVER", longToken: "WETH", shortToken: "USDC" }, // XAG
@@ -4702,6 +4714,18 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(4_430, 18), // ~10M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        negativePositionImpactFactor: exponentToFloat("5.0e-9"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("4%"),
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(2_500_000),
+      },
     },
   ],
   avalanche: [
