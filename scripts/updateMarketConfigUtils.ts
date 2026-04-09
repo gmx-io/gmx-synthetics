@@ -4,7 +4,6 @@ import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
-import { MarketHours } from "../config/markets";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [
   keys.MAX_OPEN_INTEREST,
