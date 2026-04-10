@@ -47,12 +47,16 @@ send_telegram() {
   local message="$1"
   local disable_notification="$2"
 
-  curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-    -d chat_id="$TELEGRAM_CHAT_ID" \
-    -d text="$message" \
-    -d parse_mode="HTML" \
-    -d disable_notification="$disable_notification" \
-    > /dev/null 2>&1
+  if [ "$SWITCHOVER_TG_MESSAGES" = "true" ]; then
+    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+      -d chat_id="$TELEGRAM_CHAT_ID" \
+      -d text="$message" \
+      -d parse_mode="HTML" \
+      -d disable_notification="$disable_notification" \
+      > /dev/null 2>&1
+  else
+    echo "$message" >&2
+  fi
 }
 
 # acquire per-chain lock (wait up to 5 minutes for other scripts to finish)
