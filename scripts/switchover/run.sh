@@ -40,6 +40,9 @@ LOG_DIR="$REPO_DIR/logs/switchover/$CHAIN_DIR"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/${SCRIPT_NAME}.log"
 
+# per-chain lock to prevent concurrent transactions (nonce conflicts)
+LOCK_FILE="$LOG_DIR/.switchover.lock"
+
 send_telegram() {
   local message="$1"
   local disable_notification="$2"
@@ -52,12 +55,20 @@ send_telegram() {
     > /dev/null 2>&1
 }
 
+# acquire per-chain lock (wait up to 5 minutes for other scripts to finish)
+exec 9>"$LOCK_FILE"
+if ! flock -w 300 9; then
+  echo "$(date) [$CHAIN_DIR/$SCRIPT_NAME] Failed to acquire lock after 5 minutes" | tee -a "$LOG_FILE"
+  send_telegram "❌ <b>${SCRIPT_NAME}</b> (${CHAIN_DIR}) failed: could not acquire lock" "false"
+  exit 1
+fi
+
 echo "" >> "$LOG_FILE"
 echo "$(date) [$CHAIN_DIR/$SCRIPT_NAME] Starting" | tee -a "$LOG_FILE"
 send_telegram "⏳ <b>${SCRIPT_NAME}</b> (${CHAIN_DIR}) starting..." "true"
 
 RUN_OUTPUT=$(mktemp)
-bash "$SCRIPT" > "$RUN_OUTPUT" 2>&1 || true
+timeout 180 bash "$SCRIPT" > "$RUN_OUTPUT" 2>&1 || true
 cat "$RUN_OUTPUT" >> "$LOG_FILE"
 
 TX_HASH="$(tail -20 "$RUN_OUTPUT" | awk '/tx sent:/ { sub(/.*tx sent: /, ""); print }' | tail -1)"
