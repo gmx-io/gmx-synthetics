@@ -162,18 +162,6 @@ library ReaderDepositUtils {
                 poolValue,
                 marketTokensSupply
             );
-
-            if (cappedDiffUsd != 0) {
-                (int256 tokenInPriceImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
-                    params.dataStore,
-                    params.market.marketToken,
-                    params.tokenIn,
-                    params.tokenInPrice,
-                    cappedDiffUsd.toInt256()
-                );
-
-                amountIn += tokenInPriceImpactAmount.toUint256();
-            }
         }
 
         if (params.priceImpactUsd < 0) {
