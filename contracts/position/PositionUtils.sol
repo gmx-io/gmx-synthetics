@@ -651,27 +651,6 @@ library PositionUtils {
                 prices,
                 params.position.isLong()
             );
-
-            if (sizeDeltaUsd < 0) {
-                uint256 poolUsd = MarketUtils.getPoolUsdWithoutPnl(
-                    params.contracts.dataStore,
-                    params.market,
-                    prices,
-                    params.position.isLong(),
-                    false
-                );
-                uint256 reservedUsd = MarketUtils.getReservedUsd(
-                    params.contracts.dataStore,
-                    params.market,
-                    prices,
-                    params.position.isLong()
-                );
-
-                // if reservedUsd is greater than poolUsd, the pool is not sufficient to cover reserved open interest amount
-                if (reservedUsd > poolUsd) {
-                    revert Errors.InsufficientReserve(reservedUsd, poolUsd);
-                }
-            }
         }
     }
 
