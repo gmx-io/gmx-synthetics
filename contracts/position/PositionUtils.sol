@@ -631,26 +631,6 @@ library PositionUtils {
                 sizeDeltaInTokens,
                 useOpenInterestInTokens
             );
-
-            MarketUtils.validateOpenInterest(
-                params.contracts.dataStore,
-                params.market,
-                params.position.isLong()
-            );
-
-            MarketUtils.validateReserve(
-                params.contracts.dataStore,
-                params.market,
-                prices,
-                params.position.isLong()
-            );
-
-            MarketUtils.validateOpenInterestReserve(
-                params.contracts.dataStore,
-                params.market,
-                prices,
-                params.position.isLong()
-            );
         }
     }
 
