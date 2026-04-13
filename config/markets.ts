@@ -2585,7 +2585,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
       positionImpactPoolDistributionRate: expandDecimals(311, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(3772, 18),
+      minPositionImpactPoolAmount: expandDecimals(441, 18), // restore active min
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3954,7 +3954,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2m USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(6671, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(77685, 18), // above current bucket, pauses distribution
+      minPositionImpactPoolAmount: expandDecimals(9450, 18), // restore active min
     },
     {
       tokens: { indexToken: "WELL", longToken: "WETH", shortToken: "USDC" },
