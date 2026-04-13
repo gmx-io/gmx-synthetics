@@ -657,7 +657,8 @@ library MarketUtils {
             claimableAmount
         );
 
-        validateMarketTokenBalance(dataStore, market);
+        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
+        validateMarketTokenBalance(dataStore, marketProps);
 
         MarketEventUtils.emitFundingFeesClaimed(
             eventEmitter,
@@ -756,7 +757,8 @@ library MarketUtils {
             amountToBeClaimed
         );
 
-        validateMarketTokenBalance(dataStore, market);
+        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
+        validateMarketTokenBalance(dataStore, marketProps);
 
         MarketEventUtils.emitCollateralClaimed(
             eventEmitter,
