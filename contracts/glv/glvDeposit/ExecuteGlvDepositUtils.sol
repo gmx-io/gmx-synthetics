@@ -190,6 +190,13 @@ library ExecuteGlvDepositUtils {
         );
 
         if (glvDeposit.isMarketTokenDeposit()) {
+            if (params.oracle.minTimestamp() < deposit.updatedAtTime()) {
+                revert Errors.OracleTimestampsAreSmallerThanRequired(
+                    params.oracle.minTimestamp(),
+                    glvDeposit.updatedAtTime()
+                );
+            }
+
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
             return glvDeposit.marketTokenAmount();
