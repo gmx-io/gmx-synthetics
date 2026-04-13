@@ -185,6 +185,11 @@ const config: {
       dataStreamFeedId: "0x0003c16c6aed42294f5cb4741f6e59ba2d728f0eae2eb9e6d3f555808c59fc45",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xB4AD57B52aB9141de9926a3e0C8dc6264c2ef205",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     DOGE: {
       synthetic: true,
@@ -213,6 +218,11 @@ const config: {
       dataStreamFeedId: "0x0003591ce9a9d662c43124ca14fd6f8603c9ab856ee45358189a2ce6904b5a3c",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x0E278D14B4bf6429dDB0a1B353e2Ae8A4e128C93",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     SOL: {
       address: "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07",
@@ -234,6 +244,11 @@ const config: {
       dataStreamFeedId: "0x0003364401fcbe3153adf158017cd18a2833655db5cc5eb8fad2c16cb0ec82f4",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x3a9659C071dD3C37a8b1A2363409A8D41B2Feae3",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     SATS: {
       synthetic: true,
@@ -248,6 +263,11 @@ const config: {
       dataStreamFeedId: "0x00033a4f1021830ac0e7b7a03f70ed56fecb0ac2a10c8ea5328c240c847b71f3",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x5698690a7B7B84F6aa985ef7690A8A7288FBc9c8",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     UNI: {
       address: "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
@@ -321,8 +341,11 @@ const config: {
       dataStreamFeedId: "0x0003a845b2e108468ec6f42a5c88609082e9ec86fe9d2529c9e5f8af440079f8",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // there seems to be a Chainlink on-chain feed, but it is indicated as
-      // a High Market Risk feed so has not been added
+      priceFeed: {
+        address: "0x82BA56a2fADF9C14f17D08bc51bDA0bDB83A8934",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     SUI: {
       synthetic: true,
@@ -330,7 +353,11 @@ const config: {
       dataStreamFeedId: "0x000348ce31679e9ce1f80ec929f1d7c86499569d67f1cea80a90d6e5e3c127a7",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0x4a85B128EBDaFC24d5CB611e161376ffDECeB289",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     SEI: {
       synthetic: true,
@@ -338,7 +365,11 @@ const config: {
       dataStreamFeedId: "0x0003487e79423ea3c34f4edfc8bb112b0d0fbe054906644912b04bd5a3c6243b",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0xCc9742d77622eE9abBF1Df03530594f9097bDcB3",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     APT: {
       synthetic: true,
@@ -346,7 +377,11 @@ const config: {
       dataStreamFeedId: "0x0003c6405661f306b96c352b0ed428e190b76e1f14641fb5b68652f9ca8d9af5",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0xdc49F292ad1bb3DAb6C11363d74ED06F38b9bd9C",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     TIA: {
       synthetic: true,
@@ -402,7 +437,11 @@ const config: {
       dataStreamFeedId: "0x0003f9ec12942ff27b28ab151905c8fc1cb280518d8bbd3885d410eaa50ddc56",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0x0301e5D0A8f7490444ebd1921E3d0f0fe7722786",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     PENDLE: {
       address: "0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8",
