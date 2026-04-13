@@ -43,8 +43,8 @@ contract StaticOracleProvider is IOracleProvider, ReentrancyGuard {
 
         return OracleUtils.ValidatedPrice({
             token: token,
-            min: priceMax,
-            max: priceMin,
+            min: priceMin,
+            max: priceMax,
             timestamp: block.timestamp,
             provider: address(this)
         });
