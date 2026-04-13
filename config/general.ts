@@ -284,9 +284,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
       executionGasFeeMultiplierFactor: expandDecimals(15556, 26), // 1.5556x
       estimatedGasFeeMultiplierFactor: expandDecimals(15556, 26), // 1.5556x
-      maxCallbackGasLimit: 0,
-      nativeTokenTransferGasLimit: 0,
-      refundExecutionFeeGasLimit: 0,
+      maxCallbackGasLimit: 5_200_000,
+      nativeTokenTransferGasLimit: 150_000,
+      refundExecutionFeeGasLimit: 260_000,
     },
   }[network.name];
 
