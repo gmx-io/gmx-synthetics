@@ -190,7 +190,7 @@ library ExecuteGlvDepositUtils {
         );
 
         if (glvDeposit.isMarketTokenDeposit()) {
-            if (params.oracle.minTimestamp() < deposit.updatedAtTime()) {
+            if (params.oracle.minTimestamp() < glvDeposit.updatedAtTime()) {
                 revert Errors.OracleTimestampsAreSmallerThanRequired(
                     params.oracle.minTimestamp(),
                     glvDeposit.updatedAtTime()

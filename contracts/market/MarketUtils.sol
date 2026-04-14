@@ -724,22 +724,27 @@ library MarketUtils {
         address account,
         address receiver
     ) internal returns (uint256) {
-        uint256 claimableAmount = dataStore.getUintValueFromDataStore(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
+        uint256 adjustedClaimableAmount = 0;
+        uint256 amountToBeClaimed = 0;
+        {
+            uint256 claimableAmount = dataStore.getUintValueFromDataStore(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
 
-        uint256 claimableFactor = _getClaimableFactor(dataStore, market, token, timeKey, account);
+            uint256 claimableFactor = _getClaimableFactor(dataStore, market, token, timeKey, account);
 
-        if (claimableFactor > Precision.FLOAT_PRECISION) {
-            revert Errors.InvalidClaimableFactor(claimableFactor);
+            if (claimableFactor > Precision.FLOAT_PRECISION) {
+                revert Errors.InvalidClaimableFactor(claimableFactor);
+            }
+
+            uint256 claimedAmount = dataStore.getUintValueFromDataStore(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
+
+            adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
+
+            if (adjustedClaimableAmount <= claimedAmount) {
+                revert Errors.CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
+            }
+
+            amountToBeClaimed = adjustedClaimableAmount - claimedAmount;
         }
-
-        uint256 claimedAmount = dataStore.getUintValueFromDataStore(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
-
-        uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
-        if (adjustedClaimableAmount <= claimedAmount) {
-            revert Errors.CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
-        }
-
-        uint256 amountToBeClaimed = adjustedClaimableAmount - claimedAmount;
 
         dataStore.setUint(
             Keys.claimedCollateralAmountKey(market, token, timeKey, account),
@@ -757,8 +762,7 @@ library MarketUtils {
             amountToBeClaimed
         );
 
-        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
-        validateMarketTokenBalance(dataStore, marketProps);
+        validateMarketTokenBalance(dataStore, MarketStoreUtils.get(dataStore, market));
 
         MarketEventUtils.emitCollateralClaimed(
             eventEmitter,
