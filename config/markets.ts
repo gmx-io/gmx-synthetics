@@ -19,6 +19,9 @@ export type ClosedMarketConfig = {
   negativeMaxPositionImpactFactor?: BigNumberish;
   positiveMaxPositionImpactFactor?: BigNumberish;
 
+  positionFeeFactorForPositiveImpact?: BigNumberish;
+  positionFeeFactorForNegativeImpact?: BigNumberish;
+
   minCollateralFactor: BigNumberish;
   minCollateralFactorForLiquidation: BigNumberish;
   minCollateralFactorForOpenInterestMultiplier?: BigNumberish;
@@ -4642,6 +4645,9 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.01%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.02%"),
+
       negativePositionImpactFactor: exponentToFloat("4.0e-10"),
       positivePositionImpactFactor: exponentToFloat("3.2e-10"),
 
@@ -4671,6 +4677,9 @@ const config: {
 
       closedState: {
         ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
 
         negativePositionImpactFactor: exponentToFloat("3.0e-9"),
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
@@ -4690,6 +4699,9 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.01%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.02%"),
+
       negativePositionImpactFactor: exponentToFloat("4.0e-10"),
       positivePositionImpactFactor: exponentToFloat("3.2e-10"),
 
@@ -4719,6 +4731,9 @@ const config: {
 
       closedState: {
         ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
 
         negativePositionImpactFactor: exponentToFloat("5.0e-9"),
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
