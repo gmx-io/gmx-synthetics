@@ -556,15 +556,67 @@ task("deploy:dry-run", "Preview what contracts would be deployed without broadca
       return { events: [], status: 1 } as any;
     };
 
+    // Intercept state-changing RPC calls so direct ethers contract calls
+    // (e.g. ethers.getContractAt(...).setKeeper(...)) become no-ops.
+    // View calls (eth_call) pass through to the real network.
+    const fakeTransactionHashes = new Set<string>();
+    let fakeTxCounter = 0;
+    const originalRequest = hre.network.provider.request.bind(hre.network.provider);
+    hre.network.provider.request = async (args: { method: string; params?: any[] }) => {
+      if (args.method === "eth_estimateGas") {
+        return "0x100000";
+      }
+      if (args.method === "eth_sendTransaction" || args.method === "eth_sendRawTransaction") {
+        const fakeHash = ethers.utils.hexZeroPad(ethers.utils.hexlify(++fakeTxCounter), 32);
+        fakeTransactionHashes.add(fakeHash);
+        return fakeHash;
+      }
+      if (args.method === "eth_getTransactionReceipt" && fakeTransactionHashes.has(args.params?.[0])) {
+        return {
+          transactionHash: args.params[0],
+          blockHash: ethers.constants.HashZero,
+          blockNumber: "0x1",
+          contractAddress: null,
+          cumulativeGasUsed: "0x100000",
+          gasUsed: "0x100000",
+          logs: [],
+          logsBloom: "0x" + "0".repeat(512),
+          status: "0x1",
+          from: ethers.constants.AddressZero,
+          to: ethers.constants.AddressZero,
+          transactionIndex: "0x0",
+        };
+      }
+      if (args.method === "eth_getTransactionByHash" && fakeTransactionHashes.has(args.params?.[0])) {
+        return {
+          hash: args.params[0],
+          blockHash: ethers.constants.HashZero,
+          blockNumber: "0x1",
+          from: ethers.constants.AddressZero,
+          gas: "0x100000",
+          gasPrice: "0x0",
+          input: "0x",
+          nonce: "0x0",
+          to: ethers.constants.AddressZero,
+          transactionIndex: "0x0",
+          value: "0x0",
+        };
+      }
+      return originalRequest(args);
+    };
+
+    let exitedEarly = false;
     try {
       await hre.run("deploy", { tags: taskArgs.tags });
     } catch (e) {
+      exitedEarly = true;
       console.log(`\nNote: deploy flow exited early: ${e.message}\n`);
     } finally {
       hre.deployments.deploy = originalDeploy;
       hre.deployments.execute = originalExecute;
       hre.deployments.get = originalGet;
       hre.deployments.getOrNull = originalGetOrNull;
+      hre.network.provider.request = originalRequest;
 
       // Restore .migrations.json to its pre-dry-run state
       if (migrationsBackup !== null) {
@@ -662,7 +714,11 @@ task("deploy:dry-run", "Preview what contracts would be deployed without broadca
       }
 
       if (skipFnSkipped.length > 0) {
-        console.log(`SKIP FUNCTION SKIPPED (${skipFnSkipped.length} — skip() returned true):`);
+        if (exitedEarly) {
+          console.log(`NOT REACHED (${skipFnSkipped.length} — deploy flow exited early, may deploy in a real run):`);
+        } else {
+          console.log(`SKIP FUNCTION SKIPPED (${skipFnSkipped.length} — skip() returned true):`);
+        }
         for (const name of skipFnSkipped.sort()) {
           console.log(`  - ${name}`);
         }
@@ -683,7 +739,13 @@ task("deploy:dry-run", "Preview what contracts would be deployed without broadca
         redeploys.length + skips.length + migrationSkipped.length + skipFnSkipped.length + noDeployScript.length;
       console.log("────────────────────────────────────────────");
       console.log(
-        `  Total: ${total} | Deploy: ${redeploys.length} (${redeployContracts} redeploy, ${newContracts} new) | Unchanged: ${skips.length} | Migration-skipped: ${migrationSkipped.length} | skip()-skipped: ${skipFnSkipped.length} | No script: ${noDeployScript.length}`
+        `  Total: ${total} | Deploy: ${
+          redeploys.length
+        } (${redeployContracts} redeploy, ${newContracts} new) | Unchanged: ${skips.length} | Migration-skipped: ${
+          migrationSkipped.length
+        } | ${exitedEarly ? "Not reached" : "skip()-skipped"}: ${skipFnSkipped.length} | No script: ${
+          noDeployScript.length
+        }`
       );
       console.log("────────────────────────────────────────────\n");
     }
