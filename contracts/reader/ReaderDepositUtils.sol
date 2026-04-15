@@ -149,7 +149,7 @@ library ReaderDepositUtils {
         }
 
         if (params.priceImpactUsd > 0) {
-            (int256 positiveImpactAmount, uint256 cappedDiffUsd) = MarketUtils.getSwapImpactAmountWithCap(
+            (int256 positiveImpactAmount, /*uint256 cappedDiffUsd*/) = MarketUtils.getSwapImpactAmountWithCap(
                 params.dataStore,
                 params.market.marketToken,
                 params.tokenOut,
