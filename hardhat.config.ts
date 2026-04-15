@@ -474,6 +474,221 @@ task("deploy", "Deploy contracts", async (taskArgs: any, env, runSuper) => {
   await runSuper();
 });
 
+task("deploy:dry-run", "Preview what contracts would be deployed without broadcasting transactions")
+  .addOptionalParam("tags", "Deploy script tags", undefined, types.string)
+  .setAction(async (taskArgs: any, hre) => {
+    const report: { name: string; action: string; address?: string }[] = [];
+    const dryRunDeployments = new Map<string, any>();
+
+    // Back up .migrations.json — the deploy pipeline writes migration IDs for scripts
+    // that return true (all scripts with `id`), which would "burn" the ID and cause
+    // a subsequent real deploy to skip them
+    const deploymentsNetworkDir = path.join(__dirname, "deployments", hre.network.name);
+    const migrationsPath = path.join(deploymentsNetworkDir, ".migrations.json");
+    const migrationsBackup = fs.existsSync(migrationsPath) ? fs.readFileSync(migrationsPath, "utf8") : null;
+
+    // The deploy task requires SKIP_AUTO_HANDLER_REDEPLOYMENT to be set for non-hardhat networks;
+    // default to "true" for dry-runs so the task doesn't abort with an empty report
+    const origSkipEnv = process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT;
+    if (origSkipEnv === undefined) {
+      process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT = "true";
+    }
+
+    const originalDeploy = hre.deployments.deploy;
+    const originalExecute = hre.deployments.execute;
+    const originalGet = hre.deployments.get;
+    const originalGetOrNull = hre.deployments.getOrNull;
+
+    // Patch get/getOrNull to resolve contracts that would be newly deployed
+    hre.deployments.get = async (name: string) => {
+      try {
+        return await originalGet.call(hre.deployments, name);
+      } catch (e) {
+        const stub = dryRunDeployments.get(name);
+        if (stub) return stub;
+        throw e;
+      }
+    };
+
+    hre.deployments.getOrNull = async (name: string) => {
+      const result = await originalGetOrNull.call(hre.deployments, name);
+      if (result) return result;
+      return dryRunDeployments.get(name) || null;
+    };
+
+    hre.deployments.deploy = async (name: string, options: any): Promise<any> => {
+      try {
+        const diff = await hre.deployments.fetchIfDifferent(name, options);
+        const existing = await originalGetOrNull.call(hre.deployments, name);
+
+        if (diff.differences) {
+          if (existing) {
+            report.push({ name, action: "REDEPLOY", address: existing.address });
+          } else {
+            report.push({ name, action: "NEW" });
+          }
+        } else {
+          report.push({ name, action: "SKIP", address: diff.address || existing?.address });
+        }
+
+        if (existing) {
+          return { ...existing, newlyDeployed: false };
+        }
+        // New contract — store a stub so downstream scripts can resolve this dependency
+        const stub = {
+          address: ethers.constants.AddressZero,
+          abi: [],
+          newlyDeployed: false,
+          receipt: { transactionHash: ethers.constants.HashZero },
+        };
+        dryRunDeployments.set(name, stub);
+        return stub;
+      } catch (e) {
+        report.push({ name, action: "ERROR", address: String(e) });
+        const existing = await originalGetOrNull.call(hre.deployments, name);
+        if (existing) return { ...existing, newlyDeployed: false };
+        throw e;
+      }
+    };
+
+    hre.deployments.execute = async (name: string, opts: any, methodName: string, ...args: any[]): Promise<any> => {
+      report.push({ name, action: `WOULD CALL ${methodName}` });
+      return { events: [], status: 1 } as any;
+    };
+
+    try {
+      await hre.run("deploy", { tags: taskArgs.tags });
+    } catch (e) {
+      console.log(`\nNote: deploy flow exited early: ${e.message}\n`);
+    } finally {
+      hre.deployments.deploy = originalDeploy;
+      hre.deployments.execute = originalExecute;
+      hre.deployments.get = originalGet;
+      hre.deployments.getOrNull = originalGetOrNull;
+
+      // Restore .migrations.json to its pre-dry-run state
+      if (migrationsBackup !== null) {
+        fs.writeFileSync(migrationsPath, migrationsBackup);
+      } else if (fs.existsSync(migrationsPath)) {
+        fs.unlinkSync(migrationsPath);
+      }
+
+      // Restore env var
+      if (origSkipEnv === undefined) {
+        delete process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT;
+      }
+    }
+
+    console.log("\n════════════════════════════════════════════");
+    console.log(`  Deploy Dry-Run Report (${hre.network.name})`);
+    console.log("════════════════════════════════════════════\n");
+
+    const redeploys = report.filter((r) => r.action === "REDEPLOY" || r.action === "NEW");
+    const skips = report.filter((r) => r.action === "SKIP");
+    const calls = report.filter((r) => r.action.startsWith("WOULD CALL"));
+    const errors = report.filter((r) => r.action === "ERROR");
+
+    if (redeploys.length > 0) {
+      console.log(`WILL BE DEPLOYED (${redeploys.length}):`);
+      for (const r of redeploys) {
+        const detail = r.action === "REDEPLOY" ? `(replacing ${r.address})` : "(new)";
+        console.log(`  ● ${r.name} ${detail}`);
+      }
+      console.log();
+    }
+
+    if (skips.length > 0) {
+      console.log(`UNCHANGED (${skips.length} will be skipped):`);
+      for (const r of skips) {
+        console.log(`  ○ ${r.name} at ${r.address}`);
+      }
+      console.log();
+    }
+
+    if (calls.length > 0) {
+      console.log("STATE-CHANGING CALLS:");
+      for (const r of calls) {
+        console.log(`  --> ${r.name}.${r.action.replace("WOULD CALL ", "")}()`);
+      }
+      console.log();
+    }
+
+    if (errors.length > 0) {
+      console.log("ERRORS:");
+      for (const r of errors) {
+        console.log(`  ✗ ${r.name}: ${r.address}`);
+      }
+      console.log();
+    }
+
+    if (redeploys.length === 0) {
+      console.log("Nothing to deploy — all contracts are up to date.\n");
+    }
+
+    // Cross-reference against all deployment files on disk
+    const deploymentsDir = path.join(__dirname, "deployments", hre.network.name);
+    if (fs.existsSync(deploymentsDir)) {
+      const allDeploymentFiles = fs.readdirSync(deploymentsDir).filter((f) => {
+        return f.endsWith(".json") && !f.startsWith(".") && f !== "solcInputs";
+      });
+      const allDeployedNames = allDeploymentFiles.map((f) => f.replace(".json", ""));
+      const reportedNames = new Set(report.filter((r) => !r.action.startsWith("WOULD CALL")).map((r) => r.name));
+      const notReached = allDeployedNames.filter((name) => !reportedNames.has(name));
+
+      // Read .migrations.json to distinguish migration-skipped vs skip()-skipped
+      const migrationsPath = path.join(deploymentsDir, ".migrations.json");
+      const migrationNames = new Set<string>();
+      if (fs.existsSync(migrationsPath)) {
+        const migrations = JSON.parse(fs.readFileSync(migrationsPath, "utf8"));
+        for (const id of Object.keys(migrations)) {
+          migrationNames.add(id.replace(/_\d+$/, ""));
+        }
+      }
+
+      const deployScriptsDir = path.join(__dirname, "deploy");
+      const hasDeployScript = (name: string) => fs.existsSync(path.join(deployScriptsDir, `deploy${name}.ts`));
+
+      const migrationSkipped = notReached.filter((name) => migrationNames.has(name));
+      const nonMigration = notReached.filter((name) => !migrationNames.has(name));
+      const skipFnSkipped = nonMigration.filter((name) => hasDeployScript(name));
+      const noDeployScript = nonMigration.filter((name) => !hasDeployScript(name));
+
+      if (migrationSkipped.length > 0) {
+        console.log(`MIGRATION ID SKIPPED (${migrationSkipped.length} — id already in .migrations.json):`);
+        for (const name of migrationSkipped.sort()) {
+          console.log(`  - ${name}`);
+        }
+        console.log();
+      }
+
+      if (skipFnSkipped.length > 0) {
+        console.log(`SKIP FUNCTION SKIPPED (${skipFnSkipped.length} — skip() returned true):`);
+        for (const name of skipFnSkipped.sort()) {
+          console.log(`  - ${name}`);
+        }
+        console.log();
+      }
+
+      if (noDeployScript.length > 0) {
+        console.log(`NO DEPLOY SCRIPT (${noDeployScript.length} — no deploy/deploy{Name}.ts found):`);
+        for (const name of noDeployScript.sort()) {
+          console.log(`  - ${name}`);
+        }
+        console.log();
+      }
+
+      const newContracts = redeploys.filter((r) => r.action === "NEW").length;
+      const redeployContracts = redeploys.length - newContracts;
+      const total =
+        redeploys.length + skips.length + migrationSkipped.length + skipFnSkipped.length + noDeployScript.length;
+      console.log("────────────────────────────────────────────");
+      console.log(
+        `  Total: ${total} | Deploy: ${redeploys.length} (${redeployContracts} redeploy, ${newContracts} new) | Unchanged: ${skips.length} | Migration-skipped: ${migrationSkipped.length} | skip()-skipped: ${skipFnSkipped.length} | No script: ${noDeployScript.length}`
+      );
+      console.log("────────────────────────────────────────────\n");
+    }
+  });
+
 task("collect-deployments", "Collect current deployments into the docs folder").setAction(collectDeployments);
 
 task("generate-deployment-docs", "Generate deployment documentation for all networks")
