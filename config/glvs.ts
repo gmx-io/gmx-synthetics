@@ -111,7 +111,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("SYRUP", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("CHZ", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LIT", arbitrum_ethUsdcDefaultCap, 1),
-          // RWA and Commodities
+          // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
           createGlvMarketConfig("GOLD", arbitrum_ethUsdcDefaultCap, 1), // XAU
           createGlvMarketConfig("SILVER", arbitrum_ethUsdcDefaultCap, 1), // XAG
         ],
@@ -230,10 +230,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           createGlvMarketConfig("WETH", 15_000_000, 1),
           createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.0),
-          createGlvMarketConfig("XAU", 5_000_000, 1),
-          createGlvMarketConfig("XAG", 5_000_000, 1),
-          createGlvMarketConfig("XPT", 2_000_000, 1),
-          createGlvMarketConfig("XPD", 2_000_000, 1),
+          // RWA and Commodities (real asset names are preferred e.g. GOLD instead of XAU)
+          createGlvMarketConfig("XAU", 5_000_000, 1), // GOLD
+          createGlvMarketConfig("XAG", 5_000_000, 1), // SILVER
+          createGlvMarketConfig("XPT", 2_000_000, 1), // PLATINUM
+          createGlvMarketConfig("XPD", 2_000_000, 1), // PALLADIUM
+          createGlvMarketConfig("WTIOIL", 5_000_000, 1), // CL
+          createGlvMarketConfig("BRENTOIL", 5_000_000, 1), // BZ
+          createGlvMarketConfig("NATGAS", 5_000_000, 1), // NATGAS
         ],
       },
     ],
