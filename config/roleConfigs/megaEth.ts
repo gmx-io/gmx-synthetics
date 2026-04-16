@@ -20,8 +20,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       ...generalConfigKeepers.mainnet,
     },
     TIMELOCK_ADMIN: {
-      "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
-      "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
+      "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_1
       "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7": true, // protocol_multisig_1
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
     },
