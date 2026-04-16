@@ -4106,7 +4106,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_376_000, 6), // ~2.37M USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(1265, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(3989, 18), // restore active min
+      minPositionImpactPoolAmount: expandDecimals(37924, 18), // above current bucket, pauses distribution
     },
     {
       tokens: { indexToken: "0G", longToken: "WBTC.e", shortToken: "USDC" },
