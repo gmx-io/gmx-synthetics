@@ -197,6 +197,15 @@ library ExecuteGlvDepositUtils {
                 );
             }
 
+            uint256 requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+            if (params.oracle.maxTimestamp() > glvDeposit.updatedAtTime() + requestExpirationTime) {
+                revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                    params.oracle.maxTimestamp(),
+                    glvDeposit.updatedAtTime(),
+                    requestExpirationTime
+                );
+            }
+
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
             return glvDeposit.marketTokenAmount();
