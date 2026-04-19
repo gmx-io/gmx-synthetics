@@ -231,15 +231,15 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         "0xA45B5130f36CDcA45667738e2a258AB09f4A5f7F": true, // StargatePoolNative
         "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3": true, // StargatePoolUSDC
         "0xcE8CcA271Ebc0533920C83d39F417ED6A0abB7D0": true, // StargatePoolUSDT
-        "0x91dd54AA8BA9Dfde8b956Cfb709a7c418f870e21": true, // BTC [WBTC-USDC] GM Adapter
-        "0x27Ef981E6fcB274a6C5C75983725d265Fd3dCdac": true, // WBTC-USDC GLV Adapter
-        "0xfcff5015627B8ce9CeAA7F5b38a6679F65fE39a7": true, // ETH [WETH-USDC] GM Adapter
-        "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6": true, // WETH-USDC GLV Adapter
-        "0x661E1faD17124471a59c37E9c4590BA809599f30": true, // BTC-BTC GM Adapter
-        "0x0110424A21D5DF818f4a789E5d9d9141a4E29A3C": true, // WETH-WETH GM Adapter
+        "0x91dd54AA8BA9Dfde8b956Cfb709a7c418f870e21": false, // BTC [WBTC-USDC] GM Adapter
+        "0x27Ef981E6fcB274a6C5C75983725d265Fd3dCdac": false, // WBTC-USDC GLV Adapter
+        "0xfcff5015627B8ce9CeAA7F5b38a6679F65fE39a7": false, // ETH [WETH-USDC] GM Adapter
+        "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6": false, // WETH-USDC GLV Adapter
+        "0x661E1faD17124471a59c37E9c4590BA809599f30": false, // BTC-BTC GM Adapter
+        "0x0110424A21D5DF818f4a789E5d9d9141a4E29A3C": false, // WETH-WETH GM Adapter
       },
       multichainEndpoints: {
-        "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
+        "0x1a44076050125825900e736c501f859c50fE728c": false, // LZ Endpoint
       },
       srcChainIds: {
         8453: true, // Base
@@ -264,7 +264,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         "0x12dC9256Acc9895B076f6638D628382881e62CeE": true, // StargatePoolUSDT
       },
       multichainEndpoints: {
-        "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
+        "0x1a44076050125825900e736c501f859c50fE728c": false, // LZ Endpoint
       },
       srcChainIds: {
         8453: true, // Base
