@@ -667,7 +667,7 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_021,
     },
-    // RWA and Commodities
+    // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
     GOLD: {
       negativePositionImpactFactor: exponentToFloat("4.0e-10"),
       expectedSwapImpactRatio: 20_000,
@@ -773,25 +773,47 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 11_600,
     },
+    // RWA and Commodities (real asset names are preferred e.g. GOLD instead of XAU)
     XAU: {
+      // GOLD
       negativePositionImpactFactor: exponentToFloat("3e-9"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_000,
     },
     XAG: {
+      // SILVER
       negativePositionImpactFactor: exponentToFloat("5e-9"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_015,
     },
     XPT: {
+      // PLATINUM
       negativePositionImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_015,
     },
     XPD: {
+      // PALLADIUM
       negativePositionImpactFactor: exponentToFloat("2e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_037,
+    },
+    WTIOIL: {
+      // CL
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    BRENTOIL: {
+      // BZ
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    NATGAS: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
     },
   },
   botanix: {

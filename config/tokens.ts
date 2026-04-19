@@ -1249,7 +1249,7 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
-    // RWA and Commodities
+    // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
     GOLD: {
       // XAU
       synthetic: true,
@@ -1688,6 +1688,26 @@ const config: {
       synthetic: true,
       decimals: 18,
       dataStreamFeedId: "0x00033d2059d23ee3e105d2d9a885c1afd7686a4d32767a8b6ba99316ebe0a50b",
+      dataStreamFeedDecimals: 18,
+    },
+    WTIOIL: {
+      // CL
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000336a9415df7de086262b13f25c2818c639a74ad64e30cc017c96a896c99af",
+      dataStreamFeedDecimals: 18,
+    },
+    BRENTOIL: {
+      // BZ
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00032eea59e0fc7b13010c291c2d0d0e06d178eea5ea96c481d703ab1b1bc9f7",
+      dataStreamFeedDecimals: 18,
+    },
+    NATGAS: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000361c33db98ecc0978f0657197e3d97507647b2cbf1450716737ccc6fc6fbd",
       dataStreamFeedDecimals: 18,
     },
   },
