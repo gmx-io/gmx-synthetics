@@ -2587,7 +2587,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1390, 18),
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
-      positionImpactPoolDistributionRate: expandDecimals(311, 18 + 30).div(SECONDS_PER_DAY), // unchanged
+      positionImpactPoolDistributionRate: expandDecimals(150, 18 + 30).div(SECONDS_PER_DAY), // reduced to satisfy 7d-distribution sanity check vs current pool
       minPositionImpactPoolAmount: expandDecimals(1665, 18), // above current bucket, pauses distribution
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
@@ -3956,7 +3956,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(460, 18), // ~2m USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2m USD (2x max open interest)
 
-      positionImpactPoolDistributionRate: expandDecimals(6671, 18 + 30).div(SECONDS_PER_DAY), // unchanged
+      positionImpactPoolDistributionRate: expandDecimals(3000, 18 + 30).div(SECONDS_PER_DAY), // reduced to satisfy 7d-distribution sanity check vs current pool
       minPositionImpactPoolAmount: expandDecimals(29416, 18), // above current bucket, pauses distribution
     },
     {
