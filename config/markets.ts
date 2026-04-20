@@ -538,7 +538,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(95_000_000),
+      maxOpenInterest: decimalToFloat(50_000_000),
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
@@ -637,7 +637,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(110_000_000),
+      maxOpenInterest: decimalToFloat(40_000_000),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
