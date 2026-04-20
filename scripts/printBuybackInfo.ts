@@ -35,7 +35,7 @@ async function main() {
 
   const pricesByToken = await getPricesFromTickers();
   const dataStore = await hre.ethers.getContract("DataStore");
-  const feeHandler = await hre.ethers.getContract("FeeHandler");
+  const feeVault = await hre.ethers.getContract("FeeVault");
   const buybackTokens = [tokens.GMX, hre.network.name === "arbitrum" ? tokens.WETH : tokens.WAVAX];
 
   const data = await Promise.all(
@@ -55,7 +55,7 @@ async function main() {
     let feesTotalUsdPerBuybackToken = 0;
     console.log(`Buyback token: ${buybackToken.symbol}`);
     const withdrawableAmount = await dataStore.getUint(keys.withdrawableBuybackTokenAmountKey(buybackToken.address));
-    const contractBalance = await getBalanceOf(buybackToken.address, feeHandler.address);
+    const contractBalance = await getBalanceOf(buybackToken.address, feeVault.address);
     console.log(
       `Withdrawable amount: ${withdrawableAmount.toString()}, Contract balance: ${contractBalance.toString()}`
     );

@@ -1682,7 +1682,10 @@ library MarketUtils {
             }
         }
 
-        bool isLongFunding = cache.nextSavedFundingFactorPerSecond >= 0;
+        if (cache.nextSavedFundingFactorPerSecond == 0) {
+            return (0, true, 0);
+        }
+        bool isLongFunding = cache.nextSavedFundingFactorPerSecond > 0;
         configCache.minFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
             Keys.minFundingFactorPerSecondKey(market.marketToken, isLongFunding)
         );
