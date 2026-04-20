@@ -2588,7 +2588,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
       positionImpactPoolDistributionRate: expandDecimals(311, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(441, 18), // restore active min
+      minPositionImpactPoolAmount: expandDecimals(1665, 18), // above current bucket, pauses distribution
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3957,7 +3957,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2m USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(6671, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(9450, 18), // restore active min
+      minPositionImpactPoolAmount: expandDecimals(29416, 18), // above current bucket, pauses distribution
     },
     {
       tokens: { indexToken: "WELL", longToken: "WETH", shortToken: "USDC" },
@@ -4106,7 +4106,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_376_000, 6), // ~2.37M USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(1265, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(37924, 18), // above current bucket, pauses distribution
+      minPositionImpactPoolAmount: expandDecimals(3989, 18), // restore active min
     },
     {
       tokens: { indexToken: "0G", longToken: "WBTC.e", shortToken: "USDC" },
@@ -4136,8 +4136,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(12, 8), // ~1.12M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_125_000, 6), // ~1.2M USD (2x max open interest)
 
-      positionImpactPoolDistributionRate: expandDecimals(2583, 18 + 30).div(SECONDS_PER_DAY), // 2583 0G / day gross (~$1507/day gross, ~$1507/day net to GLV)
-      minPositionImpactPoolAmount: expandDecimals(8144, 18), // leave ~10% = 8144 0G
+      positionImpactPoolDistributionRate: expandDecimals(2583, 18 + 30).div(SECONDS_PER_DAY), // unchanged
+      minPositionImpactPoolAmount: expandDecimals(41458, 18), // above current bucket, pauses distribution
     },
     {
       tokens: { indexToken: "AVNT", longToken: "WETH", shortToken: "USDC" },
