@@ -3956,8 +3956,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(460, 18), // ~2m USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2m USD (2x max open interest)
 
-      positionImpactPoolDistributionRate: expandDecimals(3000, 18 + 30).div(SECONDS_PER_DAY), // reduced to satisfy 7d-distribution sanity check vs current pool
-      minPositionImpactPoolAmount: expandDecimals(29416, 18), // above current bucket, pauses distribution
+      positionImpactPoolDistributionRate: expandDecimals(6671, 18 + 30).div(SECONDS_PER_DAY), // unchanged
+      minPositionImpactPoolAmount: expandDecimals(9450, 18), // restore active min
     },
     {
       tokens: { indexToken: "WELL", longToken: "WETH", shortToken: "USDC" },
@@ -4106,7 +4106,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_376_000, 6), // ~2.37M USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(1265, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(3989, 18), // restore active min
+      minPositionImpactPoolAmount: expandDecimals(25264, 18), // above current bucket, pauses distribution
     },
     {
       tokens: { indexToken: "0G", longToken: "WBTC.e", shortToken: "USDC" },
@@ -4137,7 +4137,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(1_125_000, 6), // ~1.2M USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(2583, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(41458, 18), // above current bucket, pauses distribution
+      minPositionImpactPoolAmount: expandDecimals(8144, 18), // restore active min
     },
     {
       tokens: { indexToken: "AVNT", longToken: "WETH", shortToken: "USDC" },
