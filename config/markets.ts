@@ -3956,7 +3956,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(460, 18), // ~2m USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2m USD (2x max open interest)
 
-      positionImpactPoolDistributionRate: expandDecimals(6671, 18 + 30).div(SECONDS_PER_DAY), // unchanged
+      positionImpactPoolDistributionRate: expandDecimals(3000, 18 + 30).div(SECONDS_PER_DAY), // reduced to satisfy 7d-distribution sanity check vs current
       minPositionImpactPoolAmount: expandDecimals(9450, 18), // restore active min
     },
     {
