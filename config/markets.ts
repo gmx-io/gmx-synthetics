@@ -4137,7 +4137,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(1_125_000, 6), // ~1.2M USD (2x max open interest)
 
       positionImpactPoolDistributionRate: expandDecimals(2583, 18 + 30).div(SECONDS_PER_DAY), // unchanged
-      minPositionImpactPoolAmount: expandDecimals(8144, 18), // restore active min
+      minPositionImpactPoolAmount: expandDecimals(39411, 18), // above current bucket, pauses distribution
     },
     {
       tokens: { indexToken: "AVNT", longToken: "WETH", shortToken: "USDC" },
