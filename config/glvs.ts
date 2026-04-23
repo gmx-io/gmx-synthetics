@@ -114,6 +114,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
           createGlvMarketConfig("GOLD", arbitrum_ethUsdcDefaultCap, 1), // XAU
           createGlvMarketConfig("SILVER", arbitrum_ethUsdcDefaultCap, 1), // XAG
+          // createGlvMarketConfig("WTIOIL", arbitrum_ethUsdcDefaultCap, 1), // CL
+          // createGlvMarketConfig("BRENTOIL", arbitrum_ethUsdcDefaultCap, 1), // BZ
+          // createGlvMarketConfig("NATGAS", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {
