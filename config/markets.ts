@@ -4782,6 +4782,21 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(4_430, 18), // ~10M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+
+        negativePositionImpactFactor: exponentToFloat("3.0e-9"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(2_500_000),
+      },
     },
     {
       tokens: { indexToken: "BRENTOIL", longToken: "WETH", shortToken: "USDC" }, // BZ
@@ -4821,6 +4836,21 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(3_540, 18), // ~8M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6), // ~8M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+
+        negativePositionImpactFactor: exponentToFloat("3.0e-9"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(1_500_000),
+      },
     },
     {
       tokens: { indexToken: "NATGAS", longToken: "WETH", shortToken: "USDC" },
@@ -4860,6 +4890,21 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(885, 18), // ~2M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
+
+        negativePositionImpactFactor: exponentToFloat("2.0e-8"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("4%"), // 25x leverage
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(250_000),
+      },
     },
   ],
   avalanche: [
