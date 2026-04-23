@@ -1266,6 +1266,29 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    WTIOIL: {
+      // CL
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00034a112217255cc022f9b1f8e504e38081698a141a963349cf53d0e3910a95",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    BRENTOIL: {
+      // BZ
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003c1444945554474726cf719e4f91d7bec2eac5a851a7b1ab42e3f2ec1e9a6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    NATGAS: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00035231c4651c67585a5b7526878b7bfa053ab59746c25d86e4f82c8693f4ee",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {

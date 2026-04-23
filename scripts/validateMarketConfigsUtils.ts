@@ -678,6 +678,21 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_500,
     },
+    WTIOIL: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    BRENTOIL: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    NATGAS: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
   },
   avalanche: {
     "BTC.b": {

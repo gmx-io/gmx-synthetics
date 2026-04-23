@@ -4744,6 +4744,168 @@ const config: {
         maxOpenInterest: decimalToFloat(2_500_000),
       },
     },
+    {
+      tokens: { indexToken: "WTIOIL", longToken: "WETH", shortToken: "USDC" }, // CL
+      virtualTokenIdForIndexToken: hashString("PERP:WTIOIL/USD"),
+      virtualMarketId: hashString("SPOT:WTIOIL/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.01%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.02%"),
+
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      positivePositionImpactFactor: exponentToFloat("3.2e-10"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("0.9%"), // ~110x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.0e-10"),
+
+      reserveFactor: percentageToFloat("255%"),
+      openInterestReserveFactor: percentageToFloat("250%"),
+      maxPnlFactorForTraders: percentageToFloat("75%"),
+      maxPnlFactorForDeposits: percentageToFloat("75%"),
+      maxPnlFactorForAdl: percentageToFloat("70%"),
+      minPnlFactorAfterAdl: percentageToFloat("65%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+
+      maxOpenInterest: decimalToFloat(5_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(7_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(4_430, 18), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+
+        negativePositionImpactFactor: exponentToFloat("3.0e-9"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(2_500_000),
+      },
+    },
+    {
+      tokens: { indexToken: "BRENTOIL", longToken: "WETH", shortToken: "USDC" }, // BZ
+      virtualTokenIdForIndexToken: hashString("PERP:BRENTOIL/USD"),
+      virtualMarketId: hashString("SPOT:BRENTOIL/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.01%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.02%"),
+
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      positivePositionImpactFactor: exponentToFloat("3.2e-10"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("0.9%"), // ~110x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.0e-10"),
+
+      reserveFactor: percentageToFloat("255%"),
+      openInterestReserveFactor: percentageToFloat("250%"),
+      maxPnlFactorForTraders: percentageToFloat("75%"),
+      maxPnlFactorForDeposits: percentageToFloat("75%"),
+      maxPnlFactorForAdl: percentageToFloat("70%"),
+      minPnlFactorAfterAdl: percentageToFloat("65%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+
+      maxOpenInterest: decimalToFloat(4_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(6_000_000),
+
+      maxLongTokenPoolAmount: expandDecimals(3_540, 18), // ~8M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(8_000_000, 6), // ~8M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+
+        negativePositionImpactFactor: exponentToFloat("3.0e-9"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(1_500_000),
+      },
+    },
+    {
+      tokens: { indexToken: "NATGAS", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:NATGAS/USD"),
+      virtualMarketId: hashString("SPOT:NATGAS/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.02%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.04%"),
+
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      positivePositionImpactFactor: exponentToFloat("3.2e-10"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("2.2%"), // ~45x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.0e-10"),
+
+      reserveFactor: percentageToFloat("255%"),
+      openInterestReserveFactor: percentageToFloat("250%"),
+      maxPnlFactorForTraders: percentageToFloat("75%"),
+      maxPnlFactorForDeposits: percentageToFloat("75%"),
+      maxPnlFactorForAdl: percentageToFloat("70%"),
+      minPnlFactorAfterAdl: percentageToFloat("65%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(885, 18), // ~2M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
+
+        negativePositionImpactFactor: exponentToFloat("2.0e-8"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("4%"), // 25x leverage
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(250_000),
+      },
+    },
   ],
   avalanche: [
     {
