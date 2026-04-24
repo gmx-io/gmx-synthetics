@@ -653,6 +653,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             chainlinkTreasuryWntAmount,
             _getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
         );
+        if (keeperCostsV2 > chainlinkTreasuryWntAmount - wntForChainlink) {
+            return (wntForChainlink, chainlinkTreasuryWntAmount - wntForChainlink);
+        }
         uint256 wntForTreasury = chainlinkTreasuryWntAmount - wntForChainlink - keeperCostsV2;
 
         return (wntForChainlink, wntForTreasury);
