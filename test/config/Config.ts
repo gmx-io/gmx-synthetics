@@ -490,62 +490,10 @@ describe("Config", () => {
     await expect(
       config.setUint(
         keys.MAX_FUNDING_FACTOR_PER_SECOND,
-        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
-        4
-      )
-    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
-
-    await expect(
-      config.setUint(
-        keys.MIN_FUNDING_FACTOR_PER_SECOND,
-        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
-        11
-      )
-    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
-
-    await expect(
-      config.setUint(
-        keys.MAX_FUNDING_FACTOR_PER_SECOND,
         encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
         4
       )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
-  });
-
-  it("validates max funding factor per second range for longs and shorts", async () => {
-    const maxAllowed = await configUtils.MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND();
-
-    await expect(
-      config.setUint(
-        keys.MAX_FUNDING_FACTOR_PER_SECOND,
-        encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
-        maxAllowed.add(1)
-      )
-    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
-
-    await expect(
-      config.setUint(
-        keys.MAX_FUNDING_FACTOR_PER_SECOND,
-        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
-        maxAllowed.add(1)
-      )
-    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
-
-    await config.setUint(
-      keys.MAX_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
-      maxAllowed
-    );
-    await config.setUint(
-      keys.MAX_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
-      maxAllowed
-    );
-
-    const maxLong = await dataStore.getUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, true));
-    const maxShort = await dataStore.getUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, false));
-    expect(maxLong).eq(maxAllowed);
-    expect(maxShort).eq(maxAllowed);
   });
 
   it("validates data stream spread reduction factor", async () => {

@@ -434,6 +434,9 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         if (edgeDataStreamId == bytes32(0)) {
             revert Errors.EmptyDataStreamFeedId(token);
         }
+        if (edgeDataStreamTokenDecimals == 0) {
+            revert Errors.InvalidEdgeDataStreamDecimals(token, edgeDataStreamTokenDecimals);
+        }
 
         bytes[] memory payloads = new bytes[](2);
         payloads[0] = abi.encodeWithSignature("setBytes32(bytes32,bytes32)",

@@ -40,6 +40,14 @@ string constant CREATE_ORDER_PARAMS = string(
         CREATE_ORDER_NUMBERS
     )
 );
+string constant CREATE_TWAP_ORDER_PARAMS = string(
+    abi.encodePacked(
+        "CreateTwapOrder(address account,CreateOrderParams params,uint256 twapCount,uint256 interval,bytes32 relayParams,bytes32 subaccountApproval)",
+        CREATE_ORDER_ADDRESSES,
+        CREATE_ORDER_NUMBERS,
+        CREATE_ORDER_PARAMS_ROOT
+    )
+);
 
 library RelayUtils {
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH = keccak256(bytes(UPDATE_ORDER_PARAMS));
@@ -65,6 +73,7 @@ library RelayUtils {
                 CREATE_ORDER_NUMBERS
             )
         );
+    bytes32 public constant CREATE_TWAP_ORDER_TYPEHASH = keccak256(bytes(CREATE_TWAP_ORDER_PARAMS));
 
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
@@ -321,6 +330,56 @@ library RelayUtils {
             );
     }
 
+    function getCreateTwapOrderStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        SubaccountApproval calldata subaccountApproval,
+        address account,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        uint256 twapCount,
+        uint256 interval
+    ) external pure returns (bytes32) {
+        return
+            _getCreateTwapOrderStructHash(
+                relayParams,
+                keccak256(abi.encode(subaccountApproval)),
+                account,
+                params,
+                twapCount,
+                interval
+            );
+    }
+
+    function getCreateTwapOrderStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        uint256 twapCount,
+        uint256 interval
+    ) external pure returns (bytes32) {
+        return _getCreateTwapOrderStructHash(relayParams, bytes32(0), address(0), params, twapCount, interval);
+    }
+
+    function _getCreateTwapOrderStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        bytes32 subaccountApprovalHash,
+        address account,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        uint256 twapCount,
+        uint256 interval
+    ) private pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_TWAP_ORDER_TYPEHASH,
+                    account,
+                    _getCreateOrderParamsStructHash(params),
+                    twapCount,
+                    interval,
+                    _getRelayParamsHash(relayParams),
+                    subaccountApprovalHash
+                )
+            );
+    }
+
     function _getCreateOrderAddressesStructHash(
         IBaseOrderUtils.CreateOrderParamsAddresses memory addresses
     ) private pure returns (bytes32) {
@@ -441,7 +500,7 @@ library RelayUtils {
     }
 
     function _getCreateOrderParamsStructHash(
-        IBaseOrderUtils.CreateOrderParams calldata params
+        IBaseOrderUtils.CreateOrderParams memory params
     ) private pure returns (bytes32) {
         return
             keccak256(

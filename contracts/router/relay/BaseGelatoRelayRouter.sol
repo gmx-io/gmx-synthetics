@@ -130,6 +130,45 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             orderHandler.createOrder(account, srcChainId, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
+    function _createTwapOrder(
+        address account,
+        uint256 srcChainId,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool isSubaccount,
+        uint256 twapCount,
+        uint256 interval
+    ) internal returns (bytes32[] memory) {
+        Contracts memory contracts = _getContracts();
+        IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), params.numbers.executionFee * twapCount);
+
+        if (
+            params.numbers.initialCollateralDeltaAmount != 0 &&
+            (Order.isSwapOrder(params.orderType) || Order.isIncreaseOrder(params.orderType))
+        ) {
+            // for increase and swap orders OrderUtils sets initialCollateralDeltaAmount based on the amount of received initialCollateralToken
+            // instead of using initialCollateralDeltaAmount from params
+            // it is possible to use external calls to send tokens to OrderVault, in this case initialCollateralDeltaAmount could be zero
+            // and there is no need to call _sendTokens here
+            _sendTokens(
+                account,
+                params.addresses.initialCollateralToken,
+                address(contracts.orderVault),
+                params.numbers.initialCollateralDeltaAmount * twapCount,
+                srcChainId
+            );
+        }
+
+        return
+            orderHandler.createTwapOrder(
+                account,
+                srcChainId,
+                params,
+                isSubaccount && params.addresses.callbackContract != address(0),
+                twapCount,
+                interval
+            );
+    }
+
     function _updateOrder(address account, IRelayUtils.UpdateOrderParams calldata params, bool isSubaccount) internal {
         Contracts memory contracts = _getContracts();
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, params.key);

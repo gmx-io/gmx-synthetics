@@ -8,7 +8,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: [],
+  id: "StaticOracleProvider_1",
 });
 
 export default func;

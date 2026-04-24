@@ -518,6 +518,7 @@ library Errors {
     error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamExpo(int256 expo);
+    error InvalidEdgeDataStreamDecimals(address token, uint256 decimals);
     error RelayEmptyBatch();
     error RelayCalldataTooLong(uint256 calldataLength);
     error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);

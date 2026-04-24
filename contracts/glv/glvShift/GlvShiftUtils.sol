@@ -166,6 +166,23 @@ library GlvShiftUtils {
             new bytes32[](0)
         );
 
+        cache.fromMarketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(glvShift.fromMarket())));
+        cache.fromMarket = MarketStoreUtils.get(params.dataStore, glvShift.fromMarket());
+        cache.fromMarketPoolValueInfo = MarketUtils.getPoolValueInfo(
+            params.dataStore,
+            cache.fromMarket,
+            params.oracle.getPrimaryPrice(cache.fromMarket.indexToken),
+            params.oracle.getPrimaryPrice(cache.fromMarket.longToken),
+            params.oracle.getPrimaryPrice(cache.fromMarket.shortToken),
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            true // maximize
+        );
+        cache.marketTokensUsd = MarketUtils.marketTokenAmountToUsd(
+            glvShift.marketTokenAmount(),
+            cache.fromMarketPoolValueInfo.poolValue.toUint256(),
+            cache.fromMarketTokenSupply
+        );
+
         cache.shiftKey = keccak256(abi.encode(params.key, "shift"));
         ShiftEventUtils.emitShiftCreated(params.eventEmitter, cache.shiftKey, cache.shift);
 
@@ -213,24 +230,6 @@ library GlvShiftUtils {
             cache.receivedMarketTokens,
             cache.toMarketPoolValueInfo.poolValue.toUint256(),
             cache.toMarketTokenSupply
-        );
-
-        cache.fromMarket = MarketStoreUtils.get(params.dataStore, glvShift.fromMarket());
-        cache.fromMarketPoolValueInfo = MarketUtils.getPoolValueInfo(
-            params.dataStore,
-            cache.fromMarket,
-            params.oracle.getPrimaryPrice(cache.fromMarket.indexToken),
-            params.oracle.getPrimaryPrice(cache.fromMarket.longToken),
-            params.oracle.getPrimaryPrice(cache.fromMarket.shortToken),
-            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true // maximize
-        );
-        cache.fromMarketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(glvShift.fromMarket())));
-
-        cache.marketTokensUsd = MarketUtils.marketTokenAmountToUsd(
-            glvShift.marketTokenAmount(),
-            cache.fromMarketPoolValueInfo.poolValue.toUint256(),
-            cache.fromMarketTokenSupply
         );
 
         validateGlvShiftMaxLoss(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);

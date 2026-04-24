@@ -40,7 +40,7 @@ describe("Glv Shifts", () => {
     wnt,
     sol,
     usdc,
-    gmOracleProvider,
+    chainlinkDataStreamProvider,
     oracle;
 
   beforeEach(async () => {
@@ -62,7 +62,7 @@ describe("Glv Shifts", () => {
       sol,
       wnt,
       usdc,
-      gmOracleProvider,
+      chainlinkDataStreamProvider,
       oracle,
     } = fixture.contracts);
 
@@ -219,7 +219,7 @@ describe("Glv Shifts", () => {
     await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
     await dataStore.setAddress(
       keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
-      gmOracleProvider.address
+      chainlinkDataStreamProvider.address
     );
 
     await expectBalances({

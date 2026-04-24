@@ -101,6 +101,65 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     }
 
     // @note all params except subaccount should be part of the corresponding struct hash
+    function createTwapOrder(
+        IRelayUtils.RelayParams calldata relayParams,
+        SubaccountApproval calldata subaccountApproval,
+        address account, // main account
+        address subaccount,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        uint256 twapCount,
+        uint256 interval
+    )
+        external
+        nonReentrant
+        withRelay(relayParams, account, 0, true) // srcChainId is the current block.chainId
+        returns (bytes32[] memory)
+    {
+        return
+            _createTwapOrderForSubaccount(
+                relayParams,
+                subaccountApproval,
+                account,
+                subaccount,
+                params,
+                twapCount,
+                interval
+            );
+    }
+
+    function _createTwapOrderForSubaccount(
+        IRelayUtils.RelayParams calldata relayParams,
+        SubaccountApproval calldata subaccountApproval,
+        address account,
+        address subaccount,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        uint256 twapCount,
+        uint256 interval
+    ) private returns (bytes32[] memory) {
+        bytes32 structHash = _getCreateTwapOrderStructHash(
+            relayParams,
+            subaccountApproval,
+            account,
+            params,
+            twapCount,
+            interval
+        );
+        _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);
+        SubaccountUtils.validateCreateOrderParams(account, params);
+        _handleSubaccountOrderAction(account, subaccount, twapCount, subaccountApproval);
+
+        return
+            _createTwapOrder(
+                account,
+                0, // srcChainId is the current block.chainId
+                params,
+                true, // isSubaccount
+                twapCount,
+                interval
+            );
+    }
+
+    // @note all params except subaccount should be part of the corresponding struct hash
     function updateOrder(
         IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
@@ -163,5 +222,16 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             subaccountApproval,
             subaccountApprovalNonces
         );
+    }
+
+    function _getCreateTwapOrderStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        SubaccountApproval calldata subaccountApproval,
+        address account,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        uint256 twapCount,
+        uint256 interval
+    ) private pure returns (bytes32) {
+        return RelayUtils.getCreateTwapOrderStructHash(relayParams, subaccountApproval, account, params, twapCount, interval);
     }
 }
