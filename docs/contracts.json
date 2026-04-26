@@ -2068,18 +2068,18 @@
     },
     {
       "contractName": "BaseOrderUtils",
-      "contractAddress": "0xb112A327b0E5dd5810DDC3af0b67B16D213000b8",
-      "txHash": "0x27228ea65ff544b44ff887fa413b63b883315db526977b10a49388ac4a909a88"
+      "contractAddress": "0x839E83C387683Fc2143c2C862248B746E3E42864",
+      "txHash": "0xb32dd15261f75095e953da1893d6acdea1507b0d9ebbc73c15a54e9f5191877e"
     },
     {
       "contractName": "BridgeOutFromControllerUtils",
-      "contractAddress": "0x1Ef617533DF948a8173662Cf8ea3C6af9EB89f06",
-      "txHash": "0x20a60cf4c10dfe39cbee2a627ce3d8683b46cab23d8c39849446b1904663e7e9"
+      "contractAddress": "0x5CbA10A54801B2D2B98a23cb868e5CE2732F0250",
+      "txHash": "0xa30fd2829c0063053d8bf4f7897bf50be005fcc99991f3d885ad74904589a5e8"
     },
     {
       "contractName": "CallbackUtils",
-      "contractAddress": "0x46BAeAEdbF90Ce46310173A04942e2B3B781Bf0e",
-      "txHash": "0xb5c52336f907edc20708d666f9df9b0e53b0348b12546521a11402491ecbccd8"
+      "contractAddress": "0x9EC1d7bC7a2b256310F98FF80fbb91A2a3eF1D3F",
+      "txHash": "0xc0d6516ba2b8a822b5be03dadb74bd5fe0169889339a7628d43bb385adc459e6"
     },
     {
       "contractName": "ChainReader",
@@ -2113,8 +2113,8 @@
     },
     {
       "contractName": "Config",
-      "contractAddress": "0xb7779724235Bc038e41B8b39CA3212411aDD1284",
-      "txHash": "0x2d9681742b42d4e343534902073c99055973399bd1047f7d319fa993561f4c24"
+      "contractAddress": "0x1aa2A2B521a9A3D37D19c168709DC1577EC2d589",
+      "txHash": "0x214fc9373ba40faea938ed9b14f0053db7744d3b15be9177663efb438db634c5"
     },
     {
       "contractName": "ConfigTimelockController",
@@ -2123,8 +2123,8 @@
     },
     {
       "contractName": "ConfigUtils",
-      "contractAddress": "0xF89e77e8Dc11691C9e8757e84aaFbCD8A67d7A55",
-      "txHash": "0xd233816105582f210ee8257909b894f71fca0cf53843e67bf3c5d5fd7ad46613"
+      "contractAddress": "0xb7781d92798014fA726FB82d76091d5719a975D1",
+      "txHash": "0x50bc0e8d5d437cc882b88027b12a12f0197e51de4f7374b8d29113dc32ad5041"
     },
     {
       "contractName": "DataStore",
@@ -2133,48 +2133,48 @@
     },
     {
       "contractName": "DecreaseOrderExecutor",
-      "contractAddress": "0x733b52c8c0478Dfad424488F4Ba6AaD027022AE2",
-      "txHash": "0xc71a9b19e51c445e27ff7c94bc00103bd638808ce3af2bdf317fc5027e2e2f64"
+      "contractAddress": "0x14DfCCAC2a7Dd761C9b6b79c631f8dAFa417Eb1a",
+      "txHash": "0x7553d99fa0befccc5ae0beb0224434357b164d8b44a562a93840d02e4308ddfe"
     },
     {
       "contractName": "DecreaseOrderUtils",
-      "contractAddress": "0xC35AEd253F3a9Ad948cd511c21E89a92761dF139",
-      "txHash": "0x03e1e21734d0f4b45bac2964e40f7733a6d1860a55dae5854d96ccf14ee49b11"
+      "contractAddress": "0xBE58515EE28034C9Ffbe92691c1e805F2F0Aa99f",
+      "txHash": "0x6497dce37fd8df95a8a2e9b57fe3c4cfb94359a74d0920c98d51afb7df00c299"
     },
     {
       "contractName": "DecreasePositionCollateralUtils",
-      "contractAddress": "0x3086540b21900fDa472ce8862E8a73582FA5D4b6",
-      "txHash": "0x371bc85e4182d36d75ab8f1a9ad4bd8a9a4461a5d5846d9091862b47894c22a6"
+      "contractAddress": "0x27010835ef6A96Db8629cc0dc930dcBb56932F17",
+      "txHash": "0x84ce96fb0faaf9c117dc6551e84381ca6bb3612f0199db210c1342eef9800fa3"
     },
     {
       "contractName": "DecreasePositionSwapUtils",
-      "contractAddress": "0xe52B3700D17B45dE9de7205DEe4685B4B9EC612D",
-      "txHash": "0xe2cbfe2608cbb851176b987f5cb91dcc9657b71ddbb40a668318c21f8236552d"
+      "contractAddress": "0x1C711868698fbdda11c96F1F943a1cF060eB5621",
+      "txHash": "0xac75f76e728bd301bd86a8da6e318728d31d4af9a65fca6a0d33139e7efd3ffe"
     },
     {
       "contractName": "DecreasePositionUtils",
-      "contractAddress": "0xcb7656751B0f8aFCBe15D135D7aC58727DE06768",
-      "txHash": "0xcfd6e784eaa6a0332f739bb6f52b3ad957dbcb5c0434874e1a9ad193d891c88f"
+      "contractAddress": "0x3874583cbAc781F417E2817352450Bc8a153E5E8",
+      "txHash": "0x462000704c67ca6fd2ef42c1824a9a00ad1c120c7f21a375d7c7eb9ebd5241d7"
     },
     {
       "contractName": "DepositEventUtils",
-      "contractAddress": "0x12Ba5C403B286B0394F8593130DecCfb55422a8e",
-      "txHash": "0x06a5908239625a9908479ffa1acaf5d840549a10a50678210b8970f4b471272a"
+      "contractAddress": "0x3298f2466Eb17008636db12ed060F27f0a1AD12d",
+      "txHash": "0x98e809ebf530e82d446fe48b2359db560a860321a8022affe9e5345c08695000"
     },
     {
       "contractName": "DepositHandler",
-      "contractAddress": "0x0d776a8A8aB967193Ad50c3b220996834D5550c7",
-      "txHash": "0x7c664aa650a1d809a0500193cd49ac210efd71ded42917dadf30badbb521826d"
+      "contractAddress": "0xe0f867B83bf23e05c2d91F07E632253DB9D56a8A",
+      "txHash": "0xc009adee7344921139d2af76126f301ba387d1b287681c5394e79b24c1f1edb3"
     },
     {
       "contractName": "DepositStoreUtils",
-      "contractAddress": "0x4594d5C713e948e3809d1A6475fBe598932B06a7",
-      "txHash": "0x14d8a0ce2eee31fc604cf934b484d9d32170f7ebf3af17710ce42d248fc96515"
+      "contractAddress": "0x73e6050325eaF40F61F949D1927a6d46d64518D7",
+      "txHash": "0xdc7b412b3ddbfcc9411df93ab57f741b4481056bbbb086c2211236dbb7837285"
     },
     {
       "contractName": "DepositUtils",
-      "contractAddress": "0xB50eb1e94D5e83E82046F6aEd893CA7Ad7FAE710",
-      "txHash": "0xc00f8b7f173dad4cc2f88312213654cb25afec02a1a56feb95c0a24e193798f5"
+      "contractAddress": "0x995D3e4e82E7Efc0eE7A82493EFBd6D58076A724",
+      "txHash": "0x330505e13914e74c80977d087fab94db80046e5953f8c7c77d8c3a61e0885e58"
     },
     {
       "contractName": "DepositVault",
@@ -2203,8 +2203,8 @@
     },
     {
       "contractName": "ExecuteDepositUtils",
-      "contractAddress": "0x712dC0dbAe5f59891cb32451E15C667d06759Bb7",
-      "txHash": "0xa92e763ac1f1cf857c74e1c90a2a420d4f7f0ecd104080066be82ddc1dc653d1"
+      "contractAddress": "0xa5C9D357DB0E7ba67E893841F6Bd24D03968109A",
+      "txHash": "0x7d943654f0a821d6bed719b36d981d5ec50f0ea866c5fa57818ed8a8d0e545e0"
     },
     {
       "contractName": "ExecuteGlvDepositUtils",
@@ -2213,8 +2213,8 @@
     },
     {
       "contractName": "ExecuteOrderUtils",
-      "contractAddress": "0x68eF8ef43352E388A477973ae7c3Cf208485BfcC",
-      "txHash": "0x4d0568b86f0219742d205ddd66938c48ca04aa55dade9b56e0213684009afab6"
+      "contractAddress": "0x610701662CD64De835d53B2dE508d342781CC1Bd",
+      "txHash": "0xdc6319c76017f904e060588ba231078ecb7d95c29d3275dbed33f92d088829ee"
     },
     {
       "contractName": "ExecuteWithdrawalUtils",
@@ -2238,13 +2238,13 @@
     },
     {
       "contractName": "FeeUtils",
-      "contractAddress": "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5",
-      "txHash": "0x5477dd1d749a8c16b65818e28300cfb96b7d2dab6a8fbac97cd3fb1ea9f47958"
+      "contractAddress": "0xEd155A002F71eBE833C9D23EC379e131227a519b",
+      "txHash": "0xb2ae2550c62394bec441475d71e18507f665545b5d146f6121daf6d7c3d9091f"
     },
     {
       "contractName": "GasUtils",
-      "contractAddress": "0xDDa1982Bf61C4CF4FecF2c3fc9141BB23991cfd0",
-      "txHash": "0x041c5e0c0923a6e5c6b9a35fa0b8bf7f91e4ffb55a303d213cf99d69a9bcfaaf"
+      "contractAddress": "0xfAff9399E6727C8b6e1B4e38c4E0B998656eC0B6",
+      "txHash": "0x60a52349f10b5e437083685973b88e9ed013ae2c5c7d5c8015f26c379868e428"
     },
     {
       "contractName": "GelatoRelayRouter",
@@ -2258,8 +2258,8 @@
     },
     {
       "contractName": "GlvDepositEventUtils",
-      "contractAddress": "0x4D12C3D3e750e051e87a2F3f7750fBd94767742c",
-      "txHash": "0xe39c1ff8cc743ae8d0fea5342260bf08552e428282186bd105d5ded5ee9e77f6"
+      "contractAddress": "0x5EBFD237cF600856e7E1de5bC49ddD87e0307B60",
+      "txHash": "0x5702383d79f0288658cd7542d21a308cffd8b5c3e903d137dc912b64dce97dec"
     },
     {
       "contractName": "GlvDepositHandler",
@@ -2328,8 +2328,8 @@
     },
     {
       "contractName": "GlvWithdrawalEventUtils",
-      "contractAddress": "0xfd2069745B922D1a9FF14b55AE1C54B4ea294505",
-      "txHash": "0x6a338680dc829d209263f18feac3663d4894c503147444e402757bf2616b0d7b"
+      "contractAddress": "0xA76aF193131dB452fB5f29e1bF58C1C35F75775b",
+      "txHash": "0x9e4ebc4f01b91c587bd9a25cded0398ce07231e0f14e41d3a3fe6122836e1488"
     },
     {
       "contractName": "GlvWithdrawalHandler",
@@ -2363,18 +2363,18 @@
     },
     {
       "contractName": "IncreaseOrderExecutor",
-      "contractAddress": "0xD04F9b66ac2714cafBaA777478085a662332DE84",
-      "txHash": "0x5d05335ec75fa53aac8cce398fca5fb2f5adf0f5ac816e55b834acb7fe5eb630"
+      "contractAddress": "0x0Ac9C116cC484Cc42610ae69E73c649A0466fE14",
+      "txHash": "0x38eddd78d0f76af4faafd9d4c19c95e96d334702d5b5f812b442da41755dcc0e"
     },
     {
       "contractName": "IncreaseOrderUtils",
-      "contractAddress": "0xc3B5eb9e3400A73c3ededbe3D501c81a3E5aEAa0",
-      "txHash": "0x90e2274921e4112e8a0434bd81a0590dadd2b06fb8a527e6f279b8a0937e9d72"
+      "contractAddress": "0xc7b32Ae76222E66Fef770de3BebDC251A4a1E55D",
+      "txHash": "0x02af2f19e1292f036473e79d52b169fccc8aae7b19031b0bd2215151fd72f0fa"
     },
     {
       "contractName": "IncreasePositionUtils",
-      "contractAddress": "0x97489c355A4758117467cE13b8124e22E9C45838",
-      "txHash": "0x5a7a7d7ed82be05bfa55160fb953c2a053cfd378267088b9219b300eb544fda6"
+      "contractAddress": "0xA7A61F8bAF4e66FE0FD79F388564229EE7f59D83",
+      "txHash": "0x4809548cbbf12376b76b514ec54c1e221bcc2bcb01e840903b671ae6af67b2e2"
     },
     {
       "contractName": "JitOrderHandler",
@@ -2398,8 +2398,8 @@
     },
     {
       "contractName": "MarketEventUtils",
-      "contractAddress": "0x1302668D7Fd4b5d060e0555c1ADDB6AfC92eFfC7",
-      "txHash": "0xaf9cb2c6c1f3f7ec9e2a93f052996129b9b31fea97452f359e8136f3f2ad3edf"
+      "contractAddress": "0x0817645a12215EAb65379AEe23fD9f9b69BAa063",
+      "txHash": "0x9f8fb462adec6dda61e29a0f52ee767da44b8e3c58c4dad1d4126bea322e175d"
     },
     {
       "contractName": "MarketFactory",
@@ -2408,13 +2408,13 @@
     },
     {
       "contractName": "MarketStoreUtils",
-      "contractAddress": "0x845Ff6c5c1dAe65da425895F975Fc63527091891",
-      "txHash": "0xd9f8d61c1bf7190915ffd03296579593c0b8685efc0effab31f4b835c9ee3c70"
+      "contractAddress": "0x31568A44593297788Cae4D0A70b0746c26886208",
+      "txHash": "0xc5e8a1b60f856547b2a5ec49265cb5380f098e1e7eb330761a62d09e6d2e2d2f"
     },
     {
       "contractName": "MarketUtils",
-      "contractAddress": "0x4BaA24f93a657f0c1b4A0Ffc72B91011E35cA46b",
-      "txHash": "0x624db542c9994401609c8b385698c1c5f57daadd45118498f693c3fc3e1cd6a1"
+      "contractAddress": "0x4a7737241B12DFb719498a0cC65A2e20738e5185",
+      "txHash": "0x422f14b2e3b188200c4200d748adb969616ccdecf656f0a32c25bca1b820642f"
     },
     {
       "contractName": "MockPriceFeed",
@@ -2458,13 +2458,13 @@
     },
     {
       "contractName": "MultichainTransferRouter",
-      "contractAddress": "0xCa62C570D8667a00A56EB989881ECbA4364BFe9e",
-      "txHash": "0xbb5a0c71e3558807d32790b8971e42fa402f7ca5047ae3a5292e76931d21a130"
+      "contractAddress": "0xB9FdA3F0f089B4fcaCd66BCC62D811fa6D69F53E",
+      "txHash": "0x792b1d42805d41ff150e348edcf2463687ab454ca896514d5bc47916bafed228"
     },
     {
       "contractName": "MultichainUtils",
-      "contractAddress": "0xE457Fa570AB3c4e6419Ac0f4355EEeD65A5A55c9",
-      "txHash": "0xc88cfb72db5adfea4f1b8cfbd18ae0a014834c25a640cdde1ede6d4da1b8ad2f"
+      "contractAddress": "0xC790A8EfED82a43fdEeD32b39F1297b13e443149",
+      "txHash": "0x5c16b493fab76060a60bcb3ca18e5ca56b61213b0e744914ff25e57fab75c514"
     },
     {
       "contractName": "MultichainVault",
@@ -2483,23 +2483,23 @@
     },
     {
       "contractName": "OrderEventUtils",
-      "contractAddress": "0x733846e7634ef01B3BFA29e83f05a491343e9FBC",
-      "txHash": "0xd01b1d798d6fd51598e76cc5b88f769a366828913286d69628388b0b5323f088"
+      "contractAddress": "0xd1de2d6827eC9E22d03E79a0f47ba1E0eC36889F",
+      "txHash": "0x1917dc00fc15d9fe62d0a75811c6be129897b3e8106a51ed41f408f8514d7a7e"
     },
     {
       "contractName": "OrderHandler",
-      "contractAddress": "0x7d5F99Bab016b831648e278B208579e0eCdb3974",
-      "txHash": "0x6dc89b91da66e6e05c1cc1cf7c77310f1daa9ab8592473a30a3c78768784ba8d"
+      "contractAddress": "0x1C9F5E99fc2C34EC352018297166FEE8303D662f",
+      "txHash": "0x29343b5a3f5cb025f852d587e3d194c367409ecd42f41077af28bb9b2d5dccaf"
     },
     {
       "contractName": "OrderStoreUtils",
-      "contractAddress": "0x3550f6b9B02c4d03b1EDE52A1A78BA4B4E09358c",
-      "txHash": "0x55d6b81eb2c546365d767105d5fd86b090c657807f1acbf4c5c72364722e2153"
+      "contractAddress": "0xF59b270A13385fb2D1Eb9167c26ac323ec4ad05C",
+      "txHash": "0x8badd2f53411bb289653d93ce5be488a338fd35e57a92220aaf0119b3503fb5f"
     },
     {
       "contractName": "OrderUtils",
-      "contractAddress": "0xDA6bAE7Cc07911718bb0A03100dBB59993e4C88f",
-      "txHash": "0x859d6ce5fc25b22474ed6d4892815cad63d83a10e45f0f63b47d3fa1ec1a1f1c"
+      "contractAddress": "0x41f30c03af29dD0Ff475A99FE62c64542d9554B1",
+      "txHash": "0xf8f46c12ad7bf4431eeb6362acff2438dee0a34f5e7944308d9628f65e4b6cb8"
     },
     {
       "contractName": "OrderVault",
@@ -2508,8 +2508,8 @@
     },
     {
       "contractName": "PositionEventUtils",
-      "contractAddress": "0x0e0B79Bae754DC896dD6B2CA7A8268B9a64C1983",
-      "txHash": "0x2c4d069e6b56daa2be81be6926a4ba4b0cf56936f3586858459b2d2c5e94081e"
+      "contractAddress": "0x651d8183b2F05a97F4cf6f5d30b88B2e70D955B0",
+      "txHash": "0x1e06935003e28722d154ba63e122bf7a5ffe13380b842ef0dba5dde81ed257af"
     },
     {
       "contractName": "PositionImpactPoolUtils",
@@ -2518,18 +2518,18 @@
     },
     {
       "contractName": "PositionPricingUtils",
-      "contractAddress": "0xc39B1f659eC9D15BDfba8cEfabF039D1c6Dbe922",
-      "txHash": "0x52fa856263661a4456dba9935b657d6e789b5c1227cf206691ed08995cb480d7"
+      "contractAddress": "0xe9A3891B3c88f57d8f5e07acb4aD3325B1c783B4",
+      "txHash": "0xe7718505b6185714cb2fe972f1d27454b2111aecdf8d6846e50988fca9a5b8d1"
     },
     {
       "contractName": "PositionStoreUtils",
-      "contractAddress": "0x2e246061BE08DC56d33E03Dc0cb962C2155722b5",
-      "txHash": "0xfaee90bfa46d28aba643226e30cc6e8520ac20a47d54fe71f43ff32e4a4f52cc"
+      "contractAddress": "0xf29c47eA2Af368CD126AbC5Eb86205272C40dEd9",
+      "txHash": "0x771ac37a635c3c5586410a0adb945fb288c88dc2a5f50f7a357f4381b5b69a5b"
     },
     {
       "contractName": "PositionUtils",
-      "contractAddress": "0xe79118d6D92a4b23369ba356C90b9A7ABf1CB961",
-      "txHash": "0xa23263d909f0ca4ab80753f13c4c6f195c921b7b8bb823573ce3bed7ec79f902"
+      "contractAddress": "0xdC28CeCE004c5bd570f71C3fBa877c1F5Da3Cbf4",
+      "txHash": "0x6703af40fcebf38b7e53ccbef622c4251dc8e99a127bef1675a03a7e44363dca"
     },
     {
       "contractName": "Printer",
@@ -2573,18 +2573,13 @@
     },
     {
       "contractName": "ReferralEventUtils",
-      "contractAddress": "0x29a66b6C77ED558c249b0F91Da341A8910F6B67e",
-      "txHash": "0xdeeb13471ceb9a84464d3b792afc8148b61b759c4ae5d999e15e68c025b58490"
-    },
-    {
-      "contractName": "ReferralUtils",
-      "contractAddress": "0x89aD4542D0b0A355B30147eA3feC3bE32F3bE4D7",
-      "txHash": "0x9b0b47f803902241b5537bafbcd5f2cb8a7fbd6865b07d004a8d67d420449d9f"
+      "contractAddress": "0xC05A8FB628152237CFc11a12d198b3B795e78Fd6",
+      "txHash": "0xe8a2e7f0a11876c65acff6afa1c1008b502678c1aef3280767f7d3a7e20c1d30"
     },
     {
       "contractName": "RelayUtils",
-      "contractAddress": "0x6093430E4dF967fD3231C35E25E9fc46f681c7e2",
-      "txHash": "0xbb6eeb8789d4af749a5a72e0311cca598b124270af45f8b9c5a7bb95ba6a2559"
+      "contractAddress": "0xe8EA606146040fB69a084c6CB3C9Dd48223f8e77",
+      "txHash": "0x9045788d36c97b5e4eae2baa577f052ec4bb701882190cbf58c7ec2f8b4da4b1"
     },
     {
       "contractName": "RoleStore",
@@ -2598,8 +2593,8 @@
     },
     {
       "contractName": "ShiftEventUtils",
-      "contractAddress": "0x3d472afcd66F954Fe4909EEcDd5c940e9a99290c",
-      "txHash": "0xdb981a6a2596cbe8ca1bddb062718981433b1204c9187a0bd1ae941724d74aae"
+      "contractAddress": "0xb73cB9B23dB836b82Cbc3bD23ea357BfD4367155",
+      "txHash": "0xf1ef61acf9cf691750279a1c6a45f6e0e96467af71fa315b4b71b5f26a48e1e5"
     },
     {
       "contractName": "ShiftHandler",
@@ -2620,6 +2615,16 @@
       "contractName": "ShiftVault",
       "contractAddress": "0xC255c70b50623054CADbAD9A02E1CFE73d286666",
       "txHash": "0xd4811e76e48fae2837aad182101a3ee396f25ba18f40aff836e510f1ec0a438e"
+    },
+    {
+      "contractName": "SignatureUtils",
+      "contractAddress": "0x697DD98a9265c58D2187a6dd16266Be6a2907015",
+      "txHash": "0x3133c66d4f9f1227956ac2d30b35adb3ec5128bb487fcadf8d155c879d14ea6e"
+    },
+    {
+      "contractName": "StaticOracleProvider",
+      "contractAddress": "0x99442BA2f8c7E0d9c80acEeF142554c5dF324c7b",
+      "txHash": "0x3ee297fbd1d8717d0c6548c19ae17fd90d2f7ce6a2b1393826345decc4c1eadf"
     },
     {
       "contractName": "SubaccountGelatoRelayRouter",
@@ -2643,28 +2648,28 @@
     },
     {
       "contractName": "SwapHandler",
-      "contractAddress": "0x8c0dF501394C0fee105f92F5CA59D7B876393B99",
-      "txHash": "0x9d62f81f15df3795aea73809c19aee93d0692a33b66881d1055944c1d34f250d"
+      "contractAddress": "0x452D77e6F2fEB04365DDA065921E9A2a1444e12e",
+      "txHash": "0x539ffcd1bdc2828fee645ed3592fdd12018d00c7c4c5ef5772568c0955baae21"
     },
     {
       "contractName": "SwapOrderExecutor",
-      "contractAddress": "0x3e04e6b37B23969F3Ca1c2aAc8568322bd90BA90",
-      "txHash": "0x97e830749c5718443b374a130ef8eed4e99941e5a18d7e86ed53b8738a66fcf4"
+      "contractAddress": "0xFa6B9db4019A525CCDBb3687aD8F980bfbda0052",
+      "txHash": "0x98859ca419156829cf143d61c2315b800ee61f4bf7dfbdb6a7ef9a5f83d205aa"
     },
     {
       "contractName": "SwapOrderUtils",
-      "contractAddress": "0x4CD60ed65f5b1F1Cc73d817490b087B3bEf4E5CE",
-      "txHash": "0x760e849d4088578ead574d4473fd77c2bc0e89d9e827a6fda9f3e86bd4c5d8da"
+      "contractAddress": "0x1109Adf1c2842a0ee0E523a274BE5D9dD43Bb9fe",
+      "txHash": "0x056972e98c701650cab77e3a0762c628ee4959b9c76045f766971a8f6f390ea2"
     },
     {
       "contractName": "SwapPricingUtils",
-      "contractAddress": "0x6EEFd9F9D87939A26E91CbC461683aC13279CFcA",
-      "txHash": "0x3300f63c67a02fc8591c600dd85cce6b8a8aff88a5f7f3143dcfd31d799435c6"
+      "contractAddress": "0x3E6B4d62f393481bb38ed4921F33e9B2d237a4A0",
+      "txHash": "0x43ab045e73922fadc9d2513d0c42c382d973c00d4608727fc40a7ed788665a49"
     },
     {
       "contractName": "SwapUtils",
-      "contractAddress": "0xef76EAB96785fC260f6E8422A13610CeAC528339",
-      "txHash": "0x0dced70eee04d7552db8f12c21d7bd0ea1664132b68136f28890d091db44f9a4"
+      "contractAddress": "0x8bcAeB3ca2f95C94b4Ccfd3eae767093E26bfAF6",
+      "txHash": "0x2f92e027ed76191b5d62318bea889a69a2d46db543d3f562a9aa91799b396d62"
     },
     {
       "contractName": "TimelockConfig",
@@ -2673,8 +2678,8 @@
     },
     {
       "contractName": "WithdrawalEventUtils",
-      "contractAddress": "0x9c5974E19ea019bb69f3098531384e5D9d4638b9",
-      "txHash": "0x10db1c292f2e90ac2396dc23976d525ab3390572141d52acf29b29ec18a2a60d"
+      "contractAddress": "0x45a81C4C1bB48C3132667e70503154AcF944Ba86",
+      "txHash": "0x4fbe84ad08dbb6447a2ed6d20d29e4691f4edd696704afeb77b6999d223363c2"
     },
     {
       "contractName": "WithdrawalHandler",
