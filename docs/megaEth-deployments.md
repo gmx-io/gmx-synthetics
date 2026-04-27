@@ -2,26 +2,27 @@
 
 **Network Type:** Mainnet  
 **Chain ID:** 4326  
-**Total Contracts:** 129  
-**Last Updated:** Apr 26, 2026, 07:55 PM UTC
+**Total Contracts:** 131  
+**Last Updated:** Apr 27, 2026, 12:14 PM UTC
 
 ## Deployed Contracts
 
 | Name | Address | Link |
 |------|---------|------|
-| AdlHandler | `0xf97835F08c2Bc0DA66F0e354Aa6C22b1c99657E6` | [View on Explorer](https://megaeth.blockscout.com/address/0xf97835F08c2Bc0DA66F0e354Aa6C22b1c99657E6) |
-| AdlUtils | `0xB2bFC502495fCC3c9b4c710422582420507b4D89` | [View on Explorer](https://megaeth.blockscout.com/address/0xB2bFC502495fCC3c9b4c710422582420507b4D89) |
+| AdlHandler | `0x0063Be1BF68b8CE15f312485EbD484Db70e4bC83` | [View on Explorer](https://megaeth.blockscout.com/address/0x0063Be1BF68b8CE15f312485EbD484Db70e4bC83) |
+| AdlUtils | `0xE4483f3A598676D303D1b92245F1f7FeC6A4b06b` | [View on Explorer](https://megaeth.blockscout.com/address/0xE4483f3A598676D303D1b92245F1f7FeC6A4b06b) |
 | BaseOrderUtils | `0x839E83C387683Fc2143c2C862248B746E3E42864` | [View on Explorer](https://megaeth.blockscout.com/address/0x839E83C387683Fc2143c2C862248B746E3E42864) |
 | BridgeOutFromControllerUtils | `0x5CbA10A54801B2D2B98a23cb868e5CE2732F0250` | [View on Explorer](https://megaeth.blockscout.com/address/0x5CbA10A54801B2D2B98a23cb868e5CE2732F0250) |
 | CallbackUtils | `0x9EC1d7bC7a2b256310F98FF80fbb91A2a3eF1D3F` | [View on Explorer](https://megaeth.blockscout.com/address/0x9EC1d7bC7a2b256310F98FF80fbb91A2a3eF1D3F) |
 | ChainlinkDataStreamProvider | `0xfdD24de4974fFCeBBA126fF1D17bF18E4a9AE5ac` | [View on Explorer](https://megaeth.blockscout.com/address/0xfdD24de4974fFCeBBA126fF1D17bF18E4a9AE5ac) |
 | ChainlinkPriceFeedProvider | `0x7452c558d45f8afC8c83dAe62C3f8A5BE19c71f6` | [View on Explorer](https://megaeth.blockscout.com/address/0x7452c558d45f8afC8c83dAe62C3f8A5BE19c71f6) |
-| ChainReader | `0xdAAB0e167806c8E541eAb65DC9346F4c95b90265` | [View on Explorer](https://megaeth.blockscout.com/address/0xdAAB0e167806c8E541eAb65DC9346F4c95b90265) |
-| ClaimHandler | `0x7e42e350FEF7c0A766590A6b2F4eF3F38D8A2988` | [View on Explorer](https://megaeth.blockscout.com/address/0x7e42e350FEF7c0A766590A6b2F4eF3F38D8A2988) |
-| ClaimUtils | `0xd337800a702a698b1882b45811dC91d24e442c68` | [View on Explorer](https://megaeth.blockscout.com/address/0xd337800a702a698b1882b45811dC91d24e442c68) |
+| ChainReader | `0x301e7152d03c46f9Ce31834b4bd79DDe7BA16b88` | [View on Explorer](https://megaeth.blockscout.com/address/0x301e7152d03c46f9Ce31834b4bd79DDe7BA16b88) |
+| ClaimHandler | `0x06D774708a890f520e695322eE1aA5De3897261B` | [View on Explorer](https://megaeth.blockscout.com/address/0x06D774708a890f520e695322eE1aA5De3897261B) |
+| ClaimUtils | `0x4102f4ccc97189241cD5e460b9f0266535fbf8dC` | [View on Explorer](https://megaeth.blockscout.com/address/0x4102f4ccc97189241cD5e460b9f0266535fbf8dC) |
 | ClaimVault | `0x9c8630D180E1f0cB2dF2baeE663dD0936118a6E2` | [View on Explorer](https://megaeth.blockscout.com/address/0x9c8630D180E1f0cB2dF2baeE663dD0936118a6E2) |
+| CollateralFactorManager | `0xB63185b6B39a21E348009b73355053B97e9B79a5` | [View on Explorer](https://megaeth.blockscout.com/address/0xB63185b6B39a21E348009b73355053B97e9B79a5) |
 | Config | `0x1aa2A2B521a9A3D37D19c168709DC1577EC2d589` | [View on Explorer](https://megaeth.blockscout.com/address/0x1aa2A2B521a9A3D37D19c168709DC1577EC2d589) |
-| ConfigTimelockController | `0xBf96f66932C1D826C172a80bE7c062ab6b26a4CC` | [View on Explorer](https://megaeth.blockscout.com/address/0xBf96f66932C1D826C172a80bE7c062ab6b26a4CC) |
+| ConfigTimelockController | `0x6Fdda2c1Bf9939088744D7acfe6963EA86056707` | [View on Explorer](https://megaeth.blockscout.com/address/0x6Fdda2c1Bf9939088744D7acfe6963EA86056707) |
 | ConfigUtils | `0xb7781d92798014fA726FB82d76091d5719a975D1` | [View on Explorer](https://megaeth.blockscout.com/address/0xb7781d92798014fA726FB82d76091d5719a975D1) |
 | DataStore | `0xE43C7B694f6b652a9F4A0f275C008d18758Dce35` | [View on Explorer](https://megaeth.blockscout.com/address/0xE43C7B694f6b652a9F4A0f275C008d18758Dce35) |
 | DecreaseOrderExecutor | `0x14DfCCAC2a7Dd761C9b6b79c631f8dAFa417Eb1a` | [View on Explorer](https://megaeth.blockscout.com/address/0x14DfCCAC2a7Dd761C9b6b79c631f8dAFa417Eb1a) |
@@ -36,23 +37,24 @@
 | DepositVault | `0x8231A60862F9b0bA93fFA050c0E94AC902D901d2` | [View on Explorer](https://megaeth.blockscout.com/address/0x8231A60862F9b0bA93fFA050c0E94AC902D901d2) |
 | EdgeDataStreamProvider | `0xb9a3e10Fd35e10387B4d3a24AEa443577600E89b` | [View on Explorer](https://megaeth.blockscout.com/address/0xb9a3e10Fd35e10387B4d3a24AEa443577600E89b) |
 | EdgeDataStreamVerifier | `0xe6e361a23b2eeb223Efb6563A491a7Ff81ed1f79` | [View on Explorer](https://megaeth.blockscout.com/address/0xe6e361a23b2eeb223Efb6563A491a7Ff81ed1f79) |
+| EIP6492Deployer | `0xBD968f8Ca5982406951fe1069d887221B81e8711` | [View on Explorer](https://megaeth.blockscout.com/address/0xBD968f8Ca5982406951fe1069d887221B81e8711) |
 | EventEmitter | `0xAf2E131d483cedE068e21a9228aD91E623a989C2` | [View on Explorer](https://megaeth.blockscout.com/address/0xAf2E131d483cedE068e21a9228aD91E623a989C2) |
 | ExchangeRouter | `0x73B3593F01CF8e573a412D1d0c972b581794ebE0` | [View on Explorer](https://megaeth.blockscout.com/address/0x73B3593F01CF8e573a412D1d0c972b581794ebE0) |
 | ExecuteDepositUtils | `0xa5C9D357DB0E7ba67E893841F6Bd24D03968109A` | [View on Explorer](https://megaeth.blockscout.com/address/0xa5C9D357DB0E7ba67E893841F6Bd24D03968109A) |
-| ExecuteGlvDepositUtils | `0xC95B894c91cBF211c33b4083f8893ed8F3c46D62` | [View on Explorer](https://megaeth.blockscout.com/address/0xC95B894c91cBF211c33b4083f8893ed8F3c46D62) |
+| ExecuteGlvDepositUtils | `0x9813618390816612ae362591F4c0F5b3D6c2A950` | [View on Explorer](https://megaeth.blockscout.com/address/0x9813618390816612ae362591F4c0F5b3D6c2A950) |
 | ExecuteOrderUtils | `0x610701662CD64De835d53B2dE508d342781CC1Bd` | [View on Explorer](https://megaeth.blockscout.com/address/0x610701662CD64De835d53B2dE508d342781CC1Bd) |
-| ExecuteWithdrawalUtils | `0x5e1C080c5Fef6032d5576a88F50851af0B3841fe` | [View on Explorer](https://megaeth.blockscout.com/address/0x5e1C080c5Fef6032d5576a88F50851af0B3841fe) |
+| ExecuteWithdrawalUtils | `0xc8e249FAe62c8C92e010F695b9bd989D28352FEB` | [View on Explorer](https://megaeth.blockscout.com/address/0xc8e249FAe62c8C92e010F695b9bd989D28352FEB) |
 | ExternalHandler | `0xa7EE2737249e0099906cB079BCEe85f0bbd837d4` | [View on Explorer](https://megaeth.blockscout.com/address/0xa7EE2737249e0099906cB079BCEe85f0bbd837d4) |
 | FeeDistributorUtils | `0xBE9fcCee06c30f0C684B595cDbaCdc68EE3BDF4D` | [View on Explorer](https://megaeth.blockscout.com/address/0xBE9fcCee06c30f0C684B595cDbaCdc68EE3BDF4D) |
 | FeeDistributorVault | `0x30BD2954d4014D5C02bc53FBe7e2d0f0599958EE` | [View on Explorer](https://megaeth.blockscout.com/address/0x30BD2954d4014D5C02bc53FBe7e2d0f0599958EE) |
 | FeeUtils | `0xEd155A002F71eBE833C9D23EC379e131227a519b` | [View on Explorer](https://megaeth.blockscout.com/address/0xEd155A002F71eBE833C9D23EC379e131227a519b) |
 | GasUtils | `0xfAff9399E6727C8b6e1B4e38c4E0B998656eC0B6` | [View on Explorer](https://megaeth.blockscout.com/address/0xfAff9399E6727C8b6e1B4e38c4E0B998656eC0B6) |
 | GelatoRelayRouter | `0x24eD625B9C47fDEbF088A4d12B7f9B4B2f556297` | [View on Explorer](https://megaeth.blockscout.com/address/0x24eD625B9C47fDEbF088A4d12B7f9B4B2f556297) |
-| GlvDepositCalc | `0xd336087512BeF8Df32AF605b492f452Fd6436CD8` | [View on Explorer](https://megaeth.blockscout.com/address/0xd336087512BeF8Df32AF605b492f452Fd6436CD8) |
+| GlvDepositCalc | `0x4f72085eB844356f6966797ac905412EAC149950` | [View on Explorer](https://megaeth.blockscout.com/address/0x4f72085eB844356f6966797ac905412EAC149950) |
 | GlvDepositEventUtils | `0x5EBFD237cF600856e7E1de5bC49ddD87e0307B60` | [View on Explorer](https://megaeth.blockscout.com/address/0x5EBFD237cF600856e7E1de5bC49ddD87e0307B60) |
-| GlvDepositHandler | `0x0Ca40ae32Bd2e463C7a3d9aba919d238672651DE` | [View on Explorer](https://megaeth.blockscout.com/address/0x0Ca40ae32Bd2e463C7a3d9aba919d238672651DE) |
-| GlvDepositStoreUtils | `0xd4aE0008949F62dEcB1Afa65511288B1072AAf00` | [View on Explorer](https://megaeth.blockscout.com/address/0xd4aE0008949F62dEcB1Afa65511288B1072AAf00) |
-| GlvDepositUtils | `0x79D4ac3B69611097577DB6AABE61B5ca8d7DCbb6` | [View on Explorer](https://megaeth.blockscout.com/address/0x79D4ac3B69611097577DB6AABE61B5ca8d7DCbb6) |
+| GlvDepositHandler | `0xdfa1E086e6400681AB389012355AaD83Fca6b786` | [View on Explorer](https://megaeth.blockscout.com/address/0xdfa1E086e6400681AB389012355AaD83Fca6b786) |
+| GlvDepositStoreUtils | `0x05772f3B70F0c3aCf9A12BA717F4b2856A83Fa52` | [View on Explorer](https://megaeth.blockscout.com/address/0x05772f3B70F0c3aCf9A12BA717F4b2856A83Fa52) |
+| GlvDepositUtils | `0x488a7465769bA9739830F00c64Ee4fcbd13fCE88` | [View on Explorer](https://megaeth.blockscout.com/address/0x488a7465769bA9739830F00c64Ee4fcbd13fCE88) |
 | GlvFactory | `0xA3E4c933D2227cEe0aaa2823a056843c0303a1a5` | [View on Explorer](https://megaeth.blockscout.com/address/0xA3E4c933D2227cEe0aaa2823a056843c0303a1a5) |
 | GlvReader | `0x424527a588D56513cB2F5161958D83883EE8aB0f` | [View on Explorer](https://megaeth.blockscout.com/address/0x424527a588D56513cB2F5161958D83883EE8aB0f) |
 | GlvRouter | `0x505F0cCADA00F0CcB4EEbf6467531cF4dd907B0E` | [View on Explorer](https://megaeth.blockscout.com/address/0x505F0cCADA00F0CcB4EEbf6467531cF4dd907B0E) |
@@ -60,13 +62,13 @@
 | GlvShiftHandler | `0xCE33CE903Aad1bA4843364adb7C627047c7Fe7fe` | [View on Explorer](https://megaeth.blockscout.com/address/0xCE33CE903Aad1bA4843364adb7C627047c7Fe7fe) |
 | GlvShiftStoreUtils | `0xb43957bf6D16FB94319CCD1dFc4731D2BE677157` | [View on Explorer](https://megaeth.blockscout.com/address/0xb43957bf6D16FB94319CCD1dFc4731D2BE677157) |
 | GlvShiftUtils | `0x183F99Ce7a4Db30cb5CCAb6dAd1C218Fe9e0e529` | [View on Explorer](https://megaeth.blockscout.com/address/0x183F99Ce7a4Db30cb5CCAb6dAd1C218Fe9e0e529) |
-| GlvStoreUtils | `0xf0BFcB1c0C00f40B04D351cF8e4A1c980F9949AB` | [View on Explorer](https://megaeth.blockscout.com/address/0xf0BFcB1c0C00f40B04D351cF8e4A1c980F9949AB) |
-| GlvUtils | `0x821A38756eB44F725a31d14Ef00a3Dfb488e995B` | [View on Explorer](https://megaeth.blockscout.com/address/0x821A38756eB44F725a31d14Ef00a3Dfb488e995B) |
+| GlvStoreUtils | `0x581B77730E35726419b7a69eE797Caa3BDf5A644` | [View on Explorer](https://megaeth.blockscout.com/address/0x581B77730E35726419b7a69eE797Caa3BDf5A644) |
+| GlvUtils | `0x71412679Fe334F0affa29322A57506D77A44e791` | [View on Explorer](https://megaeth.blockscout.com/address/0x71412679Fe334F0affa29322A57506D77A44e791) |
 | GlvVault | `0x52e4875EB5603d21912d30A1dBA6B0B97192459A` | [View on Explorer](https://megaeth.blockscout.com/address/0x52e4875EB5603d21912d30A1dBA6B0B97192459A) |
 | GlvWithdrawalEventUtils | `0xA76aF193131dB452fB5f29e1bF58C1C35F75775b` | [View on Explorer](https://megaeth.blockscout.com/address/0xA76aF193131dB452fB5f29e1bF58C1C35F75775b) |
-| GlvWithdrawalHandler | `0xDb76b1734f8C914c09C5FbEE24399019D1E2DF36` | [View on Explorer](https://megaeth.blockscout.com/address/0xDb76b1734f8C914c09C5FbEE24399019D1E2DF36) |
-| GlvWithdrawalStoreUtils | `0x843bC7629476525dCFfb797fA728611C4d8F4019` | [View on Explorer](https://megaeth.blockscout.com/address/0x843bC7629476525dCFfb797fA728611C4d8F4019) |
-| GlvWithdrawalUtils | `0xA9fA0aD7D12006441cCA29F4741c66A4273AC9d5` | [View on Explorer](https://megaeth.blockscout.com/address/0xA9fA0aD7D12006441cCA29F4741c66A4273AC9d5) |
+| GlvWithdrawalHandler | `0xa85d5Dc5C8592A6Bcb16709DCF4370f881eE384B` | [View on Explorer](https://megaeth.blockscout.com/address/0xa85d5Dc5C8592A6Bcb16709DCF4370f881eE384B) |
+| GlvWithdrawalStoreUtils | `0x3c98B7BF18830B6D58ED6417eD1dB7Ab659064c3` | [View on Explorer](https://megaeth.blockscout.com/address/0x3c98B7BF18830B6D58ED6417eD1dB7Ab659064c3) |
+| GlvWithdrawalUtils | `0xa702d661EBB2f60B05973e95163683191BEc142f` | [View on Explorer](https://megaeth.blockscout.com/address/0xa702d661EBB2f60B05973e95163683191BEc142f) |
 | GmOracleProvider | `0x97FC94B3c7b15081FC4FC2a52F29020e3A54B835` | [View on Explorer](https://megaeth.blockscout.com/address/0x97FC94B3c7b15081FC4FC2a52F29020e3A54B835) |
 | GovTimelockController | `0x0a42516de743D87572f5788cac23F0a2c1a39f69` | [View on Explorer](https://megaeth.blockscout.com/address/0x0a42516de743D87572f5788cac23F0a2c1a39f69) |
 | GovToken | `0x1e1fD2855313188fb44A39e6AA9de9c3113c7f0f` | [View on Explorer](https://megaeth.blockscout.com/address/0x1e1fD2855313188fb44A39e6AA9de9c3113c7f0f) |
@@ -74,7 +76,7 @@
 | IncreaseOrderUtils | `0xc7b32Ae76222E66Fef770de3BebDC251A4a1E55D` | [View on Explorer](https://megaeth.blockscout.com/address/0xc7b32Ae76222E66Fef770de3BebDC251A4a1E55D) |
 | IncreasePositionUtils | `0xA7A61F8bAF4e66FE0FD79F388564229EE7f59D83` | [View on Explorer](https://megaeth.blockscout.com/address/0xA7A61F8bAF4e66FE0FD79F388564229EE7f59D83) |
 | JitOrderHandler | `0xcF2a4Af134510eA1010d8CfBADB6efc937D952f0` | [View on Explorer](https://megaeth.blockscout.com/address/0xcF2a4Af134510eA1010d8CfBADB6efc937D952f0) |
-| LayerZeroProvider | `0x9c41F854f123a7905907FfcF2578dFB7E47D02E0` | [View on Explorer](https://megaeth.blockscout.com/address/0x9c41F854f123a7905907FfcF2578dFB7E47D02E0) |
+| LayerZeroProvider | `0xbfB6f55a561dd5c6FB263FBaBFdD82e4E9A9AffD` | [View on Explorer](https://megaeth.blockscout.com/address/0xbfB6f55a561dd5c6FB263FBaBFdD82e4E9A9AffD) |
 | LiquidationHandler | `0x74fCc13e7D2bf35eAaA06BC2CB3307eD6a852414` | [View on Explorer](https://megaeth.blockscout.com/address/0x74fCc13e7D2bf35eAaA06BC2CB3307eD6a852414) |
 | LiquidationUtils | `0xD13455852044e2D50f00ba38f282cb29c523236D` | [View on Explorer](https://megaeth.blockscout.com/address/0xD13455852044e2D50f00ba38f282cb29c523236D) |
 | MarketEventUtils | `0x0817645a12215EAb65379AEe23fD9f9b69BAa063` | [View on Explorer](https://megaeth.blockscout.com/address/0x0817645a12215EAb65379AEe23fD9f9b69BAa063) |
@@ -84,9 +86,9 @@
 | MockPriceFeed | `0x301020d4A05575d1eb7bB9dbD8912851f82E4487` | [View on Explorer](https://megaeth.blockscout.com/address/0x301020d4A05575d1eb7bB9dbD8912851f82E4487) |
 | Multicall3 | `0xF516BC01c50eebdBad4d7E506c8f690ae8EAFc52` | [View on Explorer](https://megaeth.blockscout.com/address/0xF516BC01c50eebdBad4d7E506c8f690ae8EAFc52) |
 | MultichainClaimsRouter | `0xfE9fD31e499bA6d8733Aec49ECe5b41381103433` | [View on Explorer](https://megaeth.blockscout.com/address/0xfE9fD31e499bA6d8733Aec49ECe5b41381103433) |
-| MultichainGlvRouter | `0x7EF7d01316425de5d7C2EFDf8b802A250c222faB` | [View on Explorer](https://megaeth.blockscout.com/address/0x7EF7d01316425de5d7C2EFDf8b802A250c222faB) |
-| MultichainGmRouter | `0x041336A3DaF0a12d004a95f1511393d9A3d7236d` | [View on Explorer](https://megaeth.blockscout.com/address/0x041336A3DaF0a12d004a95f1511393d9A3d7236d) |
-| MultichainOrderRouter | `0x976363dFbA3AeB8Fb10b733baD74e7099cCB558A` | [View on Explorer](https://megaeth.blockscout.com/address/0x976363dFbA3AeB8Fb10b733baD74e7099cCB558A) |
+| MultichainGlvRouter | `0xa44a3F66B3B4D4711D5Bd47e62ab5F13471e77CC` | [View on Explorer](https://megaeth.blockscout.com/address/0xa44a3F66B3B4D4711D5Bd47e62ab5F13471e77CC) |
+| MultichainGmRouter | `0x915d980926a8d63D8dfb577982BAa6916988aD52` | [View on Explorer](https://megaeth.blockscout.com/address/0x915d980926a8d63D8dfb577982BAa6916988aD52) |
+| MultichainOrderRouter | `0x37322E93a0E611522D526ED0A6EC90EDE2118125` | [View on Explorer](https://megaeth.blockscout.com/address/0x37322E93a0E611522D526ED0A6EC90EDE2118125) |
 | MultichainReader | `0xcdA9c0f9Ad580DBf564a3b5a5Ca58D09F11f4FA8` | [View on Explorer](https://megaeth.blockscout.com/address/0xcdA9c0f9Ad580DBf564a3b5a5Ca58D09F11f4FA8) |
 | MultichainSubaccountRouter | `0xeB8f828A4B89dc3A854f278227A2A5E136E50bF9` | [View on Explorer](https://megaeth.blockscout.com/address/0xeB8f828A4B89dc3A854f278227A2A5E136E50bF9) |
 | MultichainTransferRouter | `0xB9FdA3F0f089B4fcaCd66BCC62D811fa6D69F53E` | [View on Explorer](https://megaeth.blockscout.com/address/0xB9FdA3F0f089B4fcaCd66BCC62D811fa6D69F53E) |
@@ -100,7 +102,7 @@
 | OrderUtils | `0x41f30c03af29dD0Ff475A99FE62c64542d9554B1` | [View on Explorer](https://megaeth.blockscout.com/address/0x41f30c03af29dD0Ff475A99FE62c64542d9554B1) |
 | OrderVault | `0xD5AE04762E2afb1506695b3F36286EBE7B0E6772` | [View on Explorer](https://megaeth.blockscout.com/address/0xD5AE04762E2afb1506695b3F36286EBE7B0E6772) |
 | PositionEventUtils | `0x651d8183b2F05a97F4cf6f5d30b88B2e70D955B0` | [View on Explorer](https://megaeth.blockscout.com/address/0x651d8183b2F05a97F4cf6f5d30b88B2e70D955B0) |
-| PositionImpactPoolUtils | `0xA6A71371Bc45D123E658c5234Bbc2A37c5C9257f` | [View on Explorer](https://megaeth.blockscout.com/address/0xA6A71371Bc45D123E658c5234Bbc2A37c5C9257f) |
+| PositionImpactPoolUtils | `0x06e137Ae756589E85Ab6D45Cbd945A43DFE09cFD` | [View on Explorer](https://megaeth.blockscout.com/address/0x06e137Ae756589E85Ab6D45Cbd945A43DFE09cFD) |
 | PositionPricingUtils | `0xe9A3891B3c88f57d8f5e07acb4aD3325B1c783B4` | [View on Explorer](https://megaeth.blockscout.com/address/0xe9A3891B3c88f57d8f5e07acb4aD3325B1c783B4) |
 | PositionStoreUtils | `0xf29c47eA2Af368CD126AbC5Eb86205272C40dEd9` | [View on Explorer](https://megaeth.blockscout.com/address/0xf29c47eA2Af368CD126AbC5Eb86205272C40dEd9) |
 | PositionUtils | `0xdC28CeCE004c5bd570f71C3fBa877c1F5Da3Cbf4` | [View on Explorer](https://megaeth.blockscout.com/address/0xdC28CeCE004c5bd570f71C3fBa877c1F5Da3Cbf4) |
@@ -117,9 +119,9 @@
 | RoleStore | `0xecA46636BDDbb4F451ca2B7062C7E36744934655` | [View on Explorer](https://megaeth.blockscout.com/address/0xecA46636BDDbb4F451ca2B7062C7E36744934655) |
 | Router | `0x1eAfB14236C489C28845EC04F78DECA5Fb9879Aa` | [View on Explorer](https://megaeth.blockscout.com/address/0x1eAfB14236C489C28845EC04F78DECA5Fb9879Aa) |
 | ShiftEventUtils | `0xb73cB9B23dB836b82Cbc3bD23ea357BfD4367155` | [View on Explorer](https://megaeth.blockscout.com/address/0xb73cB9B23dB836b82Cbc3bD23ea357BfD4367155) |
-| ShiftHandler | `0xBb54059D79d6E887f17aF86f724Bb1634b2C6758` | [View on Explorer](https://megaeth.blockscout.com/address/0xBb54059D79d6E887f17aF86f724Bb1634b2C6758) |
-| ShiftStoreUtils | `0x78f795255a4A3D5b3B51537f58bFfc814229FebC` | [View on Explorer](https://megaeth.blockscout.com/address/0x78f795255a4A3D5b3B51537f58bFfc814229FebC) |
-| ShiftUtils | `0xc251968307875E79c698ADF5D646410901fF61B6` | [View on Explorer](https://megaeth.blockscout.com/address/0xc251968307875E79c698ADF5D646410901fF61B6) |
+| ShiftHandler | `0xe216C1FF71457ff924284D9e852f9cD773087492` | [View on Explorer](https://megaeth.blockscout.com/address/0xe216C1FF71457ff924284D9e852f9cD773087492) |
+| ShiftStoreUtils | `0x8F3537361296c18cF06434D0A322bD7a3CA322c5` | [View on Explorer](https://megaeth.blockscout.com/address/0x8F3537361296c18cF06434D0A322bD7a3CA322c5) |
+| ShiftUtils | `0xa6eE364AD7Af57f6c3070A4FB5004d20A02A0940` | [View on Explorer](https://megaeth.blockscout.com/address/0xa6eE364AD7Af57f6c3070A4FB5004d20A02A0940) |
 | ShiftVault | `0xC255c70b50623054CADbAD9A02E1CFE73d286666` | [View on Explorer](https://megaeth.blockscout.com/address/0xC255c70b50623054CADbAD9A02E1CFE73d286666) |
 | SignatureUtils | `0x697DD98a9265c58D2187a6dd16266Be6a2907015` | [View on Explorer](https://megaeth.blockscout.com/address/0x697DD98a9265c58D2187a6dd16266Be6a2907015) |
 | StaticOracleProvider | `0x99442BA2f8c7E0d9c80acEeF142554c5dF324c7b` | [View on Explorer](https://megaeth.blockscout.com/address/0x99442BA2f8c7E0d9c80acEeF142554c5dF324c7b) |
@@ -134,7 +136,7 @@
 | SwapUtils | `0x8bcAeB3ca2f95C94b4Ccfd3eae767093E26bfAF6` | [View on Explorer](https://megaeth.blockscout.com/address/0x8bcAeB3ca2f95C94b4Ccfd3eae767093E26bfAF6) |
 | TimelockConfig | `0x9d5f3fac443748c28FB5dc964D74F8419F686F6D` | [View on Explorer](https://megaeth.blockscout.com/address/0x9d5f3fac443748c28FB5dc964D74F8419F686F6D) |
 | WithdrawalEventUtils | `0x45a81C4C1bB48C3132667e70503154AcF944Ba86` | [View on Explorer](https://megaeth.blockscout.com/address/0x45a81C4C1bB48C3132667e70503154AcF944Ba86) |
-| WithdrawalHandler | `0x8ca83c6243b7461Ae24b5cB167912F5C055F80b0` | [View on Explorer](https://megaeth.blockscout.com/address/0x8ca83c6243b7461Ae24b5cB167912F5C055F80b0) |
-| WithdrawalStoreUtils | `0x4988217cE0DDCe37cadA2DCA760846Ba80D32df8` | [View on Explorer](https://megaeth.blockscout.com/address/0x4988217cE0DDCe37cadA2DCA760846Ba80D32df8) |
-| WithdrawalUtils | `0xc0c02Dc34104bE5576D3587b1F099152E7385658` | [View on Explorer](https://megaeth.blockscout.com/address/0xc0c02Dc34104bE5576D3587b1F099152E7385658) |
+| WithdrawalHandler | `0x7C7b26C9dFc36a6C4934B463b51B6cA1dEa0a248` | [View on Explorer](https://megaeth.blockscout.com/address/0x7C7b26C9dFc36a6C4934B463b51B6cA1dEa0a248) |
+| WithdrawalStoreUtils | `0xb25ABe5E519cbFbeAC7FEA0271aB330eDd615A5d` | [View on Explorer](https://megaeth.blockscout.com/address/0xb25ABe5E519cbFbeAC7FEA0271aB330eDd615A5d) |
+| WithdrawalUtils | `0xcA1A4071f03412D164c4491E07BbB231f34D562f` | [View on Explorer](https://megaeth.blockscout.com/address/0xcA1A4071f03412D164c4491E07BbB231f34D562f) |
 | WithdrawalVault | `0x0Ec53dda9676219dE63eC703212219b07811F33C` | [View on Explorer](https://megaeth.blockscout.com/address/0x0Ec53dda9676219dE63eC703212219b07811F33C) |
