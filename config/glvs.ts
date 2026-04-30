@@ -111,6 +111,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("SYRUP", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("CHZ", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LIT", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("MEGA", arbitrum_ethUsdcDefaultCap, 1),
           // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
           createGlvMarketConfig("GOLD", arbitrum_ethUsdcDefaultCap, 1), // XAU
           createGlvMarketConfig("SILVER", arbitrum_ethUsdcDefaultCap, 1), // XAG
@@ -217,6 +218,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("BTC", 5_000_000, 1),
           createGlvMarketConfig("WETH", 5_000_000, 1),
           createGlvMarketConfig("SOL", 5_000_000, 1),
+          createGlvMarketConfig("MEGA", 750_000, 1), // FIXME: confirm minMarketTokenBalanceUsd cap
         ],
       },
     ],

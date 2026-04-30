@@ -1289,6 +1289,13 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    MEGA: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e5c055e11f7689db6ca622867a5e7228d76bf311c3345baef8b081bb18bd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -1628,6 +1635,14 @@ const config: {
         decimals: 18,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+    },
+    MEGA: {
+      address: "0x28B7E77f82B25B95953825F1E3eA0E36c1c29861",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003e5c055e11f7689db6ca622867a5e7228d76bf311c3345baef8b081bb18bd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
   },
   arbitrumSepolia: {

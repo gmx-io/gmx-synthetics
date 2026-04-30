@@ -4635,6 +4635,46 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(15, 8), // ~1M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x max open interest)
     },
+    {
+      tokens: { indexToken: "MEGA", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:MEGA/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+
+      negativePositionImpactFactor: exponentToFloat("8.45e-8"),
+      positivePositionImpactFactor: exponentToFloat("7.04e-8"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1%"),
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("2.2%"), // ~45x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.0e-10"),
+
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+      maxPnlFactorForDeposits: percentageToFloat("50%"),
+      maxPnlFactorForAdl: percentageToFloat("45%"),
+      minPnlFactorAfterAdl: percentageToFloat("40%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("35%"),
+
+      maxOpenInterest: decimalToFloat(250_000),
+      maxPoolUsdForDeposit: decimalToFloat(375_000),
+
+      maxLongTokenPoolAmount: expandDecimals(221, 18), // ~500K USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500K USD (2x max open interest)
+    },
     // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
     {
       tokens: { indexToken: "GOLD", longToken: "WETH", shortToken: "USDC" }, // XAU
@@ -6219,6 +6259,49 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 18),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
+    },
+    {
+      tokens: { indexToken: "MEGA", longToken: "USDm", shortToken: "USDm" },
+      virtualTokenIdForIndexToken: hashString("PERP:MEGA/USD"),
+      virtualMarketId: hashString("SPOT:USDm/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+
+      negativePositionImpactFactor: exponentToFloat("8.45e-8"),
+      positivePositionImpactFactor: exponentToFloat("7.04e-8"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1%"),
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+
+      swapFeeFactorForNegativeImpact: bigNumberify(0),
+      swapFeeFactorForPositiveImpact: bigNumberify(0),
+      atomicSwapFeeFactor: bigNumberify(0),
+      swapImpactExponentFactor: bigNumberify(0),
+      negativeSwapImpactFactor: bigNumberify(0),
+      positiveSwapImpactFactor: bigNumberify(0),
+
+      minCollateralFactor: percentageToFloat("1.8%"), // ~55x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.0e-10"),
+
+      reserveFactor: percentageToFloat("140%"),
+      openInterestReserveFactor: percentageToFloat("135%"),
+      maxPnlFactorForTraders: percentageToFloat("65%"),
+      maxPnlFactorForDeposits: percentageToFloat("65%"),
+      maxPnlFactorForAdl: percentageToFloat("60%"),
+      minPnlFactorAfterAdl: percentageToFloat("55%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("50%"),
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
+
+      maxLongTokenPoolAmount: expandDecimals(1_000_000, 18), // ~1M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 18), // ~1M USD (2x max open interest)
     },
     {
       // Short-lived swap-only pool for Megaeth launch (USDM as gas payment token)
