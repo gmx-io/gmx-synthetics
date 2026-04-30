@@ -218,7 +218,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("BTC", 5_000_000, 1),
           createGlvMarketConfig("WETH", 5_000_000, 1),
           createGlvMarketConfig("SOL", 5_000_000, 1),
-          createGlvMarketConfig("MEGA", 750_000, 1), // FIXME: confirm minMarketTokenBalanceUsd cap
+          createGlvMarketConfig("MEGA", 2_000_000, 1), // max token amount
         ],
       },
     ],
