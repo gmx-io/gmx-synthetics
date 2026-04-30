@@ -4669,8 +4669,10 @@ const config: {
       minPnlFactorAfterAdl: percentageToFloat("40%"),
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
-      maxOpenInterest: decimalToFloat(250_000),
-      maxPoolUsdForDeposit: decimalToFloat(375_000),
+      // maxOpenInterest: decimalToFloat(250_000),
+      maxOpenInterest: decimalToFloat(1_000),
+      // maxPoolUsdForDeposit: decimalToFloat(375_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500),
 
       maxLongTokenPoolAmount: expandDecimals(221, 18), // ~500K USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500K USD (2x max open interest)
@@ -6297,8 +6299,10 @@ const config: {
       minPnlFactorAfterAdl: percentageToFloat("55%"),
       maxPnlFactorForWithdrawals: percentageToFloat("50%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      // maxOpenInterest: decimalToFloat(500_000),
+      // maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(1_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500),
 
       maxLongTokenPoolAmount: expandDecimals(1_000_000, 18), // ~1M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 18), // ~1M USD (2x max open interest)
