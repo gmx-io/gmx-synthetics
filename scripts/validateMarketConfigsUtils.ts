@@ -693,6 +693,11 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_500,
     },
+    MEGA: {
+      negativePositionImpactFactor: exponentToFloat("8.45e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -872,6 +877,12 @@ const recommendedMarketConfig = {
     },
     SOL: {
       negativePositionImpactFactor: exponentToFloat("8.51e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    MEGA: {
+      negativePositionImpactFactor: exponentToFloat("8.45e-8"),
       negativeSwapImpactFactor: 0,
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 12_000,
