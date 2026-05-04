@@ -66,8 +66,13 @@ library WithdrawalUtils {
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
 
-        if (wntAmount < params.executionFee) {
-            revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
+        if (!isAtomicWithdrawal) {
+            if (wntAmount < params.executionFee) {
+                revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
+            }
+            params.executionFee = wntAmount;
+        } else {
+            params.executionFee = 0;
         }
 
         AccountUtils.validateReceiver(params.addresses.receiver);
@@ -77,8 +82,6 @@ library WithdrawalUtils {
         if (marketTokenAmount == 0) {
             revert Errors.EmptyWithdrawalAmount();
         }
-        params.executionFee = wntAmount;
-
         MarketUtils.validateEnabledMarket(dataStore, params.addresses.market);
         MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
         MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
