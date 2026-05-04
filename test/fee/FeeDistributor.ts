@@ -52,6 +52,7 @@ describe("FeeDistributor", function () {
     mockVaultV1,
     claimVault,
     claimUtils,
+    mockFlags,
     wallet,
     user0,
     user1,
@@ -134,6 +135,7 @@ describe("FeeDistributor", function () {
       mockVaultV1,
       claimVault,
       claimUtils,
+      mockFlags,
     } = fixture.contracts);
 
     ({
@@ -1306,7 +1308,14 @@ describe("FeeDistributor", function () {
     const dataStoreD = await deployContract("DataStore", [roleStore.address]);
     const configD = await deployContract(
       "Config",
-      [roleStore.address, dataStoreD.address, eventEmitter.address, oracle.address, staticOracleProvider.address],
+      [
+        roleStore.address,
+        dataStoreD.address,
+        eventEmitter.address,
+        oracle.address,
+        staticOracleProvider.address,
+        mockFlags.address,
+      ],
       {
         libraries: {
           "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
