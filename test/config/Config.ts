@@ -115,6 +115,15 @@ describe("Config", () => {
     expect(await dataStore.getAddress(key)).eq(wnt.address);
   });
 
+  it("setAddress for EIP6492_DEPLOYER", async () => {
+    await expect(
+      config.connect(user1).setAddress(keys.EIP6492_DEPLOYER, "0x", user1.address)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
+    await config.connect(user0).setAddress(keys.EIP6492_DEPLOYER, "0x", user1.address);
+    expect(await dataStore.getAddress(keys.EIP6492_DEPLOYER)).eq(user1.address);
+  });
+
   it("setBytes32", async () => {
     const key = keys.oracleTypeKey(wnt.address);
 
