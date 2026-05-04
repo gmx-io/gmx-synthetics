@@ -253,6 +253,14 @@ export async function getOracleParams({
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const chainlinkDataStreamFeedProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
 
+  const configTokens = await hre.gmx.getTokens();
+  const decimalsByAddress: { [addr: string]: number } = {};
+  for (const token of Object.values(configTokens) as Array<{ address?: string; decimals?: number }>) {
+    if (token.address && token.decimals !== undefined) {
+      decimalsByAddress[token.address.toLowerCase()] = token.decimals;
+    }
+  }
+
   const params = {
     tokens: [],
     providers: [],
@@ -275,12 +283,14 @@ export async function getOracleParams({
     const dataStreamMultiplierKey = keys.dataStreamMultiplierKey(token);
     let dataStreamMultiplier = await dataStore.getUint(dataStreamMultiplierKey);
     if (dataStreamMultiplier.eq(0)) {
-      let tokenDecimals = 18;
-      try {
-        const tokenContract = await ethers.getContractAt("MintableToken", token);
-        tokenDecimals = await tokenContract.decimals();
-      } catch (e) {
-        throw new Error(`Cannot fetch token decimals for ${token}`);
+      let tokenDecimals = decimalsByAddress[token.toLowerCase()];
+      if (tokenDecimals === undefined) {
+        try {
+          const tokenContract = await ethers.getContractAt("MintableToken", token);
+          tokenDecimals = await tokenContract.decimals();
+        } catch (e) {
+          throw new Error(`Cannot fetch token decimals for ${token}`);
+        }
       }
       dataStreamMultiplier = expandDecimals(1, 60 - 8 - tokenDecimals);
       await dataStore.setUint(dataStreamMultiplierKey, dataStreamMultiplier);

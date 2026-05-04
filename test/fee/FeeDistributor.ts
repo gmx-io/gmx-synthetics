@@ -159,6 +159,7 @@ describe("FeeDistributor", function () {
     } = fixture.accounts);
 
     mockExtendedGmxDistributor = await deployContract("MockRewardDistributorV1", []);
+    await mockExtendedGmxDistributor.updateLastDistributionTime();
     mockLzReadResponseChainA = await deployContract("MockLzReadResponse", []);
     mockExtendedGmxTracker = await deployContract("MockRewardTrackerV1", [mockExtendedGmxDistributor.address]);
     mockLzReadResponseChainC = await deployContract("MockLzReadResponse", []);
@@ -1377,6 +1378,7 @@ describe("FeeDistributor", function () {
     );
 
     const mockExtendedGmxDistributorD = await deployContract("MockRewardDistributorV1", []);
+    await mockExtendedGmxDistributorD.updateLastDistributionTime();
     const mockExtendedGmxTrackerD = await deployContract("MockRewardTrackerV1", [mockExtendedGmxDistributorD.address]);
     const mockVesterD = await deployContract("MockVesterV1", [
       [signer5.address, signer6.address, signer7.address],
