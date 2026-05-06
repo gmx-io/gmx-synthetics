@@ -606,8 +606,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 feeAmountGmx = _getUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid));
         address distributor = IRewardTracker(extendedGmxTracker).distributor();
         _transferOut(gmx, extendedGmxTracker, feeAmountGmx);
-        IRewardDistributor(distributor).updateLastDistributionTime();
         IRewardDistributor(distributor).setTokensPerInterval(feeAmountGmx / 1 weeks);
+        IRewardDistributor(distributor).updateLastDistributionTime();
     }
 
     function _setUint(bytes32 fullKey, uint256 value) internal {
@@ -653,6 +653,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             chainlinkTreasuryWntAmount,
             _getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
         );
+        if (keeperCostsV2 > chainlinkTreasuryWntAmount - wntForChainlink) {
+            return (wntForChainlink, chainlinkTreasuryWntAmount - wntForChainlink);
+        }
         uint256 wntForTreasury = chainlinkTreasuryWntAmount - wntForChainlink - keeperCostsV2;
 
         return (wntForChainlink, wntForTreasury);

@@ -605,8 +605,7 @@ library PositionUtils {
     function updateOpenInterest(
         PositionUtils.UpdatePositionParams memory params,
         int256 sizeDeltaUsd,
-        int256 sizeDeltaInTokens,
-        MarketUtils.MarketPrices memory prices
+        int256 sizeDeltaInTokens
     ) internal {
         if (sizeDeltaUsd != 0) {
             bool useOpenInterestInTokens = params.contracts.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);

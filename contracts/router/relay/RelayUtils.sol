@@ -40,7 +40,7 @@ string constant CREATE_ORDER_PARAMS = string(
         CREATE_ORDER_NUMBERS
     )
 );
-string constant CREATE_TWAP_ORDER_TYPE = string(
+string constant CREATE_TWAP_ORDER_PARAMS = string(
     abi.encodePacked(
         "CreateTwapOrder(address account,CreateOrderParams params,uint256 twapCount,uint256 interval,bytes32 relayParams,bytes32 subaccountApproval)",
         CREATE_ORDER_ADDRESSES,
@@ -73,7 +73,7 @@ library RelayUtils {
                 CREATE_ORDER_NUMBERS
             )
         );
-    bytes32 public constant CREATE_TWAP_ORDER_TYPEHASH = keccak256(bytes(CREATE_TWAP_ORDER_TYPE));
+    bytes32 public constant CREATE_TWAP_ORDER_TYPEHASH = keccak256(bytes(CREATE_TWAP_ORDER_PARAMS));
 
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(

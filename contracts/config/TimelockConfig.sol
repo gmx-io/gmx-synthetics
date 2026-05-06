@@ -435,7 +435,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
             revert Errors.EmptyDataStreamFeedId(token);
         }
         if (edgeDataStreamTokenDecimals == 0) {
-            revert Errors.InvalidEdgeDataStreamDecimals(token);
+            revert Errors.InvalidEdgeDataStreamDecimals(token, edgeDataStreamTokenDecimals);
         }
 
         bytes[] memory payloads = new bytes[](2);

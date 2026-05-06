@@ -303,8 +303,7 @@ library DecreasePositionUtils {
         PositionUtils.updateOpenInterest(
             params,
             -params.order.sizeDeltaUsd().toInt256(),
-            -values.sizeDeltaInTokens.toInt256(),
-            cache.prices
+            -values.sizeDeltaInTokens.toInt256()
         );
 
         // affiliate rewards are still distributed even if the order is a liquidation order

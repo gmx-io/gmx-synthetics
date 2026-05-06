@@ -79,7 +79,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       gelatoRelayFeeBaseAmount: 0,
       relayFeeAddress: ethers.constants.AddressZero,
       maxRelayFeeUsdForSubaccount: 0,
-
+      maxRelayFeeSwapUsd: 0,
       maxDataLength: 18,
     };
   }
@@ -157,6 +157,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     gelatoRelayFeeBaseAmount: 50000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
     relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
+    maxRelayFeeSwapUsd: decimalToFloat(100),
 
     maxDataLength: 18,
 

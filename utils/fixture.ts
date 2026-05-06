@@ -123,7 +123,6 @@ async function setup() {
   const relayUtils = await hre.ethers.getContract("RelayUtils");
   const signatureUtils = await hre.ethers.getContract("SignatureUtils");
   const oracle = await hre.ethers.getContract("Oracle");
-  const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
   const marketUtils = await hre.ethers.getContract("MarketUtils");
@@ -340,7 +339,6 @@ async function setup() {
       relayUtils,
       signatureUtils,
       oracle,
-      gmOracleProvider,
       chainlinkPriceFeedProvider,
       chainlinkDataStreamProvider,
       marketUtils,

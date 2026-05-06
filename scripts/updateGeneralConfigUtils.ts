@@ -230,6 +230,12 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.MAX_RELAY_FEE_SWAP_USD,
+      value: generalConfig.maxRelayFeeSwapUsd,
+      label: `maxRelayFeeUsd`,
+    },
+    {
+      type: "uint",
       baseKey: keys.MAX_DATA_LENGTH,
       value: generalConfig.maxDataLength,
       label: `maxDataLength`,

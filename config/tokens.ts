@@ -1808,7 +1808,7 @@ const config: {
     TEST: {
       synthetic: true,
       decimals: 18,
-      oracleProvider: "gmOracle",
+      oracleProvider: "chainlinkDataStream",
     },
     WBTC: {
       decimals: 8,
@@ -1891,20 +1891,20 @@ const config: {
     ADA: {
       decimals: 18,
       synthetic: true,
-      oracleProvider: "gmOracle",
+      oracleProvider: "chainlinkDataStream",
       oracleTimestampAdjustment: 1,
     },
     DOT: {
       decimals: 18,
       synthetic: true,
-      oracleProvider: "gmOracle",
+      oracleProvider: "chainlinkDataStream",
     },
     MATIC: {
       decimals: 18,
       synthetic: true,
       // dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
       // dataStreamFeedDecimals: 18,
-      // oracleProvider: "gmOracle",
+      // oracleProvider: "chainlinkDataStream",
       dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9",
       dataStreamFeedDecimals: 18,
     },
@@ -1917,7 +1917,7 @@ const config: {
     TRX: {
       decimals: 18,
       synthetic: true,
-      oracleProvider: "gmOracle",
+      oracleProvider: "chainlinkDataStream",
     },
   },
   // token addresses are retrieved in runtime for hardhat and localhost networks
