@@ -24,5 +24,6 @@
   "ClaimVault_1": 1768458466,
   "EdgeDataStreamVerifier_6": 1768458481,
   "EdgeDataStreamProvider_6": 1768458484,
-  "FeeDistributorVault_1": 1768458506
+  "FeeDistributorVault_1": 1768458506,
+  "StaticOracleProvider_1": 1778119916
 }
