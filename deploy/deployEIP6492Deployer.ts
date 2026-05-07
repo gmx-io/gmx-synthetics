@@ -1,5 +1,6 @@
 import { createDeployFunction } from "../utils/deploy";
 import { EIP6492_DEPLOYER } from "../utils/keys";
+import { grantRoleIfNotGranted } from "../utils/role";
 
 const func = createDeployFunction({
   contractName: "EIP6492Deployer",
@@ -11,9 +12,9 @@ const func = createDeployFunction({
     const currentValue = await dataStore.getAddress(EIP6492_DEPLOYER);
     if (currentValue.toLowerCase() !== deployedContract.address.toLowerCase()) {
       console.log(`Setting EIP6492_DEPLOYER in DataStore to ${deployedContract.address}`);
-      const configDeployment = await get("Config");
-      const config = await ethers.getContractAt("Config", configDeployment.address);
-      await config.setAddress(EIP6492_DEPLOYER, "0x", deployedContract.address);
+      // const configDeployment = await get("Config");
+      // const config = await ethers.getContractAt("Config", configDeployment.address);
+      // await config.setAddress(EIP6492_DEPLOYER, "0x", deployedContract.address);
     }
   },
   id: "EIP6492Deployer_1",
