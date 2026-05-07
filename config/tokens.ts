@@ -1249,6 +1249,53 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
+    GOLD: {
+      // XAU
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003cee5f549828ad1e7a7325f3244956ec493223b3408dd47a30499759ae4cd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    SILVER: {
+      // XAG
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e17a3db8679890f061d82e651e584c815fb35012ea5613593c322c598d9f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    WTIOIL: {
+      // CL
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00034a112217255cc022f9b1f8e504e38081698a141a963349cf53d0e3910a95",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    BRENTOIL: {
+      // BZ
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003c1444945554474726cf719e4f91d7bec2eac5a851a7b1ab42e3f2ec1e9a6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    NATGAS: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00035231c4651c67585a5b7526878b7bfa053ab59746c25d86e4f82c8693f4ee",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MEGA: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e5c055e11f7689db6ca622867a5e7228d76bf311c3345baef8b081bb18bd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -1589,6 +1636,14 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    MEGA: {
+      address: "0x28B7E77f82B25B95953825F1E3eA0E36c1c29861",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003e5c055e11f7689db6ca622867a5e7228d76bf311c3345baef8b081bb18bd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   arbitrumSepolia: {
     WETH: {
@@ -1640,14 +1695,58 @@ const config: {
       address: "0x095f40616FA98Ff75D1a7D0c68685c5ef806f110", // Stargate USDT
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
+      dataStreamFeedId: "0x00032874077216155926e26c159c1c20a572921371d9de605fe9633e48d136f9", // USDT
       dataStreamFeedDecimals: 18,
       priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
+        address: "0x80EDee6f667eCc9f63a0a6f55578F870651f06A4", // USDT
         decimals: 8,
         heartbeatDuration: 144 * 60 * 60,
         stablePriceUsd: decimalToFloat(1),
       },
+    },
+    XAU: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000332d678cdc95604058871774641e47841f68474316a1366433401722ad64c",
+      dataStreamFeedDecimals: 18,
+    },
+    XAG: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003df2295a030fae13d6764627bee0e4101be1b39f7e6a33deb9207b1c92bff",
+      dataStreamFeedDecimals: 18,
+    },
+    XPT: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003c9769ffbb96b88785cf5e6ba9974eb447ff0d00d6b722f57842b033c5acd",
+      dataStreamFeedDecimals: 18,
+    },
+    XPD: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00033d2059d23ee3e105d2d9a885c1afd7686a4d32767a8b6ba99316ebe0a50b",
+      dataStreamFeedDecimals: 18,
+    },
+    WTIOIL: {
+      // CL
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000336a9415df7de086262b13f25c2818c639a74ad64e30cc017c96a896c99af",
+      dataStreamFeedDecimals: 18,
+    },
+    BRENTOIL: {
+      // BZ
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00032eea59e0fc7b13010c291c2d0d0e06d178eea5ea96c481d703ab1b1bc9f7",
+      dataStreamFeedDecimals: 18,
+    },
+    NATGAS: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000361c33db98ecc0978f0657197e3d97507647b2cbf1450716737ccc6fc6fbd",
+      dataStreamFeedDecimals: 18,
     },
   },
   arbitrumGoerli: {
