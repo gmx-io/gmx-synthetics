@@ -1,0 +1,66 @@
+{
+  "address": "0x32784C86a35284316427a4C18e02E68bD7d352be",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "factory",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "deploy",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x21250643825bf95e0434ea9f5e2ac5aedae8c7f9301d4de3b58c06386c5c1b01",
+  "receipt": {
+    "to": null,
+    "from": "0xE7BfFf2aB721264887230037940490351700a068",
+    "contractAddress": "0x32784C86a35284316427a4C18e02E68bD7d352be",
+    "transactionIndex": 26,
+    "gasUsed": "4336777",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x4d8ac49158e14090ffbf1e7d4f59e792c01eeb1483ec01d034c2e6acc9bc95c0",
+    "transactionHash": "0x21250643825bf95e0434ea9f5e2ac5aedae8c7f9301d4de3b58c06386c5c1b01",
+    "logs": [],
+    "blockNumber": 15326421,
+    "cumulativeGasUsed": "13121308",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "6e6f2ad09f1fc2750049effd0496bd52",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.29+commit.ab55807c\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"factory\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"deploy\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/router/relay/EIP6492Deployer.sol\":\"EIP6492Deployer\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":10},\"remappings\":[]},\"sources\":{\"contracts/router/relay/EIP6492Deployer.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\n// @title EIP6492Deployer\\n// @dev Unprivileged helper that executes factory calls for EIP-6492 signature\\n// validation. By isolating factory.call() in a contract with no roles,\\n// attacker-controlled calldata cannot access privileged protocol functions.\\n// This contract must NEVER be granted any roles (CONTROLLER, ROUTER_PLUGIN, etc).\\ncontract EIP6492Deployer {\\n    function deploy(address factory, bytes calldata data) external returns (bool) {\\n        (bool success, ) = factory.call(data);\\n        return success;\\n    }\\n}\\n\",\"keccak256\":\"0x15755547a4aa69711af39be02828a55217b194d6e3959fa4a86164ee80029b06\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b506101998061001f6000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063e97fac0514610030575b600080fd5b61004361003e3660046100c2565b610057565b604051901515815260200160405180910390f35b600080846001600160a01b03168484604051610074929190610153565b6000604051808303816000865af19150503d80600081146100b1576040519150601f19603f3d011682016040523d82523d6000602084013e6100b6565b606091505b50909695505050505050565b6000806000604084860312156100d757600080fd5b83356001600160a01b03811681146100ee57600080fd5b925060208401356001600160401b0381111561010957600080fd5b8401601f8101861361011a57600080fd5b80356001600160401b0381111561013057600080fd5b86602082840101111561014257600080fd5b939660209190910195509293505050565b818382376000910190815291905056fea264697066735822122090dde4b95cc54d6263fdc381dea555c74a0ac579910a92e27a797cbbee6cb12064736f6c634300081d0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063e97fac0514610030575b600080fd5b61004361003e3660046100c2565b610057565b604051901515815260200160405180910390f35b600080846001600160a01b03168484604051610074929190610153565b6000604051808303816000865af19150503d80600081146100b1576040519150601f19603f3d011682016040523d82523d6000602084013e6100b6565b606091505b50909695505050505050565b6000806000604084860312156100d757600080fd5b83356001600160a01b03811681146100ee57600080fd5b925060208401356001600160401b0381111561010957600080fd5b8401601f8101861361011a57600080fd5b80356001600160401b0381111561013057600080fd5b86602082840101111561014257600080fd5b939660209190910195509293505050565b818382376000910190815291905056fea264697066735822122090dde4b95cc54d6263fdc381dea555c74a0ac579910a92e27a797cbbee6cb12064736f6c634300081d0033",
+  "libraries": {},
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
