@@ -34,7 +34,7 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IGlvDepositUtils.CreateGlvDepositParams memory params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, transferRequests, params);
+        bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, account, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         return _createGlvDeposit(account, srcChainId, transferRequests, params);
@@ -61,7 +61,7 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);
+        bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, account, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _processTransferRequests(account, transferRequests, srcChainId);
