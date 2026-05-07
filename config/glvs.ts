@@ -98,7 +98,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("AERO", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("BRETT", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("WLFI", arbitrum_ethUsdcDefaultCap, 1),
-          createGlvMarketConfig("WELL", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("WELL", arbitrum_ethUsdcDefaultCap, 1, true),
           createGlvMarketConfig("VVV", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("MORPHO", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LINK", arbitrum_ethUsdcDefaultCap, 1),
@@ -111,6 +111,13 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("SYRUP", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("CHZ", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LIT", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("MEGA", arbitrum_ethUsdcDefaultCap, 1),
+          // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
+          createGlvMarketConfig("GOLD", arbitrum_ethUsdcDefaultCap, 1), // XAU
+          createGlvMarketConfig("SILVER", arbitrum_ethUsdcDefaultCap, 1), // XAG
+          createGlvMarketConfig("WTIOIL", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("BRENTOIL", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("NATGAS", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {
@@ -211,6 +218,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("BTC", 5_000_000, 1),
           createGlvMarketConfig("WETH", 5_000_000, 1),
           createGlvMarketConfig("SOL", 5_000_000, 1),
+          createGlvMarketConfig("MEGA", 2_000_000, 1), // max token amount
         ],
       },
     ],
@@ -227,6 +235,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           createGlvMarketConfig("WETH", 15_000_000, 1),
           createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.0),
+          // RWA and Commodities (real asset names are preferred e.g. GOLD instead of XAU)
+          createGlvMarketConfig("XAU", 5_000_000, 1), // GOLD
+          createGlvMarketConfig("XAG", 5_000_000, 1), // SILVER
+          createGlvMarketConfig("XPT", 2_000_000, 1), // PLATINUM
+          createGlvMarketConfig("XPD", 2_000_000, 1), // PALLADIUM
+          createGlvMarketConfig("WTIOIL", 5_000_000, 1), // CL
+          createGlvMarketConfig("BRENTOIL", 5_000_000, 1), // BZ
+          createGlvMarketConfig("NATGAS", 5_000_000, 1), // NATGAS
         ],
       },
     ],
