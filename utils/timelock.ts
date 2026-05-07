@@ -7,6 +7,7 @@ import * as keys from "./keys";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { BigNumber, constants } from "ethers";
 import * as crypto from "crypto";
+import { writeJsonFile } from "./file";
 
 export async function timelockWriteMulticall({ timelock, multicallWriteParams }) {
   console.info("multicallWriteParams", multicallWriteParams);
@@ -44,6 +45,8 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
     await signExternally(await timelock.populateTransaction.multicall(multicallWriteParams));
   } else {
     console.info("NOTE: executed in read-only mode, no transactions were sent, simulation was successful");
+
+    writeJsonFile("out/timelock_tx.txt", await timelock.populateTransaction.multicall(multicallWriteParams));
   }
 }
 
