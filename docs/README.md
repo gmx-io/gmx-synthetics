@@ -18,10 +18,10 @@ The documentation is generated from the deployment artifacts in `/deployments/` 
 
 | Network | Contracts | Documentation | Last Updated |
 |---------|-----------|---------------|-------------|
-| Arbitrum One | 141 | [View](./arbitrum-deployments.md) | Apr 24, 2026, 06:27 AM UTC |
-| Avalanche C-Chain | 137 | [View](./avalanche-deployments.md) | Apr 24, 2026, 06:24 AM UTC |
+| Arbitrum One | 141 | [View](./arbitrum-deployments.md) | Apr 24, 2026, 06:24 AM UTC |
+| Avalanche C-Chain | 143 | [View](./avalanche-deployments.md) | May 7, 2026, 02:13 AM UTC |
 | Botanix | 132 | [View](./botanix-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
-| MegaETH | 128 | [View](./megaEth-deployments.md) | Jan 15, 2026, 06:35 AM UTC |
+| MegaETH | 129 | [View](./megaEth-deployments.md) | May 7, 2026, 02:13 AM UTC |
 
 ### Testnet
 

@@ -2,8 +2,8 @@
 
 **Network Type:** Mainnet  
 **Chain ID:** 4326  
-**Total Contracts:** 128  
-**Last Updated:** Feb 13, 2026, 08:34 AM UTC
+**Total Contracts:** 129  
+**Last Updated:** May 7, 2026, 02:13 AM UTC
 
 ## Deployed Contracts
 
@@ -122,6 +122,7 @@
 | ShiftStoreUtils | `0x78f795255a4A3D5b3B51537f58bFfc814229FebC` | [View on Explorer](https://megaeth.blockscout.com/address/0x78f795255a4A3D5b3B51537f58bFfc814229FebC) |
 | ShiftUtils | `0xc251968307875E79c698ADF5D646410901fF61B6` | [View on Explorer](https://megaeth.blockscout.com/address/0xc251968307875E79c698ADF5D646410901fF61B6) |
 | ShiftVault | `0xC255c70b50623054CADbAD9A02E1CFE73d286666` | [View on Explorer](https://megaeth.blockscout.com/address/0xC255c70b50623054CADbAD9A02E1CFE73d286666) |
+| StaticOracleProvider | `0xb5418e0983E533B17E81fb8d0C81Fe60C318F4e9` | [View on Explorer](https://megaeth.blockscout.com/address/0xb5418e0983E533B17E81fb8d0C81Fe60C318F4e9) |
 | SubaccountGelatoRelayRouter | `0xD515fA0B4d704f3E2C57270F1F53BEeE16348B3b` | [View on Explorer](https://megaeth.blockscout.com/address/0xD515fA0B4d704f3E2C57270F1F53BEeE16348B3b) |
 | SubaccountRouter | `0x3133aC88af73d3187f1700a2426AD95B5d6E0562` | [View on Explorer](https://megaeth.blockscout.com/address/0x3133aC88af73d3187f1700a2426AD95B5d6E0562) |
 | SubaccountRouterUtils | `0x29B51c0647628A87739344725E2d2bB17D0414f2` | [View on Explorer](https://megaeth.blockscout.com/address/0x29B51c0647628A87739344725E2d2bB17D0414f2) |
