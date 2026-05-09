@@ -4254,8 +4254,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("4.44e-8"),
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("155%"),
+      openInterestReserveFactor: percentageToFloat("150%"),
 
       maxOpenInterest: decimalToFloat(1_250_000),
       maxPoolUsdForDeposit: decimalToFloat(1_875_000),
