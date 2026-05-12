@@ -3964,6 +3964,8 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:WELL/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
+      isDisabled: true,
+
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithLowerBase,
