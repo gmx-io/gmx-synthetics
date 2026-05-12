@@ -34,7 +34,7 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         address account,
         uint256 chainId
     ) external {
-        bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
+        bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, account, key);
         _handleSignature(structHash, relayParams.signature, account, chainId);
     }
 
