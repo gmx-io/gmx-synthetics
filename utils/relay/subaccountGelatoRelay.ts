@@ -487,9 +487,10 @@ export async function sendRemoveSubaccount(p: {
   });
 }
 
-async function getRemoveSubaccountSignature({ signer, relayParams, subaccount, verifyingContract, chainId }) {
+async function getRemoveSubaccountSignature({ signer, relayParams, account, subaccount, verifyingContract, chainId }) {
   const types = {
     RemoveSubaccount: [
+      { name: "account", type: "address" },
       { name: "subaccount", type: "address" },
       { name: "relayParams", type: "bytes32" },
     ],
@@ -497,6 +498,7 @@ async function getRemoveSubaccountSignature({ signer, relayParams, subaccount, v
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
+    account,
     subaccount,
     relayParams: hashRelayParams(relayParams),
   };

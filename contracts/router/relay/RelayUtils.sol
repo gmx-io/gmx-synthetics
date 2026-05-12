@@ -83,7 +83,7 @@ library RelayUtils {
         );
 
     bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
-        keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
+        keccak256(bytes("RemoveSubaccount(address account,address subaccount,bytes32 relayParams)"));
 
     bytes32 public constant BATCH_TYPEHASH =
         keccak256(
@@ -250,9 +250,10 @@ library RelayUtils {
 
     function getRemoveSubaccountStructHash(
         IRelayUtils.RelayParams calldata relayParams,
+        address account,
         address subaccount
     ) external pure returns (bytes32) {
-        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, _getRelayParamsHash(relayParams)));
+        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, account, subaccount, _getRelayParamsHash(relayParams)));
     }
 
     function getSubaccountApprovalStructHash(
