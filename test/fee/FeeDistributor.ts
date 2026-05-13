@@ -266,8 +266,13 @@ describe("FeeDistributor", function () {
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdA, keys.FEE_RECEIVER]),
-      user0.address
+      encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.feeWithdrawerKey]),
+      mockLzReadResponseChainA.address
+    );
+    await config.setAddress(
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
+      encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.feeWithdrawerKey]),
+      mockLzReadResponseChainC.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -275,11 +280,6 @@ describe("FeeDistributor", function () {
       user0.address
     );
     await dataStore.setAddress(keys.FEE_RECEIVER, feeDistributorVault.address);
-    await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdC, keys.FEE_RECEIVER]),
-      user1.address
-    );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.feeDistributorVaultKey]),
@@ -381,12 +381,12 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
+    await mockLzReadResponseChainA.setWithdrawableAmount(
+      gmxA.address,
       expandDecimals(40_000, 18)
     );
-    await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
+    await mockLzReadResponseChainC.setWithdrawableAmount(
+      gmxC.address,
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
@@ -478,12 +478,12 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
+    await mockLzReadResponseChainA.setWithdrawableAmount(
+      gmxA.address,
       expandDecimals(10_000, 18)
     );
-    await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
+    await mockLzReadResponseChainC.setWithdrawableAmount(
+      gmxC.address,
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
@@ -590,12 +590,12 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
+    await mockLzReadResponseChainA.setWithdrawableAmount(
+      gmxA.address,
       expandDecimals(40_000, 18)
     );
-    await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
+    await mockLzReadResponseChainC.setWithdrawableAmount(
+      gmxC.address,
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
@@ -779,12 +779,12 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
+    await mockLzReadResponseChainA.setWithdrawableAmount(
+      gmxA.address,
       expandDecimals(10_000, 18)
     );
-    await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
+    await mockLzReadResponseChainC.setWithdrawableAmount(
+      gmxC.address,
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
@@ -943,12 +943,12 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
+    await mockLzReadResponseChainA.setWithdrawableAmount(
+      gmxA.address,
       expandDecimals(10_000, 18)
     );
-    await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
+    await mockLzReadResponseChainC.setWithdrawableAmount(
+      gmxC.address,
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
@@ -1149,6 +1149,8 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
     await feeHandler.withdrawFees(gmx.address);
@@ -1330,12 +1332,12 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
+    await mockLzReadResponseChainA.setWithdrawableAmount(
+      gmxA.address,
       expandDecimals(10_000, 18)
     );
-    await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
+    await mockLzReadResponseChainC.setWithdrawableAmount(
+      gmxC.address,
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
@@ -1551,8 +1553,8 @@ describe("FeeDistributor", function () {
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdD, keys.FEE_RECEIVER]),
-      feeDistributorVaultD.address
+      encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.feeWithdrawerKey]),
+      feeHandlerD.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1654,8 +1656,8 @@ describe("FeeDistributor", function () {
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdA, keys.FEE_RECEIVER]),
-      user0.address
+      encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.feeWithdrawerKey]),
+      mockLzReadResponseChainA.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1664,8 +1666,8 @@ describe("FeeDistributor", function () {
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdB, keys.FEE_RECEIVER]),
-      feeDistributorVault.address
+      encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.feeWithdrawerKey]),
+      feeHandler.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1674,8 +1676,8 @@ describe("FeeDistributor", function () {
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdC, keys.FEE_RECEIVER]),
-      user1.address
+      encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.feeWithdrawerKey]),
+      mockLzReadResponseChainC.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1763,12 +1765,12 @@ describe("FeeDistributor", function () {
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
     await mockRewardTrackerD.setTotalSupply(expandDecimals(6_000_000, 18));
 
-    await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
+    await mockLzReadResponseChainA.setWithdrawableAmount(
+      gmxA.address,
       expandDecimals(10_000, 18)
     );
-    await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
+    await mockLzReadResponseChainC.setWithdrawableAmount(
+      gmxC.address,
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));

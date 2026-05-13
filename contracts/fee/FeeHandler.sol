@@ -10,11 +10,12 @@ import "../role/RoleModule.sol";
 import "../oracle/OracleModule.sol";
 import "../utils/BasicMulticall.sol";
 import "../fee/FeeUtils.sol";
+import "../fee/IFeeWithdrawer.sol";
 import "../v1/IVaultV1.sol";
 import "../v1/IVaultGovV1.sol";
 
 // @title FeeHandler
-contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall {
+contract FeeHandler is IFeeWithdrawer, ReentrancyGuard, RoleModule, OracleModule, BasicMulticall {
     using SafeERC20 for IERC20;
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -50,7 +51,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     // note that claimFees should be called to claim pending fees if needed
     // before calling this function
     // @param buybackToken the token for which to withdraw fees
-    function withdrawFees(address buybackToken) external nonReentrant onlyFeeKeeper {
+    function withdrawFees(address buybackToken) external override nonReentrant onlyFeeKeeper {
         _validateBuybackToken(_getBatchSize(buybackToken), buybackToken);
 
         address receiver = dataStore.getAddress(Keys.FEE_RECEIVER);
@@ -59,6 +60,18 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         dataStore.setUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken), 0);
 
         IERC20(buybackToken).safeTransfer(receiver, amount);
+    }
+
+    function withdrawableAmount(address token) external view override returns (uint256) {
+        return dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(token));
+    }
+
+    function amountFactor(address /*token*/) external pure override returns (uint256) {
+        return 0;
+    }
+
+    function withdrawTarget() external view override returns (address) {
+        return dataStore.getAddress(Keys.FEE_RECEIVER);
     }
 
     // @dev claim fees in feeToken from the specified markets
@@ -189,8 +202,8 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     }
 
     function _incrementWithdrawableBuybackTokenAmount(address buybackToken, uint256 amount) internal {
-        uint256 withdrawableAmount = dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken));
-        dataStore.setUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken), withdrawableAmount + amount);
+        uint256 currentAmount = dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken));
+        dataStore.setUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken), currentAmount + amount);
     }
 
     function _incrementAvailableFeeAmounts(uint256 version, address feeToken, uint256 feeAmount) internal {

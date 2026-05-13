@@ -2,6 +2,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export type FeeDistributorConfig = {
   feeDistributor?: string;
+  gmx?: string;
+  wnt?: string;
 };
 
 export default async function (hre: HardhatRuntimeEnvironment): Promise<FeeDistributorConfig> {

@@ -529,15 +529,13 @@ library Errors {
     error OutdatedReadResponse(uint256 timestamp);
     error InvalidDistributionState(uint256 distributionStateUint);
     error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
-    error BridgingTransactionFailed(bytes result);
     error MaxFeesFromTreasuryExceeded(uint256 maxFeesFromTreasury, uint256 additionalFeesFromTreasury);
     error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength);
-    error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
     error KeeperAmountMismatch(uint256 feesForKeepers, uint256 feesToKeepers);
     error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
-    error InvalidReferralRewardToken(address token);
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
     error ZeroTreasuryAddress();
+    error InvalidWithdrawTarget(address withdrawTarget, address expected);
 
     // CreReceiver errors
     error UnauthorizedWorkflowOwner(address workflowOwner);

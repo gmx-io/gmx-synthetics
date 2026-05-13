@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
-import { Contract, ContractFactory } from "ethers";
+import { Contract, ContractFactory, Signer } from "ethers";
 import { hashString } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
 
@@ -118,7 +118,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
 };
 
-async function getFactory(deployer: ethers.SignerWithAddress, contractName: string, libraries?: any) {
+async function getFactory(deployer: Signer, contractName: string, libraries?: any) {
   if (libraries) {
     return await ethers.getContractFactory(contractName, {
       signer: deployer,
@@ -382,13 +382,6 @@ async function deployContracts(): Promise<DeploymentResult> {
     await mockExtendedGmxTracker.deployed();
     console.log("MockRewardTrackerV1 deployed to:", mockExtendedGmxTracker.address);
     contracts.mockExtendedGmxTracker = mockExtendedGmxTracker.address;
-    await delay(txDelay);
-
-    const MockVesterV1: ContractFactory = await getFactory(deployer, "MockVesterV1");
-    const mockVester: Contract = await MockVesterV1.deploy([deployerAddress], [expandDecimals(1, 18)]);
-    await mockVester.deployed();
-    console.log("MockVesterV1 deployed to:", mockVester.address);
-    contracts.mockVester = mockVester.address;
     await delay(txDelay);
 
     saveCheckpoint(5, contracts);

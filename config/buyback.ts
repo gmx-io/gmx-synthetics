@@ -7,25 +7,25 @@ export type BuybackBatchAmount = {
   amount: BigNumberish;
 };
 
-export type BuybackGmxFactor = {
+export type BuybackPrimaryTokenFactor = {
   version: number;
   factor: BigNumberish;
 };
 
 export type BuybackConfig = {
   batchAmounts: BuybackBatchAmount[];
-  gmxFactors: BuybackGmxFactor[];
+  primaryTokenFactors: BuybackPrimaryTokenFactor[];
   maxPriceAge: number;
 };
 
 export default async function (hre: HardhatRuntimeEnvironment): Promise<BuybackConfig> {
   const defaultEmptyConfig = {
     batchAmounts: [],
-    gmxFactors: [],
+    primaryTokenFactors: [],
     maxPriceAge: 0,
   };
 
-  const defaultBuybackGmxFactor = [
+  const defaultBuybackPrimaryTokenFactor = [
     {
       version: 1,
       factor: percentageToFloat("30%"),
@@ -53,7 +53,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<BuybackC
           amount: expandDecimals(15, 17),
         },
       ],
-      gmxFactors: defaultBuybackGmxFactor,
+      primaryTokenFactors: defaultBuybackPrimaryTokenFactor,
       maxPriceAge: defaultMaxPriceAge,
     },
 
@@ -68,7 +68,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<BuybackC
           amount: expandDecimals(150, 18),
         },
       ],
-      gmxFactors: defaultBuybackGmxFactor,
+      primaryTokenFactors: defaultBuybackPrimaryTokenFactor,
       maxPriceAge: defaultMaxPriceAge,
     },
 

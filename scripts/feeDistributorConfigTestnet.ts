@@ -44,7 +44,7 @@ if (resetDistributionTimestampStr !== "true" && resetDistributionTimestampStr !=
 }
 const resetDistributionTimestamp = resetDistributionTimestampStr === "true";
 
-const resetDistributionStateStr = process.env.RESET_DISTRIBUTION_TIMESTAMP;
+const resetDistributionStateStr = process.env.RESET_DISTRIBUTION_STATE;
 if (!resetDistributionStateStr) {
   throw new Error("RESET_DISTRIBUTION_STATE environment variable not provided");
 }
@@ -392,7 +392,7 @@ async function configureContracts(
     await delay(txDelay);
     await config.setUint(keys.FEE_DISTRIBUTOR_GAS_LIMIT, "0x", 5_000_000);
     await delay(txDelay);
-    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
+    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
     await delay(txDelay);
     await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await delay(txDelay);
@@ -420,28 +420,28 @@ async function configureContracts(
       const chainId = chainConfig.chainIds[i];
       const isCurrentChain = chainId === chainConfig.currentChainId;
 
-      let gmxAddress, trackerAddress, dataStoreAddress, feeReceiverAddress, feeDistributorVaultAddress;
+      let gmxAddress, trackerAddress, dataStoreAddress, feeWithdrawerAddress, feeDistributorVaultAddress;
 
       if (isCurrentChain) {
         // Use current chain's contracts
         gmxAddress = contracts.gmx;
         trackerAddress = contracts.mockExtendedGmxTracker;
         dataStoreAddress = contracts.dataStore;
-        feeReceiverAddress = contracts.feeDistributorVault;
+        feeWithdrawerAddress = contracts.feeHandler;
         feeDistributorVaultAddress = contracts.feeDistributorVault;
       } else if (otherContracts) {
         // Use other chain's contracts if available
         gmxAddress = otherContracts.gmx;
         trackerAddress = otherContracts.mockExtendedGmxTracker;
         dataStoreAddress = otherContracts.dataStore;
-        feeReceiverAddress = otherContracts.feeDistributorVault;
+        feeWithdrawerAddress = otherContracts.feeHandler;
         feeDistributorVaultAddress = otherContracts.feeDistributorVault;
       } else {
         // Use AddressZero if other chain not deployed yet
         gmxAddress = ethers.constants.AddressZero;
         trackerAddress = ethers.constants.AddressZero;
         dataStoreAddress = ethers.constants.AddressZero;
-        feeReceiverAddress = ethers.constants.AddressZero;
+        feeWithdrawerAddress = ethers.constants.AddressZero;
         feeDistributorVaultAddress = ethers.constants.AddressZero;
       }
 
@@ -470,8 +470,8 @@ async function configureContracts(
         if (!isCurrentChain) {
           await config.setAddress(
             keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-            encodeData(["uint256", "bytes32"], [chainId, keys.FEE_RECEIVER]),
-            feeReceiverAddress
+            encodeData(["uint256", "bytes32"], [chainId, feeDistributorConfig.feeWithdrawerKey]),
+            feeWithdrawerAddress
           );
           await delay(txDelay);
 
@@ -520,13 +520,6 @@ async function configureContracts(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
       encodeData(["bytes32"], [hashString("TREASURY")]),
       deployerAddress
-    );
-    await delay(txDelay);
-
-    await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["bytes32"], [hashString("ESGMX_VESTER")]),
-      contracts.mockVester
     );
     await delay(txDelay);
 

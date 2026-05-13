@@ -28,6 +28,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     bytes32 internal constant LAYERZERO_OFT = keccak256(abi.encode("LAYERZERO_OFT"));
     bytes32 internal constant CHAINLINK = keccak256(abi.encode("CHAINLINK"));
     bytes32 internal constant FEE_DISTRIBUTOR_VAULT = keccak256(abi.encode("FEE_DISTRIBUTOR_VAULT"));
+    bytes32 internal constant FEE_WITHDRAWER = keccak256(abi.encode("FEE_WITHDRAWER"));
 
     FeeDistributorVault internal immutable feeDistributorVault;
     IFeeWithdrawer internal immutable feeWithdrawer;
@@ -82,10 +83,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     // In cases in which a chain encounters downtime or a keeper experiences issues, a contingency
     // should be in place to ensure the fee distribution is completed without issues
     function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
-        // validate that the FEE_RECEIVER address stored in dataStore != zero address
-        address feeReceiver = _getAddress(Keys.FEE_RECEIVER);
-        if (feeReceiver == address(0)) {
-            revert Errors.InvalidFeeReceiver(feeReceiver);
+        // validate that the feeWithdrawer's withdrawTarget is the feeDistributorVault
+        address target = feeWithdrawer.withdrawTarget();
+        if (target != address(feeDistributorVault)) {
+            revert Errors.InvalidWithdrawTarget(target, address(feeDistributorVault));
         }
 
         // validate distribution state and that distribution is not yet completed for the current week
@@ -103,44 +104,31 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             address rewardTracker = _getAddressInfoForChain(chainId, REWARD_TRACKER);
 
             if (chainId == block.chainid) {
-                uint256 feeAmountGmxCurrentChain = (
-                    feeReceiver == address(feeDistributorVault)
-                        ? _getUint(Keys.withdrawableBuybackTokenAmountKey(gmx))
-                        : IERC20(gmx).balanceOf(feeReceiver)
-                ) + _getFeeDistributorVaultBalance(gmx);
+                uint256 feeAmountGmxCurrentChain = feeWithdrawer.withdrawableAmount(gmx) +
+                    _getFeeDistributorVaultBalance(gmx);
                 uint256 stakedGmx = IERC20(rewardTracker).totalSupply();
                 _setUint(Keys2.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmxCurrentChain);
                 _setUint(Keys2.feeDistributorStakedGmxKey(chainId), stakedGmx);
                 continue;
             }
 
-            address feeReceiverTargetChain = _getAddressInfoForChain(chainId, Keys.FEE_RECEIVER);
+            address feeWithdrawerTargetChain = _getAddressInfoForChain(chainId, FEE_WITHDRAWER);
             address feeDistributorVaultTargetChain = _getAddressInfoForChain(chainId, FEE_DISTRIBUTOR_VAULT);
             address gmxTargetChain = _getAddressInfoForChain(chainId, GMX);
             uint32 layerZeroChainId = uint32(_getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
             uint256 readRequestIndex = targetChainIndex * 3;
-            if (feeReceiverTargetChain == feeDistributorVaultTargetChain) {
-                readRequestInputs[readRequestIndex] = _setReadRequestInput(
-                    layerZeroChainId,
-                    _getAddressInfoForChain(chainId, DATASTORE),
-                    abi.encodeWithSelector(
-                        DataStore.getUint.selector,
-                        Keys.withdrawableBuybackTokenAmountKey(gmxTargetChain)
-                    )
-                );
-            } else {
-                readRequestInputs[readRequestIndex] = _setReadRequestInput(
-                    layerZeroChainId,
-                    gmxTargetChain,
-                    abi.encodeWithSelector(IERC20.balanceOf.selector, feeDistributorVaultTargetChain)
-                );
-            }
+
+            readRequestInputs[readRequestIndex] = _setReadRequestInput(
+                layerZeroChainId,
+                feeWithdrawerTargetChain,
+                abi.encodeWithSelector(IFeeWithdrawer.withdrawableAmount.selector, gmxTargetChain)
+            );
             readRequestIndex++;
 
             readRequestInputs[readRequestIndex] = _setReadRequestInput(
                 layerZeroChainId,
                 gmxTargetChain,
-                abi.encodeWithSelector(IERC20.balanceOf.selector, feeReceiverTargetChain)
+                abi.encodeWithSelector(IERC20.balanceOf.selector, feeDistributorVaultTargetChain)
             );
             readRequestIndex++;
 
