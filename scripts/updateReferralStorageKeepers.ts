@@ -16,6 +16,12 @@ export async function main() {
     return;
   }
 
+  console.log("\n=== Safe Tx Builder params ===");
+  console.log(`To Address:                ${govAddress} (ReferralStorageTimelock)`);
+  console.log(`Contract Method Selector:  setKeeper`);
+  console.log(`_keeper (address):         ${multichainOrderRouter.address} (MultichainOrderRouter)`);
+  console.log(`_isActive (bool):          true\n`);
+
   await signExternally(await gov.populateTransaction.setKeeper(multichainOrderRouter.address, true));
 }
 
