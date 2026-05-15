@@ -406,7 +406,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             MessagingFee memory messagingFee = layerzeroOft.quoteSend(sendParam, false);
 
             // Make the bridge call to the OFT contract
-            layerzeroOft.send{ value: messagingFee.nativeFee }(sendParam, messagingFee, address(feeDistributorVault));
+            layerzeroOft.send{ value: messagingFee.nativeFee }(sendParam, messagingFee, address(this));
 
             // Add to the total bridged out
             totalGmxBridgedOut += sendAmount;
