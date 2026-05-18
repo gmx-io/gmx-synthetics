@@ -90,5 +90,6 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36": true, // ConfigTimelockController (ROLE_ADMIN)
     },
     MULTICHAIN_READER: {},
+    RISK_ORACLE: {},
   };
 }

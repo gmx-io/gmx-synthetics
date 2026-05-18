@@ -3,7 +3,7 @@ import { deployFixture } from "../../utils/fixture";
 
 import { EXCLUDED_CONFIG_KEYS } from "../../utils/config";
 import { grantRole } from "../../utils/role";
-import { encodeData, hashString } from "../../utils/hash";
+import { encodeData, hashString, keccakString } from "../../utils/hash";
 import { bigNumberify, decimalToFloat, expandDecimals, percentageToFloat } from "../../utils/math";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
@@ -14,17 +14,19 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("Config", () => {
   let fixture;
-  let user0, user1, user2;
-  let config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt;
+  let user0, user1, user2, user3;
+  let config, riskOracleConfig, oracle, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ config, oracle, riskOracleConfig, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt } =
+      fixture.contracts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
     await grantRole(roleStore, user2.address, "LIMITED_CONFIG_KEEPER");
+    await grantRole(roleStore, user3.address, "RISK_ORACLE");
   });
 
   it("allows required keys", async () => {
@@ -79,6 +81,57 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1), "0");
     await config.connect(user2).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", "200");
     expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1), "200");
+  });
+
+  it("allows RISK_ORACLE to set allowed keys only for enabled markets", async () => {
+    const market = ethUsdMarket.marketToken;
+
+    await expect(
+      riskOracleConfig.connect(user3).setUint(keys.FUNDING_FACTOR, encodeData(["address"], [market]), 1)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await riskOracleConfig.connect(user3).setUint(keys.FUNDING_FACTOR, encodeData(["address"], [market]), 1);
+
+    expect(await dataStore.getUint(keys.fundingFactorKey(market))).eq(1);
+  });
+
+  it("allows RISK_ORACLE to set listed two-param and glv keys", async () => {
+    const market = ethUsdMarket.marketToken;
+    const glv = user1.address;
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await riskOracleConfig
+      .connect(user3)
+      .setUint(keys.MAX_OPEN_INTEREST, encodeData(["address", "bool"], [market, true]), decimalToFloat(2_000_000));
+
+    expect(await dataStore.getUint(keys.maxOpenInterestKey(market, true))).eq(decimalToFloat(2_000_000));
+
+    await riskOracleConfig
+      .connect(user3)
+      .setUint(
+        keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD,
+        encodeData(["address", "address"], [glv, market]),
+        decimalToFloat(500_000)
+      );
+
+    expect(await dataStore.getUint(keys.glvMaxMarketTokenBalanceUsdKey(glv, market))).eq(decimalToFloat(500_000));
+  });
+
+  it("prevents RISK_ORACLE from setting non-allowed keys", async () => {
+    const market = ethUsdMarket.marketToken;
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await expect(
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.SWAP_FEE_FACTOR, encodeData(["address", "bool"], [market, true]), decimalToFloat(1, 4))
+    )
+      .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+      .withArgs(keys.SWAP_FEE_FACTOR);
   });
 
   it("setBool", async () => {
