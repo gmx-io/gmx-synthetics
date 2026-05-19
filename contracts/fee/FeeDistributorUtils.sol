@@ -22,6 +22,8 @@ struct Transfer {
 
 // @title FeeDistributorUtils
 library FeeDistributorUtils {
+    event NotEnoughWntForKeepersV2(uint256 keeperCostsV2);
+
     function withdrawNativeToken(DataStore dataStore, address receiver, uint256 amount) external {
         TokenUtils.sendNativeToken(dataStore, receiver, amount);
     }

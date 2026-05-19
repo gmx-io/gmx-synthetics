@@ -512,18 +512,21 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         // calculate the WNT that needs to be sent to each keeper
         (uint256 keeperCostsV1, uint256 keeperCostsV2) = FeeDistributorUtils.calculateKeeperCosts(dataStore);
-        uint256 wntForKeepers = keeperCostsV1 + keeperCostsV2;
 
         // calculate the WNT for chainlink costs and amount of WNT to be sent to the treasury
         (uint256 wntForChainlink, uint256 wntForTreasury) = _calculateChainlinkAndTreasuryAmounts(
             totalWntBalance,
             feesV1Usd,
-            feesV2Usd,
-            keeperCostsV2
+            feesV2Usd
         );
 
         // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
         uint256 wntForReferralRewards = _calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
+
+        // Set keeper costs v2 to zero if there is not enough WNT to cover them.
+        // Corresponding event will be emitted and devs should be alerted
+        keeperCostsV2 = _capKeeperCostsV2(totalWntBalance, wntForTreasury, wntForChainlink, keeperCostsV1, keeperCostsV2);
+        uint256 wntForKeepers = keeperCostsV1 + keeperCostsV2;
 
         wntForTreasury = _finalizeWntForTreasury(
             totalWntBalance,
@@ -537,6 +540,23 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _transferWntCosts(wntForKeepers, wntForChainlink, wntForTreasury);
 
         return (wntForKeepers, wntForChainlink, wntForTreasury, wntForReferralRewards);
+    }
+
+    // If there is not enough WNT to cover V2 costs do not apply them.
+    // Keepers should monitor `NotEnoughWntForKeepersV2` event and trigger alert
+    function _capKeeperCostsV2(
+        uint256 totalWntBalance,
+        uint256 wntForTreasury,
+        uint256 wntForChainlink,
+        uint256 keeperCostsV1,
+        uint256 keeperCostsV2
+    ) internal returns (uint256) {
+        if (wntForTreasury + wntForChainlink + keeperCostsV1 + keeperCostsV2 > totalWntBalance) {
+            emit FeeDistributorUtils.NotEnoughWntForKeepersV2(keeperCostsV2);
+            return 0;
+        } else {
+            return keeperCostsV2;
+        }
     }
 
     function _finalizeWntForTreasury(
@@ -639,8 +659,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     function _calculateChainlinkAndTreasuryAmounts(
         uint256 totalWntBalance,
         uint256 feesV1Usd,
-        uint256 feesV2Usd,
-        uint256 keeperCostsV2
+        uint256 feesV2Usd
     ) internal view returns (uint256, uint256) {
         uint256 feesV1UsdInWnt = Precision.applyFactor(feesV1Usd, _getUint(Keys2.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR));
         uint256 feesV2UsdInWnt = Precision.applyFactor(feesV2Usd, _getUint(Keys2.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR));
@@ -653,12 +672,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             chainlinkTreasuryWntAmount,
             _getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
         );
-        if (keeperCostsV2 > chainlinkTreasuryWntAmount - wntForChainlink) {
-            return (wntForChainlink, chainlinkTreasuryWntAmount - wntForChainlink);
-        }
-        uint256 wntForTreasury = chainlinkTreasuryWntAmount - wntForChainlink - keeperCostsV2;
-
-        return (wntForChainlink, wntForTreasury);
+        return (wntForChainlink, chainlinkTreasuryWntAmount - wntForChainlink);
     }
 
     function _calculateWntForReferralRewards(
