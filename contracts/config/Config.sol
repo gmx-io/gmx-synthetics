@@ -13,6 +13,7 @@ import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
 import "../utils/Precision.sol";
 import "../utils/Cast.sol";
+import "../market/MarketStoreUtils.sol";
 import "../market/MarketUtils.sol";
 import "../oracle/IOracle.sol";
 
@@ -148,14 +149,27 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         _setOracleProviderForToken(oracle, token, provider);
     }
 
-    function setStaticPriceForToken(
-        address token,
+    // @dev Offchain checks should be applied prior to executing this function
+    // token MUST be isolated to one market, be an index token for this market, no GLVs should use this token.
+    // use freezeTokenPrice script to execute those checks
+    function setStaticPriceForMarketIndexToken(
+        address market,
         OracleUtils.SetPricesParams memory pricesParams
     ) external onlyConfigKeeper nonReentrant withOraclePricesForAtomicAction(pricesParams) {
+        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
+        if (marketProps.marketToken == address(0)) {
+            revert Errors.EmptyMarket();
+        }
+
+        address token = marketProps.indexToken;
         if (token == address(0)) {
             revert Errors.EmptyToken();
         }
 
+        _setStaticPriceForToken(token);
+    }
+
+    function _setStaticPriceForToken(address token) internal {
         Price.Props memory price = oracle.getPrimaryPrice(token);
         dataStore.setUint(Keys.staticOraclePriceKey(token, false), price.min);
         dataStore.setUint(Keys.staticOraclePriceKey(token, true), price.max);
