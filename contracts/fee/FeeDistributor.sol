@@ -512,6 +512,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         // calculate the WNT that needs to be sent to each keeper
         (uint256 keeperCostsV1, uint256 keeperCostsV2) = FeeDistributorUtils.calculateKeeperCosts(dataStore);
+        uint256 wntForKeepers = keeperCostsV1 + keeperCostsV2;
 
         // calculate the WNT for chainlink costs and amount of WNT to be sent to the treasury
         (uint256 wntForChainlink, uint256 wntForTreasury) = _calculateChainlinkAndTreasuryAmounts(
@@ -522,11 +523,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
         uint256 wntForReferralRewards = _calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
-
-        // Set keeper costs v2 to zero if there is not enough WNT to cover them.
-        // Corresponding event will be emitted and devs should be alerted
-        keeperCostsV2 = _capKeeperCostsV2(totalWntBalance, wntForTreasury, wntForChainlink, keeperCostsV1, keeperCostsV2);
-        uint256 wntForKeepers = keeperCostsV1 + keeperCostsV2;
 
         wntForTreasury = _finalizeWntForTreasury(
             totalWntBalance,
@@ -542,23 +538,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         return (wntForKeepers, wntForChainlink, wntForTreasury, wntForReferralRewards);
     }
 
-    // If there is not enough WNT to cover V2 costs do not apply them.
-    // Keepers should monitor `NotEnoughWntForKeepersV2` event and trigger alert
-    function _capKeeperCostsV2(
-        uint256 totalWntBalance,
-        uint256 wntForTreasury,
-        uint256 wntForChainlink,
-        uint256 keeperCostsV1,
-        uint256 keeperCostsV2
-    ) internal returns (uint256) {
-        if (wntForTreasury + wntForChainlink + keeperCostsV1 + keeperCostsV2 > totalWntBalance) {
-            emit FeeDistributorUtils.NotEnoughWntForKeepersV2(keeperCostsV2);
-            return 0;
-        } else {
-            return keeperCostsV2;
-        }
-    }
-
     function _finalizeWntForTreasury(
         uint256 totalWntBalance,
         uint256 keeperCostsV1,
@@ -568,17 +547,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 wntForReferralRewards
     ) internal returns (uint256) {
         // calculate the remaining WNT for Treasury, validate the calculated amount and adjust if necessary
-        uint256 wntBeforeV1KeeperCostsAndReferralRewards = totalWntBalance -
-            keeperCostsV2 -
-            wntForChainlink -
-            wntForTreasury;
+        uint256 wntBeforeKeeperCostsAndReferralRewards = totalWntBalance - wntForChainlink - wntForTreasury;
 
-        uint256 keeperAndReferralCostsV1 = keeperCostsV1 + wntForReferralRewards;
-        if (keeperAndReferralCostsV1 > wntBeforeV1KeeperCostsAndReferralRewards) {
-            uint256 additionalWntForV1Costs = keeperAndReferralCostsV1 - wntBeforeV1KeeperCostsAndReferralRewards;
-            if (additionalWntForV1Costs > wntForTreasury) {
+        uint256 keeperAndReferralCosts = keeperCostsV1 + keeperCostsV2 + wntForReferralRewards;
+        if (keeperAndReferralCosts > wntBeforeKeeperCostsAndReferralRewards) {
+            uint256 additionalWntForCosts = keeperAndReferralCosts - wntBeforeKeeperCostsAndReferralRewards;
+            if (additionalWntForCosts > wntForTreasury) {
                 uint256 maxWntFromTreasury = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
-                uint256 additionalWntFromTreasury = additionalWntForV1Costs - wntForTreasury;
+                uint256 additionalWntFromTreasury = additionalWntForCosts - wntForTreasury;
                 if (additionalWntFromTreasury > maxWntFromTreasury) {
                     revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
                 }
@@ -589,10 +565,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 );
                 wntForTreasury = 0;
             } else {
-                wntForTreasury -= additionalWntForV1Costs;
+                wntForTreasury -= additionalWntForCosts;
             }
         } else {
-            uint256 remainingWntForTreasury = wntBeforeV1KeeperCostsAndReferralRewards - keeperAndReferralCostsV1;
+            uint256 remainingWntForTreasury = wntBeforeKeeperCostsAndReferralRewards - keeperAndReferralCosts;
             wntForTreasury += remainingWntForTreasury;
         }
         return wntForTreasury;
