@@ -81,12 +81,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       maxRelayFeeUsdForSubaccount: 0,
       maxRelayFeeSwapUsd: 0,
       maxDataLength: 18,
+      eip6492Deployer: ethers.constants.AddressZero,
     };
   }
 
   const generalConfig = {
     feeReceiver: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
+    eip6492Deployer: ethers.constants.AddressZero, // Should update after first deployment
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
     maxUiFeeFactor: percentageToFloat("0.1%"),
