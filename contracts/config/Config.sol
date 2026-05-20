@@ -160,7 +160,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
     function setStaticPriceForMarketIndexToken(
         address market,
         OracleUtils.SetPricesParams memory pricesParams
-    ) external onlyConfigKeeper nonReentrant {
+    ) external onlyConfigKeeper nonReentrant withOraclePrices(pricesParams) {
         Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
         if (marketProps.marketToken == address(0)) {
             revert Errors.EmptyMarket();

@@ -41,7 +41,7 @@ contract EdgeDataStreamProvider is IOracleProvider {
         return false;
     }
 
-    function shouldCheckRefPrice() external returns (bool) {
+    function shouldCheckRefPrice() external pure returns (bool) {
         return false;
     }
 
@@ -90,6 +90,8 @@ contract EdgeDataStreamProvider is IOracleProvider {
             token: token,
             min: adjustedBidPrice,
             max: adjustedAskPrice,
+            rawMin: adjustedBidPrice,
+            rawMax: adjustedAskPrice,
             timestamp: report.timestamp,
             provider: address(this)
         });

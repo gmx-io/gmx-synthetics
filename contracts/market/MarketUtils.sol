@@ -255,6 +255,17 @@ library MarketUtils {
         );
     }
 
+    // @dev return raw primary prices for the market tokens, before provider-side spread reduction
+    // @param oracle Oracle
+    // @param market the market values
+    function getMarketRawPrices(IOracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
+        return MarketPrices(
+            oracle.getPrimaryRawPrice(market.indexToken),
+            oracle.getPrimaryRawPrice(market.longToken),
+            oracle.getPrimaryRawPrice(market.shortToken)
+        );
+    }
+
     // @dev get the usd value of either the long or short tokens in the pool
     // without accounting for the pnl of open positions
     // @param dataStore DataStore
@@ -1788,11 +1799,7 @@ library MarketUtils {
         bool maximize
     ) internal view returns (int256) {
         Market.Props memory _market = getEnabledMarket(dataStore, market);
-        MarketPrices memory prices = MarketPrices(
-            oracle.getPrimaryPrice(_market.indexToken),
-            oracle.getPrimaryPrice(_market.longToken),
-            oracle.getPrimaryPrice(_market.shortToken)
-        );
+        MarketPrices memory prices = getMarketRawPrices(oracle, _market);
 
         return getPnlToPoolFactor(dataStore, _market, prices, isLong, maximize);
     }
@@ -3226,7 +3233,9 @@ library MarketUtils {
         bytes32 pnlFactorType
     ) internal view returns (bool, int256, uint256) {
         Market.Props memory _market = getEnabledMarket(dataStore, market);
-        MarketPrices memory prices = getMarketPrices(oracle, _market);
+        MarketPrices memory prices = pnlFactorType == Keys.MAX_PNL_FACTOR_FOR_ADL
+            ? getMarketRawPrices(oracle, _market)
+            : getMarketPrices(oracle, _market);
 
         return isPnlFactorExceeded(
             dataStore,

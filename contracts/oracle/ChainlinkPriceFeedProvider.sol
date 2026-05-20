@@ -22,7 +22,7 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
         return true;
     }
 
-    function shouldCheckRefPrice() external returns (bool) {
+    function shouldCheckRefPrice() external pure returns (bool) {
         return true;
     }
 
@@ -65,6 +65,8 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
             token: token,
             min: priceProps.min,
             max: priceProps.max,
+            rawMin: priceProps.min,
+            rawMax: priceProps.max,
             timestamp: Chain.currentTimestamp(),
             provider: address(this)
         });

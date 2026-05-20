@@ -14,6 +14,8 @@ contract MockOracleProvider is IOracleProvider {
             token: token,
             min: 1000,
             max: 1000,
+            rawMin: 1000,
+            rawMax: 1000,
             timestamp: block.timestamp,
             provider: address(this)
         });
@@ -27,7 +29,7 @@ contract MockOracleProvider is IOracleProvider {
         return false;
     }
 
-    function shouldCheckRefPrice() external returns (bool) {
+    function shouldCheckRefPrice() external pure returns (bool) {
         return false;
     }
 }
