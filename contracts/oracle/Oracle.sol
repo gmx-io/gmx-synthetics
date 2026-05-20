@@ -301,7 +301,7 @@ contract Oracle is IOracle, RoleModule {
                 revert Errors.MaxPriceAgeExceeded(validatedPrice.timestamp, Chain.currentTimestamp());
             }
 
-            if (!provider.isChainlinkOnChainProvider()) {
+            if (!provider.isChainlinkOnChainProvider() && provider.shouldCheckRefPrice()) {
                 (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
 
                 if (hasRefPrice) {

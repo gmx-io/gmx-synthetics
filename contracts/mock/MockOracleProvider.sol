@@ -26,4 +26,8 @@ contract MockOracleProvider is IOracleProvider {
     function isChainlinkOnChainProvider() external pure returns (bool) {
         return false;
     }
+
+    function shouldCheckRefPrice() external returns (bool) {
+        return false;
+    }
 }
