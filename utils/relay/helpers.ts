@@ -11,6 +11,7 @@ export type SubaccountApproval = {
   nonce: BigNumberish;
   integrationId: string;
   deadline: BigNumberish;
+  revocationCounter: BigNumberish;
   signature: string;
 };
 
@@ -196,13 +197,14 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
     "desChainId",
     "deadline",
     "integrationId",
+    "revocationCounter",
     "signature",
   ]);
 
   const hash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,bytes signature)",
+        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,uint256 revocationCounter,bytes signature)",
       ],
       [subaccountApproval]
     )

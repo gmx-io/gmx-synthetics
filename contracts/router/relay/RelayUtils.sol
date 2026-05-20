@@ -78,7 +78,7 @@ library RelayUtils {
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId)"
+                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,uint256 revocationCounter)"
             )
         );
 
@@ -271,7 +271,8 @@ library RelayUtils {
                     subaccountApproval.nonce,
                     subaccountApproval.desChainId,
                     subaccountApproval.deadline,
-                    subaccountApproval.integrationId
+                    subaccountApproval.integrationId,
+                    subaccountApproval.revocationCounter
                 )
             );
     }
