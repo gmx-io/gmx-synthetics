@@ -794,6 +794,18 @@ export function borrowingFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [BORROWING_FACTOR, market, isLong]);
 }
 
+export function optimalUsageFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [OPTIMAL_USAGE_FACTOR, market, isLong]);
+}
+
+export function baseBorrowingFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [BASE_BORROWING_FACTOR, market, isLong]);
+}
+
+export function aboveOptimalUsageBorrowingFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR, market, isLong]);
+}
+
 export function borrowingExponentFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [BORROWING_EXPONENT_FACTOR, market, isLong]);
 }

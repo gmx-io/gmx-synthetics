@@ -136,6 +136,44 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(market, wnt.address, true))).gt(0);
   });
 
+  it("settles borrowing before RISK_ORACLE updates borrowing config", async () => {
+    const market = ethUsdMarket.marketToken;
+    const isLong = true;
+    const data = encodeData(["address", "bool"], [market, isLong]);
+    const oldBaseBorrowingFactor = decimalToFloat(1, 9);
+    const newBaseBorrowingFactor = decimalToFloat(2, 9);
+    const latestBlock = await ethers.provider.getBlock("latest");
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await dataStore.setUint(keys.poolAmountKey(market, wnt.address), expandDecimals(1_000, 18));
+    await dataStore.setUint(keys.poolAmountKey(market, usdc.address), expandDecimals(5_000_000, 6));
+    await dataStore.setUint(keys.openInterestInTokensKey(market, wnt.address, isLong), expandDecimals(100, 18));
+    await dataStore.setUint(keys.openInterestKey(market, wnt.address, isLong), expandDecimals(500_000, 30));
+    await dataStore.setUint(keys.optimalUsageFactorKey(market, isLong), decimalToFloat(8, 1));
+    await dataStore.setUint(keys.baseBorrowingFactorKey(market, isLong), oldBaseBorrowingFactor);
+    await dataStore.setUint(keys.aboveOptimalUsageBorrowingFactorKey(market, isLong), oldBaseBorrowingFactor);
+    await dataStore.setUint(keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong), latestBlock.timestamp - 100);
+
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(market, isLong))).eq(0);
+
+    await executeWithOracleParams(fixture, {
+      args: [keys.BASE_BORROWING_FACTOR, data, newBaseBorrowingFactor],
+      oracleBlockNumber: latestBlock.number,
+      tokens: [wnt.address, usdc.address],
+      precisions: [8, 18],
+      minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      dataStreamTokens: [],
+      dataStreamData: [],
+      priceFeedTokens: [],
+      execute: riskOracleConfig.connect(user3).setUintWithOraclePrices,
+    });
+
+    expect(await dataStore.getUint(keys.baseBorrowingFactorKey(market, isLong))).eq(newBaseBorrowingFactor);
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(market, isLong))).gt(0);
+  });
+
   it("allows RISK_ORACLE to set listed two-param and glv keys", async () => {
     const market = ethUsdMarket.marketToken;
     const glv = user1.address;

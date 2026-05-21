@@ -191,6 +191,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         );
 
         _settleFundingIfRequired(baseKey, data);
+        _settleBorrowingIfRequired(baseKey, data);
 
         bytes32 fullKey = Keys.getFullKey(baseKey, data);
         dataStore.setUint(fullKey, value);
@@ -227,6 +228,24 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             eventEmitter,
             marketProps,
             prices
+        );
+    }
+
+    function _settleBorrowingIfRequired(bytes32 baseKey, bytes memory data) internal {
+        if (!_isRiskOracleBorrowingBaseKey(baseKey)) {
+            return;
+        }
+
+        (address market, bool isLong) = abi.decode(data, (address, bool));
+        Market.Props memory marketProps = MarketUtils.getEnabledMarket(dataStore, market);
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
+
+        MarketUtils.updateCumulativeBorrowingFactor(
+            dataStore,
+            eventEmitter,
+            marketProps,
+            prices,
+            isLong
         );
     }
 
@@ -341,6 +360,12 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
             baseKey == Keys.THRESHOLD_FOR_STABLE_FUNDING ||
             baseKey == Keys.THRESHOLD_FOR_DECREASE_FUNDING;
+    }
+
+    function _isRiskOracleBorrowingBaseKey(bytes32 baseKey) internal pure returns (bool) {
+        return
+            baseKey == Keys.BASE_BORROWING_FACTOR ||
+            baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR;
     }
 
     function _isRiskOracleTwoParamMarketBaseKey(bytes32 baseKey) internal pure returns (bool) {
