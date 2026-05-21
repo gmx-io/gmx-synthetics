@@ -512,6 +512,75 @@ library MarketUtils {
         return pnl;
     }
 
+    // @dev get the pending pnl for a market side and collateral token
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param collateralToken the collateral token to check
+    // @param indexTokenPrice the price of the index token
+    // @param isLong whether to get the pnl for longs or shorts
+    // @param maximize whether to maximize or minimize the pnl
+    // @return the pending pnl for a market side and collateral token
+    function getPnlByCollateralToken(
+        DataStore dataStore,
+        Market.Props memory market,
+        address collateralToken,
+        Price.Props memory indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+        int256 openInterest = getOpenInterest(dataStore, market.marketToken, collateralToken, isLong, divisor).toInt256();
+        uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, collateralToken, isLong, divisor);
+        if (openInterest == 0 || openInterestInTokens == 0) {
+            return 0;
+        }
+
+        uint256 price = indexTokenPrice.pickPriceForPnl(isLong, maximize);
+
+        int256 openInterestValue = (openInterestInTokens * price).toInt256();
+        return isLong ? openInterestValue - openInterest : openInterest - openInterestValue;
+    }
+
+    // @dev get the positive pnl liability for a payout side without offsetting losses
+    // from another collateral token bucket
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param indexTokenPrice the price of the index token
+    // @param isLong whether to get the pnl for longs or shorts
+    // @param maximize whether to maximize or minimize the pnl
+    // @return the pending positive pnl liability for a market side
+    function getPositivePnl(
+        DataStore dataStore,
+        Market.Props memory market,
+        Price.Props memory indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (uint256) {
+        int256 pnlUsingLongTokenAsCollateral = getPnlByCollateralToken(
+            dataStore,
+            market,
+            market.longToken,
+            indexTokenPrice,
+            isLong,
+            maximize
+        );
+
+        int256 pnlUsingShortTokenAsCollateral = getPnlByCollateralToken(
+            dataStore,
+            market,
+            market.shortToken,
+            indexTokenPrice,
+            isLong,
+            maximize
+        );
+
+        return (
+            pnlUsingLongTokenAsCollateral > 0 ? pnlUsingLongTokenAsCollateral.toUint256() : 0
+        ) + (
+            pnlUsingShortTokenAsCollateral > 0 ? pnlUsingShortTokenAsCollateral.toUint256() : 0
+        );
+    }
+
     // @dev get the amount of tokens in the pool
     // @param dataStore DataStore
     // @param market the market to check
@@ -1801,7 +1870,7 @@ library MarketUtils {
         Market.Props memory _market = getEnabledMarket(dataStore, market);
         MarketPrices memory prices = getMarketRawPrices(oracle, _market);
 
-        return getPnlToPoolFactor(dataStore, _market, prices, isLong, maximize);
+        return getPositivePnlToPoolFactor(dataStore, _market, prices, isLong, maximize);
     }
 
     // @dev get the ratio of pnl to pool value
@@ -1835,6 +1904,38 @@ library MarketUtils {
         );
 
         return Precision.toFactor(pnl, poolUsd);
+    }
+
+    // @dev get the ratio of positive pnl liability to pool value without offsetting
+    // profitable positions with losses that settle into another collateral pool
+    // @param dataStore DataStore
+    // @param market the market values
+    // @param prices the prices of the market tokens
+    // @param isLong whether to get the value for the long or short side
+    // @param maximize whether to maximize the factor
+    // @return (positive pnl liability of positions) / (long or short pool value)
+    function getPositivePnlToPoolFactor(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong, !maximize);
+
+        if (poolUsd == 0) {
+            return 0;
+        }
+
+        uint256 positivePnl = getPositivePnl(
+            dataStore,
+            market,
+            prices.indexTokenPrice,
+            isLong,
+            maximize
+        );
+
+        return Precision.toFactor(positivePnl, poolUsd).toInt256();
     }
 
     function validateOpenInterest(
@@ -3259,7 +3360,9 @@ library MarketUtils {
         bool isLong,
         bytes32 pnlFactorType
     ) internal view returns (bool, int256, uint256) {
-        int256 pnlToPoolFactor = getPnlToPoolFactor(dataStore, market, prices, isLong, true);
+        int256 pnlToPoolFactor = pnlFactorType == Keys.MAX_PNL_FACTOR_FOR_ADL
+            ? getPositivePnlToPoolFactor(dataStore, market, prices, isLong, true)
+            : getPnlToPoolFactor(dataStore, market, prices, isLong, true);
         uint256 maxPnlFactor = getMaxPnlFactor(dataStore, pnlFactorType, market.marketToken, isLong);
 
         bool isExceeded = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
