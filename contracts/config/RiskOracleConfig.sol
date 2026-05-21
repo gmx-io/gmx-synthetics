@@ -75,91 +75,6 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         );
     }
 
-    // @dev set a bool value
-    // @param baseKey the base key of the value to set
-    // @param data the additional data to be combined with the base key
-    // @param value the bool value
-    function setBool(bytes32 baseKey, bytes memory data, bool value) external onlyRiskOracle nonReentrant {
-        _validateKey(baseKey, data);
-
-        bytes32 fullKey = Keys.getFullKey(baseKey, data);
-
-        dataStore.setBool(fullKey, value);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "baseKey", baseKey);
-
-        eventData.bytesItems.initItems(1);
-        eventData.bytesItems.setItem(0, "data", data);
-
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "value", value);
-
-        eventEmitter.emitEventLog1(
-            "SetBool",
-            baseKey,
-            eventData
-        );
-    }
-
-    // @dev set an address value
-    // @param baseKey the base key of the value to set
-    // @param data the additional data to be combined with the base key
-    // @param value the address value
-    function setAddress(bytes32 baseKey, bytes memory data, address value) external onlyRiskOracle nonReentrant {
-        _validateKey(baseKey, data);
-
-        bytes32 fullKey = Keys.getFullKey(baseKey, data);
-
-        dataStore.setAddress(fullKey, value);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "baseKey", baseKey);
-
-        eventData.bytesItems.initItems(1);
-        eventData.bytesItems.setItem(0, "data", data);
-
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "value", value);
-
-        eventEmitter.emitEventLog1(
-            "SetAddress",
-            baseKey,
-            eventData
-        );
-    }
-
-    // @dev set a bytes32 value
-    // @param baseKey the base key of the value to set
-    // @param data the additional data to be combined with the base key
-    // @param value the bytes32 value
-    function setBytes32(bytes32 baseKey, bytes memory data, bytes32 value) external onlyRiskOracle nonReentrant {
-        _validateKey(baseKey, data);
-
-        bytes32 fullKey = Keys.getFullKey(baseKey, data);
-
-        dataStore.setBytes32(fullKey, value);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.bytes32Items.initItems(2);
-        eventData.bytes32Items.setItem(0, "baseKey", baseKey);
-        eventData.bytes32Items.setItem(1, "value", value);
-
-        eventData.bytesItems.initItems(1);
-        eventData.bytesItems.setItem(0, "data", data);
-
-        eventEmitter.emitEventLog1(
-            "SetBytes32",
-            baseKey,
-            eventData
-        );
-    }
-
     // @dev set a uint256 value
     // @param basekey the base key of the value to set
     // @param data the additional data to be combined with the base key
@@ -181,7 +96,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
     }
 
     function _setUint(bytes32 baseKey, bytes memory data, uint256 value) internal {
-        _validateKey(baseKey, data);
+        Market.Props memory marketProps = _validateKeyAndMarket(baseKey, data);
 
         ConfigUtils.validateRange(
             dataStore,
@@ -190,8 +105,9 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             value
         );
 
-        _settleFundingIfRequired(baseKey, data);
-        _settleBorrowingIfRequired(baseKey, data);
+        _validateCollateralFactorInvariant(marketProps.marketToken, baseKey, data, value);
+        _settleFundingIfRequired(marketProps, baseKey, data);
+        _settleBorrowingIfRequired(marketProps, baseKey, data);
 
         bytes32 fullKey = Keys.getFullKey(baseKey, data);
         dataStore.setUint(fullKey, value);
@@ -214,13 +130,31 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         );
     }
 
-    function _settleFundingIfRequired(bytes32 baseKey, bytes memory data) internal {
+    function _validateCollateralFactorInvariant(address market, bytes32 baseKey, bytes memory data, uint256 value) internal view {
+        if (baseKey == Keys.MIN_COLLATERAL_FACTOR) {
+            uint256 minCollateralFactorForLiquidation = dataStore.getUint(Keys.minCollateralFactorForLiquidationKey(market));
+
+            if (value < minCollateralFactorForLiquidation) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+
+            return;
+        }
+
+        if (baseKey == Keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION) {
+            uint256 minCollateralFactor = dataStore.getUint(Keys.minCollateralFactorKey(market));
+
+            if (minCollateralFactor < value) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+    }
+
+    function _settleFundingIfRequired(Market.Props memory marketProps, bytes32 baseKey, bytes memory data) internal {
         if (!_isRiskOracleFundingBaseKey(baseKey)) {
             return;
         }
 
-        address market = _getRiskOracleMarket(baseKey, data);
-        Market.Props memory marketProps = MarketUtils.getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
 
         MarketUtils.updateFundingState(
@@ -231,13 +165,12 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         );
     }
 
-    function _settleBorrowingIfRequired(bytes32 baseKey, bytes memory data) internal {
+    function _settleBorrowingIfRequired(Market.Props memory marketProps, bytes32 baseKey, bytes memory data) internal {
         if (!_isRiskOracleBorrowingBaseKey(baseKey)) {
             return;
         }
 
         (address market, bool isLong) = abi.decode(data, (address, bool));
-        Market.Props memory marketProps = MarketUtils.getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
 
         MarketUtils.updateCumulativeBorrowingFactor(
@@ -246,35 +179,6 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             marketProps,
             prices,
             isLong
-        );
-    }
-
-    // @dev set an int256 value
-    // @param basekey the base key of the value to set
-    // @param data the additional data to be combined with the base key
-    // @param value the int256 value
-    function setInt(bytes32 baseKey, bytes memory data, int256 value) external onlyRiskOracle nonReentrant {
-        _validateKey(baseKey, data);
-
-        bytes32 fullKey = Keys.getFullKey(baseKey, data);
-
-        dataStore.setInt(fullKey, value);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "baseKey", baseKey);
-
-        eventData.bytesItems.initItems(1);
-        eventData.bytesItems.setItem(0, "data", data);
-
-        eventData.intItems.initItems(1);
-        eventData.intItems.setItem(0, "value", value);
-
-        eventEmitter.emitEventLog1(
-            "SetInt",
-            baseKey,
-            eventData
         );
     }
 
@@ -310,9 +214,10 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         allowedRiskOracleBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
     }
 
-    // @dev validate that the baseKey is allowed to be used
+    // @dev validate that the baseKey is allowed to be used and market is valid and allowed to edit
     // @param baseKey the base key to validate
-    function _validateKey(bytes32 baseKey, bytes memory data) internal view {
+    // @return address of the market for change
+    function _validateKeyAndMarket(bytes32 baseKey, bytes memory data) internal view returns (Market.Props memory) {
         if (roleStore.hasRole(msg.sender, Role2.RISK_ORACLE)) {
             if (!allowedRiskOracleBaseKeys[baseKey]) {
                 revert Errors.InvalidBaseKey(baseKey);
@@ -323,7 +228,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
                 revert Errors.Unauthorized(msg.sender, "RISK_ORACLE_MARKET_DISABLED");
             }
 
-            return;
+            return MarketUtils.getEnabledMarket(dataStore, market);
         }
 
         revert Errors.InvalidBaseKey(baseKey);

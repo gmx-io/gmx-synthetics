@@ -174,6 +174,36 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(market, isLong))).gt(0);
   });
 
+  it("validates collateral factor invariants for RISK_ORACLE updates", async () => {
+    const market = ethUsdMarket.marketToken;
+    const data = encodeData(["address"], [market]);
+    const minCollateralFactor = decimalToFloat(2, 2); // 2%
+    const minCollateralFactorForLiquidation = decimalToFloat(1, 2); // 1%
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await riskOracleConfig.connect(user3).setUint(keys.MIN_COLLATERAL_FACTOR, data, minCollateralFactor);
+    await riskOracleConfig
+      .connect(user3)
+      .setUint(keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, data, minCollateralFactorForLiquidation);
+
+    await expect(
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.MIN_COLLATERAL_FACTOR, data, minCollateralFactorForLiquidation.sub(1))
+    )
+      .to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange")
+      .withArgs(keys.MIN_COLLATERAL_FACTOR, minCollateralFactorForLiquidation.sub(1));
+
+    await expect(
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, data, minCollateralFactor.add(1))
+    )
+      .to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange")
+      .withArgs(keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, minCollateralFactor.add(1));
+  });
+
   it("allows RISK_ORACLE to set listed two-param and glv keys", async () => {
     const market = ethUsdMarket.marketToken;
     const glv = user1.address;
