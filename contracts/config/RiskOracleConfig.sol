@@ -6,14 +6,11 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../data/Keys2.sol";
 import "../data/Keys3.sol";
 import "../role/Role2.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
-import "../utils/Precision.sol";
-import "../utils/Cast.sol";
 import "../market/MarketUtils.sol";
 import "../oracle/OracleModule.sol";
 import "../oracle/OracleUtils.sol";
@@ -105,8 +102,8 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             value
         );
 
-        _validateCollateralFactorInvariant(marketProps.marketToken, baseKey, data, value);
-        _settleFundingIfRequired(marketProps, baseKey, data);
+        _validateCollateralFactorInvariant(marketProps.marketToken, baseKey, value);
+        _settleFundingIfRequired(marketProps, baseKey);
         _settleBorrowingIfRequired(marketProps, baseKey, data);
 
         bytes32 fullKey = Keys.getFullKey(baseKey, data);
@@ -130,7 +127,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         );
     }
 
-    function _validateCollateralFactorInvariant(address market, bytes32 baseKey, bytes memory data, uint256 value) internal view {
+    function _validateCollateralFactorInvariant(address market, bytes32 baseKey, uint256 value) internal view {
         if (baseKey == Keys.MIN_COLLATERAL_FACTOR) {
             uint256 minCollateralFactorForLiquidation = dataStore.getUint(Keys.minCollateralFactorForLiquidationKey(market));
 
@@ -150,7 +147,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         }
     }
 
-    function _settleFundingIfRequired(Market.Props memory marketProps, bytes32 baseKey, bytes memory data) internal {
+    function _settleFundingIfRequired(Market.Props memory marketProps, bytes32 baseKey) internal {
         if (!_isRiskOracleFundingBaseKey(baseKey)) {
             return;
         }
@@ -170,7 +167,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             return;
         }
 
-        (address market, bool isLong) = abi.decode(data, (address, bool));
+        (/*address market*/, bool isLong) = abi.decode(data, (address, bool));
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
 
         MarketUtils.updateCumulativeBorrowingFactor(
@@ -218,20 +215,16 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
     // @param baseKey the base key to validate
     // @return address of the market for change
     function _validateKeyAndMarket(bytes32 baseKey, bytes memory data) internal view returns (Market.Props memory) {
-        if (roleStore.hasRole(msg.sender, Role2.RISK_ORACLE)) {
-            if (!allowedRiskOracleBaseKeys[baseKey]) {
-                revert Errors.InvalidBaseKey(baseKey);
-            }
-
-            address market = _getRiskOracleMarket(baseKey, data);
-            if (!dataStore.getBool(Keys3.riskOracleMarketEnabledKey(market))) {
-                revert Errors.Unauthorized(msg.sender, "RISK_ORACLE_MARKET_DISABLED");
-            }
-
-            return MarketUtils.getEnabledMarket(dataStore, market);
+        if (!allowedRiskOracleBaseKeys[baseKey]) {
+            revert Errors.InvalidBaseKey(baseKey);
         }
 
-        revert Errors.InvalidBaseKey(baseKey);
+        address market = _getRiskOracleMarket(baseKey, data);
+        if (!dataStore.getBool(Keys3.riskOracleMarketEnabledKey(market))) {
+            revert Errors.Unauthorized(msg.sender, "RISK_ORACLE_MARKET_DISABLED");
+        }
+
+        return MarketUtils.getEnabledMarket(dataStore, market);
     }
 
 
