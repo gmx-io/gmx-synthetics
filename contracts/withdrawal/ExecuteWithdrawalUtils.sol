@@ -427,6 +427,7 @@ library ExecuteWithdrawalUtils {
             minOutputAmount: minOutputAmount,
             receiver: receiver,
             uiFeeReceiver: uiFeeReceiver,
+            uiFeeFactor: type(uint256).max,
             shouldUnwrapNativeToken: shouldUnwrapNativeToken,
             swapPricingType: params.swapPricingType
         });

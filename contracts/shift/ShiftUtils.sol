@@ -275,6 +275,7 @@ library ShiftUtils {
                 cache.initialLongTokenAmount,
                 cache.initialShortTokenAmount,
                 shift.minMarketTokens(),
+                0, // uiFeeFactor
                 shift.updatedAtTime(),
                 0, // executionFee
                 0, // callbackGasLimit

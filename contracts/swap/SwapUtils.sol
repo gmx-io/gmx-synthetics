@@ -222,6 +222,9 @@ library SwapUtils {
             _params.amountIn,
             cache.balanceWasImproved,
             params.uiFeeReceiver,
+            params.uiFeeFactor == type(uint256).max
+                ? FeeUtils.getUiFeeFactor(params.dataStore, params.uiFeeReceiver)
+                : params.uiFeeFactor,
             params.swapPricingType
         );
 

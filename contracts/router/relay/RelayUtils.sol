@@ -223,6 +223,7 @@ library RelayUtils {
                 minOutputAmount: 0,
                 receiver: address(this),
                 uiFeeReceiver: address(0),
+                uiFeeFactor: type(uint256).max,
                 shouldUnwrapNativeToken: false,
                 swapPricingType: ISwapPricingUtils.SwapPricingType.AtomicSwap
             })

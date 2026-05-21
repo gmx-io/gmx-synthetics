@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../../deposit/ExecuteDepositUtils.sol";
 import "../../nonce/NonceUtils.sol";
 import "../../exchange/IDepositHandler.sol";
+import "../../fee/FeeUtils.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
@@ -227,6 +228,7 @@ library ExecuteGlvDepositUtils {
                 initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
                 initialShortTokenAmount: glvDeposit.initialShortTokenAmount(),
                 minMarketTokens: 0,
+                uiFeeFactor: FeeUtils.getUiFeeFactor(params.dataStore, glvDeposit.uiFeeReceiver()),
                 updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
