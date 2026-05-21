@@ -15,12 +15,14 @@ import "../utils/BasicMulticall.sol";
 import "../utils/Precision.sol";
 import "../utils/Cast.sol";
 import "../market/MarketUtils.sol";
+import "../oracle/OracleModule.sol";
+import "../oracle/OracleUtils.sol";
 
 import "./ConfigUtils.sol";
 
 // @title RiskOracleConfig
 // @dev limited capability config only for risk-oracle keys
-contract RiskOracleConfig is ReentrancyGuard, RoleModule, BasicMulticall {
+contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;
@@ -37,9 +39,10 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, BasicMulticall {
 
     constructor(
         RoleStore _roleStore,
+        IOracle _oracle,
         DataStore _dataStore,
         EventEmitter _eventEmitter
-    ) RoleModule(_roleStore) {
+    ) RoleModule(_roleStore) OracleModule(_oracle) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
 
@@ -162,9 +165,23 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param data the additional data to be combined with the base key
     // @param value the uint256 value
     function setUint(bytes32 baseKey, bytes memory data, uint256 value) external onlyRiskOracle nonReentrant {
-        _validateKey(baseKey, data);
+        _setUint(baseKey, data, value);
+    }
 
-        bytes32 fullKey = Keys.getFullKey(baseKey, data);
+    // @dev set a uint256 value after setting oracle prices for funding settlement.
+    // This should be used for funding config keys so accrued funding is settled
+    // using the previous config before the new value is stored.
+    function setUintWithOraclePrices(
+        bytes32 baseKey,
+        bytes memory data,
+        uint256 value,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external onlyRiskOracle nonReentrant withOraclePrices(oracleParams) {
+        _setUint(baseKey, data, value);
+    }
+
+    function _setUint(bytes32 baseKey, bytes memory data, uint256 value) internal {
+        _validateKey(baseKey, data);
 
         ConfigUtils.validateRange(
             dataStore,
@@ -173,6 +190,9 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, BasicMulticall {
             value
         );
 
+        _settleFundingIfRequired(baseKey, data);
+
+        bytes32 fullKey = Keys.getFullKey(baseKey, data);
         dataStore.setUint(fullKey, value);
 
         EventUtils.EventLogData memory eventData;
@@ -190,6 +210,23 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, BasicMulticall {
             "SetUint",
             baseKey,
             eventData
+        );
+    }
+
+    function _settleFundingIfRequired(bytes32 baseKey, bytes memory data) internal {
+        if (!_isRiskOracleFundingBaseKey(baseKey)) {
+            return;
+        }
+
+        address market = _getRiskOracleMarket(baseKey, data);
+        Market.Props memory marketProps = MarketUtils.getEnabledMarket(dataStore, market);
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
+
+        MarketUtils.updateFundingState(
+            dataStore,
+            eventEmitter,
+            marketProps,
+            prices
         );
     }
 
@@ -292,6 +329,18 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, BasicMulticall {
         return
             baseKey == Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD ||
             baseKey == Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT;
+    }
+
+    function _isRiskOracleFundingBaseKey(bytes32 baseKey) internal pure returns (bool) {
+        return
+            baseKey == Keys.FUNDING_FACTOR ||
+            baseKey == Keys.FUNDING_EXPONENT_FACTOR ||
+            baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND ||
+            baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND ||
+            baseKey == Keys.MIN_FUNDING_FACTOR_PER_SECOND ||
+            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
+            baseKey == Keys.THRESHOLD_FOR_STABLE_FUNDING ||
+            baseKey == Keys.THRESHOLD_FOR_DECREASE_FUNDING;
     }
 
     function _isRiskOracleTwoParamMarketBaseKey(bytes32 baseKey) internal pure returns (bool) {

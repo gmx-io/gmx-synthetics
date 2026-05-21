@@ -7,6 +7,7 @@ import { encodeData, hashString, keccakString } from "../../utils/hash";
 import { bigNumberify, decimalToFloat, expandDecimals, percentageToFloat } from "../../utils/math";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
+import { executeWithOracleParams } from "../../utils/exchange";
 import * as keys from "../../utils/keys";
 import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
 import { ethers } from "hardhat";
@@ -15,12 +16,12 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 describe("Config", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let config, riskOracleConfig, oracle, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt;
+  let config, riskOracleConfig, oracle, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt, usdc;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ config, oracle, riskOracleConfig, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt } =
+    ({ config, oracle, riskOracleConfig, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt, usdc } =
       fixture.contracts);
     ({ user0, user1, user2, user3 } = fixture.accounts);
 
@@ -87,14 +88,52 @@ describe("Config", () => {
     const market = ethUsdMarket.marketToken;
 
     await expect(
-      riskOracleConfig.connect(user3).setUint(keys.FUNDING_FACTOR, encodeData(["address"], [market]), 1)
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.MAX_OPEN_INTEREST, encodeData(["address", "bool"], [market, true]), 1)
     ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
 
     await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
 
-    await riskOracleConfig.connect(user3).setUint(keys.FUNDING_FACTOR, encodeData(["address"], [market]), 1);
+    await riskOracleConfig
+      .connect(user3)
+      .setUint(keys.MAX_OPEN_INTEREST, encodeData(["address", "bool"], [market, true]), 1);
 
-    expect(await dataStore.getUint(keys.fundingFactorKey(market))).eq(1);
+    expect(await dataStore.getUint(keys.maxOpenInterestKey(market, true))).eq(1);
+  });
+
+  it("settles funding before RISK_ORACLE updates funding config", async () => {
+    const market = ethUsdMarket.marketToken;
+    const data = encodeData(["address"], [market]);
+    const oldFundingFactor = decimalToFloat(1, 9);
+    const newFundingFactor = decimalToFloat(2, 9);
+    const latestBlock = await ethers.provider.getBlock("latest");
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await dataStore.setUint(keys.openInterestKey(market, wnt.address, true), expandDecimals(1_000_000, 30));
+    await dataStore.setUint(keys.openInterestKey(market, usdc.address, false), expandDecimals(500_000, 30));
+    await dataStore.setUint(keys.fundingFactorKey(market), oldFundingFactor);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(market), oldFundingFactor);
+    await dataStore.setUint(keys.fundingUpdatedAtKey(market), latestBlock.timestamp - 100);
+
+    expect(await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(market, wnt.address, true))).eq(0);
+
+    await executeWithOracleParams(fixture, {
+      args: [keys.FUNDING_FACTOR, data, newFundingFactor],
+      oracleBlockNumber: latestBlock.number,
+      tokens: [wnt.address, usdc.address],
+      precisions: [8, 18],
+      minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      dataStreamTokens: [],
+      dataStreamData: [],
+      priceFeedTokens: [],
+      execute: riskOracleConfig.connect(user3).setUintWithOraclePrices,
+    });
+
+    expect(await dataStore.getUint(keys.fundingFactorKey(market))).eq(newFundingFactor);
+    expect(await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(market, wnt.address, true))).gt(0);
   });
 
   it("allows RISK_ORACLE to set listed two-param and glv keys", async () => {
