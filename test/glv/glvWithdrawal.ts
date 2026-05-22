@@ -25,18 +25,21 @@ import { printGasUsage } from "../../utils/gas";
 import { expectBalances } from "../../utils/validation";
 import { setBytes32IfDifferent } from "../../utils/dataStore";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { grantRole } from "../../utils/role";
+import { parseLogs, getEventData } from "../../utils/event";
 
 describe("Glv Withdrawals", () => {
   const { provider } = ethers;
 
   let fixture;
-  let user0, user1, user2;
+  let user0, user1, user2, user3;
   let glvReader,
     dataStore,
     ethUsdMarket,
     ethUsdGlvAddress,
     btcUsdMarket,
     glvRouter,
+    glvWithdrawalHandler,
     wnt,
     sol,
     usdc,
@@ -51,7 +54,7 @@ describe("Glv Withdrawals", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
 
     ({
       glvReader,
@@ -60,6 +63,7 @@ describe("Glv Withdrawals", () => {
       ethUsdGlvAddress,
       btcUsdMarket,
       glvRouter,
+      glvWithdrawalHandler,
       wnt,
       usdc,
       sol,
@@ -346,6 +350,97 @@ describe("Glv Withdrawals", () => {
       errorsContract,
       "EmptyGlvWithdrawal"
     );
+  });
+
+  // The keeper portion of the execution fee goes to the caller if it holds ORDER_KEEPER,
+  // otherwise to glvWithdrawal.account(). cancelGlvWithdrawal also lets ORDER_KEEPER cancel
+  // before expiration; that branch is covered by the last test below.
+  //
+  // Hardhat's deployer holds both ORDER_KEEPER and CONTROLLER, so user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) are used to exercise each branch.
+
+  async function createGlvWithdrawalForKeeperTest() {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(10 * 5000, 6),
+      },
+    });
+
+    const glvToken = await contractAt("GlvToken", ethUsdGlvAddress);
+    const glvTokenAmount = expandDecimals(1000, 18);
+    await glvToken.mint(user0.address, glvTokenAmount);
+
+    await createGlvWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      glv: ethUsdGlvAddress,
+      market: ethUsdMarket,
+      glvTokenAmount,
+      executionFee: expandDecimals(1, 15),
+    });
+
+    const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
+    return glvWithdrawalKeys[0];
+  }
+
+  it("cancelGlvWithdrawal by ORDER_KEEPER pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const glvWithdrawalKey = await createGlvWithdrawalForKeeperTest();
+    const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKey);
+
+    // advance past expiration; the pre-expiration branch is tested separately below.
+    const refTime = (await ethers.provider.getBlock("latest")).timestamp;
+    await increaseTime(refTime, 300);
+
+    const txn = await glvWithdrawalHandler.connect(orderKeeperSigner).cancelGlvWithdrawal(glvWithdrawalKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+    expect(keeperEvent.executionFeeAmount).lte(glvWithdrawal.numbers.executionFee);
+
+    const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
+    if (refundEvent) {
+      expect(refundEvent.receiver).eq(user1.address); // glvWithdrawal.receiver()
+    }
+  });
+
+  it("cancelGlvWithdrawal by CONTROLLER-only signer pays the keeper portion to glvWithdrawal.account", async () => {
+    const controllerOnlySigner = user3;
+    await grantRole(roleStore, controllerOnlySigner.address, "CONTROLLER");
+
+    const glvWithdrawalKey = await createGlvWithdrawalForKeeperTest();
+
+    const refTime = (await ethers.provider.getBlock("latest")).timestamp;
+    await increaseTime(refTime, 300);
+
+    const txn = await glvWithdrawalHandler.connect(controllerOnlySigner).cancelGlvWithdrawal(glvWithdrawalKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(user0.address); // glvWithdrawal.account()
+  });
+
+  // ORDER_KEEPER can cancel a glvWithdrawal before expiration. The keeper should still get the
+  // keeper portion of the execution fee in that case.
+  it("cancelGlvWithdrawal by ORDER_KEEPER before expiration pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const glvWithdrawalKey = await createGlvWithdrawalForKeeperTest();
+    const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKey);
+
+    // no increaseTime — the keeper bypass branch runs before expiration.
+    const txn = await glvWithdrawalHandler.connect(orderKeeperSigner).cancelGlvWithdrawal(glvWithdrawalKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+    expect(keeperEvent.executionFeeAmount).lte(glvWithdrawal.numbers.executionFee);
   });
 
   describe("execute glv withdrawal, validations", () => {
