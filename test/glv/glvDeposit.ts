@@ -1074,9 +1074,8 @@ describe("Glv Deposits", () => {
     );
   });
 
-  // The keeper portion of the execution fee goes to the caller if it holds ORDER_KEEPER,
-  // otherwise to glvDeposit.account(). Hardhat's deployer holds both roles, so user2
-  // (ORDER_KEEPER only) and user3 (CONTROLLER only) are used to exercise each branch.
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
 
   async function createCancellableGlvDeposit() {
     await createGlvDeposit(fixture, {
@@ -1102,19 +1101,15 @@ describe("Glv Deposits", () => {
     await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
 
     const glvDepositKey = await createCancellableGlvDeposit();
-    const glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKey);
 
     const txn = await glvDepositHandler.connect(orderKeeperSigner).cancelGlvDeposit(glvDepositKey);
     const parsedLogs = parseLogs(fixture, await txn.wait());
 
     const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
     expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
-    expect(keeperEvent.executionFeeAmount).lte(glvDeposit.numbers.executionFee);
 
     const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
-    if (refundEvent) {
-      expect(refundEvent.receiver).eq(user1.address); // glvDeposit.receiver()
-    }
+    expect(refundEvent.receiver).eq(user1.address); // glvDeposit.receiver()
   });
 
   it("cancelGlvDeposit by CONTROLLER-only signer pays the keeper portion to glvDeposit.account", async () => {

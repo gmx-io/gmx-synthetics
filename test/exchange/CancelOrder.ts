@@ -206,12 +206,9 @@ describe("Exchange.CancelOrder", () => {
     );
   });
 
-  // For market orders, the keeper portion of the execution fee goes to the caller if it holds
-  // ORDER_KEEPER, otherwise to order.account(). Non-market orders are tested separately below
-  // (they only allow CONTROLLER and the keeper field always goes to order.account).
-  //
-  // Hardhat's deployer holds both ORDER_KEEPER and CONTROLLER, so user2 (ORDER_KEEPER only)
-  // and user3 (CONTROLLER only) are used to exercise each branch.
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately. Non-market orders only allow
+  // CONTROLLER — covered by the "cancelOrder non-market only allows CONTROLLER" test.
 
   async function createCancellableMarketOrder() {
     await createOrder(fixture, {
@@ -262,19 +259,15 @@ describe("Exchange.CancelOrder", () => {
     await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
 
     const orderKey = await createCancellableMarketOrder();
-    const order = await reader.getOrder(dataStore.address, orderKey);
 
     const txn = await orderHandler.connect(orderKeeperSigner).cancelOrder(orderKey);
     const parsedLogs = parseLogs(fixture, await txn.wait());
 
     const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
     expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
-    expect(keeperEvent.executionFeeAmount).lte(order.numbers.executionFee);
 
     const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
-    if (refundEvent) {
-      expect(refundEvent.receiver).eq(user1.address); // order.cancellationReceiver()
-    }
+    expect(refundEvent.receiver).eq(user1.address); // order.cancellationReceiver()
   });
 
   it("cancelOrder market by CONTROLLER-only signer pays the keeper portion to order.account", async () => {

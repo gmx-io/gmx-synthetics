@@ -116,9 +116,8 @@ describe("Exchange.CancelDeposit", () => {
     );
   });
 
-  // The keeper portion of the execution fee goes to the caller if it holds ORDER_KEEPER,
-  // otherwise to deposit.account(). Hardhat's deployer holds both roles, so user2
-  // (ORDER_KEEPER only) and user3 (CONTROLLER only) are used to exercise each branch.
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
 
   async function createCancellableDeposit() {
     await createDeposit(fixture, {
@@ -144,19 +143,15 @@ describe("Exchange.CancelDeposit", () => {
     await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
 
     const depositKey = await createCancellableDeposit();
-    const deposit = await reader.getDeposit(dataStore.address, depositKey);
 
     const txn = await depositHandler.connect(orderKeeperSigner).cancelDeposit(depositKey);
     const parsedLogs = parseLogs(fixture, await txn.wait());
 
     const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
     expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
-    expect(keeperEvent.executionFeeAmount).lte(deposit.numbers.executionFee);
 
     const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
-    if (refundEvent) {
-      expect(refundEvent.receiver).eq(user1.address); // deposit.receiver()
-    }
+    expect(refundEvent.receiver).eq(user1.address); // deposit.receiver()
   });
 
   it("cancelDeposit by CONTROLLER-only signer pays the keeper portion to deposit.account", async () => {

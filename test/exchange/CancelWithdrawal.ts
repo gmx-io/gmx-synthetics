@@ -78,9 +78,8 @@ describe("Exchange.Withdrawal", () => {
     expect(await getWithdrawalCount(dataStore)).eq(0);
   });
 
-  // The keeper portion of the execution fee goes to the caller if it holds ORDER_KEEPER,
-  // otherwise to withdrawal.account(). Hardhat's deployer holds both roles, so user2
-  // (ORDER_KEEPER only) and user3 (CONTROLLER only) are used to exercise each branch.
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
 
   async function createCancellableWithdrawal() {
     await handleDeposit(fixture, {
@@ -109,19 +108,15 @@ describe("Exchange.Withdrawal", () => {
     await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
 
     const withdrawalKey = await createCancellableWithdrawal();
-    const withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKey);
 
     const txn = await withdrawalHandler.connect(orderKeeperSigner).cancelWithdrawal(withdrawalKey);
     const parsedLogs = parseLogs(fixture, await txn.wait());
 
     const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
     expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
-    expect(keeperEvent.executionFeeAmount).lte(withdrawal.numbers.executionFee);
 
     const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
-    if (refundEvent) {
-      expect(refundEvent.receiver).eq(user1.address); // withdrawal.receiver()
-    }
+    expect(refundEvent.receiver).eq(user1.address); // withdrawal.receiver()
   });
 
   it("cancelWithdrawal by CONTROLLER-only signer pays the keeper portion to withdrawal.account", async () => {

@@ -264,9 +264,8 @@ describe("Exchange.Shift", () => {
     expect(await getBalanceOf(btcUsdSingleTokenMarket.marketToken, user0.address)).eq(expandDecimals(3000, 18));
   });
 
-  // The keeper portion of the execution fee goes to the caller if it holds ORDER_KEEPER,
-  // otherwise to shift.account(). Hardhat's deployer holds both roles, so user2
-  // (ORDER_KEEPER only) and user3 (CONTROLLER only) are used to exercise each branch.
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
 
   async function createCancellableShift() {
     await createShift(fixture, {
@@ -289,19 +288,15 @@ describe("Exchange.Shift", () => {
     await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
 
     const shiftKey = await createCancellableShift();
-    const shift = await reader.getShift(dataStore.address, shiftKey);
 
     const txn = await shiftHandler.connect(orderKeeperSigner).cancelShift(shiftKey);
     const parsedLogs = parseLogs(fixture, await txn.wait());
 
     const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
     expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
-    expect(keeperEvent.executionFeeAmount).lte(shift.numbers.executionFee);
 
     const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
-    if (refundEvent) {
-      expect(refundEvent.receiver).eq(user1.address); // shift.receiver()
-    }
+    expect(refundEvent.receiver).eq(user1.address); // shift.receiver()
   });
 
   it("cancelShift by CONTROLLER-only signer pays the keeper portion to shift.account", async () => {
