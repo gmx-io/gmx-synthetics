@@ -1,7 +1,9 @@
+import fs from "fs";
+import path from "path";
 import hre from "hardhat";
 import { getPositionImpactPoolWithdrawalPayload, timelockWriteMulticall } from "../utils/timelock";
-import { expandDecimals, formatAmount } from "../utils/math";
-import { constants } from "ethers";
+import { formatAmount } from "../utils/math";
+import { constants, utils } from "ethers";
 import { fetchSignedPrices } from "../utils/prices";
 import { fetchMarketAddress } from "../utils/market";
 import * as keys from "../utils/keys";
@@ -147,19 +149,22 @@ async function main() {
 
   const receiver = "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E";
 
-  /*
-  // OM market address: 0x89EB78679921499632fF16B1be3ee48295cfCD91
-  Retrieve position impact pool amount:
-    POOL_KEY=$(cast keccak $(cast abi-encode "f(bytes32,address)" "0x8d05e344d016decb2483e1a2db6dfebdef3f67c47ac787f0ac505b4d45d3e16c" "0x89EB78679921499632fF16B1be3ee48295cfCD91")) \
-    cast call 0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8 "getUint(bytes32)(uint256)" "$POOL_KEY" --rpc-url https://arb1.arbitrum.io/rpc
-
-  output: 57798402402081225282171 (57798.4024 OM)
-  */
-  const withdrawalItems = [
-    {
-      marketKey: "OM:WBTC.e:USDC",
-      amount: 57_798, // ignored when FULL_WITHDRAWAL=true
-    },
+  // NOTE: amount is the human readable token amount
+  // e.g. to withdraw 500 ETH, amount would be "500"
+  // and not 500 * (10 ** 18)
+  // SCDEV-212: ~$2.7M batch, totals per Linear table.
+  const withdrawalItems: any[] = [
+    { marketKey: "BTC:WBTC.e:USDC", amount: "13.35" }, // ~$1,084,682
+    { marketKey: "WETH:WETH:USDC", amount: "441" }, // ~$1,027,010
+    { marketKey: "XRP:WETH:USDC", amount: "103453" }, // ~$153,261
+    { marketKey: "LINK:LINK:USDC", amount: "10074" }, // ~$106,211
+    { marketKey: "DOGE:WETH:USDC", amount: "586446" }, // ~$64,792
+    { marketKey: "VVV:WETH:USDC", amount: "3803" }, // ~$64,229
+    { marketKey: "FARTCOIN:WBTC.e:USDC", amount: "245074" }, // ~$63,026
+    { marketKey: "GMX:GMX:USDC", amount: "6898" }, // ~$52,661
+    { marketKey: "ORDI:WBTC.e:USDC", amount: "7146" }, // ~$36,062
+    { marketKey: "ARB:ARB:USDC", amount: "221831" }, // ~$31,420
+    { marketKey: "HYPE:WBTC.e:USDC", amount: "416" }, // ~$17,276
   ];
 
   let salt = ethers.constants.HashZero;
@@ -206,7 +211,7 @@ async function main() {
     if (process.env.FULL_WITHDRAWAL === "true") {
       adjustedAmount = priceImpactPoolAmount;
     } else {
-      adjustedAmount = expandDecimals(amount, indexToken.decimals);
+      adjustedAmount = utils.parseUnits(amount, indexToken.decimals);
       if (adjustedAmount.gt(priceImpactPoolAmount)) {
         throw new Error(
           `adjustedAmount > priceImpactPoolAmount for ${marketKey}: ${adjustedAmount.toString()}, ${priceImpactPoolAmount.toString()}`
