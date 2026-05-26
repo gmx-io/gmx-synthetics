@@ -22,7 +22,6 @@ import "./ConfigUtils.sol";
 contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
-    using EventUtils for EventUtils.IntItems;
     using EventUtils for EventUtils.BoolItems;
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
@@ -213,7 +212,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
 
     // @dev validate that the baseKey is allowed to be used and market is valid and allowed to edit
     // @param baseKey the base key to validate
-    // @return address of the market for change
+    // @return Market props for change
     function _validateKeyAndMarket(bytes32 baseKey, bytes memory data) internal view returns (Market.Props memory) {
         if (!allowedRiskOracleBaseKeys[baseKey]) {
             revert Errors.InvalidBaseKey(baseKey);
@@ -263,6 +262,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
     function _isRiskOracleBorrowingBaseKey(bytes32 baseKey) internal pure returns (bool) {
         return
             baseKey == Keys.BASE_BORROWING_FACTOR ||
+            baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR;
     }
 
