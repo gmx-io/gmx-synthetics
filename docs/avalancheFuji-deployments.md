@@ -3,7 +3,7 @@
 **Network Type:** Testnet  
 **Chain ID:** 43113  
 **Total Contracts:** 143  
-**Last Updated:** May 18, 2026, 06:49 AM UTC
+**Last Updated:** May 27, 2026, 08:25 AM UTC
 
 ## Deployed Contracts
 
@@ -122,7 +122,7 @@
 | ReferralStorage | `0x192e82A18a4ab446dD9968f055431b60640B155D` | [View on Explorer](https://testnet.snowtrace.io/address/0x192e82A18a4ab446dD9968f055431b60640B155D) |
 | ReferralUtils | `0xF0D56D24E88C711BC475dA6534F32BbaF63e3Ff4` | [View on Explorer](https://testnet.snowtrace.io/address/0xF0D56D24E88C711BC475dA6534F32BbaF63e3Ff4) |
 | RelayUtils | `0xc01b4f1C8cAFb04e4b30820f354b56F610fF2751` | [View on Explorer](https://testnet.snowtrace.io/address/0xc01b4f1C8cAFb04e4b30820f354b56F610fF2751) |
-| RiskOracleConfig | `0x4e1fB0F05732A63d2942cc50Ab32a876c1c717eC` | [View on Explorer](https://testnet.snowtrace.io/address/0x4e1fB0F05732A63d2942cc50Ab32a876c1c717eC) |
+| RiskOracleConfig | `0x32fC3c81F75a7bDd77AfB7d6AFcf4324bb5c52D5` | [View on Explorer](https://testnet.snowtrace.io/address/0x32fC3c81F75a7bDd77AfB7d6AFcf4324bb5c52D5) |
 | RoleStore | `0x19a8085537078e7847a332A76ABaDD5b02B1e736` | [View on Explorer](https://testnet.snowtrace.io/address/0x19a8085537078e7847a332A76ABaDD5b02B1e736) |
 | Router | `0x5e7d61e4C52123ADF651961e4833aCc349b61491` | [View on Explorer](https://testnet.snowtrace.io/address/0x5e7d61e4C52123ADF651961e4833aCc349b61491) |
 | ShiftEventUtils | `0x7CF66F5bd3CEeeee6cA80dbBbd87cE696C735Fd8` | [View on Explorer](https://testnet.snowtrace.io/address/0x7CF66F5bd3CEeeee6cA80dbBbd87cE696C735Fd8) |

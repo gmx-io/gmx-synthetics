@@ -3,7 +3,7 @@
 **Network Type:** Testnet  
 **Chain ID:** 421614  
 **Total Contracts:** 138  
-**Last Updated:** May 18, 2026, 06:51 AM UTC
+**Last Updated:** May 27, 2026, 08:25 AM UTC
 
 ## Deployed Contracts
 
@@ -121,7 +121,7 @@
 | ReferralStorage | `0xBbCdA58c228Bb29B5769778181c81Ac8aC546c11` | [View on Explorer](https://sepolia.arbiscan.io/address/0xBbCdA58c228Bb29B5769778181c81Ac8aC546c11) |
 | ReferralUtils | `0xc814c610F89D3e75F67f54f57f61fF402528a1fe` | [View on Explorer](https://sepolia.arbiscan.io/address/0xc814c610F89D3e75F67f54f57f61fF402528a1fe) |
 | RelayUtils | `0xB6D2F33Bf32552F370Eaf97af6954E4C248a10a9` | [View on Explorer](https://sepolia.arbiscan.io/address/0xB6D2F33Bf32552F370Eaf97af6954E4C248a10a9) |
-| RiskOracleConfig | `0x857CB5110B52B98bD98B345fe94415e04A142b5B` | [View on Explorer](https://sepolia.arbiscan.io/address/0x857CB5110B52B98bD98B345fe94415e04A142b5B) |
+| RiskOracleConfig | `0x05b417b467642823EaA293C525CEf2dD83196241` | [View on Explorer](https://sepolia.arbiscan.io/address/0x05b417b467642823EaA293C525CEf2dD83196241) |
 | RoleStore | `0x433E3C47885b929aEcE4149E3c835E565a20D95c` | [View on Explorer](https://sepolia.arbiscan.io/address/0x433E3C47885b929aEcE4149E3c835E565a20D95c) |
 | Router | `0x72F13a44C8ba16a678CAD549F17bc9e06d2B8bD2` | [View on Explorer](https://sepolia.arbiscan.io/address/0x72F13a44C8ba16a678CAD549F17bc9e06d2B8bD2) |
 | ShiftEventUtils | `0x0d2c9dd8a4bA1F9cf940E46f9Bf5BCB42Aa51848` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0d2c9dd8a4bA1F9cf940E46f9Bf5BCB42Aa51848) |
