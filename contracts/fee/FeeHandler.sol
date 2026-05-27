@@ -176,6 +176,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         _setAvailableFeeAmount(feeToken, buybackToken, availableFeeAmount - buybackAmount);
 
         IERC20(buybackToken).safeTransferFrom(msg.sender, address(feeVault), batchSize);
+        feeVault.recordTransferIn(buybackToken);
         feeVault.transferOut(feeToken, msg.sender, buybackAmount);
 
         EventUtils.EventLogData memory eventData;
