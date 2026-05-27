@@ -1,7 +1,7 @@
 export const ROLES_TO_ADD = [
   {
-    role: "TIMELOCK_ADMIN",
-    member: "0x58f582455b54d7c83d03bceed95faf72b37fddd7",
-    contractName: "SafeProxy",
+    role: "CONTROLLER",
+    member: "0x23BaFd10C7c15eaff7754D624BC660cbAA7d2Ec9",
+    contractName: "RiskOracleConfig",
   },
 ];
