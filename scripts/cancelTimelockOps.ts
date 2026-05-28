@@ -11,11 +11,16 @@ ConfigTimelockController in that tx, extracts the operation ids, and writes a
 Safe batch JSON with one TimelockConfig.cancelAction(bytes32) call per op.
 
 Usage:
+  OP_HASHES (optional): comma-separated allowlist — cancel only these opHashes
+  (opHash can be retrieved from the signal tx --> CallScheduled event logs, topic1:id)
+
   SIGNAL_TX_HASH=0x... \
+  OP_HASHES=0x<opHash1>,0x<opHash2> \
     npx hardhat run scripts/cancelTimelockOps.ts --network arbitrum
 
-  e.g. cancel the SCDEV-212 signal (withdrawFromPositionImpactPool, 11 ops):
+  e.g. cancel the SCDEV-212 signal for 2/11 withdrawFromPositionImpactPool ops --> VVV + FARTCOIN:
   SIGNAL_TX_HASH=0x4450dbc0a7dd6f7b4f116ded33436cae921dfbe5a28e99101b20dfd542394dd1 \
+  OP_HASHES=0xb7af3a71699441a0d15ab0395a626b59f3780e5e6b8dae921f58f7bebaf7690a,0xbcc5fd109033e52be11d36f451363dbd4c75f7f1b69b219b5faa49836c8a72d2 \
     npx hardhat run scripts/cancelTimelockOps.ts --network arbitrum
 
 Output: out/safe-batch-cancelAction-<network>-<timestamp>.json
@@ -125,13 +130,28 @@ async function main() {
     console.log(`        state: ${state}`);
   }
 
-  const cancellable = ops.filter((op) => op.state.startsWith("SCHEDULED"));
+  let cancellable = ops.filter((op) => op.state.startsWith("SCHEDULED"));
   if (cancellable.length !== ops.length) {
     console.log(
       `\nWARNING: ${ops.length - cancellable.length} op(s) are not in SCHEDULED state and cannot be cancelled.`
     );
     console.log(`Including only ${cancellable.length} cancellable op(s) in the Safe batch.`);
   }
+
+  // Optional allowlist: only cancel these opHashes (comma-separated). If unset, cancel all cancellable ops.
+  if (process.env.OP_HASHES) {
+    const allowlist = new Set(process.env.OP_HASHES.split(",").map((h) => h.trim().toLowerCase()));
+    const before = cancellable.length;
+    cancellable = cancellable.filter((op) => allowlist.has(op.opHash.toLowerCase()));
+    console.log(`\nOP_HASHES filter: keeping ${cancellable.length} of ${before} cancellable op(s).`);
+    const matched = new Set(cancellable.map((op) => op.opHash.toLowerCase()));
+    for (const h of allowlist) {
+      if (!matched.has(h)) {
+        console.log(`  WARNING: allowlist opHash not found among cancellable ops: ${h}`);
+      }
+    }
+  }
+
   if (cancellable.length === 0) {
     throw new Error("No cancellable operations found");
   }
