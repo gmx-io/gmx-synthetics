@@ -77,8 +77,15 @@ library DecreasePositionUtils {
         );
 
         // cap the order size to the position size
+        // a MarketDecrease may become oversized if the position is partially
+        // reduced (e.g. by liquidation, ADL or another decrease) before the order
+        // is executed, in which case it is capped to close the remaining position
+        // instead of reverting and being cancelled
+        // a Liquidation order is created with sizeDeltaUsd equal to the position
+        // size and executed atomically, so it should never be oversized
         if (params.order.sizeDeltaUsd() > params.position.sizeInUsd()) {
-            if (params.order.orderType() == Order.OrderType.LimitDecrease ||
+            if (params.order.orderType() == Order.OrderType.MarketDecrease ||
+                params.order.orderType() == Order.OrderType.LimitDecrease ||
                 params.order.orderType() == Order.OrderType.StopLossDecrease) {
 
                 OrderEventUtils.emitOrderSizeDeltaAutoUpdated(
