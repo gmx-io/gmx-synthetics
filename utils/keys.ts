@@ -270,6 +270,7 @@ export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 export const SUBACCOUNT_EXPIRES_AT = hashString("SUBACCOUNT_EXPIRES_AT");
 export const SUBACCOUNT_INTEGRATION_ID = hashString("SUBACCOUNT_INTEGRATION_ID");
 export const SUBACCOUNT_INTEGRATION_DISABLED = hashString("SUBACCOUNT_INTEGRATION_DISABLED");
+export const SUBACCOUNT_REVOCATION_COUNTER = hashString("SUBACCOUNT_REVOCATION_COUNTER");
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
 export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
 
@@ -895,6 +896,18 @@ export function subaccountActionCountKey(account: string, subaccount: string, ac
 
 export function subaccountAutoTopUpAmountKey(account: string, subaccount: string) {
   return hashData(["bytes32", "address", "address"], [SUBACCOUNT_AUTO_TOP_UP_AMOUNT, account, subaccount]);
+}
+
+export function subaccountIntegrationIdKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_INTEGRATION_ID, account, subaccount]);
+}
+
+export function subaccountIntegrationDisabledKey(integrationId: string) {
+  return hashData(["bytes32", "bytes32"], [SUBACCOUNT_INTEGRATION_DISABLED, integrationId]);
+}
+
+export function subaccountRevocationCounterKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_REVOCATION_COUNTER, account, subaccount]);
 }
 
 export function glvSupportedMarketListKey(glv: string) {

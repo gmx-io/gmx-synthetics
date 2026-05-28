@@ -18,6 +18,7 @@ struct SubaccountApproval {
     uint256 desChainId;
     uint256 deadline;
     bytes32 integrationId;
+    uint256 revocationCounter;
     bytes signature;
 }
 
@@ -64,6 +65,26 @@ library SubaccountUtils {
     ) external {
         bytes32 setKey = Keys.subaccountListKey(account);
         dataStore.removeAddress(setKey, subaccount);
+
+        // Increase the counter to invalidate any outstanding SubaccountApproval signed against the
+        // prior counter value — this is the defense. The clears below reset session state so legitimate
+        // re-add starts clean (not security-critical).
+        dataStore.incrementUint(Keys.subaccountRevocationCounterKey(account, subaccount), 1);
+
+        // Auto-top-up amount (per subaccount, not actionType).
+        dataStore.setUint(Keys.subaccountAutoTopUpAmountKey(account, subaccount), 0);
+
+        // subaccountIntegrationId (also per subaccount, not actionType) is intentionally
+        // preserved on removal. It's an owner-set tag (via setIntegrationId) checked by
+        // validateIntegrationId against the per-integration disable list. Clearing here
+        // would silently neutralize the disable defense on re-add. Preserving forces any
+        // override to be explicit via setIntegrationId.
+
+        // Per-actionType state (per subaccount, per actionType). All wired actionTypes should be cleared here.
+        // SUBACCOUNT_ORDER_ACTION is the only wired actionType currently.
+        dataStore.setUint(Keys.subaccountExpiresAtKey(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION), 0);
+        dataStore.setUint(Keys.maxAllowedSubaccountActionCountKey(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION), 0);
+        dataStore.setUint(Keys.subaccountActionCountKey(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION), 0);
 
         EventUtils.EventLogData memory eventData;
 

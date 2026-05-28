@@ -443,6 +443,8 @@ library Keys {
     bytes32 public constant SUBACCOUNT_INTEGRATION_ID = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_ID"));
     // @dev key for subaccount integration id disabled status
     bytes32 public constant SUBACCOUNT_INTEGRATION_DISABLED = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_DISABLED"));
+    // @dev key for the per-(account, subaccount) revocation counter used to invalidate signed SubaccountApprovals on removal
+    bytes32 public constant SUBACCOUNT_REVOCATION_COUNTER = keccak256(abi.encode("SUBACCOUNT_REVOCATION_COUNTER"));
     // @dev key for fee distributor swap order token index
     bytes32 public constant FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX"));
     // @dev key for fee distributor swap fee batch
@@ -1991,6 +1993,14 @@ library Keys {
         return keccak256(abi.encode(
             SUBACCOUNT_INTEGRATION_DISABLED,
             integrationId
+        ));
+    }
+
+    function subaccountRevocationCounterKey(address account, address subaccount) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_REVOCATION_COUNTER,
+            account,
+            subaccount
         ));
     }
 
