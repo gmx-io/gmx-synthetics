@@ -515,7 +515,7 @@ describe("Exchange.Deposit", () => {
 
     expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
 
-    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49999975006249999995000"); // 49999.975006249999995
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49999975000012490625000"); // 49999.975000012490625
   });
 
   it("positive and negative price impact", async () => {
@@ -592,7 +592,7 @@ describe("Exchange.Deposit", () => {
 
     expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
 
-    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49987487503124999995000"); // 49987.487503124999995
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49987487502345311325000"); // 49987.487502345311325
   });
 
   it("price impact split over multiple orders", async () => {
@@ -794,16 +794,16 @@ describe("Exchange.Deposit", () => {
     });
 
     expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
-    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("60011482496874999995000"); // 60011.482496875
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("60011484797797146090000"); // 60011.48479779714609
 
     expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq(expandDecimals(10, 18));
     expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq(expandDecimals(60 * 1000, 6));
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(
-      "9997296499374999999" // 9.997296499375
+      "9997296959559429218" // 9.997296959559429218
     );
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("60000000000"); // 60,000
     expect(await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(
-      "2703500625000001" // 0.002703500625 ETH, ~13.51 USD
+      "2703040440570782" // 0.002703040440570782 ETH, ~13.51 USD
     );
     expect(await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(0);
   });
@@ -864,18 +864,75 @@ describe("Exchange.Deposit", () => {
       },
     });
 
-    expect(await getMarketTokenPrice(fixture)).eq("1000525446705012120185491696460"); // ~1.00052
+    expect(await getMarketTokenPrice(fixture)).eq("1000525446705011352181369795225"); // ~1.00052
 
-    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49944998007168690894085"); // 49944.998
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49944998007606848330474"); // 49944.998
     expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq("10000000000000000000"); // 10 ETH
     expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq("49975000000"); // 49975 USDC
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(
-      "9995996750943749999" // 9.996 ETH
+      "9995996751031412188" // 9.996 ETH
     );
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("49967503750"); // 49967.50375 USDC
     expect(await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(
-      "2503249056250001" // 0.0025, 12.5 USD
+      "2503248968587812" // 0.0025, 12.5 USD
     );
+  });
+
+  it("one-sided deposit, positive price impact accounts for the rebate added to the pool", async () => {
+    // set negative price impact to 0.1% for every $100,000 of token imbalance => 1e-8
+    // set positive price impact to 0.05% for every $100,000 of token imbalance => 5e-9
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+
+    // deposit USDC only to create a short-heavy pool and seed the USDC swap impact pool
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        shortTokenAmount: expandDecimals(50 * 1000, 6),
+      },
+      execute: {
+        gasUsageLabel: "executeDeposit",
+      },
+    });
+
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("49975000000"); // 49975 USDC
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(0);
+    const usdcImpactPoolBefore = await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address);
+    expect(usdcImpactPoolBefore).eq("25000000"); // 25 USDC, $25
+    expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
+
+    // deposit WNT into the short-heavy pool: the positive-impact rebate is paid in USDC and added
+    // back to the overweight short side, so the credited impact reflects the post-rebate balance
+    // (~$9.3664) rather than the deposit-only quote (~$9.36875)
+    const depositAmountOut = await reader.getDepositAmountOut(
+      dataStore.address,
+      ethUsdMarket,
+      prices.ethUsdMarket,
+      expandDecimals(5, 18),
+      0,
+      AddressZero,
+      SwapPricingType.TwoStep,
+      true
+    );
+
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(5, 18),
+        receiver: user1,
+      },
+      execute: {
+        gasUsageLabel: "executeDeposit",
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("25009366409000000000000"); // 25009.366409
+    expect(depositAmountOut).eq(await getBalanceOf(ethUsdMarket.marketToken, user1.address));
+    const usdcImpactPoolAfter = await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address);
+    expect(usdcImpactPoolAfter).lt(usdcImpactPoolBefore); // rebate paid in USDC
+    expect(usdcImpactPoolAfter).eq("15633591"); // 15.633591 USDC, 9.366409 USDC rebate paid
+    expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30)); // no over-mint
   });
 
   it("handle deposit error", async () => {
