@@ -1,4 +1,4 @@
-// PM2 config for the market balance monitor (SCDEV-228).
+// PM2 config for the market balance monitor.
 //
 // Runs scripts/monitor/balanceMonitor.js once per cron tick, then exits.
 // autorestart:false keeps it from looping; cron_restart re-launches it on schedule.
@@ -16,7 +16,7 @@ module.exports = {
       name: "gmx-balance-monitor",
       script: "scripts/monitor/balanceMonitor.js",
       cwd: __dirname,
-      cron_restart: "0 */6 * * *", // every 6 hours
+      cron_restart: "0 8 * * *", // daily at 08:00; PM2 fires in the node's local time
       autorestart: false,
       instances: 1,
       time: true,
