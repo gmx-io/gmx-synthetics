@@ -3925,8 +3925,9 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
       maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // stop distribution
-      minPositionImpactPoolAmount: expandDecimals(12136, 18), // leave ~10% = 12136 KTA
+      // KTA/USD [WETH-USDC] [0x970b730b5dD18de53A230eE8F4af088dBC3a6F8d] — start distribution and drain PI bucket
+      positionImpactPoolDistributionRate: expandDecimals(45457, 18 + 30).div(SECONDS_PER_DAY), // ~45,457 KTA/day, drains current ~363,656 KTA PI bucket in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
     },
     {
       tokens: { indexToken: "WLFI", longToken: "WETH", shortToken: "USDC" },
