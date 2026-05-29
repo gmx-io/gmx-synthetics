@@ -107,6 +107,8 @@ export function getRoles({
       "0xC77E6C0ca99E02660A23c00A860Dd5a8912DEaF5": true, // ConfigTimelockController (ROLE_ADMIN)
     },
     MULTICHAIN_READER: {},
-    RISK_ORACLE: {},
+    RISK_ORACLE: {
+      "0x16ffB5a90bE6a0c0c5179d62Ced944fdD8108C72": true, // KMS generated
+    },
   };
 }
