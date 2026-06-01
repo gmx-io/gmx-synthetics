@@ -2,8 +2,8 @@
 
 **Network Type:** Mainnet  
 **Chain ID:** 43114  
-**Total Contracts:** 137  
-**Last Updated:** Dec 19, 2025, 06:06 AM UTC
+**Total Contracts:** 138  
+**Last Updated:** May 27, 2026, 08:25 AM UTC
 
 ## Deployed Contracts
 
@@ -122,6 +122,7 @@
 | ReferralEventUtils | `0x825E3bdaC3d503CaC071c849b386fA352582C1d7` | [View on Explorer](https://snowtrace.io/address/0x825E3bdaC3d503CaC071c849b386fA352582C1d7) |
 | ReferralUtils | `0x41978c5C7665DcCf6D88978809f32E4bb78E12cA` | [View on Explorer](https://snowtrace.io/address/0x41978c5C7665DcCf6D88978809f32E4bb78E12cA) |
 | RelayUtils | `0x05fcA76DeE79743426DacE9A3369e4B9Af7Fe4ea` | [View on Explorer](https://snowtrace.io/address/0x05fcA76DeE79743426DacE9A3369e4B9Af7Fe4ea) |
+| RiskOracleConfig | `0x23BaFd10C7c15eaff7754D624BC660cbAA7d2Ec9` | [View on Explorer](https://snowtrace.io/address/0x23BaFd10C7c15eaff7754D624BC660cbAA7d2Ec9) |
 | RoleStore | `0xA44F830B6a2B6fa76657a3B92C1fe74fcB7C6AfD` | [View on Explorer](https://snowtrace.io/address/0xA44F830B6a2B6fa76657a3B92C1fe74fcB7C6AfD) |
 | Router | `0x820F5FfC5b525cD4d88Cd91aCf2c28F16530Cc68` | [View on Explorer](https://snowtrace.io/address/0x820F5FfC5b525cD4d88Cd91aCf2c28F16530Cc68) |
 | ShiftEventUtils | `0x55D5c8eFF1A91b3d12BED13922793133F2739Cc2` | [View on Explorer](https://snowtrace.io/address/0x55D5c8eFF1A91b3d12BED13922793133F2739Cc2) |

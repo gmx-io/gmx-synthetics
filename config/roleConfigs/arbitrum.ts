@@ -57,6 +57,7 @@ export function getRoles({
       "0x7F01614cA5198Ec979B1aAd1DAF0DE7e0a215BDF": true, // Oracle
 
       "0x33D1a645B9E9fc19b06Fe02981180c8DDAeE75B1": true, // Config (CONTROLLER)
+      "0x5cA40cBb5321bBe4EF74Ddf01CCd2b4BCC76a9f9": true, // RiskOracleConfig (CONTROLLER)
       "0x4C8569E2F8A8Af32E0464E53d76449Ca7a004baF": true, // ConfigSyncer (CONTROLLER)
       "0xC77E6C0ca99E02660A23c00A860Dd5a8912DEaF5": true, // ConfigTimelockController (CONTROLLER)
       "0x4A1D9e342E2dB5f4a02c9eF5cB29CaF289f31599": true, // TimelockConfig (CONTROLLER)
@@ -106,5 +107,8 @@ export function getRoles({
       "0xC77E6C0ca99E02660A23c00A860Dd5a8912DEaF5": true, // ConfigTimelockController (ROLE_ADMIN)
     },
     MULTICHAIN_READER: {},
+    RISK_ORACLE: {
+      "0x16ffB5a90bE6a0c0c5179d62Ced944fdD8108C72": true, // KMS generated
+    },
   };
 }

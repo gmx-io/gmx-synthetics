@@ -581,6 +581,11 @@
       "txHash": "0x5ac865630eca5bbfd1b26b02ba37eb5506ec9c864d2f65176123e5229e07415f"
     },
     {
+      "contractName": "RiskOracleConfig",
+      "contractAddress": "0x5cA40cBb5321bBe4EF74Ddf01CCd2b4BCC76a9f9",
+      "txHash": "0x459c72b6abb1945783ab2fe1035c0738e9e2da3048f7697608f6f46bfb9dc3b1"
+    },
+    {
       "contractName": "RoleStore",
       "contractAddress": "0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72",
       "txHash": "0x913bbba4d56b0c04199ba0f3f8700e64c4b547f770becc03ab12756472cb06cd"
@@ -1266,6 +1271,11 @@
       "contractName": "RelayUtils",
       "contractAddress": "0x05fcA76DeE79743426DacE9A3369e4B9Af7Fe4ea",
       "txHash": "0x21f67856fcd477fe21ed15cbd3476a06215fb6fb5d251b66efde73f05940dc9b"
+    },
+    {
+      "contractName": "RiskOracleConfig",
+      "contractAddress": "0x23BaFd10C7c15eaff7754D624BC660cbAA7d2Ec9",
+      "txHash": "0x20a65b1fc9c8e0068e69b8a28a1eb6ead53b6bbe2a525a51a2040b6655f70ed7"
     },
     {
       "contractName": "RoleStore",

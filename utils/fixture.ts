@@ -61,6 +61,7 @@ async function setup() {
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
   const config = await hre.ethers.getContract("Config");
+  const riskOracleConfig = await hre.ethers.getContract("RiskOracleConfig");
   const configUtils = await hre.ethers.getContract("ConfigUtils");
   const configSyncer = await hre.ethers.getContract("ConfigSyncer");
   const mockRiskOracle = await hre.ethers.getContract("MockRiskOracle");
@@ -288,6 +289,7 @@ async function setup() {
     },
     contracts: {
       config,
+      riskOracleConfig,
       configUtils,
       configSyncer,
       mockRiskOracle,

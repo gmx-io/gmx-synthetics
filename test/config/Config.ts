@@ -3,10 +3,11 @@ import { deployFixture } from "../../utils/fixture";
 
 import { EXCLUDED_CONFIG_KEYS } from "../../utils/config";
 import { grantRole } from "../../utils/role";
-import { encodeData, hashString } from "../../utils/hash";
+import { encodeData, hashString, keccakString } from "../../utils/hash";
 import { bigNumberify, decimalToFloat, expandDecimals, percentageToFloat } from "../../utils/math";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
+import { executeWithOracleParams } from "../../utils/exchange";
 import * as keys from "../../utils/keys";
 import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
 import { ethers } from "hardhat";
@@ -14,17 +15,19 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("Config", () => {
   let fixture;
-  let user0, user1, user2;
-  let config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt;
+  let user0, user1, user2, user3;
+  let config, riskOracleConfig, oracle, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt, usdc;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ config, oracle, riskOracleConfig, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt, usdc } =
+      fixture.contracts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
     await grantRole(roleStore, user2.address, "LIMITED_CONFIG_KEEPER");
+    await grantRole(roleStore, user3.address, "RISK_ORACLE");
   });
 
   it("allows required keys", async () => {
@@ -79,6 +82,163 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1), "0");
     await config.connect(user2).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", "200");
     expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1), "200");
+  });
+
+  it("allows RISK_ORACLE to set allowed keys only for enabled markets", async () => {
+    const market = ethUsdMarket.marketToken;
+
+    await expect(
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.MAX_OPEN_INTEREST, encodeData(["address", "bool"], [market, true]), 1)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await riskOracleConfig
+      .connect(user3)
+      .setUint(keys.MAX_OPEN_INTEREST, encodeData(["address", "bool"], [market, true]), 1);
+
+    expect(await dataStore.getUint(keys.maxOpenInterestKey(market, true))).eq(1);
+  });
+
+  it("settles funding before RISK_ORACLE updates funding config", async () => {
+    const market = ethUsdMarket.marketToken;
+    const data = encodeData(["address"], [market]);
+    const oldFundingFactor = decimalToFloat(1, 9);
+    const newFundingFactor = decimalToFloat(2, 9);
+    const latestBlock = await ethers.provider.getBlock("latest");
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await dataStore.setUint(keys.openInterestKey(market, wnt.address, true), expandDecimals(1_000_000, 30));
+    await dataStore.setUint(keys.openInterestKey(market, usdc.address, false), expandDecimals(500_000, 30));
+    await dataStore.setUint(keys.fundingFactorKey(market), oldFundingFactor);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(market), oldFundingFactor);
+    await dataStore.setUint(keys.fundingUpdatedAtKey(market), latestBlock.timestamp - 100);
+
+    expect(await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(market, wnt.address, true))).eq(0);
+
+    await executeWithOracleParams(fixture, {
+      args: [keys.FUNDING_FACTOR, data, newFundingFactor],
+      oracleBlockNumber: latestBlock.number,
+      tokens: [wnt.address, usdc.address],
+      precisions: [8, 18],
+      minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      dataStreamTokens: [],
+      dataStreamData: [],
+      priceFeedTokens: [],
+      execute: riskOracleConfig.connect(user3).setUintWithOraclePrices,
+    });
+
+    expect(await dataStore.getUint(keys.fundingFactorKey(market))).eq(newFundingFactor);
+    expect(await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(market, wnt.address, true))).gt(0);
+  });
+
+  it("settles borrowing before RISK_ORACLE updates borrowing config", async () => {
+    const market = ethUsdMarket.marketToken;
+    const isLong = true;
+    const data = encodeData(["address", "bool"], [market, isLong]);
+    const oldBaseBorrowingFactor = decimalToFloat(1, 9);
+    const newBaseBorrowingFactor = decimalToFloat(2, 9);
+    const latestBlock = await ethers.provider.getBlock("latest");
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await dataStore.setUint(keys.poolAmountKey(market, wnt.address), expandDecimals(1_000, 18));
+    await dataStore.setUint(keys.poolAmountKey(market, usdc.address), expandDecimals(5_000_000, 6));
+    await dataStore.setUint(keys.openInterestInTokensKey(market, wnt.address, isLong), expandDecimals(100, 18));
+    await dataStore.setUint(keys.openInterestKey(market, wnt.address, isLong), expandDecimals(500_000, 30));
+    await dataStore.setUint(keys.optimalUsageFactorKey(market, isLong), decimalToFloat(8, 1));
+    await dataStore.setUint(keys.baseBorrowingFactorKey(market, isLong), oldBaseBorrowingFactor);
+    await dataStore.setUint(keys.aboveOptimalUsageBorrowingFactorKey(market, isLong), oldBaseBorrowingFactor);
+    await dataStore.setUint(keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong), latestBlock.timestamp - 100);
+
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(market, isLong))).eq(0);
+
+    await executeWithOracleParams(fixture, {
+      args: [keys.BASE_BORROWING_FACTOR, data, newBaseBorrowingFactor],
+      oracleBlockNumber: latestBlock.number,
+      tokens: [wnt.address, usdc.address],
+      precisions: [8, 18],
+      minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      dataStreamTokens: [],
+      dataStreamData: [],
+      priceFeedTokens: [],
+      execute: riskOracleConfig.connect(user3).setUintWithOraclePrices,
+    });
+
+    expect(await dataStore.getUint(keys.baseBorrowingFactorKey(market, isLong))).eq(newBaseBorrowingFactor);
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(market, isLong))).gt(0);
+  });
+
+  it("validates collateral factor invariants for RISK_ORACLE updates", async () => {
+    const market = ethUsdMarket.marketToken;
+    const data = encodeData(["address"], [market]);
+    const minCollateralFactor = decimalToFloat(2, 2); // 2%
+    const minCollateralFactorForLiquidation = decimalToFloat(1, 2); // 1%
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await riskOracleConfig.connect(user3).setUint(keys.MIN_COLLATERAL_FACTOR, data, minCollateralFactor);
+    await riskOracleConfig
+      .connect(user3)
+      .setUint(keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, data, minCollateralFactorForLiquidation);
+
+    await expect(
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.MIN_COLLATERAL_FACTOR, data, minCollateralFactorForLiquidation.sub(1))
+    )
+      .to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange")
+      .withArgs(keys.MIN_COLLATERAL_FACTOR, minCollateralFactorForLiquidation.sub(1));
+
+    await expect(
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, data, minCollateralFactor.add(1))
+    )
+      .to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange")
+      .withArgs(keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, minCollateralFactor.add(1));
+  });
+
+  it("allows RISK_ORACLE to set listed two-param and glv keys", async () => {
+    const market = ethUsdMarket.marketToken;
+    const glv = user1.address;
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await riskOracleConfig
+      .connect(user3)
+      .setUint(keys.MAX_OPEN_INTEREST, encodeData(["address", "bool"], [market, true]), decimalToFloat(2_000_000));
+
+    expect(await dataStore.getUint(keys.maxOpenInterestKey(market, true))).eq(decimalToFloat(2_000_000));
+
+    await riskOracleConfig
+      .connect(user3)
+      .setUint(
+        keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD,
+        encodeData(["address", "address"], [glv, market]),
+        decimalToFloat(500_000)
+      );
+
+    expect(await dataStore.getUint(keys.glvMaxMarketTokenBalanceUsdKey(glv, market))).eq(decimalToFloat(500_000));
+  });
+
+  it("prevents RISK_ORACLE from setting non-allowed keys", async () => {
+    const market = ethUsdMarket.marketToken;
+
+    await riskOracleConfig.connect(user0).setRiskOracleMarketEnabled(market, true);
+
+    await expect(
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.SWAP_FEE_FACTOR, encodeData(["address", "bool"], [market, true]), decimalToFloat(1, 4))
+    )
+      .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+      .withArgs(keys.SWAP_FEE_FACTOR);
   });
 
   it("setBool", async () => {

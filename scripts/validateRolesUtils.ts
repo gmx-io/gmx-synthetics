@@ -1,5 +1,6 @@
 import hre from "hardhat";
 import Role from "../artifacts/contracts/role/Role.sol/Role.json";
+import Role2 from "../artifacts/contracts/role/Role2.sol/Role2.json";
 import { hashString } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
 import { getContractNameFromEtherscan, getContractCreationFromEtherscan } from "../utils/explorer";
@@ -85,7 +86,10 @@ function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddre
 }
 
 export async function validateRoles() {
-  const roles = Role.abi.map((i) => i.name) as string[];
+  let roles = Role.abi.map((i) => i.name) as string[];
+  const roles2 = Role2.abi.map((i) => i.name) as string[];
+  roles = roles.concat(roles2);
+
   const deployments = await hre.deployments.all();
   const contractNameByAddress = Object.fromEntries(
     Object.entries(deployments).map(([contractName, deployment]) => [deployment.address, contractName])
