@@ -380,6 +380,10 @@ export function isMarketDisabledKey(market) {
   return hashData(["bytes32", "address"], [IS_MARKET_DISABLED, market]);
 }
 
+export function isRiskOracleMarketEnabledKey(market) {
+  return hashData(["bytes32", "address"], [RISK_ORACLE_MARKET_ENABLED, market]);
+}
+
 export function minMarketTokensForFirstDeposit(market) {
   return hashData(["bytes32", "address"], [MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT, market]);
 }
