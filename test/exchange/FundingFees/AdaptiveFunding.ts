@@ -608,4 +608,93 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
   it("adaptive funding with USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE as true", async () => {
     await testAdaptiveFunding(true);
   });
+
+  // funding is charged at the average of an interval's start and end rates, so the total funding for a
+  // fixed imbalance over a fixed duration is the same whether settled in one update or many
+  it("charges cadence-independent (time-integrated) funding under adaptive funding", async () => {
+    const totalDuration = 60 * 60; // 1 hour
+
+    async function runScenario(numIntervals) {
+      const f = await deployFixture();
+      const { user0: long, user1: short } = f.accounts;
+      const { dataStore: ds, ethUsdMarket: market, wnt: wntToken, usdc: usdcToken } = f.contracts;
+
+      await handleDeposit(f, {
+        create: {
+          market,
+          longTokenAmount: expandDecimals(10_000, 18),
+          shortTokenAmount: expandDecimals(5_000_000, 6),
+        },
+      });
+
+      // every interval is an Increase (zero thresholds, no decrease) and the rate ramps linearly and
+      // uncapped (no min bound, high max bound)
+      await ds.setUint(keys.fundingFactorKey(market.marketToken), decimalToFloat(1, 10));
+      await ds.setUint(keys.fundingExponentFactorKey(market.marketToken), decimalToFloat(1));
+      await ds.setUint(keys.thresholdForStableFundingKey(market.marketToken), 0);
+      await ds.setUint(keys.thresholdForDecreaseFundingKey(market.marketToken), 0);
+      await ds.setUint(keys.fundingIncreaseFactorPerSecondKey(market.marketToken), decimalToFloat(1, 10));
+      await ds.setUint(keys.fundingDecreaseFactorPerSecondKey(market.marketToken), 0);
+      await ds.setUint(keys.minFundingFactorPerSecondKey(market.marketToken, true), 0);
+      await ds.setUint(keys.minFundingFactorPerSecondKey(market.marketToken, false), 0);
+      await ds.setUint(keys.maxFundingFactorPerSecondKey(market.marketToken, true), decimalToFloat(1));
+      await ds.setUint(keys.maxFundingFactorPerSecondKey(market.marketToken, false), decimalToFloat(1));
+
+      // user0 opens a $150k long, user1 a $50k short => longs pay shorts with a fixed 50% imbalance
+      await handleOrder(f, {
+        create: {
+          account: long,
+          market,
+          initialCollateralToken: wntToken,
+          initialCollateralDeltaAmount: expandDecimals(10, 18),
+          sizeDeltaUsd: decimalToFloat(150_000),
+          acceptablePrice: expandDecimals(5050, 12),
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+        },
+      });
+
+      await handleOrder(f, {
+        create: {
+          account: short,
+          market,
+          initialCollateralToken: usdcToken,
+          initialCollateralDeltaAmount: expandDecimals(10_000, 6),
+          sizeDeltaUsd: decimalToFloat(50_000),
+          acceptablePrice: expandDecimals(4950, 12),
+          orderType: OrderType.MarketIncrease,
+          isLong: false,
+        },
+      });
+
+      // the tiny short-side order triggers a funding update without materially changing the imbalance
+      for (let i = 0; i < numIntervals; i++) {
+        await time.increase(totalDuration / numIntervals);
+
+        await handleOrder(f, {
+          create: {
+            account: short,
+            market,
+            initialCollateralToken: usdcToken,
+            initialCollateralDeltaAmount: expandDecimals(1, 6),
+            sizeDeltaUsd: decimalToFloat(1),
+            acceptablePrice: expandDecimals(4950, 12),
+            orderType: OrderType.MarketIncrease,
+            isLong: false,
+          },
+        });
+      }
+
+      // cumulative funding fee per size charged to longs collateralized in wnt
+      return ds.getUint(keys.fundingFeeAmountPerSizeKey(market.marketToken, wntToken.address, true));
+    }
+
+    const singleUpdate = await runScenario(1);
+    const manyUpdates = await runScenario(12);
+
+    // equal within tolerance => cadence-independent (pre-fix the single update over-accrues ~1.8x)
+    expect(singleUpdate).to.be.gt(0);
+    expect(manyUpdates).to.be.gt(0);
+    expect(singleUpdate).to.be.closeTo(manyUpdates, manyUpdates.div(40)); // within 2.5%
+  });
 });
