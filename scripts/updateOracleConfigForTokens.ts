@@ -212,7 +212,7 @@ export async function updateOracleConfigForTokens() {
       );
 
       if (shouldUpdate) {
-        console.log(`adding update for ${token.symbol}`);
+        console.log(`✅ adding update for ${token.symbol}`);
         if (isTestnet) {
           testnetTasks.push(async () => {
             printTxHash(
