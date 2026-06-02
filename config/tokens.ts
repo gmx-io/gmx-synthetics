@@ -185,6 +185,11 @@ const config: {
       dataStreamFeedId: "0x0003c16c6aed42294f5cb4741f6e59ba2d728f0eae2eb9e6d3f555808c59fc45",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xB4AD57B52aB9141de9926a3e0C8dc6264c2ef205",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     DOGE: {
       synthetic: true,
@@ -687,7 +692,11 @@ const config: {
       dataStreamFeedId: "0x0003d34539af562867c3cb309b59efccf40e74b404fb415eeb7699d61322aed9",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0xf9ce4fE2F0EcE0362cb416844AE179a49591D567",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     JUP: {
       synthetic: true,
@@ -968,6 +977,11 @@ const config: {
       dataStreamFeedId: "0x0003db12da014dbc5a928b9e7a8c6bc1fbab0c60d332ce26c644cc7477b6fe7f",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x76998C22eEa325A11dc6971Cedcf533E9740F854",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     GMX: {
       address: "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
