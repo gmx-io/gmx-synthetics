@@ -17,6 +17,7 @@ const NETWORKS = (process.env.MONITOR_NETWORKS || "arbitrum,avalanche,botanix,me
   .map((n) => n.trim())
   .filter(Boolean);
 const MONITOR_SCRIPT = process.env.MONITOR_SCRIPT || "scripts/checkMarketBalanceHealth.ts";
+const HEALTHCHECK_URL = process.env.HEALTHCHECK_URL; // dead-man's-switch ping URL (e.g. healthchecks.io)
 
 function log(msg) {
   console.log(`[balance-monitor] ${msg}`);
@@ -79,9 +80,21 @@ function codeBlock(body) {
   return "```\n" + b + "\n```";
 }
 
+// Ping an external dead-man's-switch (e.g. healthchecks.io). If pings stop arriving, the
+// service fires its own alert.
+async function pingHealthcheck() {
+  try {
+    await fetch(HEALTHCHECK_URL);
+  } catch (e) {
+    log(`healthcheck ping failed: ${e && e.message ? e.message : e}`);
+  }
+}
+
 async function main() {
-  if (!BOT_TOKEN || !CHAT_ID) {
-    log("missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID — set them in .env");
+  if (!BOT_TOKEN || !CHAT_ID || !HEALTHCHECK_URL) {
+    log("missing TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID / HEALTHCHECK_URL — set them in .env");
+    // No ping: a broken .env means the monitor isn't running.
+    // Tells healthchecks the monitor is not working.
     process.exit(1);
   }
 
@@ -112,6 +125,9 @@ async function main() {
 
   if (alerts.length === 0) {
     log("done — nothing to report");
+    // Ping: clean run, all markets healthy.
+    // Tells healthchecks the monitor is alive.
+    await pingHealthcheck();
     process.exit(0);
   }
 
@@ -128,13 +144,18 @@ async function main() {
     }
   }
   log(`done — sent ${sent}/${alerts.length} alert(s)${sendFailures.length ? `, ${sendFailures.length} failed` : ""}`);
+  // Ping: runner reached the end (with or without flagged markets / send failures).
+  // Tells healthchecks the monitor is alive.
+  await pingHealthcheck();
   process.exit(sendFailures.length ? 1 : 0);
 }
 
 if (require.main === module) {
   main().catch((err) => {
     log(`unexpected error: ${err && err.stack ? err.stack : err}`);
-    // Try to surface the failure to Telegram, then exit non-zero.
+    // Try to surface the failure to Telegram, then exit non-zero. No ping here on purpose:
+    // if a crash also broke the Telegram send, the missing healthchecks ping is the only
+    // alert left.
     if (BOT_TOKEN && CHAT_ID) {
       sendTelegram(`❌ GMX balance-monitor crashed:\n${codeBlock(String(err && err.message ? err.message : err))}`)
         .catch(() => {})
