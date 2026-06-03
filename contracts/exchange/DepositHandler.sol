@@ -87,7 +87,7 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
             multichainVault,
             depositVault,
             key,
-            deposit.account(),
+            roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : deposit.account(),
             startingGas,
             Keys.USER_INITIATED_CANCEL,
             ""

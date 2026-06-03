@@ -87,7 +87,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
             multichainVault,
             withdrawalVault,
             key,
-            withdrawal.account(),
+            roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : withdrawal.account(),
             startingGas,
             Keys.USER_INITIATED_CANCEL,
             ""

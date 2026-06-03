@@ -147,7 +147,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
             glvVault: glvVault,
             oracle: oracle,
             key: key,
-            keeper: glvWithdrawal.account(),
+            keeper: roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : glvWithdrawal.account(),
             startingGas: startingGas,
             reason: Keys.USER_INITIATED_CANCEL,
             reasonBytes: ""
