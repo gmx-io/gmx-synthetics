@@ -1,6 +1,5 @@
-import fs from "fs";
-import path from "path";
 import hre from "hardhat";
+import { writeSafeBatchJson } from "../utils/safeTx";
 
 /*
 Generate a Safe Transaction Builder batch JSON to cancel all timelock operations
@@ -23,7 +22,7 @@ Usage:
   OP_HASHES=0xb7af3a71699441a0d15ab0395a626b59f3780e5e6b8dae921f58f7bebaf7690a,0xbcc5fd109033e52be11d36f451363dbd4c75f7f1b69b219b5faa49836c8a72d2 \
     npx hardhat run scripts/cancelTimelockOps.ts --network arbitrum
 
-Output: out/safe-batch-cancelAction-<network>-<timestamp>.json
+Output: out/safe-batch-cancelTimelockOps-<network>-<timestamp>.json
 
 The script also prints the current on-chain state of each operation so you can
 spot ops that are already executed or already cancelled (those would revert at
@@ -168,29 +167,13 @@ async function main() {
     contractInputsValues: { id: op.opHash },
   }));
 
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const outDir = "out";
-  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  const filename = path.join(outDir, `safe-batch-cancelAction-${hre.network.name}-${stamp}.json`);
-
-  const batch = {
-    version: "1.0",
-    chainId: String(hre.network.config.chainId),
-    createdAt: Date.now(),
-    meta: {
-      name: `Cancel timelock ops from ${txHash.slice(0, 10)}… (${transactions.length} ops)`,
-      description: `Cancels ${transactions.length} timelock op(s) scheduled by ${txHash}. Reproducible: SIGNAL_TX_HASH=${txHash} npx hardhat run scripts/cancelTimelockOps.ts --network ${hre.network.name}`,
-      txBuilderVersion: "1.16.5",
-      createdFromSafeAddress: "",
-      createdFromOwnerAddress: "",
-      checksum: "",
-    },
+  writeSafeBatchJson({
+    scriptName: "cancelTimelockOps",
     transactions,
-  };
-
-  fs.writeFileSync(filename, JSON.stringify(batch, null, 2));
-  console.log(`\nSafe Transaction Builder batch written to: ${filename}`);
-  console.log(`  Load via Safe --> Transaction Builder --> drag and drop the JSON file`);
+    createdFromSafeAddress: "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7", // protocol_multisig_1
+    name: `Cancel timelock ops from ${txHash.slice(0, 10)}… (${transactions.length} ops)`,
+    description: `Cancels ${transactions.length} timelock op(s) scheduled by ${txHash}. Reproducible: SIGNAL_TX_HASH=${txHash} npx hardhat run scripts/cancelTimelockOps.ts --network ${hre.network.name}`,
+  });
 }
 
 main().catch((ex) => {
