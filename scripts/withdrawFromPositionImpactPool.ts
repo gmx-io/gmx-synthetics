@@ -16,20 +16,23 @@ Timelock methods need same salt param for both calls. This salt is generated dur
  stored in the cache folder locally. If cache is missing script will try to load salt from env variable.
  Original salt param can be obtained through the explorer if no one knows it.
 
-Args are passing as env vars.
+Args are passing as env vars. Markets and amounts to withdraw are configured in the
+withdrawalItems array below (not env vars). Each entry is
+{ marketKey: "INDEX:LONG:SHORT", amount: "<human readable index token amount>" }.
 
-@arg MARKET - market key to withdraw from
-@arg AMOUNT - amount in market _index_ token to withdraw (decimals should be taken from token. e.g ETH has 18 decimals)
 @arg RECEIVER - funds receiver address
 @arg TIMELOCK_METHOD - should be one of "signalWithdrawFromPositionImpactPool" || "executeWithOraclePrice"
 @arg SALT(optional) - provide custom salt for execute* method
 @arg ORACLE(optional) - which oracle to use for prices. Possible options: "chainlinkPriceFeed" | "chainlinkDataStream".
 default: chainlinkPriceFeed
 
-example for ETH-USDC market to withdraw 1 ETH worth of funds:
-MARKET=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 AMOUNT=1000000000000000000 \
-RECEIVER=0xE63F81517D622405E2C04410c933ad4ab6c78731 \
 TIMELOCK_METHOD=signalWithdrawFromPositionImpactPool \
+npx hardhat run scripts/withdrawFromPositionImpactPool.ts --network arbitrum
+
+!!! IMPORTANT !!!
+For execution via Safe, chainlinkPriceFeed must be used, and markets must have CL price feeds registered.
+
+TIMELOCK_METHOD=executeWithOraclePrice \
 npx hardhat run scripts/withdrawFromPositionImpactPool.ts --network arbitrum
  */
 
@@ -37,12 +40,6 @@ const expectedTimelockMethods = ["signalWithdrawFromPositionImpactPool", "execut
 
 async function fetchChainlinkPriceFeedInfo({ indexToken, longToken, shortToken }) {
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
-  const result = {
-    shortToken: {},
-    longToken: {},
-    indexToken: {},
-  };
-
   return {
     indexToken: {
       address: indexToken.address.toLowerCase(),
@@ -60,8 +57,6 @@ async function fetchChainlinkPriceFeedInfo({ indexToken, longToken, shortToken }
       data: "0x",
     },
   };
-
-  return result;
 }
 
 async function fetchChainlinkDataStreamInfo({ indexToken, longToken, shortToken }) {
@@ -90,10 +85,10 @@ async function fetchOracleParams({ indexToken, longToken, shortToken }) {
   const marketInfo = { indexToken, longToken, shortToken };
 
   let oracleParams: { shortToken: any; longToken: any; indexToken: any };
-  if (process.env.ORACLE === "chainlinkPriceFeed") {
-    oracleParams = await fetchChainlinkPriceFeedInfo(marketInfo);
-  } else {
+  if (process.env.ORACLE === "chainlinkDataStream") {
     oracleParams = await fetchChainlinkDataStreamInfo(marketInfo);
+  } else {
+    oracleParams = await fetchChainlinkPriceFeedInfo(marketInfo);
   }
   if (!oracleParams.shortToken) {
     throw new Error(`Token ${marketInfo.shortToken} not found`);
@@ -147,7 +142,7 @@ async function main() {
     throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
   }
 
-  const receiver = "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E";
+  const receiver = process.env.RECEIVER || "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E"; // GMX DAO Treasury
 
   // NOTE: amount is the human readable token amount
   // e.g. to withdraw 500 ETH, amount would be "500"
