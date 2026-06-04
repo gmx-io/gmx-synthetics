@@ -1,3 +1,34 @@
+/*
+Updates every token's on-chain oracle config in DataStore to match config/tokens.ts. Scans all tokens
+(to touch a single token its diff must be the only one present). Review the diff before running.
+
+For each token, diffs three things and queues updates for any that drift:
+- priceFeed - Chainlink on-chain feed (address, multiplier, heartbeat, stable price)
+- dataStream - Chainlink data stream feed (id, multiplier, spread reduction factor)
+- oracleProviderForToken - provider Oracle requires for the token's non-atomic reads
+
+Mainnet changes go through a two-phase timelock and can be exported as a Safe batch JSON for signing.
+
+Env vars:
+  PHASE                                 signal | finalize (required on mainnet, forbidden on testnet)
+  ALLOW_PRICE_FEED_MULTIPLIER_UPDATE    allow updating a priceFeed multiplier (would otherwise throw)
+  ALLOW_STABLE_PRICE_UPDATE             allow updating a stablePrice (would otherwise throw)
+  ALLOW_DATA_STREAM_MULTIPLIER_UPDATE   log dataStream multiplier mismatch (would otherwise throw)
+  SKIP_PRICE_FEED_VALIDATION            skip Chainlink feed metadata checks (decimals, description)
+  WRITE                                 "true" to skip the interactive confirm in timelockWriteMulticall
+  SKIP_VALIDATION                       skip the dry-run callStatic in timelockWriteMulticall
+
+Usage:
+  # signal on arbitrum mainnet
+  PHASE=signal npx hardhat run scripts/updateOracleConfigForTokens.ts --network arbitrum
+
+  # finalize after the timelock delay has passed
+  PHASE=finalize npx hardhat run scripts/updateOracleConfigForTokens.ts --network arbitrum
+
+  # testnet (no PHASE)
+  npx hardhat run scripts/updateOracleConfigForTokens.ts --network arbitrumSepolia
+*/
+
 import prompts from "prompts";
 
 import { getFullKey } from "../utils/config";
@@ -9,6 +40,7 @@ import {
   setPriceFeedPayload,
   timelockWriteMulticall,
 } from "../utils/timelock";
+import { inputsOf, writeSafeBatchJson } from "../utils/safeTx";
 
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress, getOracleProviderKey } from "../utils/oracle";
@@ -123,6 +155,7 @@ export async function updateOracleConfigForTokens() {
   }
 
   const multicallWriteParams = [];
+  const safeBatchTransactions: any[] = [];
   const testnetTasks: (() => Promise<void>)[] = [];
 
   const predecessor = ethers.constants.HashZero;
@@ -179,7 +212,7 @@ export async function updateOracleConfigForTokens() {
       );
 
       if (shouldUpdate) {
-        console.log(`adding update for ${token.symbol}`);
+        console.log(`✅ adding update for ${token.symbol}`);
         if (isTestnet) {
           testnetTasks.push(async () => {
             printTxHash(
@@ -211,6 +244,26 @@ export async function updateOracleConfigForTokens() {
               salt,
             ])
           );
+
+          safeBatchTransactions.push({
+            to: timelock.address,
+            value: "0",
+            data: null,
+            contractMethod: {
+              name: "signalSetPriceFeed",
+              payable: false,
+              inputs: inputsOf(timelock, "signalSetPriceFeed"),
+            },
+            contractInputsValues: {
+              token: token.address,
+              priceFeed: priceFeed.address,
+              priceFeedMultiplier: priceFeedMultiplier.toString(),
+              priceFeedHeartbeatDuration: priceFeed.heartbeatDuration.toString(),
+              stablePrice: stablePrice.toString(),
+              predecessor,
+              salt,
+            },
+          });
         } else {
           const { targets, values, payloads } = await setPriceFeedPayload(
             token.address,
@@ -222,6 +275,24 @@ export async function updateOracleConfigForTokens() {
           multicallWriteParams.push(
             timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads, predecessor, salt])
           );
+
+          safeBatchTransactions.push({
+            to: timelock.address,
+            value: "0",
+            data: null,
+            contractMethod: {
+              name: "executeBatch",
+              payable: false,
+              inputs: inputsOf(timelock, "executeBatch"),
+            },
+            contractInputsValues: {
+              targets: JSON.stringify(targets),
+              values: JSON.stringify(values.map((v: any) => v.toString())),
+              payloads: JSON.stringify(payloads),
+              predecessor,
+              salt,
+            },
+          });
         }
       }
     }
@@ -281,6 +352,25 @@ export async function updateOracleConfigForTokens() {
             salt,
           ])
         );
+
+        safeBatchTransactions.push({
+          to: timelock.address,
+          value: "0",
+          data: null,
+          contractMethod: {
+            name: "signalSetDataStream",
+            payable: false,
+            inputs: inputsOf(timelock, "signalSetDataStream"),
+          },
+          contractInputsValues: {
+            token: token.address,
+            feedId: token.dataStreamFeedId,
+            dataStreamMultiplier: dataStreamMultiplier.toString(),
+            dataStreamSpreadReductionFactor: dataStreamSpreadReductionFactor.toString(),
+            predecessor,
+            salt,
+          },
+        });
       } else {
         const { targets, values, payloads } = await setDataStreamPayload(
           token.address,
@@ -291,6 +381,24 @@ export async function updateOracleConfigForTokens() {
         multicallWriteParams.push(
           timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads, predecessor, salt])
         );
+
+        safeBatchTransactions.push({
+          to: timelock.address,
+          value: "0",
+          data: null,
+          contractMethod: {
+            name: "executeBatch",
+            payable: false,
+            inputs: inputsOf(timelock, "executeBatch"),
+          },
+          contractInputsValues: {
+            targets: JSON.stringify(targets),
+            values: JSON.stringify(values.map((v: any) => v.toString())),
+            payloads: JSON.stringify(payloads),
+            predecessor,
+            salt,
+          },
+        });
       }
     }
 
@@ -337,6 +445,16 @@ export async function updateOracleConfigForTokens() {
   }
 
   console.log(`updating ${multicallWriteParams.length} params`);
+
+  // Mainnet only: write the payload as a Safe Transaction Builder json file --> this gives signers per-row review
+  // The signExternally path below is not affected, and still uses timelock.multicall(bytes[])
+  if (!isTestnet && safeBatchTransactions.length > 0) {
+    writeSafeBatchJson({
+      scriptName: "updateOracleConfigForTokens",
+      label: phase,
+      transactions: safeBatchTransactions,
+    });
+  }
 
   if (isTestnet && testnetTasks.length > 0) {
     const { write } = await prompts({
