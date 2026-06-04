@@ -80,26 +80,32 @@ async function main() {
           { addr: market.longToken, ...longInfo },
           { addr: market.shortToken, ...shortInfo },
         ]) {
-      const r = await readToken(dataStore, market.marketToken, t.addr);
-      const fmt = (v: any) => formatAmount(v, t.decimals, 6);
       const label = `${idxSym}/${longInfo.symbol}-${shortInfo.symbol} ${t.symbol}`.padEnd(28);
-      const tail = `(surplus ${fmt(r.surplus)}, queued ${fmt(r.claimableFunding)})`;
+      try {
+        const r = await readToken(dataStore, market.marketToken, t.addr);
+        const fmt = (v: any) => formatAmount(v, t.decimals, 6);
+        const tail = `(surplus ${fmt(r.surplus)}, queued ${fmt(r.claimableFunding)})`;
 
-      let icon: string;
-      let action: string;
-      if (r.balance.lt(r.expectedMin) || r.balance.lt(r.collateralSum) || r.balance.lt(r.claimableFunding)) {
-        // ❌ One of the three static checks fails — market is broken.
-        icon = "❌";
-        action = `broken — top up ${fmt(r.expectedMin.sub(r.balance))} ${t.symbol}`;
-      } else if (r.claimableFunding.gt(r.surplus)) {
-        // ⚠️ Check 1 passes, but user claims > surplus will revert.
-        icon = "⚠️ ";
-        action = `topup ${fmt(r.claimableFunding.sub(r.surplus))} ${t.symbol}`;
-      } else {
-        icon = "✅";
-        action = "";
+        let icon: string;
+        let action: string;
+        if (r.balance.lt(r.expectedMin) || r.balance.lt(r.collateralSum) || r.balance.lt(r.claimableFunding)) {
+          // ❌ One of the three static checks fails — market is broken.
+          icon = "❌";
+          action = `broken — top up ${fmt(r.expectedMin.sub(r.balance))} ${t.symbol}`;
+        } else if (r.claimableFunding.gt(r.surplus)) {
+          // ⚠️ Check 1 passes, but user claims > surplus will revert.
+          icon = "⚠️ ";
+          action = `topup ${fmt(r.claimableFunding.sub(r.surplus))} ${t.symbol}`;
+        } else {
+          icon = "✅";
+          action = "";
+        }
+        console.log(`${icon} ${label} ${action.padEnd(28)} ${tail}`);
+      } catch (err) {
+        // One bad read must not abort the rest of the scan. Print a ❌ line so it's surfaced
+        // (the monitor alerts on ❌ lines) and keep scanning the remaining markets.
+        console.log(`❌ ${label} read failed — ${err && err.message ? err.message : err}`);
       }
-      console.log(`${icon} ${label} ${action.padEnd(28)} ${tail}`);
     }
   }
 }
