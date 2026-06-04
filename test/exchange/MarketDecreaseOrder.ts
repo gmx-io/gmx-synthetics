@@ -118,16 +118,6 @@ describe("Exchange.MarketDecreaseOrder", () => {
       },
     });
 
-    await handleOrder(fixture, {
-      create: {
-        ...params,
-        sizeDeltaUsd: decimalToFloat(1000 * 1000),
-      },
-      execute: {
-        expectedCancellationReason: "InvalidDecreaseOrderSize",
-      },
-    });
-
     // if we want to have a min collateral factor of 0.1 when open interest is 200,000
     // then minCollateralFactorForOpenInterestMultiplier * 200,000 = 0.1
     // minCollateralFactorForOpenInterestMultiplier: 0.1 / 200,000 = 5e-7
@@ -178,6 +168,43 @@ describe("Exchange.MarketDecreaseOrder", () => {
         expect(event.nextSizeDeltaUsd).eq(decimalToFloat(199 * 1000));
       }
     );
+  });
+
+  it("auto-updates an oversized MarketDecrease to the position size", async () => {
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+
+    // an oversized MarketDecrease can occur if the position is partially reduced
+    // (e.g. by liquidation, ADL or another decrease) before the keeper executes it
+    await usingResult(
+      handleOrder(fixture, {
+        create: {
+          ...getParams(),
+          initialCollateralDeltaAmount: 0,
+          sizeDeltaUsd: decimalToFloat(1000 * 1000),
+        },
+        execute: {},
+      }),
+      (result) => {
+        const event = getEventData(result.executeResult.logs, "OrderSizeDeltaAutoUpdated");
+        expect(event.sizeDeltaUsd).eq(decimalToFloat(1000 * 1000));
+        expect(event.nextSizeDeltaUsd).eq(decimalToFloat(200 * 1000));
+      }
+    );
+
+    expect(await getOrderCount(dataStore)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
   });
 
   it("executeOrder validations 1", async () => {
