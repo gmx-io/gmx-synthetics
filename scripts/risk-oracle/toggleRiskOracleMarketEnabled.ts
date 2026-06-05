@@ -20,10 +20,10 @@ async function main() {
   const originalValue = await dataStore.getBool(isRiskOracleMarketEnabledKey(marketToken));
   console.log(`${keyLabel}:`, originalValue.toString());
 
-  if (originalValue.toString() === ENABLED.toString()) {
+  if (originalValue.toString() === ENABLED) {
     throw new Error("Already set");
   }
-  await config.setRiskOracleMarketEnabled(marketToken, ENABLED);
+  await config.setRiskOracleMarketEnabled(marketToken, ENABLED === "true");
 
   const newValue = await dataStore.getBool(isRiskOracleMarketEnabledKey(marketToken));
   console.log(`${keyLabel}:`, newValue.toString());

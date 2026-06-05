@@ -93,6 +93,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     MULTICHAIN_READER: {},
     RISK_ORACLE: {
       "0x16ffB5a90bE6a0c0c5179d62Ced944fdD8108C72": true, // KMS generated
+      "0xB630FDb99b5D50Ef26891E2cf4494027fc4C1289": true,
     },
   };
 }
