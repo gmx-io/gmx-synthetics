@@ -31,6 +31,7 @@ library DecreasePositionSwapUtils {
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
                     params.order.uiFeeReceiver(), // uiFeeReceiver
+                    type(uint256).max, // uiFeeFactor
                     false, // shouldUnwrapNativeToken
                     ISwapPricingUtils.SwapPricingType.Swap
                 )
@@ -76,6 +77,7 @@ library DecreasePositionSwapUtils {
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
                     params.order.uiFeeReceiver(), // uiFeeReceiver
+                    type(uint256).max, // uiFeeFactor
                     false, // shouldUnwrapNativeToken
                     ISwapPricingUtils.SwapPricingType.Swap
                 )

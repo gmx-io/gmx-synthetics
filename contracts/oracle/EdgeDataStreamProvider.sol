@@ -41,6 +41,10 @@ contract EdgeDataStreamProvider is IOracleProvider {
         return false;
     }
 
+    function shouldCheckRefPrice() external pure returns (bool) {
+        return false;
+    }
+
     function getOraclePrice(
         address token,
         bytes memory data
@@ -86,6 +90,8 @@ contract EdgeDataStreamProvider is IOracleProvider {
             token: token,
             min: adjustedBidPrice,
             max: adjustedAskPrice,
+            rawMin: adjustedBidPrice,
+            rawMax: adjustedAskPrice,
             timestamp: report.timestamp,
             provider: address(this)
         });

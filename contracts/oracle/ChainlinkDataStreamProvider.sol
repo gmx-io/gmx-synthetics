@@ -54,6 +54,10 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
         return false;
     }
 
+    function shouldCheckRefPrice() external pure returns (bool) {
+        return false;
+    }
+
     function getOraclePrice(
         address token,
         bytes memory data
@@ -84,6 +88,8 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
         uint256 precision = _getDataStreamMultiplier(token);
         uint256 adjustedBidPrice = Precision.mulDiv(uint256(uint192(report.bid)), precision, Precision.FLOAT_PRECISION);
         uint256 adjustedAskPrice = Precision.mulDiv(uint256(uint192(report.ask)), precision, Precision.FLOAT_PRECISION);
+        uint256 rawBidPrice = adjustedBidPrice;
+        uint256 rawAskPrice = adjustedAskPrice;
 
         uint256 spreadReductionFactor = _getDataStreamSpreadReductionFactor(token);
         if (spreadReductionFactor != 0) {
@@ -102,6 +108,8 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
             token: token,
             min: adjustedBidPrice,
             max: adjustedAskPrice,
+            rawMin: rawBidPrice,
+            rawMax: rawAskPrice,
             timestamp: report.observationsTimestamp,
             provider: address(this)
         });

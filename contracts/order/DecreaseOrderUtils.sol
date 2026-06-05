@@ -142,6 +142,7 @@ library DecreaseOrderUtils {
                 0,
                 order.srcChainId() == 0 ? order.receiver(): address(params.contracts.multichainVault),
                 order.uiFeeReceiver(),
+                type(uint256).max,
                 order.srcChainId() == 0 ? order.shouldUnwrapNativeToken() : false,
                 ISwapPricingUtils.SwapPricingType.Swap
             )
