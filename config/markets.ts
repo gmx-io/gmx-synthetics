@@ -4949,6 +4949,62 @@ const config: {
         maxOpenInterest: decimalToFloat(250_000),
       },
     },
+    {
+      tokens: { indexToken: "SPCX", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:SPCX/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+      liquidationFeeFactor: percentageToFloat("0.9%"),
+
+      negativePositionImpactFactor: exponentToFloat("1.0e-8"),
+      positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("3%"),
+      positiveMaxPositionImpactFactor: percentageToFloat("0.4%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("8.0e-8"),
+
+      reserveFactor: percentageToFloat("255%"),
+      openInterestReserveFactor: percentageToFloat("250%"),
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+      maxPnlFactorForDeposits: percentageToFloat("50%"),
+      maxPnlFactorForAdl: percentageToFloat("45%"),
+      minPnlFactorAfterAdl: percentageToFloat("40%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("35%"),
+
+      maxOpenInterest: decimalToFloat(2_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(2950, 18), // ~5M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6), // ~5M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_LowMax_WithHigherBase,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
+
+        negativePositionImpactFactor: exponentToFloat("2.0e-8"),
+        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+        minCollateralFactor: percentageToFloat("4%"), // 25x leverage
+        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+
+        maxOpenInterest: decimalToFloat(250_000),
+      },
+    },
   ],
   avalanche: [
     {
