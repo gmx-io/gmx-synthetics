@@ -1310,6 +1310,14 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    SPCX: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003f769383ad721a5521200b1914c58371677b58c93b686f968dafcd38a7432",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {
