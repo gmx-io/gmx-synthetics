@@ -16,6 +16,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
 import "../market/MarketUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "../deposit/DepositVault.sol";
 import "../exchange/IDepositHandler.sol";
@@ -129,6 +130,7 @@ library ShiftUtils {
             Shift.Numbers(
                 marketTokenAmount,
                 params.minMarketTokens,
+                0, // uiFeeFactor, set below to avoid a stack too deep error
                 Chain.currentTimestamp(),
                 params.executionFee,
                 params.callbackGasLimit,
@@ -136,6 +138,8 @@ library ShiftUtils {
             ),
             params.dataList
         );
+
+        shift.setUiFeeFactor(FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver));
 
         CallbackUtils.validateCallbackGasLimit(dataStore, shift.callbackGasLimit());
 
@@ -216,6 +220,7 @@ library ShiftUtils {
                 shift.marketTokenAmount(),
                 0, // minLongTokenAmount
                 0, // minShortTokenAmount
+                shift.uiFeeFactor(), // uiFeeFactor
                 shift.updatedAtTime(),
                 0, // executionFee
                 0, // callbackGasLimit

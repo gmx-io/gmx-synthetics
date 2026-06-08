@@ -677,7 +677,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1659893219353356", "10000000000000"); // 0.001635869004900372 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1686577520338340", "10000000000000"); // 0.001635869004900372 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

@@ -399,6 +399,7 @@ library PositionUtils {
             market.shortToken, // shortToken
             position.sizeInUsd(), // sizeDeltaUsd
             address(0), // uiFeeReceiver
+            type(uint256).max, // uiFeeFactor (unused since uiFeeReceiver is the zero address)
 
             // should not account for liquidation fees to determine if position should be liquidated
             false // isLiquidation

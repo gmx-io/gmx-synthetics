@@ -344,7 +344,11 @@ library SwapPricingUtils {
         fees.feeAmountForPool = feeAmount - fees.feeReceiverAmount;
 
         fees.uiFeeReceiver = uiFeeReceiver;
-        fees.uiFeeReceiverFactor = uiFeeFactor;
+        // a uiFeeFactor of type(uint256).max is used as a sentinel value to read the
+        // currently configured factor, otherwise the snapshotted factor is used
+        fees.uiFeeReceiverFactor = uiFeeFactor == type(uint256).max
+            ? FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver)
+            : uiFeeFactor;
         fees.uiFeeAmount = Precision.applyFactor(amount, fees.uiFeeReceiverFactor);
 
         fees.amountAfterFees = amount - feeAmount - fees.uiFeeAmount;

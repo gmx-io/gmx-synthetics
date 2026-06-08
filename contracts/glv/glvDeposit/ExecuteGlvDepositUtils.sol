@@ -228,7 +228,7 @@ library ExecuteGlvDepositUtils {
                 initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
                 initialShortTokenAmount: glvDeposit.initialShortTokenAmount(),
                 minMarketTokens: 0,
-                uiFeeFactor: FeeUtils.getUiFeeFactor(params.dataStore, glvDeposit.uiFeeReceiver()),
+                uiFeeFactor: glvDeposit.uiFeeFactor(),
                 updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,

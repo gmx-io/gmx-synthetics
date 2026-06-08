@@ -108,15 +108,16 @@ library GlvDepositEventUtils {
         eventData.addressItems.setItem(0, "longTokenSwapPath", glvDeposit.longTokenSwapPath());
         eventData.addressItems.setItem(1, "shortTokenSwapPath", glvDeposit.shortTokenSwapPath());
 
-        eventData.uintItems.initItems(8);
+        eventData.uintItems.initItems(9);
         eventData.uintItems.setItem(0, "initialLongTokenAmount", glvDeposit.initialLongTokenAmount());
         eventData.uintItems.setItem(1, "initialShortTokenAmount", glvDeposit.initialShortTokenAmount());
         eventData.uintItems.setItem(2, "minGlvTokens", glvDeposit.minGlvTokens());
-        eventData.uintItems.setItem(3, "updatedAtTime", glvDeposit.updatedAtTime());
-        eventData.uintItems.setItem(4, "executionFee", glvDeposit.executionFee());
-        eventData.uintItems.setItem(5, "callbackGasLimit", glvDeposit.callbackGasLimit());
-        eventData.uintItems.setItem(6, "marketTokenAmount", glvDeposit.marketTokenAmount());
-        eventData.uintItems.setItem(7, "srcChainId", glvDeposit.srcChainId());
+        eventData.uintItems.setItem(3, "uiFeeFactor", glvDeposit.uiFeeFactor());
+        eventData.uintItems.setItem(4, "updatedAtTime", glvDeposit.updatedAtTime());
+        eventData.uintItems.setItem(5, "executionFee", glvDeposit.executionFee());
+        eventData.uintItems.setItem(6, "callbackGasLimit", glvDeposit.callbackGasLimit());
+        eventData.uintItems.setItem(7, "marketTokenAmount", glvDeposit.marketTokenAmount());
+        eventData.uintItems.setItem(8, "srcChainId", glvDeposit.srcChainId());
 
         eventData.boolItems.initItems(2);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", glvDeposit.shouldUnwrapNativeToken());

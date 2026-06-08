@@ -213,6 +213,7 @@ library ExecuteWithdrawalUtils {
             cache.longTokenOutputAmount,
             false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
+            withdrawal.uiFeeFactor(),
             params.swapPricingType
         );
 
@@ -241,6 +242,7 @@ library ExecuteWithdrawalUtils {
             cache.shortTokenOutputAmount,
             false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
+            withdrawal.uiFeeFactor(),
             params.swapPricingType
         );
 
@@ -309,26 +311,22 @@ library ExecuteWithdrawalUtils {
         IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory result;
         (result.outputToken, result.outputAmount) = _swap(
             params,
+            withdrawal,
             market,
             market.longToken,
             cache.longTokenOutputAmount,
             withdrawal.longTokenSwapPath(),
-            withdrawal.minLongTokenAmount(),
-            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
-            withdrawal.uiFeeReceiver(),
-            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
+            withdrawal.minLongTokenAmount()
         );
 
         (result.secondaryOutputToken, result.secondaryOutputAmount) = _swap(
             params,
+            withdrawal,
             market,
             market.shortToken,
             cache.shortTokenOutputAmount,
             withdrawal.shortTokenSwapPath(),
-            withdrawal.minShortTokenAmount(),
-            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
-            withdrawal.uiFeeReceiver(),
-            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
+            withdrawal.minShortTokenAmount()
         );
 
         // for multichain action, receiver is the multichainVault; increase user's multichain balances
@@ -402,14 +400,12 @@ library ExecuteWithdrawalUtils {
 
     function _swap(
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
+        Withdrawal.Props memory withdrawal,
         Market.Props memory market,
         address tokenIn,
         uint256 amountIn,
         address[] memory swapPath,
-        uint256 minOutputAmount,
-        address receiver,
-        address uiFeeReceiver,
-        bool shouldUnwrapNativeToken
+        uint256 minOutputAmount
     ) internal returns (address, uint256) {
         SwapCache memory cache;
 
@@ -425,10 +421,10 @@ library ExecuteWithdrawalUtils {
             amountIn: amountIn,
             swapPathMarkets: cache.swapPathMarkets,
             minOutputAmount: minOutputAmount,
-            receiver: receiver,
-            uiFeeReceiver: uiFeeReceiver,
-            uiFeeFactor: type(uint256).max,
-            shouldUnwrapNativeToken: shouldUnwrapNativeToken,
+            receiver: withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
+            uiFeeReceiver: withdrawal.uiFeeReceiver(),
+            uiFeeFactor: withdrawal.uiFeeFactor(),
+            shouldUnwrapNativeToken: withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false,
             swapPricingType: params.swapPricingType
         });
 

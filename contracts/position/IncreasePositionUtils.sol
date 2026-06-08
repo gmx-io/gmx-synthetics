@@ -274,6 +274,7 @@ library IncreasePositionUtils {
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
             params.order.uiFeeReceiver(), // uiFeeReceiver
+            params.order.uiFeeFactor(), // uiFeeFactor
             false // isLiquidation
         );
 
