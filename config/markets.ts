@@ -4971,7 +4971,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
 
-      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
       minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("8.0e-8"),
