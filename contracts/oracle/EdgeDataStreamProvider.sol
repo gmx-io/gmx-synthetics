@@ -42,7 +42,7 @@ contract EdgeDataStreamProvider is IOracleProvider {
     }
 
     function shouldCheckRefPrice() external pure returns (bool) {
-        return false;
+        return true;
     }
 
     function getOraclePrice(

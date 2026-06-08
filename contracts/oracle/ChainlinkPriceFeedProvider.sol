@@ -23,7 +23,7 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
     }
 
     function shouldCheckRefPrice() external pure returns (bool) {
-        return true;
+        return false;
     }
 
     // @dev the timestamp returned is based on the current blockchain timestamp
