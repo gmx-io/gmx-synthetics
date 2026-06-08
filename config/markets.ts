@@ -4985,7 +4985,7 @@ const config: {
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
       maxOpenInterest: decimalToFloat(2_500_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_750_000),
 
       maxLongTokenPoolAmount: expandDecimals(2950, 18), // ~5M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6), // ~5M USD (2x max open interest)
