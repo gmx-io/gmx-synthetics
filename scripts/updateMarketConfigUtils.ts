@@ -127,7 +127,7 @@ const processMarkets = async ({
     }]`;
 
     const addConfigItem = (type: string, baseKey: string, keyData: string, value: any, label: string) => {
-      if (!value) {
+      if (value === undefined) {
         return;
       }
       const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));

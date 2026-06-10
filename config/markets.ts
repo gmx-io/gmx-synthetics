@@ -169,6 +169,7 @@ export type BaseMarketConfig = {
   isDisabled?: boolean;
 
   closedState?: ClosedMarketConfig;
+  riskOracleEnabled?: boolean;
 };
 
 export type SpotMarketConfig = Partial<BaseMarketConfig> & {
@@ -373,6 +374,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   minPositionImpactPoolAmount: 0,
 
   liquidationFeeFactor: percentageToFloat("0.20%"),
+  riskOracleEnabled: false,
 };
 
 const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
@@ -2456,6 +2458,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "FIL", longToken: "WBTC.e", shortToken: "USDC" },
@@ -3050,6 +3053,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "AIXBT", longToken: "WETH", shortToken: "USDC" },
@@ -3150,6 +3154,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "MKR", longToken: "WETH", shortToken: "USDC" },
@@ -5206,6 +5211,7 @@ const config: {
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
 
       atomicSwapFeeFactor: percentageToFloat("2%"),
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
