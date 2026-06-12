@@ -4996,6 +4996,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6), // ~5M USD (2x max open interest)
 
       closedState: {
+        /* closedState temporary equal to pre-IPO state
         ...borrowingRateConfig_LowMax_WithHigherBase,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
@@ -5006,9 +5007,12 @@ const config: {
 
         minCollateralFactor: percentageToFloat("4%"), // 25x leverage
         minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        */
 
-        maxOpenInterest: decimalToFloat(250_000),
-      },
+        // for updateMarketConfig to have a change to apply
+        // and for keeper to have monitoring target
+        maxOpenInterest: decimalToFloat(499_999),
+      } as ClosedMarketConfig,
     },
   ],
   avalanche: [
