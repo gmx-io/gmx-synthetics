@@ -23,7 +23,8 @@ CRON_ENTRIES="
 15 22 * * 0,1-4  SWITCHOVER_TG_MESSAGES=true $RUN_SH $REPO_DIR/scripts/switchover/arbitrum/NATGAS_open.sh
 # SPCX (NYSE hours, Mon-Fri): on-hours 09:45, off-hours 15:45 America/New_York (15-min grace inside session)
 # fixed UTC times, valid while US is on EDT; shift by +1h on Nov 1, 2026 (EST): open 14:45, closed 20:45 UTC
-# run_nyse.sh skips NYSE full-day closures from nyse_holidays.txt (off-hours params stay active all day)
+# run_nyse.sh skips both switchovers on NYSE full-day closures from nyse_holidays.txt
+# (off-hours params stay active all day; the skip is logged and reported to telegram)
 45 13 * * 1-5  SWITCHOVER_TG_MESSAGES=true $RUN_NYSE_SH $REPO_DIR/scripts/switchover/arbitrum/SPCX_open.sh
 45 19 * * 1-5  SWITCHOVER_TG_MESSAGES=true $RUN_NYSE_SH $REPO_DIR/scripts/switchover/arbitrum/SPCX_closed.sh
 "
