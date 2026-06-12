@@ -28,5 +28,7 @@
   "FeeDistributorVault_1": 1763069805,
   "EdgeDataStreamVerifier_6": 1771919856,
   "EdgeDataStreamProvider_6": 1771919860,
-  "StaticOracleProvider_1": 1781192600
+  "StaticOracleProvider_1": 1781192600,
+  "EIP6492Deployer_1": 1781271586,
+  "FeeVault_1": 1781271654
 }
