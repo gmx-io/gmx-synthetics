@@ -5010,6 +5010,7 @@ const config: {
         */
 
         // for updateMarketConfig to have a change to apply
+        // and for keeper to have monitoring target
         maxOpenInterest: decimalToFloat(499_999),
       } as ClosedMarketConfig,
     },
