@@ -4979,7 +4979,7 @@ const config: {
       minCollateralFactor: percentageToFloat("5%"), // 20x leverage
       minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("8.0e-8"),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("4.0e-7"),
 
       reserveFactor: percentageToFloat("255%"),
       openInterestReserveFactor: percentageToFloat("250%"),
