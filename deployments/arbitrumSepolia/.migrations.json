@@ -27,5 +27,6 @@
   "MockTimelockV1": 1763068970,
   "FeeDistributorVault_1": 1763069805,
   "EdgeDataStreamVerifier_6": 1771919856,
-  "EdgeDataStreamProvider_6": 1771919860
+  "EdgeDataStreamProvider_6": 1771919860,
+  "StaticOracleProvider_1": 1781192600
 }
