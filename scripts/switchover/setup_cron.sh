@@ -20,6 +20,10 @@ CRON_ENTRIES="
 15 22 * * 0,1-4  SWITCHOVER_TG_MESSAGES=true $RUN_SH $REPO_DIR/scripts/switchover/arbitrum/BRENTOIL_open.sh
 45 20 * * 1-5  SWITCHOVER_TG_MESSAGES=true $RUN_SH $REPO_DIR/scripts/switchover/arbitrum/NATGAS_closed.sh
 15 22 * * 0,1-4  SWITCHOVER_TG_MESSAGES=true $RUN_SH $REPO_DIR/scripts/switchover/arbitrum/NATGAS_open.sh
+# SPCX (US equity hours): closed Mon-Fri 19:45 UTC, open Mon-Fri 13:45 UTC
+# valid while US is on EDT; shift by +1h on Nov 1, 2026 (EST): closed 20:45, open 14:45 UTC
+45 19 * * 1-5  SWITCHOVER_TG_MESSAGES=true $RUN_SH $REPO_DIR/scripts/switchover/arbitrum/SPCX_closed.sh
+45 13 * * 1-5  SWITCHOVER_TG_MESSAGES=true $RUN_SH $REPO_DIR/scripts/switchover/arbitrum/SPCX_open.sh
 "
 
 # remove old switchover entries, append new ones
