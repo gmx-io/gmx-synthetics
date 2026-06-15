@@ -32,7 +32,7 @@ const RISK_ORACLE_MANAGED_BASE_KEYS = [
 
 const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
-function getRiskOracleManagedBaseKeys() {
+export function getRiskOracleManagedBaseKeys() {
   if (RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
     return RISK_ORACLE_MANAGED_BASE_KEYS;
   }
@@ -45,7 +45,7 @@ const KEEPER_MANAGED_BASE_KEYS_ARBITRUM = [
   keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
 ];
 
-function getKeeperManagedBaseKeys() {
+export function getKeeperManagedBaseKeys() {
   if (hre.network.name === "arbitrum") {
     return KEEPER_MANAGED_BASE_KEYS_ARBITRUM;
   }
@@ -53,7 +53,7 @@ function getKeeperManagedBaseKeys() {
   return [];
 }
 
-const processMarkets = async ({
+export const processMarkets = async ({
   markets,
   includeMarket,
   onchainMarketsByTokens,

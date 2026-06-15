@@ -1009,7 +1009,8 @@ async function validatePerpConfig({
     throw new Error(`Empty maxOpenInterestForShorts for ${marketLabel}`);
   }
 
-  if (process.env.READ_FROM_CHAIN === "true") {
+  // only read from chain when we have an on-chain market; the config-only checks have no market
+  if (process.env.READ_FROM_CHAIN === "true" && market) {
     const multicallReadParams = [];
 
     multicallReadParams.push({
@@ -1334,7 +1335,8 @@ async function validateSwapConfig({
   let positiveSwapImpactFactor = marketConfig.positiveSwapImpactFactor;
   let swapImpactExponentFactor = marketConfig.swapImpactExponentFactor;
 
-  if (process.env.READ_FROM_CHAIN === "true") {
+  // only read from chain when we have an on-chain market; the config-only checks have no market
+  if (process.env.READ_FROM_CHAIN === "true" && market) {
     const multicallReadParams = [];
 
     multicallReadParams.push({
