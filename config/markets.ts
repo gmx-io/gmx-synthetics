@@ -5007,9 +5007,6 @@ const config: {
         positionFeeFactorForPositiveImpact: percentageToFloat("0.06%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
 
-        negativePositionImpactFactor: exponentToFloat("1.0e-8"),
-        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
-
         maxPnlFactorForTraders: percentageToFloat("45%"),
         maxPnlFactorForDeposits: percentageToFloat("45%"),
         maxPnlFactorForAdl: percentageToFloat("40%"),
