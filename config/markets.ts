@@ -4990,13 +4990,12 @@ const config: {
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
       maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(400_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
 
       maxLongTokenPoolAmount: expandDecimals(2950, 18), // ~5M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6), // ~5M USD (2x max open interest)
 
       closedState: {
-        /* closedState temporary equal to pre-IPO state
         ...borrowingRateConfig_LowMax_WithHigherBase,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
@@ -5007,11 +5006,8 @@ const config: {
 
         minCollateralFactor: percentageToFloat("4%"), // 25x leverage
         minCollateralFactorForLiquidation: percentageToFloat("1%"),
-        */
 
-        // for updateMarketConfig to have a change to apply
-        // and for keeper to have monitoring target
-        maxOpenInterest: decimalToFloat(499_999),
+        maxOpenInterest: decimalToFloat(250_000),
       } as ClosedMarketConfig,
     },
   ],
