@@ -279,6 +279,7 @@ export const GLV_MAX_MARKET_COUNT = hashString("GLV_MAX_MARKET_COUNT");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT");
 export const GLV_SHIFT_MIN_INTERVAL = hashString("GLV_SHIFT_MIN_INTERVAL");
+export const GLV_MARKET_REMOVAL_DUST_THRESHOLD = hashString("GLV_MARKET_REMOVAL_DUST_THRESHOLD");
 export const IS_GLV_MARKET_DISABLED = hashString("IS_GLV_MARKET_DISABLED");
 
 export const SYNC_CONFIG_FEATURE_DISABLED = hashString("SYNC_CONFIG_FEATURE_DISABLED");
@@ -936,6 +937,10 @@ export function glvMaxMarketTokenBalanceAmountKey(glv: string, market: string) {
 
 export function glvShiftMinIntervalKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SHIFT_MIN_INTERVAL, glv]);
+}
+
+export function glvMarketRemovalDustThresholdKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [GLV_MARKET_REMOVAL_DUST_THRESHOLD, glv, market]);
 }
 
 export function glvShiftMaxLossFactorKey(glv: string) {
