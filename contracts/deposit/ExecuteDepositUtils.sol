@@ -563,6 +563,7 @@ library ExecuteDepositUtils {
                 market, // receiver
                 uiFeeReceiver, // uiFeeReceiver
                 uiFeeFactor, // uiFeeFactor
+                0, // tokenInPoolAmountBeforeAction
                 false, // shouldUnwrapNativeToken
                 ISwapPricingUtils.SwapPricingType.Swap
             )

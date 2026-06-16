@@ -31,6 +31,7 @@ library IncreaseOrderUtils {
             params.order.market(),
             params.order.uiFeeReceiver(),
             params.order.uiFeeFactor(),
+            0,
             false,
             ISwapPricingUtils.SwapPricingType.Swap
         ));

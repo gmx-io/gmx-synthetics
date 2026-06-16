@@ -32,6 +32,7 @@ library SwapUtils {
      * @param tokenIn The address of the token that is being swapped.
      * @param amountIn The amount of the token that is being swapped.
      * @param receiver The address to which the swapped tokens should be sent.
+     * @param shouldRelaxMaxPoolAmountForTokenIn A boolean indicating whether max pool amount validation for tokenIn can be skipped if tokenIn is not increased.
      * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
      */
     struct _SwapParams {
@@ -39,6 +40,7 @@ library SwapUtils {
         address tokenIn;
         uint256 amountIn;
         address receiver;
+        bool shouldRelaxMaxPoolAmountForTokenIn;
         bool shouldUnwrapNativeToken;
     }
 
@@ -133,6 +135,20 @@ library SwapUtils {
                 tokenOut,
                 outputAmount,
                 receiver,
+                // only the first hop in the swap path can use already-debited withdrawal inventory.
+                // Later hops receive fresh output from the previous market,
+                // so they should still enforce maxPoolAmount.
+
+                // address(params.bank) == market.marketToken means only same-bank swaps qualify.
+                // This is the case where SwapUtils does not transfer fresh tokenIn into the market.
+                // Normal swaps/deposits/orders transfer fresh tokenIn in, so their bank is never the
+                // marketToken and they never reach the relaxed path.
+
+                // even when eligible, maxPoolAmount validation is only skipped if the tokenIn pool did not increase
+                // past params.tokenInPoolAmountBeforeAction (see _shouldSkipMaxPoolAmountValidationForTokenIn).
+                // Callers that pass tokenInPoolAmountBeforeAction as 0 keep strict validation
+                // for any non-empty tokenIn pool.
+                i == 0 && address(params.bank) == market.marketToken,
                 i == params.swapPathMarkets.length - 1 ? params.shouldUnwrapNativeToken : false // only convert ETH on the last swap if needed
             );
 
@@ -353,7 +369,9 @@ library SwapUtils {
             _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
         );
 
-        MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        if (!_shouldSkipMaxPoolAmountValidationForTokenIn(params, _params)) {
+            MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        }
 
         // for single token markets cache.tokenOut will always equal _params.market.longToken
         // so only the reserve for longs will be validated
@@ -406,5 +424,18 @@ library SwapUtils {
         );
 
         return (cache.tokenOut, cache.amountOut);
+    }
+
+    function _shouldSkipMaxPoolAmountValidationForTokenIn(
+        ISwapUtils.SwapParams memory params,
+        _SwapParams memory _params
+    ) internal view returns (bool) {
+        if (!_params.shouldRelaxMaxPoolAmountForTokenIn) {
+            return false;
+        }
+
+        // if token amount not increased, return true, and skip the validation
+        uint256 poolAmount = MarketUtils.getPoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        return poolAmount <= params.tokenInPoolAmountBeforeAction;
     }
 }

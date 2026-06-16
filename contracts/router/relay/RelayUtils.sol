@@ -224,6 +224,7 @@ library RelayUtils {
                 receiver: address(this),
                 uiFeeReceiver: address(0),
                 uiFeeFactor: type(uint256).max,
+                tokenInPoolAmountBeforeAction: 0,
                 shouldUnwrapNativeToken: false,
                 swapPricingType: ISwapPricingUtils.SwapPricingType.AtomicSwap
             })

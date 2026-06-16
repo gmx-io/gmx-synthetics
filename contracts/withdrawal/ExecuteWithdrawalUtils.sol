@@ -57,6 +57,8 @@ library ExecuteWithdrawalUtils {
         SwapPricingUtils.SwapFees shortTokenFees;
         uint256 longTokenPoolAmountDelta;
         uint256 shortTokenPoolAmountDelta;
+        uint256 longTokenPoolAmountBeforeAction;
+        uint256 shortTokenPoolAmountBeforeAction;
     }
 
     struct SwapCache {
@@ -272,6 +274,9 @@ library ExecuteWithdrawalUtils {
         cache.shortTokenPoolAmountDelta = cache.shortTokenOutputAmount - cache.shortTokenFees.feeAmountForPool;
         cache.shortTokenOutputAmount = cache.shortTokenFees.amountAfterFees;
 
+        cache.longTokenPoolAmountBeforeAction = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
+        cache.shortTokenPoolAmountBeforeAction = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
+
         // it is rare but possible for withdrawals to be blocked because pending borrowing fees
         // have not yet been deducted from position collateral and credited to the poolAmount value
         MarketUtils.applyDeltaToPoolAmount(
@@ -316,7 +321,8 @@ library ExecuteWithdrawalUtils {
             market.longToken,
             cache.longTokenOutputAmount,
             withdrawal.longTokenSwapPath(),
-            withdrawal.minLongTokenAmount()
+            withdrawal.minLongTokenAmount(),
+            cache.longTokenPoolAmountBeforeAction
         );
 
         (result.secondaryOutputToken, result.secondaryOutputAmount) = _swap(
@@ -326,7 +332,8 @@ library ExecuteWithdrawalUtils {
             market.shortToken,
             cache.shortTokenOutputAmount,
             withdrawal.shortTokenSwapPath(),
-            withdrawal.minShortTokenAmount()
+            withdrawal.minShortTokenAmount(),
+            cache.shortTokenPoolAmountBeforeAction
         );
 
         // for multichain action, receiver is the multichainVault; increase user's multichain balances
@@ -405,7 +412,8 @@ library ExecuteWithdrawalUtils {
         address tokenIn,
         uint256 amountIn,
         address[] memory swapPath,
-        uint256 minOutputAmount
+        uint256 minOutputAmount,
+        uint256 tokenInPoolAmountBeforeAction
     ) internal returns (address, uint256) {
         SwapCache memory cache;
 
@@ -424,6 +432,7 @@ library ExecuteWithdrawalUtils {
             receiver: withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             uiFeeReceiver: withdrawal.uiFeeReceiver(),
             uiFeeFactor: withdrawal.uiFeeFactor(),
+            tokenInPoolAmountBeforeAction: tokenInPoolAmountBeforeAction,
             shouldUnwrapNativeToken: withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false,
             swapPricingType: params.swapPricingType
         });

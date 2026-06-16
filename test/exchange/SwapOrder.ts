@@ -50,6 +50,25 @@ describe("Exchange.SwapOrder", () => {
     expect(await usdc.balanceOf(user0.address)).eq("50000000000");
   });
 
+  it("executeOrder reverts when a normal swap adds tokenIn above maxPoolAmount", async () => {
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(1, 18));
+
+    await handleOrder(fixture, {
+      create: {
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        acceptablePrice: 0,
+        orderType: OrderType.MarketSwap,
+        swapPath: [ethUsdMarket.marketToken],
+        gasUsageLabel: "orderHandler.createOrder",
+      },
+      execute: {
+        gasUsageLabel: "orderHandler.executeOrder",
+        expectedCancellationReason: "MaxPoolAmountExceeded",
+      },
+    });
+  });
+
   it("executeOrder, spot only market", async () => {
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq(0);
