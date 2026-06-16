@@ -28,6 +28,12 @@ export type ClosedMarketConfig = {
   minCollateralFactorForOpenInterestMultiplierLong?: BigNumberish;
   minCollateralFactorForOpenInterestMultiplierShort?: BigNumberish;
 
+  maxPnlFactorForTraders?: BigNumberish;
+  maxPnlFactorForDeposits?: BigNumberish;
+  maxPnlFactorForAdl?: BigNumberish;
+  minPnlFactorAfterAdl?: BigNumberish;
+  maxPnlFactorForWithdrawals?: BigNumberish;
+
   maxOpenInterest: BigNumberish;
   maxOpenInterestForLongs?: BigNumberish;
   maxOpenInterestForShorts?: BigNumberish;
@@ -4979,7 +4985,7 @@ const config: {
       minCollateralFactor: percentageToFloat("5%"), // 20x leverage
       minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("4.0e-7"),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.0e-7"),
 
       reserveFactor: percentageToFloat("255%"),
       openInterestReserveFactor: percentageToFloat("250%"),
@@ -4989,7 +4995,7 @@ const config: {
       minPnlFactorAfterAdl: percentageToFloat("40%"),
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
+      maxOpenInterest: decimalToFloat(1_000_000),
       maxPoolUsdForDeposit: decimalToFloat(750_000),
 
       maxLongTokenPoolAmount: expandDecimals(2950, 18), // ~5M USD (2x max open interest)
@@ -4998,16 +5004,19 @@ const config: {
       closedState: {
         ...borrowingRateConfig_LowMax_WithHigherBase,
 
-        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.06%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
 
-        negativePositionImpactFactor: exponentToFloat("2.0e-8"),
+        negativePositionImpactFactor: exponentToFloat("1.0e-8"),
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
-        minCollateralFactor: percentageToFloat("4%"), // 25x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        maxPnlFactorForTraders: percentageToFloat("45%"),
+        maxPnlFactorForDeposits: percentageToFloat("45%"),
+        maxPnlFactorForAdl: percentageToFloat("40%"),
+        minPnlFactorAfterAdl: percentageToFloat("35%"),
+        maxPnlFactorForWithdrawals: percentageToFloat("30%"),
 
-        maxOpenInterest: decimalToFloat(250_000),
+        maxOpenInterest: decimalToFloat(1_000_000),
       } as ClosedMarketConfig,
     },
   ],
