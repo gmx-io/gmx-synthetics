@@ -857,6 +857,13 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 10_000,
     },
+    // disabled dev market
+    "BTC:stBTC:USDC.e (Archived)": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 10_000,
+    },
     stBTC: {
       expectedSwapImpactRatio: 10_000,
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
@@ -1220,30 +1227,40 @@ async function validatePerpConfig({
   const maxLongTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForLongs
     .mul(FLOAT_PRECISION)
     .div(openInterestReserveFactorLongs);
-  const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
-    .mul(borrowingFactorForLongs)
-    .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
-    .mul(SECONDS_PER_YEAR);
+  // a shut-down market can have maxOpenInterest set to 1, which makes the divisor round down to
+  // zero; the borrowing-factor check is meaningless in that case, so skip it instead of dividing by zero
+  if (maxLongTokenPoolUsdBasedOnMaxOpenInterest.eq(0)) {
+    console.log(`    maxBorrowingFactorForLongsPerYear: skipped (maxOpenInterestForLongs is effectively zero)`);
+  } else {
+    const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
+      .mul(borrowingFactorForLongs)
+      .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
+      .mul(SECONDS_PER_YEAR);
 
-  if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(15, 1))) {
-    throw new Error("maxBorrowingFactorForLongsPerYear is more than 150%");
+    if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(15, 1))) {
+      throw new Error("maxBorrowingFactorForLongsPerYear is more than 150%");
+    }
+
+    console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
   }
-
-  console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
 
   const maxShortTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForShorts
     .mul(FLOAT_PRECISION)
     .div(openInterestReserveFactorShorts);
-  const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
-    .mul(borrowingFactorForShorts)
-    .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
-    .mul(SECONDS_PER_YEAR);
+  if (maxShortTokenPoolUsdBasedOnMaxOpenInterest.eq(0)) {
+    console.log(`    maxBorrowingFactorForShortsPerYear: skipped (maxOpenInterestForShorts is effectively zero)`);
+  } else {
+    const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
+      .mul(borrowingFactorForShorts)
+      .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
+      .mul(SECONDS_PER_YEAR);
 
-  if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(15, 1))) {
-    throw new Error("maxBorrowingFactorForShortsPerYear is more than 150%");
+    if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(15, 1))) {
+      throw new Error("maxBorrowingFactorForShortsPerYear is more than 150%");
+    }
+
+    console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
   }
-
-  console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
 
   for (const [key, value] of Object.entries({
     optimalUsageFactorForLongs,
@@ -1494,8 +1511,6 @@ export async function validateMarketConfigs() {
   const marketKeysToSkip = {
     "0x74885b4D524d497261259B38900f54e6dbAd2210:0x74885b4D524d497261259B38900f54e6dbAd2210:0xaf88d065e77c8cC2239327C5EDb3A432268e5831":
       true, // old APE market
-    "0x1B9e25f54225bcdCf347569E38C41Ade9BB686e5:0xF4586028FFdA7Eca636864F80f8a3f2589E33795:0x325eEb3AA50014f35861e3374f54B3997Aa8357d":
-      true, // old stBTC-USDC.e market
   };
 
   for (const market of markets) {
