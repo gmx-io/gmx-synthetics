@@ -6214,7 +6214,8 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      swapFeeFactorForNegativeImpact: percentageToFloat("0.5%"), // default is 0.07%
+      // swapFeeFactorForNegativeImpact left at baseMarketConfig default (0.07%) to match on-chain;
+      // deposit/withdrawal negative-impact fee factors inherit it
 
       reserveFactor: percentageToFloat("135%"),
       openInterestReserveFactor: percentageToFloat("130%"),
@@ -6225,6 +6226,7 @@ const config: {
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"), // on-chain value (default is 0.4%)
 
       swapImpactExponentFactor: exponentToFloat("2e0"),
       negativeSwapImpactFactor: exponentToFloat("3.5e-09"),
@@ -6234,9 +6236,11 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: bigNumberify(0), // on-chain value (never configured for this market)
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
+
+      maxCollateralSum: bigNumberify(0), // on-chain value (never configured for this market)
 
       maxOpenInterest: 1,
       maxPoolUsdForDeposit: 1,

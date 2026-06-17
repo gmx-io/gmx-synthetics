@@ -1227,30 +1227,40 @@ async function validatePerpConfig({
   const maxLongTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForLongs
     .mul(FLOAT_PRECISION)
     .div(openInterestReserveFactorLongs);
-  const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
-    .mul(borrowingFactorForLongs)
-    .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
-    .mul(SECONDS_PER_YEAR);
+  // a shut-down market can have maxOpenInterest set to 1, which makes the divisor round down to
+  // zero; the borrowing-factor check is meaningless in that case, so skip it instead of dividing by zero
+  if (maxLongTokenPoolUsdBasedOnMaxOpenInterest.eq(0)) {
+    console.log(`    maxBorrowingFactorForLongsPerYear: skipped (maxOpenInterestForLongs is effectively zero)`);
+  } else {
+    const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
+      .mul(borrowingFactorForLongs)
+      .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
+      .mul(SECONDS_PER_YEAR);
 
-  if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(15, 1))) {
-    throw new Error("maxBorrowingFactorForLongsPerYear is more than 150%");
+    if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(15, 1))) {
+      throw new Error("maxBorrowingFactorForLongsPerYear is more than 150%");
+    }
+
+    console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
   }
-
-  console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
 
   const maxShortTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForShorts
     .mul(FLOAT_PRECISION)
     .div(openInterestReserveFactorShorts);
-  const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
-    .mul(borrowingFactorForShorts)
-    .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
-    .mul(SECONDS_PER_YEAR);
+  if (maxShortTokenPoolUsdBasedOnMaxOpenInterest.eq(0)) {
+    console.log(`    maxBorrowingFactorForShortsPerYear: skipped (maxOpenInterestForShorts is effectively zero)`);
+  } else {
+    const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
+      .mul(borrowingFactorForShorts)
+      .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
+      .mul(SECONDS_PER_YEAR);
 
-  if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(15, 1))) {
-    throw new Error("maxBorrowingFactorForShortsPerYear is more than 150%");
+    if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(15, 1))) {
+      throw new Error("maxBorrowingFactorForShortsPerYear is more than 150%");
+    }
+
+    console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
   }
-
-  console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
 
   for (const [key, value] of Object.entries({
     optimalUsageFactorForLongs,
@@ -1424,13 +1434,6 @@ async function validateSwapConfig({
 }
 
 export async function validateMarketConfigs() {
-  // botanix markets are shut down with maxOpenInterest set to 1, which makes the
-  // borrowing-factor checks in validatePerpConfig divide by zero; skip validation for botanix
-  if (hre.network.name === "botanix") {
-    console.log("skipping market config validation for botanix");
-    return { errors: [] };
-  }
-
   const tokens = await hre.gmx.getTokens();
   const marketConfigs = await hre.gmx.getMarkets();
   const marketConfigByKey = createMarketConfigByKey({ marketConfigs, tokens });
