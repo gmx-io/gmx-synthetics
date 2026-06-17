@@ -1,6 +1,10 @@
 // Reports market config params whose live on-chain value differs from config/markets.ts on the
-// current branch, excluding the keys actively managed by the risk oracle and the funding keeper
-// (they rewrite these continuously, so config is not their baseline). Read-only — no signer, no writes.
+// current branch. Excludes the keys actively managed by the risk oracle and the funding keeper
+// (they rewrite these continuously, so config is not their baseline). The `closedState` markets are
+// compared against both their open and off-hours baselines, so a session flip is not a mismatch.
+// The bot is not aware if it's an open or closed session, it compares the on-chain value against both
+// baselines and accepts either (all values for that session type must match, partial match would trigger alert).
+// Read-only — no signer, no writes.
 //
 //   npx hardhat run scripts/compareMarketConfig.ts --network arbitrum
 //
@@ -12,6 +16,7 @@ import { getOnchainMarkets } from "../utils/market";
 import { getFullKey } from "../utils/config";
 import { bigNumberify } from "../utils/math";
 import { handleInBatches } from "../utils/batch";
+import { MarketHours } from "../config/markets";
 
 // Keys actively managed by the risk oracle / funding keeper: those systems write them on-chain, so
 // config/markets.ts is not their source of truth and a difference vs config is expected, not a mismatch.
@@ -85,7 +90,6 @@ async function compareMarketConfig(): Promise<MarketConfigDifference[]> {
 
   const generalConfig = await hre.gmx.getGeneral();
   const tokens = await hre.gmx.getTokens();
-  const markets = await hre.gmx.getMarkets();
 
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
@@ -93,23 +97,54 @@ async function compareMarketConfig(): Promise<MarketConfigDifference[]> {
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
   // includeRiskOracleBaseKeys / includeKeeperBaseKeys are forced true so coverage is total and
-  // deterministic; the risk-oracle / keeper-managed keys (see `excluded` at the top) are then dropped below.
+  // deterministic; the risk-oracle / keeper-managed keys (see `excluded` at the top) are then dropped.
   // With that skip bypassed the supported-markets set is unused, so the risk-oracle API call is skipped.
-  const [configItems] = await processMarkets({
-    markets,
-    includeMarket: undefined,
-    onchainMarketsByTokens,
-    tokens,
-    supportedRiskOracleMarkets: new Set(),
-    generalConfig,
-    includeRiskOracleBaseKeys: true,
-    includeKeeperBaseKeys: true,
-    includeMaxOpenInterest: true,
-    includePositionImpact: true,
-    includeFunding: true,
-  });
+  const enumerate = async (markets) => {
+    const [configItems] = await processMarkets({
+      markets,
+      includeMarket: undefined,
+      onchainMarketsByTokens,
+      tokens,
+      supportedRiskOracleMarkets: new Set(),
+      generalConfig,
+      includeRiskOracleBaseKeys: true,
+      includeKeeperBaseKeys: true,
+      includeMaxOpenInterest: true,
+      includePositionImpact: true,
+      includeFunding: true,
+    });
+    return configItems.filter((item) => !excluded.has(item.baseKey));
+  };
 
-  const items = configItems.filter((item) => !excluded.has(item.baseKey));
+  // Enumerate the open baseline (the items we read on-chain), plus the off-hours overlay applied to
+  // the `closedState` markets. A market sitting in its closed session matches the closed values, not
+  // the open ones, so accept either — the session keeper's flip is expected, not a mismatch. A value
+  // that matches neither baseline is still flagged.
+  const items = await enumerate(await hre.gmx.getMarkets());
+  const closedItems = await enumerate(await hre.gmx.getMarkets(MarketHours.OffHours));
+
+  // fullKey -> the set of config values the on-chain value may legitimately equal (open, plus closed
+  // for the closedState markets). `expectedText` keeps the human-readable values for the alert.
+  const norm = (type: string, v) => {
+    if (type === "uint" || type === "int") return bigNumberify(v).toString();
+    if (type === "address") return String(v).toLowerCase();
+    return String(Boolean(v));
+  };
+
+  const acceptable = new Map<string, Set<string>>();
+  const expectedText = new Map<string, string[]>();
+  for (const item of [...items, ...closedItems]) {
+    const fullKey = getFullKey(item.baseKey, item.keyData);
+    if (!acceptable.has(fullKey)) {
+      acceptable.set(fullKey, new Set());
+      expectedText.set(fullKey, []);
+    }
+    const normalized = norm(item.type, item.value);
+    if (!acceptable.get(fullKey).has(normalized)) {
+      acceptable.get(fullKey).add(normalized);
+      expectedText.get(fullKey).push(item.value.toString());
+    }
+  }
 
   const fnForType = (type: string) =>
     type === "uint" ? "getUint" : type === "int" ? "getInt" : type === "address" ? "getAddress" : "getBool";
@@ -132,29 +167,26 @@ async function compareMarketConfig(): Promise<MarketConfigDifference[]> {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const returnData = result[i].returnData;
+    const fullKey = getFullKey(item.baseKey, item.keyData);
 
     let onchain;
-    let differs;
     if (item.type === "uint") {
       onchain = bigNumberify(returnData);
-      differs = !onchain.eq(bigNumberify(item.value));
     } else if (item.type === "int") {
       onchain = abiCoder.decode(["int256"], returnData)[0];
-      differs = !onchain.eq(bigNumberify(item.value));
     } else if (item.type === "address") {
       onchain = abiCoder.decode(["address"], returnData)[0];
-      differs = String(onchain).toLowerCase() !== String(item.value).toLowerCase();
     } else {
       onchain = abiCoder.decode(["bool"], returnData)[0];
-      differs = Boolean(onchain) !== Boolean(item.value);
     }
 
-    if (differs) {
+    // Flag only if the live value matches neither the open nor the closed (off-hours) baseline.
+    if (!acceptable.get(fullKey).has(norm(item.type, onchain))) {
       differences.push({
         label: item.label,
         baseKey: item.baseKey,
         type: item.type,
-        expected: item.value.toString(),
+        expected: expectedText.get(fullKey).join(" or "),
         actual: onchain.toString(),
       });
     }
