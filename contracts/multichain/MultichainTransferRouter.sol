@@ -225,6 +225,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
                 minOutputAmount: 0,
                 receiver: address(multichainVault),
                 uiFeeReceiver: address(0),
+                uiFeeFactor: 0, // uiFeeReceiver is the zero address, so no ui fee is charged
                 shouldUnwrapNativeToken: false,
                 swapPricingType: ISwapPricingUtils.SwapPricingType.AtomicSwap
             })

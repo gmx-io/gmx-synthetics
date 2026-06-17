@@ -9,6 +9,8 @@ import {
 import { bigNumberify } from "../utils/math";
 import { handleInBatches } from "../utils/batch";
 
+const isCliCall = process.env.CLI === "true";
+
 export interface ConfigChangeItem {
   type: string;
   baseKey: string;
@@ -158,7 +160,7 @@ export async function handleConfigChanges(
     await config.connect(signer).callStatic.multicall(batch);
   });
 
-  if (!write) {
+  if (!write && !isCliCall) {
     ({ write } = await prompts({
       type: "confirm",
       name: "write",

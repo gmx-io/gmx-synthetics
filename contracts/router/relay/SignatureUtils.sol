@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 import "../../error/Errors.sol";
+import "./EIP6492Deployer.sol";
 
 /**
  * @title SignatureUtils
@@ -46,7 +47,8 @@ library SignatureUtils {
         bytes32 digest,
         bytes calldata signature,
         address expectedSigner,
-        string memory signatureType
+        string memory signatureType,
+        EIP6492Deployer eip6492Deployer
     ) external {
         // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
         // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
@@ -62,11 +64,11 @@ library SignatureUtils {
         // 1. EIP-6492 for counterfactual smart contract wallets
         if (_isEIP6492Signature(signature)) {
             // with standard digest
-            if (_validateEIP6492Signature(expectedSigner, digest, signature)) {
+            if (_validateEIP6492Signature(eip6492Deployer, expectedSigner, digest, signature)) {
                 return;
             }
             // with minified digest
-            if (_validateEIP6492Signature(expectedSigner, minifiedDigest, signature)) {
+            if (_validateEIP6492Signature(eip6492Deployer, expectedSigner, minifiedDigest, signature)) {
                 return;
             }
             revert Errors.InvalidSignature(signatureType);
@@ -137,6 +139,7 @@ library SignatureUtils {
      * @return True if the signature is valid
      */
     function _validateEIP6492Signature(
+        EIP6492Deployer eip6492Deployer,
         address signer,
         bytes32 hash,
         bytes calldata signature
@@ -150,8 +153,10 @@ library SignatureUtils {
         bool alreadyDeployed = signer.code.length > 0;
 
         // If contract not deployed, deploy it via factory
+        // The factory call is delegated to the unprivileged EIP6492Deployer to prevent
+        // attacker-controlled calldata from executing with the relay router's privileges
         if (!alreadyDeployed) {
-            (bool success, ) = factory.call(factoryCalldata);
+            bool success = eip6492Deployer.deploy(factory, factoryCalldata);
             if (!success) return false;
             // Verify deployment succeeded
             if (signer.code.length == 0) return false;
@@ -164,7 +169,7 @@ library SignatureUtils {
 
         // if wallet was already deployed, execute factoryCalldata as a prep call and retry validation
         if (alreadyDeployed) {
-            (bool success, ) = factory.call(factoryCalldata);
+            bool success = eip6492Deployer.deploy(factory, factoryCalldata);
             if (!success) return false;
             return SignatureChecker.isValidERC1271SignatureNow(signer, hash, originalSignature);
         }

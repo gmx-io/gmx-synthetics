@@ -115,6 +115,15 @@ describe("Config", () => {
     expect(await dataStore.getAddress(key)).eq(wnt.address);
   });
 
+  it("setAddress for EIP6492_DEPLOYER", async () => {
+    await expect(
+      config.connect(user1).setAddress(keys.EIP6492_DEPLOYER, "0x", user1.address)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
+    await config.connect(user0).setAddress(keys.EIP6492_DEPLOYER, "0x", user1.address);
+    expect(await dataStore.getAddress(keys.EIP6492_DEPLOYER)).eq(user1.address);
+  });
+
   it("setBytes32", async () => {
     const key = keys.oracleTypeKey(wnt.address);
 
@@ -458,15 +467,41 @@ describe("Config", () => {
   });
 
   it("validates max funding fee factor is higher than min funding fee factor", async () => {
-    await config.setUint(keys.MAX_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 10);
-    await config.setUint(keys.MIN_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 5);
+    await config.setUint(
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
+      10
+    );
+    await config.setUint(
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+      10
+    );
+    await config.setUint(
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
+      5
+    );
+    await config.setUint(
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+      5
+    );
 
     await expect(
-      config.setUint(keys.MIN_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 11)
+      config.setUint(
+        keys.MIN_FUNDING_FACTOR_PER_SECOND,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
+        11
+      )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
 
     await expect(
-      config.setUint(keys.MAX_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 4)
+      config.setUint(
+        keys.MAX_FUNDING_FACTOR_PER_SECOND,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
+        4
+      )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
   });
 

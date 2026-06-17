@@ -14,6 +14,7 @@ import {
   getBatchSignature,
   getCancelOrderSignature,
   getCreateOrderSignature,
+  getCreateTwapOrderSignature,
   getUpdateOrderSignature,
 } from "./signatures";
 
@@ -104,6 +105,41 @@ export async function sendCreateOrder(p: {
       ]);
   return sendRelayTransaction({
     calldata: createOrderCalldata,
+    ...p,
+  });
+}
+
+export async function sendCreateTwapOrder(
+  p: Parameters<typeof sendCreateOrder>[0] & { twapCount: BigNumberish; interval: BigNumberish }
+) {
+  const relayParams = await getRelayParams(p);
+  const subaccountApproval = await getSubaccountApproval({
+    ...p,
+    signer: p.subaccountApprovalSigner,
+  });
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCreateTwapOrderSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+      subaccountApproval,
+    });
+  }
+
+  const createTwapOrderCalldata = p.relayRouter.interface.encodeFunctionData("createTwapOrder", [
+    { ...relayParams, signature },
+    subaccountApproval,
+    p.account,
+    p.subaccount,
+    p.params,
+    p.twapCount,
+    p.interval,
+  ]);
+
+  return sendRelayTransaction({
+    calldata: createTwapOrderCalldata,
     ...p,
   });
 }

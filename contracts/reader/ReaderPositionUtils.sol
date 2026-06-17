@@ -170,6 +170,7 @@ library ReaderPositionUtils {
             shortToken: cache.market.shortToken,
             sizeDeltaUsd: sizeDeltaUsd,
             uiFeeReceiver: uiFeeReceiver,
+            uiFeeFactor: type(uint256).max, // read the currently configured factor for view calls
             isLiquidation: false
         });
 
@@ -254,9 +255,6 @@ library ReaderPositionUtils {
             positionInfo.position,
             sizeDeltaUsd
         );
-
-        // with totalImpactUsd the pnlAfterPriceImpactUsd may not be a very useful value to return and may be deprecated in a future iteration
-        positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
 
         positionInfo.fees.totalCostAmountExcludingFunding =
             positionInfo.fees.positionFeeAmount

@@ -255,6 +255,17 @@ library MarketUtils {
         );
     }
 
+    // @dev return raw primary prices for the market tokens, before provider-side spread reduction
+    // @param oracle Oracle
+    // @param market the market values
+    function getMarketRawPrices(IOracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
+        return MarketPrices(
+            oracle.getPrimaryRawPrice(market.indexToken),
+            oracle.getPrimaryRawPrice(market.longToken),
+            oracle.getPrimaryRawPrice(market.shortToken)
+        );
+    }
+
     // @dev get the usd value of either the long or short tokens in the pool
     // without accounting for the pnl of open positions
     // @param dataStore DataStore
@@ -501,6 +512,75 @@ library MarketUtils {
         return pnl;
     }
 
+    // @dev get the pending pnl for a market side and collateral token
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param collateralToken the collateral token to check
+    // @param indexTokenPrice the price of the index token
+    // @param isLong whether to get the pnl for longs or shorts
+    // @param maximize whether to maximize or minimize the pnl
+    // @return the pending pnl for a market side and collateral token
+    function getPnlByCollateralToken(
+        DataStore dataStore,
+        Market.Props memory market,
+        address collateralToken,
+        Price.Props memory indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+        int256 openInterest = getOpenInterest(dataStore, market.marketToken, collateralToken, isLong, divisor).toInt256();
+        uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, collateralToken, isLong, divisor);
+        if (openInterest == 0 || openInterestInTokens == 0) {
+            return 0;
+        }
+
+        uint256 price = indexTokenPrice.pickPriceForPnl(isLong, maximize);
+
+        int256 openInterestValue = (openInterestInTokens * price).toInt256();
+        return isLong ? openInterestValue - openInterest : openInterest - openInterestValue;
+    }
+
+    // @dev get the positive pnl liability for a payout side without offsetting losses
+    // from another collateral token bucket
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param indexTokenPrice the price of the index token
+    // @param isLong whether to get the pnl for longs or shorts
+    // @param maximize whether to maximize or minimize the pnl
+    // @return the pending positive pnl liability for a market side
+    function getPositivePnl(
+        DataStore dataStore,
+        Market.Props memory market,
+        Price.Props memory indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (uint256) {
+        int256 pnlUsingLongTokenAsCollateral = getPnlByCollateralToken(
+            dataStore,
+            market,
+            market.longToken,
+            indexTokenPrice,
+            isLong,
+            maximize
+        );
+
+        int256 pnlUsingShortTokenAsCollateral = getPnlByCollateralToken(
+            dataStore,
+            market,
+            market.shortToken,
+            indexTokenPrice,
+            isLong,
+            maximize
+        );
+
+        return (
+            pnlUsingLongTokenAsCollateral > 0 ? pnlUsingLongTokenAsCollateral.toUint256() : 0
+        ) + (
+            pnlUsingShortTokenAsCollateral > 0 ? pnlUsingShortTokenAsCollateral.toUint256() : 0
+        );
+    }
+
     // @dev get the amount of tokens in the pool
     // @param dataStore DataStore
     // @param market the market to check
@@ -657,7 +737,8 @@ library MarketUtils {
             claimableAmount
         );
 
-        validateMarketTokenBalance(dataStore, market);
+        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
+        validateMarketTokenBalance(dataStore, marketProps);
 
         MarketEventUtils.emitFundingFeesClaimed(
             eventEmitter,
@@ -723,22 +804,27 @@ library MarketUtils {
         address account,
         address receiver
     ) internal returns (uint256) {
-        uint256 claimableAmount = dataStore.getUintValueFromDataStore(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
+        uint256 adjustedClaimableAmount = 0;
+        uint256 amountToBeClaimed = 0;
+        {
+            uint256 claimableAmount = dataStore.getUintValueFromDataStore(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
 
-        uint256 claimableFactor = _getClaimableFactor(dataStore, market, token, timeKey, account);
+            uint256 claimableFactor = _getClaimableFactor(dataStore, market, token, timeKey, account);
 
-        if (claimableFactor > Precision.FLOAT_PRECISION) {
-            revert Errors.InvalidClaimableFactor(claimableFactor);
+            if (claimableFactor > Precision.FLOAT_PRECISION) {
+                revert Errors.InvalidClaimableFactor(claimableFactor);
+            }
+
+            uint256 claimedAmount = dataStore.getUintValueFromDataStore(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
+
+            adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
+
+            if (adjustedClaimableAmount <= claimedAmount) {
+                revert Errors.CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
+            }
+
+            amountToBeClaimed = adjustedClaimableAmount - claimedAmount;
         }
-
-        uint256 claimedAmount = dataStore.getUintValueFromDataStore(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
-
-        uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
-        if (adjustedClaimableAmount <= claimedAmount) {
-            revert Errors.CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
-        }
-
-        uint256 amountToBeClaimed = adjustedClaimableAmount - claimedAmount;
 
         dataStore.setUint(
             Keys.claimedCollateralAmountKey(market, token, timeKey, account),
@@ -756,7 +842,7 @@ library MarketUtils {
             amountToBeClaimed
         );
 
-        validateMarketTokenBalance(dataStore, market);
+        validateMarketTokenBalance(dataStore, MarketStoreUtils.get(dataStore, market));
 
         MarketEventUtils.emitCollateralClaimed(
             eventEmitter,
@@ -1598,7 +1684,9 @@ library MarketUtils {
 
         if (configCache.fundingIncreaseFactorPerSecond == 0) {
             cache.fundingFactor = getFundingFactor(dataStore, market.marketToken);
-            uint256 maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.maxFundingFactorPerSecondKey(market.marketToken));
+            uint256 maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
+                Keys.maxFundingFactorPerSecondKey(market.marketToken, longOpenInterest > shortOpenInterest)
+            );
 
             // if there is no fundingIncreaseFactorPerSecond then return the static fundingFactor based on open interest difference
             uint256 fundingFactorPerSecond = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, cache.fundingFactor);
@@ -1674,8 +1762,16 @@ library MarketUtils {
             }
         }
 
-        configCache.minFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.minFundingFactorPerSecondKey(market.marketToken));
-        configCache.maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.maxFundingFactorPerSecondKey(market.marketToken));
+        if (cache.nextSavedFundingFactorPerSecond == 0) {
+            return (0, true, 0);
+        }
+        bool isLongFunding = cache.nextSavedFundingFactorPerSecond > 0;
+        configCache.minFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
+            Keys.minFundingFactorPerSecondKey(market.marketToken, isLongFunding)
+        );
+        configCache.maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
+            Keys.maxFundingFactorPerSecondKey(market.marketToken, isLongFunding)
+        );
 
         cache.nextSavedFundingFactorPerSecond = Calc.boundMagnitude(
             cache.nextSavedFundingFactorPerSecond,
@@ -1772,13 +1868,9 @@ library MarketUtils {
         bool maximize
     ) internal view returns (int256) {
         Market.Props memory _market = getEnabledMarket(dataStore, market);
-        MarketPrices memory prices = MarketPrices(
-            oracle.getPrimaryPrice(_market.indexToken),
-            oracle.getPrimaryPrice(_market.longToken),
-            oracle.getPrimaryPrice(_market.shortToken)
-        );
+        MarketPrices memory prices = getMarketRawPrices(oracle, _market);
 
-        return getPnlToPoolFactor(dataStore, _market, prices, isLong, maximize);
+        return getPositivePnlToPoolFactor(dataStore, _market, prices, isLong, maximize);
     }
 
     // @dev get the ratio of pnl to pool value
@@ -1812,6 +1904,38 @@ library MarketUtils {
         );
 
         return Precision.toFactor(pnl, poolUsd);
+    }
+
+    // @dev get the ratio of positive pnl liability to pool value without offsetting
+    // profitable positions with losses that settle into another collateral pool
+    // @param dataStore DataStore
+    // @param market the market values
+    // @param prices the prices of the market tokens
+    // @param isLong whether to get the value for the long or short side
+    // @param maximize whether to maximize the factor
+    // @return (positive pnl liability of positions) / (long or short pool value)
+    function getPositivePnlToPoolFactor(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong, !maximize);
+
+        if (poolUsd == 0) {
+            return 0;
+        }
+
+        uint256 positivePnl = getPositivePnl(
+            dataStore,
+            market,
+            prices.indexTokenPrice,
+            isLong,
+            maximize
+        );
+
+        return Precision.toFactor(positivePnl, poolUsd).toInt256();
     }
 
     function validateOpenInterest(
@@ -3210,7 +3334,9 @@ library MarketUtils {
         bytes32 pnlFactorType
     ) internal view returns (bool, int256, uint256) {
         Market.Props memory _market = getEnabledMarket(dataStore, market);
-        MarketPrices memory prices = getMarketPrices(oracle, _market);
+        MarketPrices memory prices = pnlFactorType == Keys.MAX_PNL_FACTOR_FOR_ADL
+            ? getMarketRawPrices(oracle, _market)
+            : getMarketPrices(oracle, _market);
 
         return isPnlFactorExceeded(
             dataStore,
@@ -3234,7 +3360,9 @@ library MarketUtils {
         bool isLong,
         bytes32 pnlFactorType
     ) internal view returns (bool, int256, uint256) {
-        int256 pnlToPoolFactor = getPnlToPoolFactor(dataStore, market, prices, isLong, true);
+        int256 pnlToPoolFactor = pnlFactorType == Keys.MAX_PNL_FACTOR_FOR_ADL
+            ? getPositivePnlToPoolFactor(dataStore, market, prices, isLong, true)
+            : getPnlToPoolFactor(dataStore, market, prices, isLong, true);
         uint256 maxPnlFactor = getMaxPnlFactor(dataStore, pnlFactorType, market.marketToken, isLong);
 
         bool isExceeded = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;

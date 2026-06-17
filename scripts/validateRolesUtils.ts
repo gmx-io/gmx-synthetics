@@ -26,7 +26,7 @@ const FEE_HANDLER_ORACLES = {
 
 const trustedExternalContracts = new Set(
   [
-    "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9",
+    "0x58f582455b54d7c83d03bceed95faf72b37fddd7",
     "0x8d1d2e24ec641edc6a1ebe0f3ae7af0ebc573e0d",
     "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3",
     "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55",
@@ -92,6 +92,8 @@ export async function validateRoles() {
   );
 
   contractNameByAddress["0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D"] = "Safe";
+  contractNameByAddress["0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7"] = "Safe";
+
   console.log(`checking ${roles.length} roles`);
   console.log(roles);
 

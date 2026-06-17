@@ -27,6 +27,7 @@ describe("FeeDistributor", function () {
     esGmx,
     roleStore,
     feeHandler,
+    feeVault,
     mockExtendedGmxDistributor,
     mockLzReadResponseChainA,
     mockExtendedGmxTracker,
@@ -47,6 +48,7 @@ describe("FeeDistributor", function () {
     eventEmitter,
     configUtils,
     marketUtils,
+    marketStoreUtils,
     feeDistributorUtils,
     mockVaultV1,
     claimVault,
@@ -77,6 +79,14 @@ describe("FeeDistributor", function () {
     options,
     feesV1Usd,
     feesV2Usd;
+
+  function getFeeDistributionEventData(receipt, eventDescription: string) {
+    const event = parseLogs(fixture, receipt).find(
+      (log) => log.parsedEventData && log.parsedEventData.eventDescription === eventDescription
+    );
+    expect(event, `Missing ${eventDescription} event`).to.not.eq(undefined);
+    return event.parsedEventData;
+  }
 
   // Constants representing mock Endpoint IDs for testing purposes
   const eidA = 1000;
@@ -112,6 +122,7 @@ describe("FeeDistributor", function () {
       esGmx,
       roleStore,
       feeHandler,
+      feeVault,
       chainlinkPriceFeedProvider,
       wethPriceFeed,
       gmxPriceFeed,
@@ -120,6 +131,7 @@ describe("FeeDistributor", function () {
       eventEmitter,
       configUtils,
       marketUtils,
+      marketStoreUtils,
       feeDistributorUtils,
       mockVaultV1,
       claimVault,
@@ -149,6 +161,7 @@ describe("FeeDistributor", function () {
     } = fixture.accounts);
 
     mockExtendedGmxDistributor = await deployContract("MockRewardDistributorV1", []);
+    await mockExtendedGmxDistributor.updateLastDistributionTime();
     mockLzReadResponseChainA = await deployContract("MockLzReadResponse", []);
     mockExtendedGmxTracker = await deployContract("MockRewardTrackerV1", [mockExtendedGmxDistributor.address]);
     mockLzReadResponseChainC = await deployContract("MockLzReadResponse", []);
@@ -431,7 +444,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));
@@ -485,8 +498,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[4].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[1].parsedEventData;
+    const feeDistributionInitiatedEventData = getFeeDistributionEventData(receipt, "FeeDistributionInitiated");
+    const feeDistributionDataReceivedEventData = getFeeDistributionEventData(receipt, "FeeDistributionDataReceived");
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -541,7 +554,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(50_000, 18));
@@ -599,8 +612,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
+    const feeDistributionInitiatedEventData = getFeeDistributionEventData(receipt, "FeeDistributionInitiated");
+    const feeDistributionDataReceivedEventData = getFeeDistributionEventData(receipt, "FeeDistributionDataReceived");
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -667,7 +680,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));
@@ -723,8 +736,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[4].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[1].parsedEventData;
+    const feeDistributionInitiatedEventData = getFeeDistributionEventData(receipt, "FeeDistributionInitiated");
+    const feeDistributionDataReceivedEventData = getFeeDistributionEventData(receipt, "FeeDistributionDataReceived");
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -815,7 +828,7 @@ describe("FeeDistributor", function () {
       feesV2Usd
     );
     const distributeReceipt = await distributeTx.wait();
-    const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
+    const distributeEventData = getFeeDistributionEventData(distributeReceipt, "FeeDistributionCompleted");
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
@@ -931,7 +944,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(50_000, 18));
@@ -991,8 +1004,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
+    const feeDistributionInitiatedEventData = getFeeDistributionEventData(receipt, "FeeDistributionInitiated");
+    const feeDistributionDataReceivedEventData = getFeeDistributionEventData(receipt, "FeeDistributionDataReceived");
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -1052,7 +1065,7 @@ describe("FeeDistributor", function () {
       feesV2Usd
     );
     const distributeReceipt = await distributeTx.wait();
-    const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
+    const distributeEventData = getFeeDistributionEventData(distributeReceipt, "FeeDistributionCompleted");
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
@@ -1165,7 +1178,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
@@ -1251,7 +1264,7 @@ describe("FeeDistributor", function () {
 
     const distributeReceipt = await distributeTx.wait();
 
-    const distributeEventData = parseLogs(fixture, distributeReceipt)[7].parsedEventData;
+    const distributeEventData = getFeeDistributionEventData(distributeReceipt, "FeeDistributionCompleted");
 
     const treasuryBalanceAfter = await wnt.balanceOf(user6.address);
     const sentFromTreasury = treasuryBalancePre.sub(treasuryBalanceAfter);
@@ -1299,6 +1312,7 @@ describe("FeeDistributor", function () {
       [roleStore.address, dataStoreD.address, eventEmitter.address, oracle.address, staticOracleProvider.address],
       {
         libraries: {
+          "contracts/market/MarketStoreUtils.sol:MarketStoreUtils": marketStoreUtils.address,
           "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
         },
       }
@@ -1316,9 +1330,18 @@ describe("FeeDistributor", function () {
       mockEndpointV2D.address,
       wallet.address,
     ]);
+    const feeVaultD = await deployContract("FeeVault", [roleStore.address, dataStoreD.address]);
     const feeHandlerD = await deployContract(
       "FeeHandler",
-      [roleStore.address, oracle.address, dataStoreD.address, eventEmitter.address, mockVaultV1.address, gmxD.address],
+      [
+        roleStore.address,
+        oracle.address,
+        dataStoreD.address,
+        eventEmitter.address,
+        feeVaultD.address,
+        mockVaultV1.address,
+        gmxD.address,
+      ],
       {
         libraries: {
           "contracts/market/MarketUtils.sol:MarketUtils": marketUtils.address,
@@ -1358,6 +1381,7 @@ describe("FeeDistributor", function () {
     );
 
     const mockExtendedGmxDistributorD = await deployContract("MockRewardDistributorV1", []);
+    await mockExtendedGmxDistributorD.updateLastDistributionTime();
     const mockExtendedGmxTrackerD = await deployContract("MockRewardTrackerV1", [mockExtendedGmxDistributorD.address]);
     const mockVesterD = await deployContract("MockVesterV1", [
       [signer5.address, signer6.address, signer7.address],
@@ -1640,7 +1664,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
     await dataStoreD.setUint(keys.withdrawableBuybackTokenAmountKey(gmxD.address), expandDecimals(50_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(290_000, 18));
@@ -1679,7 +1703,7 @@ describe("FeeDistributor", function () {
 
     sendParam = {
       dstEid: eidD,
-      to: addressToBytes32(feeHandlerD.address),
+      to: addressToBytes32(feeVaultD.address),
       amountLD: expandDecimals(50_000, 18),
       minAmountLD: expandDecimals(50_000, 18),
       extraOptions: ethers.utils.arrayify("0x"),
@@ -1744,11 +1768,11 @@ describe("FeeDistributor", function () {
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
     const distributeTimestampD = await dataStoreD.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
+    const feeDistributionInitiatedEventData = getFeeDistributionEventData(receipt, "FeeDistributionInitiated");
+    const feeDistributionDataReceivedEventData = getFeeDistributionEventData(receipt, "FeeDistributionDataReceived");
 
-    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[9].parsedEventData;
-    const feeDistributionDataReceivedEventDataD = parseLogs(fixture, receiptD)[6].parsedEventData;
+    const feeDistributionInitiatedEventDataD = getFeeDistributionEventData(receiptD, "FeeDistributionInitiated");
+    const feeDistributionDataReceivedEventDataD = getFeeDistributionEventData(receiptD, "FeeDistributionDataReceived");
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));

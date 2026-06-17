@@ -117,11 +117,13 @@ export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER
 
 export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
+export const MAX_RELAY_FEE_SWAP_USD = hashString("MAX_RELAY_FEE_SWAP_USD");
 export const MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = hashString("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT");
 export const GELATO_RELAY_FEE_BASE_AMOUNT = hashString("GELATO_RELAY_FEE_BASE_AMOUNT");
 export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_MULTIPLIER_FACTOR");
 
 export const RELAY_FEE_ADDRESS = hashString("RELAY_FEE_ADDRESS");
+export const EIP6492_DEPLOYER = hashString("EIP6492_DEPLOYER");
 
 export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 
@@ -761,12 +763,12 @@ export function fundingDecreaseFactorPerSecondKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_DECREASE_FACTOR_PER_SECOND, market]);
 }
 
-export function minFundingFactorPerSecondKey(market: string) {
-  return hashData(["bytes32", "address"], [MIN_FUNDING_FACTOR_PER_SECOND, market]);
+export function minFundingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MIN_FUNDING_FACTOR_PER_SECOND, market, isLong]);
 }
 
-export function maxFundingFactorPerSecondKey(market: string) {
-  return hashData(["bytes32", "address"], [MAX_FUNDING_FACTOR_PER_SECOND, market]);
+export function maxFundingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_FUNDING_FACTOR_PER_SECOND, market, isLong]);
 }
 
 export function thresholdForStableFundingKey(market: string) {

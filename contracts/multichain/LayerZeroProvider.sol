@@ -317,6 +317,11 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         });
 
         (, , receipt) = stargate.quoteOFT(sendParam);
+
+        if (receipt.amountReceivedLD < minAmountOut) {
+            revert Errors.InsufficientBridgeOutputAmount(receipt.amountReceivedLD, minAmountOut);
+        }
+
         sendParam.minAmountLD = receipt.amountReceivedLD;
 
         messagingFee = stargate.quoteSend(sendParam, false);

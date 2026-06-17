@@ -8,9 +8,8 @@ const func = async ({ gmx, deployments, network }: HardhatRuntimeEnvironment) =>
   const tokens = await gmx.getTokens();
   const { get } = deployments;
 
-  const defaultOracleProvider: OracleProvider = network.name === "hardhat" ? "gmOracle" : "chainlinkDataStream";
+  const defaultOracleProvider: OracleProvider = "chainlinkDataStream";
   const oracleProviders = {
-    gmOracle: (await get("GmOracleProvider")).address,
     chainlinkDataStream: (await get("ChainlinkDataStreamProvider")).address,
   };
 
@@ -57,7 +56,7 @@ const func = async ({ gmx, deployments, network }: HardhatRuntimeEnvironment) =>
   }
 };
 
-func.dependencies = ["Tokens", "PriceFeeds", "DataStore", "GmOracleProvider", "ChainlinkDataStreamProvider"];
+func.dependencies = ["Tokens", "PriceFeeds", "DataStore", "ChainlinkDataStreamProvider"];
 func.tags = ["ConfigureOracleTokens"];
 
 export default func;

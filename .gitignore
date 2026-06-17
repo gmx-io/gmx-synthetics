@@ -24,6 +24,7 @@ out
 /deployments/localhost
 /deployments.txt
 *.log
+logs/
 .cursorignore*
 
 /validation/
