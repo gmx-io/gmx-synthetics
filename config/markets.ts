@@ -6131,8 +6131,8 @@ const config: {
       minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(3_250_000),
+      maxOpenInterest: 1,
+      maxPoolUsdForDeposit: 1,
 
       maxLongTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
@@ -6151,7 +6151,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(50, 18),
       maxShortTokenPoolAmount: expandDecimals(50, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxPoolUsdForDeposit: 1,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
@@ -6165,7 +6165,7 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
+      maxOpenInterest: 1,
     },
     {
       tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "USDC.e" },
@@ -6184,7 +6184,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(50, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxPoolUsdForDeposit: 1,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
@@ -6202,7 +6202,46 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
+      maxOpenInterest: 1,
+    },
+    // deprecated and disabled, created with the archived USDC.e token; kept in config so its
+    // residual on-chain state is not hidden. stBTC-USDC.e (current USDC.e) is used instead
+    {
+      tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "USDC.e (Archived)" },
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      swapFeeFactorForNegativeImpact: percentageToFloat("0.5%"), // default is 0.07%
+
+      reserveFactor: percentageToFloat("135%"),
+      openInterestReserveFactor: percentageToFloat("130%"),
+
+      maxLongTokenPoolAmount: expandDecimals(50, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
+
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+
+      swapImpactExponentFactor: exponentToFloat("2e0"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-09"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-09"),
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
+
+      maxOpenInterest: 1,
+      maxPoolUsdForDeposit: 1,
+      isDisabled: true,
     },
   ],
   megaEth: [
