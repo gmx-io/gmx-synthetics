@@ -589,6 +589,9 @@ export async function getBridgeOutSignature({
       { name: "minAmountOut", type: "uint256" },
       { name: "provider", type: "address" },
       { name: "data", type: "bytes" },
+      { name: "bridgeFeeToken", type: "address" },
+      { name: "bridgeFeeAmount", type: "uint256" },
+      { name: "bridgeFeeSwapPath", type: "address[]" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
@@ -598,6 +601,9 @@ export async function getBridgeOutSignature({
     minAmountOut: params.minAmountOut,
     provider: params.provider,
     data: params.data,
+    bridgeFeeToken: params.bridgeFee?.feeToken || ethers.constants.AddressZero,
+    bridgeFeeAmount: params.bridgeFee?.feeAmount || 0,
+    bridgeFeeSwapPath: params.bridgeFee?.feeSwapPath || [],
     relayParams: hashRelayParams(relayParams),
   };
   const domain = getDomain(srcChainId, verifyingContract);

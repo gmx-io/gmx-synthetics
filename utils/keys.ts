@@ -295,6 +295,7 @@ export const BUYBACK_GMX_FACTOR = hashString("BUYBACK_GMX_FACTOR");
 export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMPACT_FACTOR");
 export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
+export const IS_DEPLOYED_WALLET = hashString("IS_DEPLOYED_WALLET");
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
@@ -1051,4 +1052,8 @@ export function feeDistributorAddressInfoForChainKey(chainId: number, addressNam
 
 export function contributorTokenAmountKey(account: string, token: string) {
   return hashData(["bytes32", "address", "address"], [CONTRIBUTOR_TOKEN_AMOUNT, account, token]);
+}
+
+export function isDeployedWalletKey(wallet: string) {
+  return hashData(["bytes32", "address"], [IS_DEPLOYED_WALLET, wallet]);
 }

@@ -14,9 +14,11 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
+const stakingConstructorContracts = ["GmxAccountWalletFactory", "MockRewardRouterV2"];
+
 const func = createDeployFunction({
-  contractName: "MultichainTransferRouter",
-  dependencyNames: [...baseConstructorContracts],
+  contractName: "MultichainStakingRouter",
+  dependencyNames: [...baseConstructorContracts, ...stakingConstructorContracts],
   getDeployArgs: async ({ dependencyContracts }) => {
     const baseParams = {
       router: dependencyContracts.Router.address,
@@ -31,9 +33,20 @@ const func = createDeployFunction({
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
-    return [baseParams];
+    return [
+      baseParams,
+      dependencyContracts.GmxAccountWalletFactory.address,
+      dependencyContracts.MockRewardRouterV2.address,
+    ];
   },
-  libraryNames: ["GasUtils", "MultichainUtils", "RelayUtils", "SignatureUtils", "MarketUtils"],
+  libraryNames: [
+    "GasUtils",
+    "MultichainUtils",
+    "RelayUtils",
+    "StakingUtils",
+    "MultichainStakingUtils",
+    "SignatureUtils",
+  ],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
