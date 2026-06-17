@@ -22,14 +22,23 @@ const NETWORKS = (process.env.CONFIG_MONITOR_NETWORKS || DEFAULT_NETWORKS)
 const MONITOR_SCRIPT = process.env.CONFIG_MONITOR_SCRIPT || "scripts/compareMarketConfig.ts";
 const HEALTHCHECK_URL = process.env.CONFIG_HEALTHCHECK_URL; // dead-man's-switch ping URL (e.g. healthchecks.io)
 
-// The comparison reads config/markets.ts from the working tree, so the baseline is whatever branch
-// the monitor is run on — it must track `updates`. Resolve the branch so a monitor left on the wrong branch
-// surfaces itself in the log and every alert, instead of silently comparing against the wrong config.
-// Read-only; degrades to "unknown".
+// The comparison reads config/markets.ts from the working tree, so the baseline is whatever branch is
+// checked out where the monitor runs. Pull that branch first (fast-forward only, non-interactive,
+// time-boxed — so it can't hang on a credential prompt or leave a merge/conflict state) to refresh it,
+// then return "<branch>", adding a "⚠️ N behind remote" marker when HEAD is still behind its own upstream
+// (@{u}) after the pull — i.e. the pull couldn't fast-forward it (typically local commits or divergence in
+// the checkout). Compares against the branch's own upstream, not `updates`. If @{u} can't be resolved (no
+// upstream) or git fails, falls back to the plain branch name (or "unknown"), with no marker.
 function gitBranch() {
   try {
-    const branch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8" }).stdout || "";
-    return branch.trim() || "unknown";
+    const branch =
+      (spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8" }).stdout || "").trim() || "unknown";
+    spawnSync("git", ["pull", "--ff-only", "--quiet"], {
+      timeout: 30_000,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+    });
+    const behind = (spawnSync("git", ["rev-list", "--count", "HEAD..@{u}"], { encoding: "utf8" }).stdout || "").trim();
+    return Number(behind) > 0 ? `${branch} ⚠️ ${behind} behind remote` : branch;
   } catch (e) {
     return "unknown";
   }
