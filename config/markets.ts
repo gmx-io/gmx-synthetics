@@ -6204,8 +6204,7 @@ const config: {
 
       maxOpenInterest: 1,
     },
-    // deprecated and disabled, created with the archived USDC.e token; kept in config so its
-    // residual on-chain state is not hidden. stBTC-USDC.e (current USDC.e) is used instead
+    // disabled dev market
     {
       tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "USDC.e (Archived)" },
       virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),

@@ -857,7 +857,7 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 10_000,
     },
-    // deprecated and disabled, created with the archived USDC.e token
+    // disabled dev market
     "BTC:stBTC:USDC.e (Archived)": {
       negativePositionImpactFactor: 0,
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
