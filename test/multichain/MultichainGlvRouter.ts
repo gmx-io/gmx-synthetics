@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
-import { expandDecimals } from "../../utils/math";
+import { expandDecimals, percentageToFloat } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
 import {
@@ -11,7 +11,8 @@ import {
   sendCreateGlvWithdrawal,
 } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
-import { executeDeposit } from "../../utils/deposit";
+import { executeDeposit, handleDeposit } from "../../utils/deposit";
+import { executeWithdrawal } from "../../utils/withdrawal";
 import { getBalanceOf } from "../../utils/token";
 import { executeGlvDeposit, executeGlvWithdrawal, getGlvDepositCount, getGlvWithdrawalCount } from "../../utils/glv";
 import { encodeBridgeOutDataList, bridgeInTokens } from "../../utils/multichain";
@@ -696,6 +697,225 @@ describe("MultichainGlvRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(executionFee); // 0.004 ETH
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(0); // 0 USDC
+      });
+
+      it("cross-chain GLV deposit with bridge fee swap via bridgeOutFromController", async () => {
+        const mockStargatePoolGlv = mockStargatePoolUsdc;
+
+        const atomicSwapFeeFactor = percentageToFloat("1%");
+        await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+
+        const srcChainId = 1;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolGlv.SRC_EID()), srcChainId);
+
+        // Bridge in tokens for GLV deposit + USDC for bridge fee
+        const bridgeFeeUsdc = expandDecimals(10, 6);
+        await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount.add(bridgeFeeUsdc) });
+
+        // Bridge in WNT for LZ bridge-out fee
+        const bridgeOutFee = await mockStargatePoolGlv.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, amount: bridgeOutFee });
+
+        // Repurpose mockStargatePoolUsdc as GLV token pool (after USDC bridge-in)
+        await mockStargatePoolGlv.updateToken(ethUsdGlvAddress);
+
+        const bridgeFee = {
+          feeToken: usdc.address,
+          feeAmount: bridgeFeeUsdc,
+          feeSwapPath: [ethUsdMarket.marketToken],
+        };
+
+        createGlvDepositParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId,
+          deadline,
+          mockStargatePoolGlv.address,
+          providerData,
+          0,
+          undefined,
+          undefined,
+          undefined,
+          bridgeFee
+        );
+
+        createGlvDepositParams.srcChainId = srcChainId;
+        createGlvDepositParams.chainId = srcChainId;
+
+        await sendCreateGlvDeposit(createGlvDepositParams);
+        const { logs } = await executeGlvDeposit(fixture, {
+          gasUsageLabel: "executeGlvDeposit with bridge fee swap",
+        });
+
+        // GLV tokens were bridged out
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).to.eq(0);
+
+        // Bridge fee USDC was consumed
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+
+        // LZ fee was paid
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolGlv.address)).to.eq(bridgeOutFee);
+
+        // Verify bridge fee swap happened
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.not.eq(undefined);
+
+        // Bridge-out succeeded
+        const bridgeActionLogs = logs.filter((log) => log.parsedEventInfo?.eventName === "MultichainBridgeAction");
+        expect(bridgeActionLogs.length).to.eq(1);
+      });
+
+      it("cross-chain GLV withdrawal (dual-token) with bridge fee swap via bridgeOutFromController", async () => {
+        await handleDeposit(fixture, {
+          create: {
+            longTokenAmount: expandDecimals(10, 18),
+            shortTokenAmount: expandDecimals(50_000, 6),
+          },
+        });
+
+        const atomicSwapFeeFactor = percentageToFloat("1%");
+        await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+
+        // GLV deposit to get GLV tokens into user's multichain balance
+        await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+        await sendCreateGlvDeposit(createGlvDepositParams);
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+        // Set up cross-chain
+        const srcChainId = 1;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolNative.SRC_EID()), srcChainId);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // Bridge in USDC for bridge fee + WNT for relay fee + bridge-out fees
+        const bridgeFeeUsdc = expandDecimals(10, 6);
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeFeeUsdc });
+        await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+        const bridgeOutFeeWnt = await mockStargatePoolNative.BRIDGE_OUT_FEE();
+        const bridgeOutFeeUsdc = await mockStargatePoolUsdc.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, amount: bridgeOutFeeWnt.add(bridgeOutFeeUsdc) });
+
+        const bridgeFee = {
+          feeToken: usdc.address,
+          feeAmount: bridgeFeeUsdc,
+          feeSwapPath: [ethUsdMarket.marketToken],
+        };
+        const defaultBridgeFee = { feeToken: ethers.constants.AddressZero, feeAmount: 0, feeSwapPath: [] };
+
+        createGlvWithdrawalParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId,
+          deadline,
+          mockStargatePoolNative.address,
+          providerData,
+          0,
+          mockStargatePoolUsdc.address,
+          providerData,
+          0,
+          defaultBridgeFee,
+          bridgeFee
+        );
+
+        createGlvWithdrawalParams.srcChainId = srcChainId;
+        createGlvWithdrawalParams.chainId = srcChainId;
+
+        await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
+        const { logs } = await executeGlvWithdrawal(fixture, {
+          gasUsageLabel: "executeGlvWithdrawal with bridge fee swap",
+        });
+
+        // Both bridge-outs succeeded
+        const bridgeActionLogs = logs.filter((log) => log.parsedEventInfo?.eventName === "MultichainBridgeAction");
+        const bridgeFailedLogs = logs.filter(
+          (log) => log.parsedEventInfo?.eventName === "MultichainBridgeActionFailed"
+        );
+        expect(bridgeActionLogs.length).to.eq(2); // WNT + USDC bridge-outs succeeded
+        expect(bridgeFailedLogs.length).to.eq(0);
+
+        // Bridge fee swap happened
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.not.eq(undefined);
+
+        // LZ fees paid to both pools
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolNative.address)).to.eq(bridgeOutFeeWnt);
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolUsdc.address)).to.eq(bridgeOutFeeUsdc);
+      });
+
+      it("single-token cross-chain GLV withdrawal with bridge fee swap via bridgeOutFromController", async () => {
+        await handleDeposit(fixture, {
+          create: {
+            longTokenAmount: expandDecimals(10, 18),
+            shortTokenAmount: expandDecimals(50_000, 6),
+          },
+        });
+
+        const atomicSwapFeeFactor = percentageToFloat("1%");
+        await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+
+        // GLV deposit to get GLV tokens
+        await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+        await sendCreateGlvDeposit(createGlvDepositParams);
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+        // Set up cross-chain
+        const srcChainId = 1;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // Bridge in USDC for bridge fee + WNT for relay fee + bridge-out fee
+        const bridgeFeeUsdc = expandDecimals(10, 6);
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeFeeUsdc });
+        await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+        const bridgeOutFee = await mockStargatePoolUsdc.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, amount: bridgeOutFee });
+
+        // Use longTokenSwapPath to convert WNT→USDC so both outputs are USDC (single-token path)
+        createGlvWithdrawalParams.params.addresses.longTokenSwapPath = [ethUsdMarket.marketToken];
+
+        const bridgeFee = {
+          feeToken: usdc.address,
+          feeAmount: bridgeFeeUsdc,
+          feeSwapPath: [ethUsdMarket.marketToken],
+        };
+
+        createGlvWithdrawalParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId,
+          deadline,
+          mockStargatePoolUsdc.address,
+          providerData,
+          0,
+          undefined,
+          undefined,
+          undefined,
+          bridgeFee
+        );
+
+        createGlvWithdrawalParams.srcChainId = srcChainId;
+        createGlvWithdrawalParams.chainId = srcChainId;
+
+        await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
+        const { logs } = await executeGlvWithdrawal(fixture, {
+          gasUsageLabel: "executeGlvWithdrawal single-token with bridge fee swap",
+        });
+
+        // Bridge-out succeeded
+        const bridgeActionLogs = logs.filter((log) => log.parsedEventInfo?.eventName === "MultichainBridgeAction");
+        const bridgeFailedLogs = logs.filter(
+          (log) => log.parsedEventInfo?.eventName === "MultichainBridgeActionFailed"
+        );
+        expect(bridgeActionLogs.length).to.eq(1);
+        expect(bridgeFailedLogs.length).to.eq(0);
+
+        // Bridge fee swap happened
+        const swapInfoLogs = logs.filter((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLogs.length).to.be.gte(1);
+
+        // LZ fee was paid
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolUsdc.address)).to.eq(bridgeOutFee);
       });
     });
   });
