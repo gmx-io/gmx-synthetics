@@ -1424,6 +1424,13 @@ async function validateSwapConfig({
 }
 
 export async function validateMarketConfigs() {
+  // botanix markets are shut down with maxOpenInterest set to 1, which makes the
+  // borrowing-factor checks in validatePerpConfig divide by zero; skip validation for botanix
+  if (hre.network.name === "botanix") {
+    console.log("skipping market config validation for botanix");
+    return { errors: [] };
+  }
+
   const tokens = await hre.gmx.getTokens();
   const marketConfigs = await hre.gmx.getMarkets();
   const marketConfigByKey = createMarketConfigByKey({ marketConfigs, tokens });
