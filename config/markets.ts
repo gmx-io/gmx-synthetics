@@ -28,6 +28,12 @@ export type ClosedMarketConfig = {
   minCollateralFactorForOpenInterestMultiplierLong?: BigNumberish;
   minCollateralFactorForOpenInterestMultiplierShort?: BigNumberish;
 
+  maxPnlFactorForTraders?: BigNumberish;
+  maxPnlFactorForDeposits?: BigNumberish;
+  maxPnlFactorForAdl?: BigNumberish;
+  minPnlFactorAfterAdl?: BigNumberish;
+  maxPnlFactorForWithdrawals?: BigNumberish;
+
   maxOpenInterest: BigNumberish;
   maxOpenInterestForLongs?: BigNumberish;
   maxOpenInterestForShorts?: BigNumberish;
@@ -4979,7 +4985,7 @@ const config: {
       minCollateralFactor: percentageToFloat("5%"), // 20x leverage
       minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("4.0e-7"),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.0e-7"),
 
       reserveFactor: percentageToFloat("255%"),
       openInterestReserveFactor: percentageToFloat("250%"),
@@ -4989,29 +4995,25 @@ const config: {
       minPnlFactorAfterAdl: percentageToFloat("40%"),
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(400_000),
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
 
       maxLongTokenPoolAmount: expandDecimals(2950, 18), // ~5M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6), // ~5M USD (2x max open interest)
 
       closedState: {
-        /* closedState temporary equal to pre-IPO state
         ...borrowingRateConfig_LowMax_WithHigherBase,
 
-        positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.06%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
 
-        negativePositionImpactFactor: exponentToFloat("2.0e-8"),
-        positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+        maxPnlFactorForTraders: percentageToFloat("45%"),
+        maxPnlFactorForDeposits: percentageToFloat("45%"),
+        maxPnlFactorForAdl: percentageToFloat("40%"),
+        minPnlFactorAfterAdl: percentageToFloat("35%"),
+        maxPnlFactorForWithdrawals: percentageToFloat("30%"),
 
-        minCollateralFactor: percentageToFloat("4%"), // 25x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
-        */
-
-        // for updateMarketConfig to have a change to apply
-        // and for keeper to have monitoring target
-        maxOpenInterest: decimalToFloat(499_999),
+        maxOpenInterest: decimalToFloat(1_000_000),
       } as ClosedMarketConfig,
     },
   ],
@@ -6131,8 +6133,8 @@ const config: {
       minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(3_250_000),
+      maxOpenInterest: 1,
+      maxPoolUsdForDeposit: 1,
 
       maxLongTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
@@ -6151,7 +6153,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(50, 18),
       maxShortTokenPoolAmount: expandDecimals(50, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxPoolUsdForDeposit: 1,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
@@ -6165,7 +6167,7 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
+      maxOpenInterest: 1,
     },
     {
       tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "USDC.e" },
@@ -6184,7 +6186,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(50, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxPoolUsdForDeposit: 1,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
@@ -6202,7 +6204,49 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
+      maxOpenInterest: 1,
+    },
+    // disabled dev market
+    {
+      tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "USDC.e (Archived)" },
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      // swapFeeFactorForNegativeImpact left at baseMarketConfig default (0.07%) to match on-chain;
+      // deposit/withdrawal negative-impact fee factors inherit it
+
+      reserveFactor: percentageToFloat("135%"),
+      openInterestReserveFactor: percentageToFloat("130%"),
+
+      maxLongTokenPoolAmount: expandDecimals(50, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
+
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"), // on-chain value (default is 0.4%)
+
+      swapImpactExponentFactor: exponentToFloat("2e0"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-09"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-09"),
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: bigNumberify(0), // on-chain value (never configured for this market)
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
+
+      maxCollateralSum: bigNumberify(0), // on-chain value (never configured for this market)
+
+      maxOpenInterest: 1,
+      maxPoolUsdForDeposit: 1,
+      isDisabled: true,
     },
   ],
   megaEth: [
