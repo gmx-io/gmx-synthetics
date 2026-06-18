@@ -179,7 +179,7 @@ library ExecuteDepositUtils {
         cache.longTokenUsd = cache.longTokenAmount * cache.prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * cache.prices.shortTokenPrice.midPrice();
 
-        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
+        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsdForDeposit(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 cache.market,
@@ -419,14 +419,11 @@ library ExecuteDepositUtils {
             // an additional 0.005 ETH may be used to mint market tokens
             // the swap impact pool is decreased by the used amount
             //
-            // priceImpactUsd is calculated based on pricing assuming only depositAmount of tokenIn
-            // was added to the pool
-            // since impactAmount of tokenOut is added to the pool here, the calculation of
-            // the price impact would not be entirely accurate
-            //
-            // it is possible that the addition of the positive impact amount of tokens into the pool
-            // could increase the imbalance of the pool, for most cases this should not be a significant
-            // change compared to the improvement of balance from the actual deposit
+            // the impactAmount of tokenOut is added to the pool below, which on its own would
+            // increase the imbalance of the pool and partially offset the balance improvement from
+            // the deposit; this added tokenOut is accounted for by SwapPricingUtils.getPriceImpactUsdForDeposit
+            // which recalculates priceImpactUsd with the rebate included, so the impact reflects the
+            // genuine post-rebate balance improvement
             (int256 positiveImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,

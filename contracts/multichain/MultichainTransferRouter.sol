@@ -61,7 +61,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         uint256 srcChainId,
         IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
+        bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, account, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _bridgeOut(account, srcChainId, params);

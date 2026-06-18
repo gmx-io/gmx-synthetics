@@ -54,6 +54,7 @@ library GlvShiftUtils {
         bytes32 shiftKey;
         uint256 glvValue;
         uint256 glvSupply;
+        bool glvValueSuccess;
     }
 
     function createGlvShift(
@@ -237,14 +238,20 @@ library GlvShiftUtils {
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
 
-        (cache.glvValue, ) = GlvUtils.getGlvValue(
+        // the GLV value is only needed for the informational GlvValueUpdated event here,
+        // use the non-reverting variant and skip the emission if the value can not be
+        // calculated, so that an unrelated market with negative pool value does not
+        // block shifts between healthy markets
+        (cache.glvValue, , cache.glvValueSuccess) = GlvUtils.tryGetGlvValue(
             params.dataStore,
             params.oracle,
             glvShift.glv(),
             true // maximize
         );
-        cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
-        GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);
+        if (cache.glvValueSuccess) {
+            cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
+            GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);
+        }
 
         return cache.receivedMarketTokens;
     }

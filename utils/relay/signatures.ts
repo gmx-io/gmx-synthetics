@@ -23,7 +23,7 @@ export async function getCreateOrderSignature({
   signer: ethers.Signer;
   relayParams: RelayParams;
   subaccountApproval?: SubaccountApproval;
-  account?: string;
+  account: string;
   verifyingContract: string;
   params: any;
   chainId: BigNumberish;
@@ -67,7 +67,7 @@ export async function getCreateOrderSignature({
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account,
     addresses: params.addresses,
     numbers: params.numbers,
     orderType: params.orderType,
@@ -99,7 +99,7 @@ export async function getCreateTwapOrderSignature({
   signer: ethers.Signer;
   relayParams: RelayParams;
   subaccountApproval?: SubaccountApproval;
-  account?: string;
+  account: string;
   verifyingContract: string;
   params: any;
   twapCount: BigNumberish;
@@ -150,7 +150,7 @@ export async function getCreateTwapOrderSignature({
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account,
     params: {
       addresses: params.addresses,
       numbers: params.numbers,
@@ -189,7 +189,7 @@ export async function getBatchSignature({
   cancelOrderKeys: string[];
   verifyingContract: string;
   chainId: BigNumberish;
-  account?: string;
+  account: string;
   subaccountApproval?: SubaccountApproval;
 }) {
   if (relayParams.userNonce === undefined) {
@@ -252,7 +252,7 @@ export async function getBatchSignature({
     verifyingContract,
   };
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account,
     createOrderParamsList: createOrderParamsList.map((p) => ({
       addresses: p.addresses,
       numbers: p.numbers,
@@ -286,7 +286,7 @@ export async function getUpdateOrderSignature({
   signer,
   relayParams,
   subaccountApproval = undefined,
-  account = undefined,
+  account,
   verifyingContract,
   params,
   chainId,
@@ -312,7 +312,7 @@ export async function getUpdateOrderSignature({
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account,
     params,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
@@ -325,7 +325,7 @@ export async function getCancelOrderSignature({
   signer,
   relayParams,
   subaccountApproval = undefined,
-  account = undefined,
+  account,
   verifyingContract,
   key,
   chainId,
@@ -341,7 +341,7 @@ export async function getCancelOrderSignature({
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account,
     key,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
@@ -353,6 +353,7 @@ export async function getCancelOrderSignature({
 export async function getSetTraderReferralCodeSignature({
   signer,
   relayParams,
+  account,
   verifyingContract,
   referralCode,
   chainId,
@@ -362,6 +363,7 @@ export async function getSetTraderReferralCodeSignature({
   }
   const types = {
     SetTraderReferralCode: [
+      { name: "account", type: "address" },
       { name: "referralCode", type: "bytes32" },
       { name: "relayParams", type: "bytes32" },
     ],
@@ -373,6 +375,7 @@ export async function getSetTraderReferralCodeSignature({
     verifyingContract,
   };
   const typedData = {
+    account,
     referralCode: referralCode,
     relayParams: hashRelayParams(relayParams),
   };
@@ -380,12 +383,20 @@ export async function getSetTraderReferralCodeSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-export async function getRegisterCodeSignature({ signer, relayParams, verifyingContract, referralCode, chainId }) {
+export async function getRegisterCodeSignature({
+  signer,
+  relayParams,
+  account,
+  verifyingContract,
+  referralCode,
+  chainId,
+}) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
   }
   const types = {
     RegisterCode: [
+      { name: "account", type: "address" },
       { name: "referralCode", type: "bytes32" },
       { name: "relayParams", type: "bytes32" },
     ],
@@ -397,6 +408,7 @@ export async function getRegisterCodeSignature({ signer, relayParams, verifyingC
     verifyingContract,
   };
   const typedData = {
+    account,
     referralCode: referralCode,
     relayParams: hashRelayParams(relayParams),
   };
@@ -404,12 +416,20 @@ export async function getRegisterCodeSignature({ signer, relayParams, verifyingC
   return signTypedData(signer, domain, types, typedData);
 }
 
-export async function getClaimFundingFeesSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+export async function getClaimFundingFeesSignature({
+  signer,
+  relayParams,
+  account,
+  verifyingContract,
+  params,
+  chainId,
+}) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
   }
   const types = {
     ClaimFundingFees: [
+      { name: "account", type: "address" },
       { name: "markets", type: "address[]" },
       { name: "tokens", type: "address[]" },
       { name: "receiver", type: "address" },
@@ -423,6 +443,7 @@ export async function getClaimFundingFeesSignature({ signer, relayParams, verify
     verifyingContract,
   };
   const typedData = {
+    account,
     markets: params.markets,
     tokens: params.tokens,
     receiver: params.receiver,
@@ -432,12 +453,20 @@ export async function getClaimFundingFeesSignature({ signer, relayParams, verify
   return signTypedData(signer, domain, types, typedData);
 }
 
-export async function getClaimCollateralSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+export async function getClaimCollateralSignature({
+  signer,
+  relayParams,
+  account,
+  verifyingContract,
+  params,
+  chainId,
+}) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
   }
   const types = {
     ClaimCollateral: [
+      { name: "account", type: "address" },
       { name: "markets", type: "address[]" },
       { name: "tokens", type: "address[]" },
       { name: "timeKeys", type: "uint256[]" },
@@ -452,6 +481,7 @@ export async function getClaimCollateralSignature({ signer, relayParams, verifyi
     verifyingContract,
   };
   const typedData = {
+    account,
     markets: params.markets,
     tokens: params.tokens,
     timeKeys: params.timeKeys,
@@ -462,12 +492,20 @@ export async function getClaimCollateralSignature({ signer, relayParams, verifyi
   return signTypedData(signer, domain, types, typedData);
 }
 
-export async function getClaimAffiliateRewardsSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+export async function getClaimAffiliateRewardsSignature({
+  signer,
+  relayParams,
+  account,
+  verifyingContract,
+  params,
+  chainId,
+}) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
   }
   const types = {
     ClaimAffiliateRewards: [
+      { name: "account", type: "address" },
       { name: "markets", type: "address[]" },
       { name: "tokens", type: "address[]" },
       { name: "receiver", type: "address" },
@@ -481,6 +519,7 @@ export async function getClaimAffiliateRewardsSignature({ signer, relayParams, v
     verifyingContract,
   };
   const typedData = {
+    account,
     markets: params.markets,
     tokens: params.tokens,
     receiver: params.receiver,

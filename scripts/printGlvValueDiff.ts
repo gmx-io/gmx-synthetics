@@ -66,6 +66,11 @@ async function main() {
       continue;
     }
 
+    if (!glvToken) {
+      console.log("no GlvValueUpdated event at %s", txHash);
+      continue;
+    }
+
     const glvInfo = await glvReader.getGlvInfo(dataStore.address, glvToken, { blockTag: receipt.blockNumber });
     const longTokenPrice = prices[glvInfo.glv.longToken];
     const shortTokenPrice = prices[glvInfo.glv.shortToken];

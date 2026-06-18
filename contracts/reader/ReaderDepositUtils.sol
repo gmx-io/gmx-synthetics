@@ -53,7 +53,7 @@ library ReaderDepositUtils {
         uint256 longTokenUsd = longTokenAmount * prices.longTokenPrice.midPrice();
         uint256 shortTokenUsd = shortTokenAmount * prices.shortTokenPrice.midPrice();
         GetDepositAmountOutCache memory cache;
-        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
+        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsdForDeposit(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
                 market,

@@ -23,18 +23,21 @@ import { handleDeposit } from "../../utils/deposit";
 import { expectBalances } from "../../utils/validation";
 import { setBytes32IfDifferent } from "../../utils/dataStore";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { grantRole } from "../../utils/role";
+import { parseLogs, getEventData } from "../../utils/event";
 
 describe("Glv Deposits", () => {
   const { provider } = ethers;
   const { AddressZero } = ethers.constants;
 
   let fixture;
-  let user0, user1, user2;
+  let user0, user1, user2, user3;
   let glvReader,
     glvFactory,
     roleStore,
     dataStore,
     glvShiftHandler,
+    glvDepositHandler,
     ethUsdMarket,
     btcUsdMarket,
     solUsdMarket,
@@ -51,11 +54,12 @@ describe("Glv Deposits", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
     ({
       glvReader,
       dataStore,
       glvShiftHandler,
+      glvDepositHandler,
       ethUsdMarket,
       solUsdMarket,
       btcUsdMarket,
@@ -1068,5 +1072,56 @@ describe("Glv Deposits", () => {
       errorsContract,
       "EmptyGlvDeposit"
     );
+  });
+
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
+
+  async function createCancellableGlvDeposit() {
+    await createGlvDeposit(fixture, {
+      glv: ethUsdGlvAddress,
+      receiver: user1,
+      market: ethUsdMarket,
+      initialLongToken: ethUsdMarket.longToken,
+      initialShortToken: ethUsdMarket.shortToken,
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(10 * 5000, 6),
+      minGlvTokens: 100,
+      executionFee: expandDecimals(1, 15),
+    });
+
+    const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
+    const refTime = (await provider.getBlock("latest")).timestamp;
+    await increaseTime(refTime, 300);
+    return glvDepositKeys[0];
+  }
+
+  it("cancelGlvDeposit by ORDER_KEEPER pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const glvDepositKey = await createCancellableGlvDeposit();
+
+    const txn = await glvDepositHandler.connect(orderKeeperSigner).cancelGlvDeposit(glvDepositKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+
+    const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
+    expect(refundEvent.receiver).eq(user1.address); // glvDeposit.receiver()
+  });
+
+  it("cancelGlvDeposit by CONTROLLER-only signer pays the keeper portion to glvDeposit.account", async () => {
+    const controllerOnlySigner = user3;
+    await grantRole(roleStore, controllerOnlySigner.address, "CONTROLLER");
+
+    const glvDepositKey = await createCancellableGlvDeposit();
+
+    const txn = await glvDepositHandler.connect(controllerOnlySigner).cancelGlvDeposit(glvDepositKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(user0.address); // glvDeposit.account()
   });
 });

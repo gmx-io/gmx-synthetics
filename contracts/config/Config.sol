@@ -601,6 +601,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
         allowedBaseKeys[Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_COUNT] = true;
+        allowedBaseKeys[Keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD] = true;
 
         allowedBaseKeys[Keys.SYNC_CONFIG_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;

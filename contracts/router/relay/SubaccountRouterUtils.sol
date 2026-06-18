@@ -49,6 +49,19 @@ library SubaccountRouterUtils {
             revert Errors.InvalidSubaccountApprovalSubaccount();
         }
 
+        // Reject approvals signed against a stale revocation counter — any approval
+        // signed before the most recent removeSubaccount for (account, subaccount).
+        // This is the defense against signature replay after removal.
+        uint256 storedRevocationCounter = dataStore.getUint(
+            Keys.subaccountRevocationCounterKey(account, subaccountApproval.subaccount)
+        );
+        if (storedRevocationCounter != subaccountApproval.revocationCounter) {
+            revert Errors.InvalidSubaccountApprovalRevocationCounter(
+                storedRevocationCounter,
+                subaccountApproval.revocationCounter
+            );
+        }
+
         if (subaccountApproval.desChainId != block.chainid) {
             revert Errors.InvalidSubaccountApprovalDesChainId(subaccountApproval.desChainId);
         }

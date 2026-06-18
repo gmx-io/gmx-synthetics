@@ -402,6 +402,35 @@ describe("MultichainTransferRouter", () => {
       bridgeOutParams.signature = undefined;
       await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
     });
+
+    // Account-bound digests prevent cross-account collisions.
+    // Two distinct users sign the same payload shape; both must succeed because
+    // account is part of the structHash, so their digests differ.
+    it("two users signing the same bridgeOut payload do not collide", async () => {
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+
+      // fund both users identically
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await bridgeInTokens(fixture, { account: user2, token: usdc, amount: bridgeOutAmount });
+      await bridgeInTokens(fixture, { account: user2, amount: feeAmount });
+
+      // user2 submits the identical payload shape with their own signer/account
+      const user2BridgeOutParams = {
+        ...bridgeOutParams,
+        signer: user2,
+        account: user2.address,
+      };
+
+      // user1 goes first
+      await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
+
+      // user2's identical-shape payload must also succeed, because digest is account-bound
+      await expect(sendBridgeOut(user2BridgeOutParams)).to.not.be.reverted;
+    });
   });
 
   describe("transferOut", () => {

@@ -1494,6 +1494,7 @@ describe("GelatoRelayRouter", () => {
       const signature = await getCreateTwapOrderSignature({
         signer: user0,
         relayParams,
+        account: createOrderParams.account,
         verifyingContract: gelatoRelayRouter.address,
         params: createOrderParams.params,
         twapCount,
@@ -1513,6 +1514,7 @@ describe("GelatoRelayRouter", () => {
       const signature2 = await getCreateTwapOrderSignature({
         signer: user0,
         relayParams: relayParams2,
+        account: createOrderParams.account,
         verifyingContract: gelatoRelayRouter.address,
         params: createOrderParams.params,
         twapCount,
@@ -1525,6 +1527,7 @@ describe("GelatoRelayRouter", () => {
         await getCreateTwapOrderSignature({
           signer: user0,
           relayParams: relayParams2,
+          account: createOrderParams.account,
           verifyingContract: gelatoRelayRouter.address,
           params: createOrderParams.params,
           twapCount,
@@ -1569,6 +1572,7 @@ describe("GelatoRelayRouter", () => {
       const signature = await getCreateTwapOrderSignature({
         signer: user0,
         relayParams,
+        account: createOrderParams.account,
         verifyingContract: gelatoRelayRouter.address,
         params: createOrderParams.params,
         twapCount,

@@ -199,7 +199,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address subaccount
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {
         // isSubaccount=false is passed to `withRelay` modifier because this action is signed by the main account
-        bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, subaccount);
+        bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, account, subaccount);
         _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);

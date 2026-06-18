@@ -270,6 +270,7 @@ export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 export const SUBACCOUNT_EXPIRES_AT = hashString("SUBACCOUNT_EXPIRES_AT");
 export const SUBACCOUNT_INTEGRATION_ID = hashString("SUBACCOUNT_INTEGRATION_ID");
 export const SUBACCOUNT_INTEGRATION_DISABLED = hashString("SUBACCOUNT_INTEGRATION_DISABLED");
+export const SUBACCOUNT_REVOCATION_COUNTER = hashString("SUBACCOUNT_REVOCATION_COUNTER");
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
 export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
 
@@ -278,6 +279,7 @@ export const GLV_MAX_MARKET_COUNT = hashString("GLV_MAX_MARKET_COUNT");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT");
 export const GLV_SHIFT_MIN_INTERVAL = hashString("GLV_SHIFT_MIN_INTERVAL");
+export const GLV_MARKET_REMOVAL_DUST_THRESHOLD = hashString("GLV_MARKET_REMOVAL_DUST_THRESHOLD");
 export const IS_GLV_MARKET_DISABLED = hashString("IS_GLV_MARKET_DISABLED");
 
 export const SYNC_CONFIG_FEATURE_DISABLED = hashString("SYNC_CONFIG_FEATURE_DISABLED");
@@ -897,6 +899,18 @@ export function subaccountAutoTopUpAmountKey(account: string, subaccount: string
   return hashData(["bytes32", "address", "address"], [SUBACCOUNT_AUTO_TOP_UP_AMOUNT, account, subaccount]);
 }
 
+export function subaccountIntegrationIdKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_INTEGRATION_ID, account, subaccount]);
+}
+
+export function subaccountIntegrationDisabledKey(integrationId: string) {
+  return hashData(["bytes32", "bytes32"], [SUBACCOUNT_INTEGRATION_DISABLED, integrationId]);
+}
+
+export function subaccountRevocationCounterKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_REVOCATION_COUNTER, account, subaccount]);
+}
+
 export function glvSupportedMarketListKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SUPPORTED_MARKET_LIST, glv]);
 }
@@ -923,6 +937,10 @@ export function glvMaxMarketTokenBalanceAmountKey(glv: string, market: string) {
 
 export function glvShiftMinIntervalKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SHIFT_MIN_INTERVAL, glv]);
+}
+
+export function glvMarketRemovalDustThresholdKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [GLV_MARKET_REMOVAL_DUST_THRESHOLD, glv, market]);
 }
 
 export function glvShiftMaxLossFactorKey(glv: string) {

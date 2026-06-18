@@ -9,20 +9,22 @@ import { handleDeposit } from "../../utils/deposit";
 import { errorsContract } from "../../utils/error";
 import { OrderType, getOrderCount, getOrderKeys, getAutoCancelOrderKeys, createOrder } from "../../utils/order";
 import { getPositionKey } from "../../utils/position";
+import { grantRole } from "../../utils/role";
+import { parseLogs, getEventData } from "../../utils/event";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.CancelOrder", () => {
   const { provider } = ethers;
 
   let fixture;
-  let user0, user1;
-  let reader, dataStore, exchangeRouter, orderHandler, ethUsdMarket, wnt;
+  let user0, user1, user2, user3;
+  let reader, dataStore, exchangeRouter, orderHandler, roleStore, ethUsdMarket, wnt;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, exchangeRouter, orderHandler, ethUsdMarket, wnt } = fixture.contracts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
+    ({ reader, dataStore, exchangeRouter, orderHandler, roleStore, ethUsdMarket, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -202,5 +204,103 @@ describe("Exchange.CancelOrder", () => {
       errorsContract,
       "EmptyOrder"
     );
+  });
+
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately. Non-market orders only allow
+  // CONTROLLER — covered by the "cancelOrder non-market only allows CONTROLLER" test.
+
+  async function createCancellableMarketOrder() {
+    await createOrder(fixture, {
+      market: ethUsdMarket,
+      cancellationReceiver: user1,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [ethUsdMarket.marketToken],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      triggerPrice: expandDecimals(5000, 12),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee,
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    });
+
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+    const refTime = (await provider.getBlock()).timestamp;
+    await increaseTime(refTime, 300);
+    return orderKeys[0];
+  }
+
+  async function createNonMarketLimitOrder() {
+    await createOrder(fixture, {
+      market: ethUsdMarket,
+      cancellationReceiver: user1,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [ethUsdMarket.marketToken],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      triggerPrice: expandDecimals(5000, 12),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee,
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.LimitIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    });
+
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+    return orderKeys[0];
+  }
+
+  it("cancelOrder market by ORDER_KEEPER pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const orderKey = await createCancellableMarketOrder();
+
+    const txn = await orderHandler.connect(orderKeeperSigner).cancelOrder(orderKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+
+    const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
+    expect(refundEvent.receiver).eq(user1.address); // order.cancellationReceiver()
+  });
+
+  it("cancelOrder market by CONTROLLER-only signer pays the keeper portion to order.account", async () => {
+    const controllerOnlySigner = user3;
+    await grantRole(roleStore, controllerOnlySigner.address, "CONTROLLER");
+
+    const orderKey = await createCancellableMarketOrder();
+
+    const txn = await orderHandler.connect(controllerOnlySigner).cancelOrder(orderKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(user0.address); // order.account()
+  });
+
+  // Non-market orders can only be cancelled by CONTROLLER. ORDER_KEEPER alone reverts, and the
+  // keeper field still routes to order.account when CONTROLLER cancels.
+  it("cancelOrder non-market only allows CONTROLLER, keeper field routed to order.account", async () => {
+    const orderKeeperSigner = user2;
+    const controllerOnlySigner = user3;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+    await grantRole(roleStore, controllerOnlySigner.address, "CONTROLLER");
+
+    const orderKey = await createNonMarketLimitOrder();
+
+    await expect(orderHandler.connect(orderKeeperSigner).cancelOrder(orderKey))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(orderKeeperSigner.address, "CONTROLLER");
+
+    const txn = await orderHandler.connect(controllerOnlySigner).cancelOrder(orderKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(user0.address);
   });
 });

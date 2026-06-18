@@ -443,6 +443,8 @@ library Keys {
     bytes32 public constant SUBACCOUNT_INTEGRATION_ID = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_ID"));
     // @dev key for subaccount integration id disabled status
     bytes32 public constant SUBACCOUNT_INTEGRATION_DISABLED = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_DISABLED"));
+    // @dev key for the per-(account, subaccount) revocation counter used to invalidate signed SubaccountApprovals on removal
+    bytes32 public constant SUBACCOUNT_REVOCATION_COUNTER = keccak256(abi.encode("SUBACCOUNT_REVOCATION_COUNTER"));
     // @dev key for fee distributor swap order token index
     bytes32 public constant FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX"));
     // @dev key for fee distributor swap fee batch
@@ -456,6 +458,7 @@ library Keys {
     bytes32 public constant GLV_SHIFT_LAST_EXECUTED_AT = keccak256(abi.encode("GLV_SHIFT_LAST_EXECUTED_AT"));
     bytes32 public constant GLV_SHIFT_MIN_INTERVAL = keccak256(abi.encode("GLV_SHIFT_MIN_INTERVAL"));
     bytes32 public constant MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT"));
+    bytes32 public constant GLV_MARKET_REMOVAL_DUST_THRESHOLD = keccak256(abi.encode("GLV_MARKET_REMOVAL_DUST_THRESHOLD"));
 
     // @dev key for disabling automatic parameter updates via ConfigSyncer
     bytes32 public constant SYNC_CONFIG_FEATURE_DISABLED = keccak256(abi.encode("SYNC_CONFIG_FEATURE_DISABLED"));
@@ -1994,6 +1997,14 @@ library Keys {
         ));
     }
 
+    function subaccountRevocationCounterKey(address account, address subaccount) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_REVOCATION_COUNTER,
+            account,
+            subaccount
+        ));
+    }
+
     // @dev key for affiliate reward amount for an account
     // @param market the market to check
     // @param token the token to get the key for
@@ -2136,6 +2147,12 @@ library Keys {
     // it is used to limit amount of funds deposited into each market
     function glvMaxMarketTokenBalanceAmountKey(address glv, address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT, glv, market));
+    }
+
+    // @dev key for max GM token balance allowed to remain in the glv when removing a market
+    // it is used to allow removal of disabled markets with residual dust balances
+    function glvMarketRemovalDustThresholdKey(address glv, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_MARKET_REMOVAL_DUST_THRESHOLD, glv, market));
     }
 
     // @dev key for is glv market disabled

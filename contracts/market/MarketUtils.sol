@@ -84,6 +84,8 @@ library MarketUtils {
 
         uint256 durationInSeconds;
 
+        uint256 effectiveFundingFactorPerSecond;
+
         uint256 sizeOfPayingSide;
         uint256 fundingUsd;
 
@@ -92,13 +94,15 @@ library MarketUtils {
     }
 
     struct GetNextFundingFactorPerSecondCache {
+        uint256 longOpenInterest;
+        uint256 shortOpenInterest;
+
         uint256 diffUsd;
         uint256 totalOpenInterest;
 
         uint256 fundingFactor;
         uint256 fundingExponentFactor;
 
-        uint256 diffUsdAfterExponent;
         uint256 diffUsdToOpenInterestFactor;
 
         int256 savedFundingFactorPerSecond;
@@ -106,6 +110,8 @@ library MarketUtils {
 
         int256 nextSavedFundingFactorPerSecond;
         int256 nextSavedFundingFactorPerSecondWithMinBound;
+
+        uint256 effectiveFundingFactorPerSecond;
     }
 
     struct FundingConfigCache {
@@ -1497,7 +1503,7 @@ library MarketUtils {
         // this should be a rare occurrence so funding fees are not adjusted for this case
         cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market.marketToken);
 
-        (result.fundingFactorPerSecond, result.longsPayShorts, result.nextSavedFundingFactorPerSecond) = getNextFundingFactorPerSecond(
+        (result.fundingFactorPerSecond, result.longsPayShorts, result.nextSavedFundingFactorPerSecond, cache.effectiveFundingFactorPerSecond) = getNextFundingFactorPerSecond(
             dataStore,
             market,
             prices.indexTokenPrice.midPrice(),
@@ -1534,7 +1540,8 @@ library MarketUtils {
         //
         // due to these, the fundingUsd should be divided by the divisor
 
-        cache.fundingUsd = Precision.applyFactor(cache.sizeOfPayingSide, cache.durationInSeconds * result.fundingFactorPerSecond);
+        // charge the interval's average funding factor, not the ending rate (see getNextFundingFactorPerSecond)
+        cache.fundingUsd = Precision.applyFactor(cache.sizeOfPayingSide, cache.durationInSeconds * cache.effectiveFundingFactorPerSecond);
         cache.fundingUsd = cache.fundingUsd / divisor;
 
         // split the fundingUsd value by long and short collateral
@@ -1634,18 +1641,21 @@ library MarketUtils {
     // if it is bound by minFundingFactorPerSecond
     // for that reason, only the nextFundingFactorPerSecond is bound by minFundingFactorPerSecond
     // and the nextSavedFundingFactorPerSecond is not bound by minFundingFactorPerSecond
-    // @return nextFundingFactorPerSecond, longsPayShorts, nextSavedFundingFactorPerSecond
+    //
+    // nextFundingFactorPerSecond is the end-of-interval rate (for reporting and the next interval's start);
+    // effectiveFundingFactorPerSecond is the interval average, used to charge funding
+    // @return nextFundingFactorPerSecond, longsPayShorts, nextSavedFundingFactorPerSecond, effectiveFundingFactorPerSecond
     function getNextFundingFactorPerSecond(
         DataStore dataStore,
         Market.Props memory market,
         uint256 indexTokenPrice,
         uint256 durationInSeconds
-    ) internal view returns (uint256, bool, int256) {
+    ) internal view returns (uint256, bool, int256, uint256) {
         GetNextFundingFactorPerSecondCache memory cache;
 
         bool useOpenInterestInTokens = dataStore.getBoolValueFromDataStore(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
 
-        uint256 longOpenInterest = getOpenInterestForBalance({
+        cache.longOpenInterest = getOpenInterestForBalance({
             dataStore: dataStore,
             market: market,
             useOpenInterestInTokens: useOpenInterestInTokens,
@@ -1653,7 +1663,7 @@ library MarketUtils {
             isLong: true
         });
 
-        uint256 shortOpenInterest = getOpenInterestForBalance({
+        cache.shortOpenInterest = getOpenInterestForBalance({
             dataStore: dataStore,
             market: market,
             useOpenInterestInTokens: useOpenInterestInTokens,
@@ -1661,8 +1671,8 @@ library MarketUtils {
             isLong: false
         });
 
-        cache.diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
-        cache.totalOpenInterest = longOpenInterest + shortOpenInterest;
+        cache.diffUsd = Calc.diff(cache.longOpenInterest, cache.shortOpenInterest);
+        cache.totalOpenInterest = cache.longOpenInterest + cache.shortOpenInterest;
 
         FundingConfigCache memory configCache;
         configCache.fundingIncreaseFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.fundingIncreaseFactorPerSecondKey(market.marketToken));
@@ -1670,7 +1680,7 @@ library MarketUtils {
         // if the open interest difference is zero and adaptive funding
         // is not enabled, then return zero as the funding factor
         if (cache.diffUsd == 0 && configCache.fundingIncreaseFactorPerSecond == 0) {
-            return (0, true, 0);
+            return (0, true, 0, 0);
         }
 
         if (cache.totalOpenInterest == 0) {
@@ -1679,13 +1689,15 @@ library MarketUtils {
 
         cache.fundingExponentFactor = getFundingExponentFactor(dataStore, market.marketToken);
 
-        cache.diffUsdAfterExponent = Precision.applyExponentFactor(cache.diffUsd, cache.fundingExponentFactor);
-        cache.diffUsdToOpenInterestFactor = Precision.toFactor(cache.diffUsdAfterExponent, cache.totalOpenInterest);
+        cache.diffUsdToOpenInterestFactor = Precision.toFactor(
+            Precision.applyExponentFactor(cache.diffUsd, cache.fundingExponentFactor),
+            cache.totalOpenInterest
+        );
 
         if (configCache.fundingIncreaseFactorPerSecond == 0) {
             cache.fundingFactor = getFundingFactor(dataStore, market.marketToken);
             uint256 maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
-                Keys.maxFundingFactorPerSecondKey(market.marketToken, longOpenInterest > shortOpenInterest)
+                Keys.maxFundingFactorPerSecondKey(market.marketToken, cache.longOpenInterest > cache.shortOpenInterest)
             );
 
             // if there is no fundingIncreaseFactorPerSecond then return the static fundingFactor based on open interest difference
@@ -1695,10 +1707,12 @@ library MarketUtils {
                 fundingFactorPerSecond = maxFundingFactorPerSecond;
             }
 
+            // the non-adaptive rate is constant over the interval, so the effective rate equals it
             return (
                 fundingFactorPerSecond,
-                longOpenInterest > shortOpenInterest,
-                0
+                cache.longOpenInterest > cache.shortOpenInterest,
+                0,
+                fundingFactorPerSecond
             );
         }
 
@@ -1717,7 +1731,7 @@ library MarketUtils {
         FundingRateChangeType fundingRateChangeType;
 
         // check if is skew the same direction as funding
-        if ((cache.savedFundingFactorPerSecond > 0 && longOpenInterest > shortOpenInterest) || (cache.savedFundingFactorPerSecond < 0 && shortOpenInterest > longOpenInterest)) {
+        if ((cache.savedFundingFactorPerSecond > 0 && cache.longOpenInterest > cache.shortOpenInterest) || (cache.savedFundingFactorPerSecond < 0 && cache.shortOpenInterest > cache.longOpenInterest)) {
             if (cache.diffUsdToOpenInterestFactor > configCache.thresholdForStableFunding) {
                 fundingRateChangeType = FundingRateChangeType.Increase;
             } else if (cache.diffUsdToOpenInterestFactor < configCache.thresholdForDecreaseFunding) {
@@ -1741,7 +1755,7 @@ library MarketUtils {
 
             // if there are more longs than shorts, then the savedFundingFactorPerSecond should increase
             // otherwise the savedFundingFactorPerSecond should increase in the opposite direction / decrease
-            if (longOpenInterest < shortOpenInterest) {
+            if (cache.longOpenInterest < cache.shortOpenInterest) {
                 increaseValue = -increaseValue;
             }
 
@@ -1763,7 +1777,7 @@ library MarketUtils {
         }
 
         if (cache.nextSavedFundingFactorPerSecond == 0) {
-            return (0, true, 0);
+            return (0, true, 0, 0);
         }
         bool isLongFunding = cache.nextSavedFundingFactorPerSecond > 0;
         configCache.minFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
@@ -1785,10 +1799,28 @@ library MarketUtils {
             configCache.maxFundingFactorPerSecond
         );
 
+        // funding ramps linearly from the start rate to the end rate over the interval; charge the average
+        // of the two, not the end rate, so the accrued funding does not depend on the update cadence
+        // the average is only valid while the rate keeps its sign; if it crossed zero during the interval
+        // the funding would need splitting between both paying sides, so the end rate is charged instead
+        cache.effectiveFundingFactorPerSecond = cache.nextSavedFundingFactorPerSecondWithMinBound.abs();
+
+        // same sign: average the start and end rates (both bounded by the same min / max)
+        if (cache.savedFundingFactorPerSecond == 0 || (cache.savedFundingFactorPerSecond > 0) == (cache.nextSavedFundingFactorPerSecond > 0)) {
+            cache.effectiveFundingFactorPerSecond = (
+                Calc.boundMagnitude(
+                    cache.savedFundingFactorPerSecond,
+                    configCache.minFundingFactorPerSecond,
+                    configCache.maxFundingFactorPerSecond
+                ).abs() + cache.nextSavedFundingFactorPerSecondWithMinBound.abs()
+            ) / 2;
+        }
+
         return (
             cache.nextSavedFundingFactorPerSecondWithMinBound.abs(),
             cache.nextSavedFundingFactorPerSecondWithMinBound > 0,
-            cache.nextSavedFundingFactorPerSecond
+            cache.nextSavedFundingFactorPerSecond,
+            cache.effectiveFundingFactorPerSecond
         );
     }
 
@@ -3316,6 +3348,52 @@ library MarketUtils {
         );
 
         if (isPnlFactorExceededForShorts) {
+            revert Errors.PnlFactorExceededForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
+        }
+    }
+
+    // @dev validate that the pending pnl is below the allowed amount, unless the swap
+    // strictly improved (decreased) an already-exceeded side's pnlToPoolFactor
+    // a swap that adds liquidity to the profitable side of an already-breached market
+    // lowers that side's pnlToPoolFactor; such swaps are allowed even if the factor is
+    // still above the cap, as long as it strictly decreased, see SwapUtils._swap
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param prices the prices of the market tokens
+    // @param pnlFactorTypeForLongs the pnl factor type to check for the long side
+    // @param pnlFactorTypeForShorts the pnl factor type to check for the short side
+    // @param prevPnlToPoolFactorForLongs the long pnlToPoolFactor before the swap deltas were applied
+    // @param prevPnlToPoolFactorForShorts the short pnlToPoolFactor before the swap deltas were applied
+    function validateMaxPnlForSwap(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bytes32 pnlFactorTypeForLongs,
+        bytes32 pnlFactorTypeForShorts,
+        int256 prevPnlToPoolFactorForLongs,
+        int256 prevPnlToPoolFactorForShorts
+    ) internal view {
+        (bool isPnlFactorExceededForLongs, int256 pnlToPoolFactorForLongs, uint256 maxPnlFactorForLongs) = isPnlFactorExceeded(
+            dataStore,
+            market,
+            prices,
+            true,
+            pnlFactorTypeForLongs
+        );
+
+        if (isPnlFactorExceededForLongs && pnlToPoolFactorForLongs >= prevPnlToPoolFactorForLongs) {
+            revert Errors.PnlFactorExceededForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
+        }
+
+        (bool isPnlFactorExceededForShorts, int256 pnlToPoolFactorForShorts, uint256 maxPnlFactorForShorts) = isPnlFactorExceeded(
+            dataStore,
+            market,
+            prices,
+            false,
+            pnlFactorTypeForShorts
+        );
+
+        if (isPnlFactorExceededForShorts && pnlToPoolFactorForShorts >= prevPnlToPoolFactorForShorts) {
             revert Errors.PnlFactorExceededForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
         }
     }

@@ -7,6 +7,8 @@ import { expandDecimals } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { errorsContract } from "../../utils/error";
 import { getDepositCount, getDepositKeys, createDeposit } from "../../utils/deposit";
+import { grantRole } from "../../utils/role";
+import { parseLogs, getEventData } from "../../utils/event";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.CancelDeposit", () => {
@@ -14,14 +16,15 @@ describe("Exchange.CancelDeposit", () => {
   const { AddressZero } = ethers.constants;
 
   let fixture;
-  let user0, user1;
-  let reader, dataStore, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let user0, user1, user2, user3;
+  let reader, dataStore, exchangeRouter, depositHandler, roleStore, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
+    ({ reader, dataStore, exchangeRouter, depositHandler, roleStore, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
+      fixture.contracts);
   });
 
   it("cancelDeposit", async () => {
@@ -111,5 +114,56 @@ describe("Exchange.CancelDeposit", () => {
       errorsContract,
       "EmptyDeposit"
     );
+  });
+
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
+
+  async function createCancellableDeposit() {
+    await createDeposit(fixture, {
+      receiver: user1,
+      market: ethUsdMarket,
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(10 * 5000, 6),
+      initialLongToken: ethUsdMarket.longToken,
+      initialShortToken: ethUsdMarket.shortToken,
+      minMarketTokens: 100,
+      shouldUnwrapNativeToken: false,
+      executionFee: expandDecimals(1, 15),
+    });
+
+    const depositKeys = await getDepositKeys(dataStore, 0, 1);
+    const refTime = (await provider.getBlock()).timestamp;
+    await increaseTime(refTime, 300);
+    return depositKeys[0];
+  }
+
+  it("cancelDeposit by ORDER_KEEPER pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const depositKey = await createCancellableDeposit();
+
+    const txn = await depositHandler.connect(orderKeeperSigner).cancelDeposit(depositKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+
+    const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
+    expect(refundEvent.receiver).eq(user1.address); // deposit.receiver()
+  });
+
+  it("cancelDeposit by CONTROLLER-only signer pays the keeper portion to deposit.account", async () => {
+    const controllerOnlySigner = user3;
+    await grantRole(roleStore, controllerOnlySigner.address, "CONTROLLER");
+
+    const depositKey = await createCancellableDeposit();
+
+    const txn = await depositHandler.connect(controllerOnlySigner).cancelDeposit(depositKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(user0.address); // deposit.account()
   });
 });
