@@ -32,6 +32,11 @@ const RISK_ORACLE_MANAGED_BASE_KEYS = [
 
 const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
+const RISK_ORACLE_MARKETS_URL_BY_NETWORK = {
+  arbitrum: "https://arbitrum.gmxapi.io/v1/risk-oracle/markets/",
+  avalanche: "https://avalanche.gmxapi.io/v1/risk-oracle/markets/",
+};
+
 function getRiskOracleManagedBaseKeys() {
   if (RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
     return RISK_ORACLE_MANAGED_BASE_KEYS;
@@ -818,24 +823,14 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
     return supported;
   }
 
-  // Chaos API does not support fuji
-  if (hre.network.name === "avalancheFuji") {
+  const url = RISK_ORACLE_MARKETS_URL_BY_NETWORK[hre.network.name];
+  if (!url) {
     return supported;
   }
 
-  const response = await fetch("https://cloud.chaoslabs.co/query/ccar-perpetuals", {
-    method: "POST",
-    headers: {
-      protocol: `gmx-v2-${hre.network.name}`,
-      "content-type": "application/json",
-    },
-    body: `{
-      "query": "{ markets { id } }"
-    }`,
-  });
-
-  const { data } = await response.json();
-  const supportedMarketTokens = data.markets.map((market) => market.id);
+  const response = await fetch(url);
+  const riskOracleMarkets = await response.json();
+  const supportedMarketTokens = riskOracleMarkets.map((market) => market.market_token);
 
   supportedMarketTokens.forEach((supportedMarketToken) => {
     const market = markets.find((market) => {
