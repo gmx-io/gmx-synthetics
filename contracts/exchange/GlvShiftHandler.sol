@@ -50,8 +50,9 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, params);
     }
 
-    // @key glvDeposit key
-    // @oracleParams prices for `fromMarket` and `toMarket` are required
+    // @key glvShift key
+    // @oracleParams prices for `fromMarket` and `toMarket` are required, and prices for all other
+    // supported glv markets are required for the GlvValueUpdated event unless a glv token price is set
     function executeGlvShift(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams

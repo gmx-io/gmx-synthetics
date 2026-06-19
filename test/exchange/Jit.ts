@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { getGlvShiftCount, handleGlvDeposit } from "../../utils/glv";
+import { getGlvShiftCount, handleGlvDeposit, setupDistressedGlvMarket } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
 import * as keys from "../../utils/keys";
@@ -117,6 +117,38 @@ describe("Jit", () => {
     expect(await getGlvShiftCount(dataStore)).eq(0);
 
     // and liquidity was shifted
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(12_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(8_000, 18),
+      },
+    });
+  });
+
+  it("shift liquidity and execute order if unrelated glv market has negative pool value", async () => {
+    await setupDistressedGlvMarket(fixture);
+
+    await createOrder(fixture, orderParams);
+    expect(await getOrderCount(dataStore)).eq(1);
+
+    const { logs } = await executeJitOrder(fixture, {
+      gasUsageLabel: "executeJitOrder",
+      glvShifts: [
+        {
+          marketTokenAmount: expandDecimals(2000, 18),
+        },
+      ],
+    } as Parameters<typeof executeJitOrder>[1]);
+
+    expect(await getOrderCount(dataStore)).eq(0);
+    expect(await getGlvShiftCount(dataStore)).eq(0);
+
+    const glvShiftExecutedLogs = logs.filter((log) => log.parsedEventInfo?.eventName === "GlvShiftExecuted");
+    expect(glvShiftExecutedLogs.length).eq(1);
+
+    const glvValueUpdatedLogs = logs.filter((log) => log.parsedEventInfo?.eventName === "GlvValueUpdated");
+    expect(glvValueUpdatedLogs.length).eq(0);
+
     await expectBalances({
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: expandDecimals(12_000, 18),
