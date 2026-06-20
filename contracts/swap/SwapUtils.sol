@@ -379,12 +379,6 @@ library SwapUtils {
             -cache.poolAmountOut.toInt256()
         );
 
-        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
-            params.oracle.getPrimaryPrice(_params.market.indexToken),
-            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
-            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
-        );
-
         if (!_shouldSkipMaxPoolAmountValidationForTokenIn(params, _params)) {
             MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
         }
