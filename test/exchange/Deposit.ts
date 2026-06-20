@@ -365,6 +365,28 @@ describe("Exchange.Deposit", () => {
     });
   });
 
+  it("executeDeposit succeeds when borrowing accrual sees zero pool value", async () => {
+    await dataStore.setUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true), decimalToFloat(5000));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+    await dataStore.setUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, false), decimalToFloat(5000));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, usdc.address, false),
+      expandDecimals(1, 18)
+    );
+
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).gt(0);
+  });
+
   it("executeDeposit with swap", async () => {
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
 

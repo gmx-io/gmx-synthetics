@@ -177,7 +177,8 @@ library GlvShiftUtils {
             params.oracle.getPrimaryPrice(cache.fromMarket.longToken),
             params.oracle.getPrimaryPrice(cache.fromMarket.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true // maximize
+            true, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         cache.marketTokensUsd = MarketUtils.marketTokenAmountToUsd(
             glvShift.marketTokenAmount(),
@@ -217,7 +218,8 @@ library GlvShiftUtils {
             params.oracle.getPrimaryPrice(cache.toMarket.longToken),
             params.oracle.getPrimaryPrice(cache.toMarket.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true // maximize
+            true, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         cache.toMarketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(glvShift.toMarket())));
 
@@ -246,7 +248,8 @@ library GlvShiftUtils {
             params.dataStore,
             params.oracle,
             glvShift.glv(),
-            true // maximize
+            true, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         if (cache.glvValueSuccess) {
             cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();

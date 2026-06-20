@@ -35,7 +35,8 @@ contract GlvReader {
                 longTokenPrice,
                 shortTokenPrice,
                 glv,
-                maximize
+                maximize,
+                false // allowZeroPoolBorrowingFactor
             );
     }
 

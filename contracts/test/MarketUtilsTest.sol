@@ -33,4 +33,20 @@ contract MarketUtilsTest {
     ) public view returns (uint256) {
         return MarketUtils.getReservedUsd(dataStore, market, prices, isLong);
     }
+
+    function getBorrowingFactorPerSecond(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        bool isLong,
+        bool allowZeroPoolBorrowingFactor
+    ) public view returns (uint256) {
+        return MarketUtils.getBorrowingFactorPerSecond(
+            dataStore,
+            market,
+            prices,
+            isLong,
+            allowZeroPoolBorrowingFactor
+        );
+    }
 }

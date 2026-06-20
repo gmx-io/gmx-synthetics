@@ -348,6 +348,36 @@ describe("Glv Deposits", () => {
     });
   });
 
+  it("execute glv deposit tolerates a zero-pool constituent market", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    const glvToken = await contractAt("GlvToken", ethUsdGlvAddress);
+    const initialGlvBalance = await glvToken.balanceOf(user0.address);
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), 0);
+    await dataStore.setUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true), decimalToFloat(5000));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        market: solUsdMarket,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    expect(await glvToken.balanceOf(user0.address)).gt(initialGlvBalance);
+  });
+
   it("execute glv deposit with oracle GLV price", async () => {
     const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
     await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");

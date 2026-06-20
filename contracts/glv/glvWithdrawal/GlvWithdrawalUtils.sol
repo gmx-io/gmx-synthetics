@@ -165,7 +165,8 @@ library GlvWithdrawalUtils {
             params.dataStore,
             params.oracle,
             glvWithdrawal.glv(),
-            true // maximize
+            true, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         GlvEventUtils.emitGlvValueUpdated(
             params.eventEmitter,
@@ -299,7 +300,8 @@ library GlvWithdrawalUtils {
             dataStore,
             oracle,
             glvWithdrawal.glv(),
-            false // maximize
+            false, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         uint256 glvSupply = GlvToken(payable(glvWithdrawal.glv())).totalSupply();
         uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);
@@ -312,7 +314,8 @@ library GlvWithdrawalUtils {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            true // maximize
+            true, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         uint256 marketTokenAmount = MarketUtils.usdToMarketTokenAmount(
             glvTokenUsd,

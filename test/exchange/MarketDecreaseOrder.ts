@@ -84,6 +84,80 @@ describe("Exchange.MarketDecreaseOrder", () => {
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
   });
 
+  it("executeOrder allows decreases but not increases when borrowing accrual sees zero pool value", async () => {
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), 0);
+
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 18),
+        sizeDeltaUsd: decimalToFloat(1000),
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+      execute: {
+        expectedCancellationReason: "UnableToGetBorrowingFactorEmptyPoolUsd",
+      },
+    });
+
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: decimalToFloat(1000),
+        acceptablePrice: expandDecimals(4995, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+    });
+  });
+
+  it("executeOrder does not relax zero-pool borrowing for collateral-only decreases", async () => {
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), 0);
+
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 18),
+        sizeDeltaUsd: 0,
+        acceptablePrice: expandDecimals(4995, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+      execute: {
+        expectedCancellationReason: "UnableToGetBorrowingFactorEmptyPoolUsd",
+      },
+    });
+  });
+
   it("executeOrder validations 0", async () => {
     await handleOrder(fixture, {
       create: {

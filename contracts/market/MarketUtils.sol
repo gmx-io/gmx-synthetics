@@ -180,7 +180,8 @@ library MarketUtils {
             longTokenPrice,
             shortTokenPrice,
             pnlFactorType,
-            maximize
+            maximize,
+            false // allowZeroPoolBorrowingFactor
         );
 
         // if the supply is zero then treat the market token price as 1 USD
@@ -321,7 +322,8 @@ library MarketUtils {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         bytes32 pnlFactorType,
-        bool maximize
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
     ) public view returns (MarketPoolValueInfo.Props memory) {
         MarketPoolValueInfo.Props memory result;
 
@@ -343,14 +345,16 @@ library MarketUtils {
             dataStore,
             market,
             prices,
-            true
+            true,
+            allowZeroPoolBorrowingFactor
         );
 
         result.totalBorrowingFees += getTotalPendingBorrowingFees(
             dataStore,
             market,
             prices,
-            false
+            false,
+            allowZeroPoolBorrowingFactor
         );
 
         result.borrowingFeePoolFactor = Precision.FLOAT_PRECISION - dataStore.getUintValueFromDataStore(Keys.BORROWING_FEE_RECEIVER_FACTOR);
@@ -1859,13 +1863,15 @@ library MarketUtils {
         EventEmitter eventEmitter,
         Market.Props memory market,
         MarketPrices memory prices,
-        bool isLong
+        bool isLong,
+        bool allowZeroPoolBorrowingFactor
     ) external {
         (/* uint256 nextCumulativeBorrowingFactor */, uint256 delta, uint256 borrowingFactorPerSecond) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
-            isLong
+            isLong,
+            allowZeroPoolBorrowingFactor
         );
 
         incrementCumulativeBorrowingFactor(
@@ -2201,7 +2207,8 @@ library MarketUtils {
             dataStore,
             market,
             prices,
-            position.isLong()
+            position.isLong(),
+            false // allowZeroPoolBorrowingFactor
         );
 
         if (position.borrowingFactor() > nextCumulativeBorrowingFactor) {
@@ -2910,14 +2917,16 @@ library MarketUtils {
         DataStore dataStore,
         Market.Props memory market,
         MarketPrices memory prices,
-        bool isLong
+        bool isLong,
+        bool allowZeroPoolBorrowingFactor
     ) internal view returns (uint256, uint256, uint256) {
         uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
         uint256 borrowingFactorPerSecond = getBorrowingFactorPerSecond(
             dataStore,
             market,
             prices,
-            isLong
+            isLong,
+            allowZeroPoolBorrowingFactor
         );
 
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market.marketToken, isLong);
@@ -2936,7 +2945,8 @@ library MarketUtils {
         DataStore dataStore,
         Market.Props memory market,
         MarketPrices memory prices,
-        bool isLong
+        bool isLong,
+        bool allowZeroPoolBorrowingFactor
     ) internal view returns (uint256) {
         uint256 reservedUsd = getReservedUsd(
             dataStore,
@@ -2985,6 +2995,13 @@ library MarketUtils {
         uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong, false);
 
         if (poolUsd == 0) {
+            if (allowZeroPoolBorrowingFactor) {
+                // Borrowing for a depleted pool is uncomputable. Recovery paths
+                // may skip accrual so they can execute without using this as a
+                // global market freeze.
+                return 0;
+            }
+
             revert Errors.UnableToGetBorrowingFactorEmptyPoolUsd();
         }
 
@@ -3131,7 +3148,8 @@ library MarketUtils {
         DataStore dataStore,
         Market.Props memory market,
         MarketPrices memory prices,
-        bool isLong
+        bool isLong,
+        bool allowZeroPoolBorrowingFactor
     ) internal view returns (uint256) {
         uint256 openInterest = getOpenInterest(
             dataStore,
@@ -3143,7 +3161,8 @@ library MarketUtils {
             dataStore,
             market,
             prices,
-            isLong
+            isLong,
+            allowZeroPoolBorrowingFactor
         );
 
         uint256 totalBorrowing = getTotalBorrowing(dataStore, market.marketToken, isLong);

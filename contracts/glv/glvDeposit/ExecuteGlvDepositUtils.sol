@@ -66,7 +66,8 @@ library ExecuteGlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true // maximize
+            true, // maximize
+            true // allowZeroPoolBorrowingFactor
         );
         GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
 
@@ -77,7 +78,8 @@ library ExecuteGlvDepositUtils {
             glvDeposit,
             cache.receivedMarketTokens,
             cache.glvValue,
-            cache.glvSupply
+            cache.glvSupply,
+            true // allowZeroPoolBorrowingFactor
         );
         if (cache.mintAmount < glvDeposit.minGlvTokens()) {
             revert Errors.MinGlvTokens(cache.mintAmount, glvDeposit.minGlvTokens());
@@ -98,7 +100,8 @@ library ExecuteGlvDepositUtils {
             params.oracle.getPrimaryPrice(cache.market.longToken),
             params.oracle.getPrimaryPrice(cache.market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true // maximize
+            true, // maximize
+            true // allowZeroPoolBorrowingFactor
         );
         cache.marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(glvDeposit.market())));
 
@@ -121,7 +124,8 @@ library ExecuteGlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true // maximize
+            true, // maximize
+            true // allowZeroPoolBorrowingFactor
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
