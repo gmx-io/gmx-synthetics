@@ -1,5 +1,6 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 const baseConstructorContracts = [
   "Router",
@@ -53,5 +54,10 @@ const func = createDeployFunction({
     await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
   },
 });
+
+func.skip = async ({ network }: HardhatRuntimeEnvironment) => {
+  const shouldDeployForNetwork = ["hardhat", "avalancheFuji", "arbitrumSepolia"];
+  return !shouldDeployForNetwork.includes(network.name);
+};
 
 export default func;
