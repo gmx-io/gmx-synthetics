@@ -333,6 +333,17 @@ library PositionUtils {
             position.sizeInUsd()
         );
 
+        // positive pnl is paid out using pnlTokenPrice.max and valued using pnlTokenPrice.min when
+        // paying for costs, so value it consistently here to avoid overcounting it as collateral
+        if (cache.positionPnlUsd > 0) {
+            Price.Props memory pnlTokenPrice = MarketUtils.getCachedTokenPrice(
+                position.isLong() ? market.longToken : market.shortToken,
+                market,
+                prices
+            );
+            cache.positionPnlUsd = ((cache.positionPnlUsd.toUint256() / pnlTokenPrice.max) * pnlTokenPrice.min).toInt256();
+        }
+
         cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(
             position.collateralToken(),
             market,
