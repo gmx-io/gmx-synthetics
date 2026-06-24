@@ -741,6 +741,12 @@ library PositionUtils {
             sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() + cache.priceImpactAmount;
         } else {
             sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() - cache.priceImpactAmount;
+
+            // for shorts the subtraction increases sizeDeltaInTokens so the check below cannot detect
+            // negative impact exceeding the order size
+            if (cache.priceImpactAmount < 0 && -cache.priceImpactAmount > cache.baseSizeDeltaInTokens.toInt256()) {
+                revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            }
         }
 
         if (sizeDeltaInTokens < 0) {
