@@ -936,9 +936,6 @@ describe("Guardian.Liquidation", () => {
       return { liquidatable, info };
     };
 
-    // open a long that incurs negative price impact so the position stores a negative
-    // pendingImpactAmount, then disable the impact factor so the exit impact in the
-    // liquidation check is zero and only the pending impact remains
     const openLongWithNegativePendingImpact = async () => {
       await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
       await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 0));
@@ -972,8 +969,6 @@ describe("Guardian.Liquidation", () => {
       const position = await reader.getPosition(dataStore.address, positionKey);
       expect(position.numbers.pendingImpactAmount).lt(0);
 
-      // a zero max negative factor reproduces the previous behavior where the pending
-      // impact was masked, a non-zero factor counts it as a liability
       await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
       const { info: infoMasked } = await isLiquidatable(positionKey);
 
@@ -987,8 +982,6 @@ describe("Guardian.Liquidation", () => {
       expect(expectedImpactUsd).lt(0);
       expect(infoCounted.remainingCollateralUsd.sub(infoMasked.remainingCollateralUsd)).to.eq(expectedImpactUsd);
 
-      // set the leverage threshold between the two remaining collateral values so the
-      // position is liquidatable only once the pending impact is counted
       const target = infoMasked.remainingCollateralUsd.add(infoCounted.remainingCollateralUsd).div(2);
       const factor = target.mul(FLOAT_PRECISION).div(sizeInUsd);
       await dataStore.setUint(keys.minCollateralFactorForLiquidationKey(ethUsdMarket.marketToken), factor);
