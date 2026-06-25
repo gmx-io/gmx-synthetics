@@ -448,6 +448,48 @@ describe("Exchange.Withdrawal", () => {
     );
   });
 
+  it("withdraw swap paths use swap fees instead of withdrawal fees", async () => {
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 2));
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 2));
+    await dataStore.setUint(keys.withdrawalFeeFactorKey(ethUsdMarket.marketToken, true), 0);
+    await dataStore.setUint(keys.withdrawalFeeFactorKey(ethUsdMarket.marketToken, false), 0);
+    await dataStore.setUint(keys.SWAP_FEE_RECEIVER_FACTOR, decimalToFloat(1));
+
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(0);
+
+    await createWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      longTokenSwapPath: [ethUsdMarket.marketToken],
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: false,
+      executionFee: 700,
+      callbackGasLimit: 100000,
+      gasUsageLabel: "createWithdrawal",
+    });
+
+    await executeWithdrawal(fixture, {
+      gasUsageLabel: "executeWithdrawal",
+    });
+
+    expect(await wnt.balanceOf(user1.address)).eq(0);
+    expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(995, 6));
+    expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(1, 15));
+    expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(0);
+  });
+
   it("withdraw with longTokenSwapPath", async () => {
     await handleDeposit(fixture, {
       create: {
