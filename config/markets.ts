@@ -6129,8 +6129,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
-      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
       maxOpenInterest: 1,
@@ -6162,8 +6162,8 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
@@ -6199,8 +6199,8 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
 
@@ -6237,8 +6237,8 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: bigNumberify(0), // on-chain value (never configured for this market)
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
 
