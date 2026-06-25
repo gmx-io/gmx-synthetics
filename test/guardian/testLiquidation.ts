@@ -913,4 +913,94 @@ describe("Guardian.Liquidation", () => {
       expect(await getPositionCount(dataStore)).to.eq(0);
     });
   });
+
+  describe("negative pending impact is counted in the liquidation check", () => {
+    const sizeInUsd = decimalToFloat(100 * 1000);
+    const price = expandDecimals(5000, 12);
+    const prices = {
+      indexTokenPrice: { min: price, max: price },
+      longTokenPrice: { min: price, max: price },
+      shortTokenPrice: { min: expandDecimals(1, 24), max: expandDecimals(1, 24) },
+    };
+
+    const isLiquidatable = async (positionKey) => {
+      const [liquidatable, , info] = await reader.isPositionLiquidatable(
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        prices,
+        false,
+        true
+      );
+      return { liquidatable, info };
+    };
+
+    // open a long that incurs negative price impact so the position stores a negative
+    // pendingImpactAmount, then disable the impact factor so the exit impact in the
+    // liquidation check is zero and only the pending impact remains
+    const openLongWithNegativePendingImpact = async () => {
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
+      await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 0));
+
+      await handleOrder(fixture, {
+        create: {
+          account: user1,
+          market: ethUsdMarket,
+          initialCollateralToken: usdc,
+          initialCollateralDeltaAmount: expandDecimals(5000, 6),
+          sizeDeltaUsd: sizeInUsd,
+          acceptablePrice: expandDecimals(5050, 12),
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+        },
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          precisions: [8, 18],
+        },
+      });
+
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), 0);
+    };
+
+    it("reduces remaining collateral by the capped pending impact and can trigger liquidation", async () => {
+      await openLongWithNegativePendingImpact();
+
+      const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
+      const position = await reader.getPosition(dataStore.address, positionKey);
+      expect(position.numbers.pendingImpactAmount).lt(0);
+
+      // a zero max negative factor reproduces the previous behavior where the pending
+      // impact was masked, a non-zero factor counts it as a liability
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      const { info: infoMasked } = await isLiquidatable(positionKey);
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3)); // 0.5%
+      const { info: infoCounted } = await isLiquidatable(positionKey);
+
+      const pendingImpactUsd = position.numbers.pendingImpactAmount.mul(price);
+      const maxNegativeImpactUsd = sizeInUsd.mul(decimalToFloat(5, 3)).div(FLOAT_PRECISION).mul(-1);
+      const expectedImpactUsd = pendingImpactUsd.lt(maxNegativeImpactUsd) ? maxNegativeImpactUsd : pendingImpactUsd;
+
+      expect(expectedImpactUsd).lt(0);
+      expect(infoCounted.remainingCollateralUsd.sub(infoMasked.remainingCollateralUsd)).to.eq(expectedImpactUsd);
+
+      // set the leverage threshold between the two remaining collateral values so the
+      // position is liquidatable only once the pending impact is counted
+      const target = infoMasked.remainingCollateralUsd.add(infoCounted.remainingCollateralUsd).div(2);
+      const factor = target.mul(FLOAT_PRECISION).div(sizeInUsd);
+      await dataStore.setUint(keys.minCollateralFactorForLiquidationKey(ethUsdMarket.marketToken), factor);
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      const { liquidatable: liquidatableMasked } = await isLiquidatable(positionKey);
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3));
+      const { liquidatable: liquidatableCounted } = await isLiquidatable(positionKey);
+
+      expect(liquidatableMasked).to.eq(false);
+      expect(liquidatableCounted).to.eq(true);
+    });
+  });
 });
