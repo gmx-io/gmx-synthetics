@@ -91,6 +91,7 @@ const relayParamsType = `tuple(
     uint256 userNonce,
     uint256 deadline,
     bytes signature,
+    bytes32 eip6492SignatureWrapperHash,
     uint256 desChainId
   )`;
 
