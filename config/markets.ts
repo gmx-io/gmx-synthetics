@@ -4739,7 +4739,7 @@ const config: {
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
         minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        minCollateralFactorForLiquidation: percentageToFloat("0.8%"),
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
@@ -4793,7 +4793,7 @@ const config: {
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
         minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        minCollateralFactorForLiquidation: percentageToFloat("0.8%"),
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
@@ -4847,7 +4847,7 @@ const config: {
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
         minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        minCollateralFactorForLiquidation: percentageToFloat("0.8%"),
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
@@ -4901,7 +4901,7 @@ const config: {
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
         minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        minCollateralFactorForLiquidation: percentageToFloat("0.8%"),
 
         maxOpenInterest: decimalToFloat(1_500_000),
       },
