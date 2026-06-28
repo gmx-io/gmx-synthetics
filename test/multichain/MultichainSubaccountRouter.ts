@@ -819,6 +819,7 @@ describe("MultichainSubaccountRouter", () => {
           triggerPrice: decimalToFloat(4800),
           minOutputAmount: 700,
           validFromTime: 0,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: false,
           executionFeeIncrease: 0,
         },
@@ -1359,6 +1360,7 @@ describe("MultichainSubaccountRouter", () => {
           triggerPrice: 303,
           minOutputAmount: 304,
           validFromTime: 305,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: true,
           executionFeeIncrease: 0,
         },
@@ -1378,6 +1380,7 @@ describe("MultichainSubaccountRouter", () => {
       expect(order2After.numbers.triggerPrice).eq(303);
       expect(order2After.numbers.minOutputAmount).eq(304);
       expect(order2After.numbers.validFromTime).eq(305);
+      expect(order2After.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.NoSwap);
       expect(order2After.flags.autoCancel).eq(true);
 
       const orderKeysAfter = await getOrderKeys(dataStore, 0, 2);

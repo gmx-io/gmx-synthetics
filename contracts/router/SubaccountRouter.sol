@@ -157,6 +157,7 @@ contract SubaccountRouter is BaseRouter {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         uint256 validFromTime,
+        Order.DecreasePositionSwapType decreasePositionSwapType,
         bool autoCancel
     ) external payable nonReentrant {
         uint256 startingGas = gasleft();
@@ -174,6 +175,7 @@ contract SubaccountRouter is BaseRouter {
             triggerPrice,
             minOutputAmount,
             validFromTime,
+            decreasePositionSwapType,
             autoCancel,
             order,
             order.callbackContract() != address(0)

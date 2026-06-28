@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../../oracle/OracleUtils.sol";
 import "../../order/IBaseOrderUtils.sol";
+import "../../order/Order.sol";
 
 interface IRelayUtils {
     struct FeeParams {
@@ -102,6 +103,7 @@ interface IRelayUtils {
         uint256 triggerPrice;
         uint256 minOutputAmount;
         uint256 validFromTime;
+        Order.DecreasePositionSwapType decreasePositionSwapType;
         bool autoCancel;
         // should be non zero if order's execution fee should be increased
         // otherwise should be 0

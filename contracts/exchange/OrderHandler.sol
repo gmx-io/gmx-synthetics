@@ -14,9 +14,7 @@ import "../multichain/MultichainVault.sol";
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
 contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
-    using SafeCast for uint256;
     using Order for Order.Props;
-    using Array for uint256[];
 
     IOrderExecutor public immutable increaseOrderExecutor;
     IOrderExecutor public immutable decreaseOrderExecutor;
@@ -94,13 +92,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         return OrderUtils.createTwapOrder(dataStore, eventEmitter, orderVault, referralStorage, account, srcChainId, params, shouldCapMaxExecutionFee, twapCount, interval);
     }
 
-    struct UpdateOrderCache {
-        address wnt;
-        uint256 receivedWnt;
-        uint256 estimatedGasLimit;
-        uint256 oraclePriceCount;
-    }
-
     /**
      * @dev Updates the given order with the specified size delta, acceptable price, and trigger price.
      * The `updateOrder()` feature must be enabled for the given order type. The caller must be the owner
@@ -131,6 +122,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         uint256 validFromTime,
+        Order.DecreasePositionSwapType decreasePositionSwapType,
         bool autoCancel,
         Order.Props memory order,
         bool shouldCapMaxExecutionFee
@@ -147,51 +139,21 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
             revert Errors.UnsupportedOrderType(uint256(order.orderType()));
         }
 
-        if (order.autoCancel() != autoCancel) {
-            OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
-            OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
-        }
-        order.setAutoCancel(autoCancel);
-
-        order.setSizeDeltaUsd(sizeDeltaUsd);
-        order.setTriggerPrice(triggerPrice);
-        order.setAcceptablePrice(acceptablePrice);
-        order.setMinOutputAmount(minOutputAmount);
-        order.setValidFromTime(validFromTime);
-        order.setIsFrozen(false);
-
-        UpdateOrderCache memory cache;
-        // allow topping up of executionFee as frozen orders
-        // will have their executionFee reduced
-        cache.wnt = TokenUtils.wnt(dataStore);
-        cache.receivedWnt = orderVault.recordTransferIn(cache.wnt);
-
-        cache.estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        cache.oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
-        (uint256 executionFee, uint256 executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
+        OrderUtils.updateOrder(OrderUtils.UpdateOrderParams(
             dataStore,
-            cache.estimatedGasLimit,
-            order.executionFee() + cache.receivedWnt,
-            cache.oraclePriceCount,
-            shouldCapMaxExecutionFee
-        );
-        order.setExecutionFee(executionFee);
-
-        if (executionFeeDiff != 0) {
-            GasUtils.transferExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), executionFeeDiff);
-        }
-
-        order.touch();
-
-        BaseOrderUtils.validateNonEmptyOrder(order);
-
-        OrderStoreUtils.set(dataStore, key, order);
-
-        OrderEventUtils.emitOrderUpdated(
             eventEmitter,
+            orderVault,
             key,
-            order
-        );
+            sizeDeltaUsd,
+            acceptablePrice,
+            triggerPrice,
+            minOutputAmount,
+            validFromTime,
+            decreasePositionSwapType,
+            autoCancel,
+            order,
+            shouldCapMaxExecutionFee
+        ));
     }
 
     /**

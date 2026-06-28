@@ -57,6 +57,29 @@ library OrderUtils {
         uint256 executionFeeDiff;
     }
 
+    struct UpdateOrderParams {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        OrderVault orderVault;
+        bytes32 key;
+        uint256 sizeDeltaUsd;
+        uint256 acceptablePrice;
+        uint256 triggerPrice;
+        uint256 minOutputAmount;
+        uint256 validFromTime;
+        Order.DecreasePositionSwapType decreasePositionSwapType;
+        bool autoCancel;
+        Order.Props order;
+        bool shouldCapMaxExecutionFee;
+    }
+
+    struct UpdateOrderCache {
+        address wnt;
+        uint256 receivedWnt;
+        uint256 estimatedGasLimit;
+        uint256 oraclePriceCount;
+    }
+
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -149,6 +172,55 @@ library OrderUtils {
             orderKeys[i] = _createOrder(dataStore, eventEmitter, orderVault, referralStorage, account, srcChainId, params, shouldCapMaxExecutionFee, false);
         }
         return orderKeys;
+    }
+
+    function updateOrder(UpdateOrderParams memory params) external {
+        if (params.order.autoCancel() != params.autoCancel) {
+            updateAutoCancelList(params.dataStore, params.key, params.order, params.autoCancel);
+            validateTotalCallbackGasLimitForAutoCancelOrders(params.dataStore, params.order);
+        }
+        params.order.setAutoCancel(params.autoCancel);
+
+        params.order.setSizeDeltaUsd(params.sizeDeltaUsd);
+        params.order.setTriggerPrice(params.triggerPrice);
+        params.order.setAcceptablePrice(params.acceptablePrice);
+        params.order.setMinOutputAmount(params.minOutputAmount);
+        params.order.setValidFromTime(params.validFromTime);
+        params.order.setDecreasePositionSwapType(params.decreasePositionSwapType);
+        params.order.setIsFrozen(false);
+
+        UpdateOrderCache memory cache;
+        // allow topping up of executionFee as frozen orders
+        // will have their executionFee reduced
+        cache.wnt = TokenUtils.wnt(params.dataStore);
+        cache.receivedWnt = params.orderVault.recordTransferIn(cache.wnt);
+
+        cache.estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(params.dataStore, params.order);
+        cache.oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(params.order.swapPath().length);
+        (uint256 executionFee, uint256 executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
+            params.dataStore,
+            cache.estimatedGasLimit,
+            params.order.executionFee() + cache.receivedWnt,
+            cache.oraclePriceCount,
+            params.shouldCapMaxExecutionFee
+        );
+        params.order.setExecutionFee(executionFee);
+
+        if (executionFeeDiff != 0) {
+            GasUtils.transferExcessiveExecutionFee(params.dataStore, params.eventEmitter, params.orderVault, params.order.account(), executionFeeDiff);
+        }
+
+        params.order.touch();
+
+        BaseOrderUtils.validateNonEmptyOrder(params.order);
+
+        OrderStoreUtils.set(params.dataStore, params.key, params.order);
+
+        OrderEventUtils.emitOrderUpdated(
+            params.eventEmitter,
+            params.key,
+            params.order
+        );
     }
 
     function _createOrder(

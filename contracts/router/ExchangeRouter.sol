@@ -280,6 +280,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         uint256 validFromTime,
+        Order.DecreasePositionSwapType decreasePositionSwapType,
         bool autoCancel
     ) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
@@ -294,6 +295,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             triggerPrice,
             minOutputAmount,
             validFromTime,
+            decreasePositionSwapType,
             autoCancel,
             order,
             false

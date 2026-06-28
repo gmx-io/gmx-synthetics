@@ -27,7 +27,7 @@ struct Contracts {
     address wnt;
 }
 
-string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
+string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,uint256 decreasePositionSwapType,bool autoCancel,uint256 executionFeeIncrease)";
 
 string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
 string constant CREATE_ORDER_NUMBERS = "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)";
@@ -467,6 +467,7 @@ library RelayUtils {
                     params.triggerPrice,
                     params.minOutputAmount,
                     params.validFromTime,
+                    uint256(params.decreasePositionSwapType),
                     params.autoCancel,
                     params.executionFeeIncrease
                 )

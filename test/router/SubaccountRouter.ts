@@ -553,10 +553,11 @@ describe("SubaccountRouter", () => {
       expandDecimals(4850, 12), // triggerPrice
       800, // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("937238491893037", "100000000000000"); // 0.000937238491893037 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1037618841798702", "100000000000000"); // 0.001037618841798702 ETH
 
     expect(
       await dataStore.getUint(
@@ -593,6 +594,7 @@ describe("SubaccountRouter", () => {
         expandDecimals(4850, 12), // triggerPrice
         800, // minOutputAmount
         0, // validFromTime
+        DecreasePositionSwapType.NoSwap,
         false // autoCancel
       )
     ).to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized");

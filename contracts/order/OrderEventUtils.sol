@@ -74,13 +74,14 @@ library OrderEventUtils {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", order.account());
 
-        eventData.uintItems.initItems(6);
+        eventData.uintItems.initItems(7);
         eventData.uintItems.setItem(0, "sizeDeltaUsd", order.sizeDeltaUsd());
         eventData.uintItems.setItem(1, "acceptablePrice", order.acceptablePrice());
         eventData.uintItems.setItem(2, "triggerPrice", order.triggerPrice());
         eventData.uintItems.setItem(3, "minOutputAmount", order.minOutputAmount());
         eventData.uintItems.setItem(4, "updatedAtTime", order.updatedAtTime());
         eventData.uintItems.setItem(5, "validFromTime", order.validFromTime());
+        eventData.uintItems.setItem(6, "decreasePositionSwapType", uint256(order.decreasePositionSwapType()));
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "autoCancel", order.autoCancel());

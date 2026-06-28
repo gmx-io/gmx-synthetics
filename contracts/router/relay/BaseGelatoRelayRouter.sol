@@ -192,6 +192,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.triggerPrice,
             params.minOutputAmount,
             params.validFromTime,
+            params.decreasePositionSwapType,
             params.autoCancel,
             order,
             // shouldCapMaxExecutionFee
