@@ -210,6 +210,38 @@ describe("EIP-6492 wrapper tampering", () => {
     ).to.be.revertedWithCustomError(errorsContract, "InvalidEIP6492SignatureWrapper");
   });
 
+  it("rejects swapping the wrapper and its committed hash together", async () => {
+    const { victimParams, relayParams, innerSignature } = await signVictimOrder(true);
+
+    // the relayer also overwrites eip6492SignatureWrapperHash so the wrapper hash check passes;
+    // the signed relay digest is the second line of defense, because eip6492SignatureWrapperHash is
+    // part of the digest, changing it makes the victim signature no longer validate
+    const attackerWrapperHash = wrapperHash(ATTACKER_FACTORY, ATTACKER_CALLDATA);
+    const calldata = gelatoRelayRouter.interface.encodeFunctionData("createOrder", [
+      {
+        ...relayParams,
+        eip6492SignatureWrapperHash: attackerWrapperHash,
+        signature: wrapSignature(ATTACKER_FACTORY, ATTACKER_CALLDATA, innerSignature),
+      },
+      victimWallet,
+      victimParams,
+    ]);
+
+    await expect(
+      sendRelayTransaction({
+        calldata,
+        gelatoRelayFeeToken: wnt.address,
+        gelatoRelayFeeAmount: expandDecimals(1, 15),
+        sender: relaySigner,
+        relayRouter: gelatoRelayRouter,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+
+    // the whole transaction reverted: no order created and the wallet keeps its USDC
+    expect(await getOrderCount(dataStore)).eq(0);
+    await expectBalance(usdc.address, victimWallet, collateralAmount);
+  });
+
   it("accepts the untampered wrapper and records collateral to the victim order", async () => {
     // standard digest: an already-deployed wallet validates on the first ERC-1271 check, no factory call
     const { victimParams, relayParams, innerSignature } = await signVictimOrder(false);
