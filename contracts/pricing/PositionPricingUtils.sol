@@ -42,6 +42,7 @@ library PositionPricingUtils {
         address shortToken;
         uint256 sizeDeltaUsd;
         address uiFeeReceiver;
+        uint256 uiFeeFactor;
         bool isLiquidation;
     }
 
@@ -450,7 +451,8 @@ library PositionPricingUtils {
             params.dataStore,
             params.collateralTokenPrice,
             params.sizeDeltaUsd,
-            params.uiFeeReceiver
+            params.uiFeeReceiver,
+            params.uiFeeFactor
         );
 
         fees.totalCostAmountExcludingFunding =
@@ -514,7 +516,8 @@ library PositionPricingUtils {
         DataStore dataStore,
         Price.Props memory collateralTokenPrice,
         uint256 sizeDeltaUsd,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        uint256 uiFeeFactor
     ) internal view returns (PositionUiFees memory) {
         PositionUiFees memory uiFees;
 
@@ -523,7 +526,11 @@ library PositionPricingUtils {
         }
 
         uiFees.uiFeeReceiver = uiFeeReceiver;
-        uiFees.uiFeeReceiverFactor = FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
+        // a uiFeeFactor of type(uint256).max is used as a sentinel value to read the
+        // currently configured factor, otherwise the snapshotted factor is used
+        uiFees.uiFeeReceiverFactor = uiFeeFactor == type(uint256).max
+            ? FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver)
+            : uiFeeFactor;
         uiFees.uiFeeAmount = Precision.applyFactor(sizeDeltaUsd, uiFees.uiFeeReceiverFactor) / collateralTokenPrice.min;
 
         return uiFees;

@@ -30,6 +30,8 @@ library IncreaseOrderUtils {
             params.order.minOutputAmount(),
             params.order.market(),
             params.order.uiFeeReceiver(),
+            params.order.uiFeeFactor(),
+            0,
             false,
             ISwapPricingUtils.SwapPricingType.Swap
         ));

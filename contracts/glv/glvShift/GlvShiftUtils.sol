@@ -159,6 +159,7 @@ library GlvShiftUtils {
             Shift.Numbers({
                 minMarketTokens: glvShift.minMarketTokens(),
                 marketTokenAmount: glvShift.marketTokenAmount(),
+                uiFeeFactor: 0, // uiFeeReceiver is the zero address, so no ui fee is charged
                 updatedAtTime: glvShift.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,

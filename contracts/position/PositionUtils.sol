@@ -198,13 +198,13 @@ library PositionUtils {
             cache.poolTokenAmount = MarketUtils.getPoolAmount(dataStore, market, cache.pnlToken);
             cache.poolTokenPrice = position.isLong() ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
             cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice;
-            cache.poolPnl = MarketUtils.getPnl(
+            cache.poolPnl = MarketUtils.getPositivePnl(
                 dataStore,
                 market,
                 prices.indexTokenPrice,
                 position.isLong(),
                 true
-            );
+            ).toInt256();
 
             cache.cappedPoolPnl = MarketUtils.getCappedPnl(
                 dataStore,
@@ -384,6 +384,7 @@ library PositionUtils {
             market.shortToken, // shortToken
             position.sizeInUsd(), // sizeDeltaUsd
             address(0), // uiFeeReceiver
+            type(uint256).max, // uiFeeFactor (unused since uiFeeReceiver is the zero address)
 
             // should not account for liquidation fees to determine if position should be liquidated
             false // isLiquidation

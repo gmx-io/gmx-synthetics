@@ -48,6 +48,7 @@ describe("FeeDistributor", function () {
     eventEmitter,
     configUtils,
     marketUtils,
+    marketStoreUtils,
     feeDistributorUtils,
     mockVaultV1,
     claimVault,
@@ -130,6 +131,7 @@ describe("FeeDistributor", function () {
       eventEmitter,
       configUtils,
       marketUtils,
+      marketStoreUtils,
       feeDistributorUtils,
       mockVaultV1,
       claimVault,
@@ -1310,6 +1312,7 @@ describe("FeeDistributor", function () {
       [roleStore.address, dataStoreD.address, eventEmitter.address, oracle.address, staticOracleProvider.address],
       {
         libraries: {
+          "contracts/market/MarketStoreUtils.sol:MarketStoreUtils": marketStoreUtils.address,
           "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
         },
       }
