@@ -2,21 +2,25 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
-import "../data/DataStore.sol";
-import "../data/Keys.sol";
-import "../data/Keys2.sol";
-import "../role/RoleModule.sol";
-import "../oracle/OracleModule.sol";
-import "../event/EventEmitter.sol";
-import "../utils/BasicMulticall.sol";
-import "../utils/Precision.sol";
-import "../utils/Cast.sol";
-import "../market/MarketUtils.sol";
-import "../oracle/IOracle.sol";
-
-import "./ConfigUtils.sol";
+import {Chain} from "../chain/Chain.sol";
+import {DataStore} from "../data/DataStore.sol";
+import {Keys} from "../data/Keys.sol";
+import {Keys2} from "../data/Keys2.sol";
+import {Errors} from "../error/Errors.sol";
+import {EventEmitter} from "../event/EventEmitter.sol";
+import {EventUtils} from "../event/EventUtils.sol";
+import {Market} from "../market/Market.sol";
+import {MarketStoreUtils} from "../market/MarketStoreUtils.sol";
+import {IOracle} from "../oracle/IOracle.sol";
+import {OracleModule} from "../oracle/OracleModule.sol";
+import {OracleUtils} from "../oracle/OracleUtils.sol";
+import {Price} from "../price/Price.sol";
+import {Role} from "../role/Role.sol";
+import {RoleModule} from "../role/RoleModule.sol";
+import {RoleStore} from "../role/RoleStore.sol";
+import {BasicMulticall} from "../utils/BasicMulticall.sol";
+import {ConfigUtils} from "./ConfigUtils.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // @title Config
 contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
@@ -33,9 +37,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
     address public immutable staticOracleProvider;
 
     // @dev the base keys that can be set
-    mapping (bytes32 => bool) public allowedBaseKeys;
+    mapping(bytes32 => bool) public allowedBaseKeys;
     // @dev the limited base keys that can be set
-    mapping (bytes32 => bool) public allowedLimitedBaseKeys;
+    mapping(bytes32 => bool) public allowedLimitedBaseKeys;
 
     constructor(
         RoleStore _roleStore,
@@ -55,7 +59,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
     modifier onlyKeeper() {
         if (
             !roleStore.hasRole(msg.sender, Role.LIMITED_CONFIG_KEEPER) &&
-            !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)
+        !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)
         ) {
             revert Errors.Unauthorized(msg.sender, "LIMITED / CONFIG KEEPER");
         }
@@ -125,9 +129,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
             revert Errors.InvalidOracleProvider(provider);
         }
 
-        if (Chain.currentTimestamp() - dataStore.getUint(Keys.oracleProviderUpdatedAt(token, provider))
-            < dataStore.getUint(Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY)) {
-            revert Errors.OracleProviderMinChangeDelayNotYetPassed(token, provider);
+        if (provider != staticOracleProvider) {
+            if (Chain.currentTimestamp() - dataStore.getUint(Keys.oracleProviderUpdatedAt(token, provider))
+                < dataStore.getUint(Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY)) {
+                revert Errors.OracleProviderMinChangeDelayNotYetPassed(token, provider);
+            }
         }
 
         dataStore.setUint(Keys.oracleProviderUpdatedAt(token, provider), Chain.currentTimestamp());
@@ -148,14 +154,27 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         _setOracleProviderForToken(oracle, token, provider);
     }
 
-    function setStaticPriceForToken(
-        address token,
+    // @dev Offchain checks should be applied prior to executing this function
+    // token MUST be isolated to one market, be an index token for this market, no GLVs should use this token.
+    // use freezeTokenPrice script to execute those checks
+    function setStaticPriceForMarketIndexToken(
+        address market,
         OracleUtils.SetPricesParams memory pricesParams
-    ) external onlyConfigKeeper nonReentrant withOraclePricesForAtomicAction(pricesParams) {
+    ) external onlyConfigKeeper nonReentrant withOraclePrices(pricesParams) {
+        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
+        if (marketProps.marketToken == address(0)) {
+            revert Errors.EmptyMarket();
+        }
+
+        address token = marketProps.indexToken;
         if (token == address(0)) {
             revert Errors.EmptyToken();
         }
 
+        _setStaticPriceForToken(token);
+    }
+
+    function _setStaticPriceForToken(address token) internal {
         Price.Props memory price = oracle.getPrimaryPrice(token);
         dataStore.setUint(Keys.staticOraclePriceKey(token, false), price.min);
         dataStore.setUint(Keys.staticOraclePriceKey(token, true), price.max);

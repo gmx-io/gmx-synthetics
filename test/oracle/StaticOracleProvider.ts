@@ -4,10 +4,11 @@ import * as keys from "../../utils/keys";
 import { expandDecimals } from "../../utils/math";
 import { decodeValidatedPrice } from "../../utils/oracle-provider";
 import { ethers } from "hardhat";
+import { oracleProviderForTokenKey } from "../../utils/keys";
 
 describe("StaticOracleProvider", function () {
   let fixture;
-  let config, staticOracleProvider, dataStore, chainlinkPriceFeedProvider, oracle, wnt;
+  let config, staticOracleProvider, dataStore, chainlinkPriceFeedProvider, oracle, wnt, ethUsdMarket;
   let feedId;
 
   async function getOraclePrice(provider) {
@@ -24,12 +25,16 @@ describe("StaticOracleProvider", function () {
 
   beforeEach(async function () {
     fixture = await deployFixture();
-    ({ config, staticOracleProvider, dataStore, chainlinkPriceFeedProvider, oracle, wnt } = fixture.contracts);
+    ({ config, staticOracleProvider, dataStore, chainlinkPriceFeedProvider, oracle, wnt, ethUsdMarket } =
+      fixture.contracts);
 
     feedId = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
     await dataStore.setBool(keys.isOracleProviderEnabledKey(staticOracleProvider.address), true);
-    await dataStore.setBool(keys.isAtomicOracleProviderKey(chainlinkPriceFeedProvider.address), true);
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, wnt.address),
+      chainlinkPriceFeedProvider.address
+    );
     await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), feedId);
     await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 30));
   });
@@ -54,7 +59,7 @@ describe("StaticOracleProvider", function () {
       data: ["0x"],
     };
 
-    await config.setStaticPriceForToken(wnt.address, oracleParams);
+    await config.setStaticPriceForMarketIndexToken(ethUsdMarket.marketToken, oracleParams);
 
     const oraclePriceStaticB = await getOraclePrice(staticOracleProvider);
     expect(oraclePriceStaticB.min).eq(bid);

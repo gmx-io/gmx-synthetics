@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./Config.sol";
 import "./IRiskOracle.sol";
 import "../feature/FeatureUtils.sol";
+import "../utils/Cast.sol";
 
 // @title ConfigSyncer
 // @dev Contract to handle market parameter updates

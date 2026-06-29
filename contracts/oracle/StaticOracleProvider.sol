@@ -12,7 +12,7 @@ import "../data/DataStore.sol";
 
 // @title Static Oracle provider
 // @dev Contract to retrieve stored static prices for a token
-// prices are set via Config.setStaticPriceForToken
+// prices are set via Config.setStaticPriceForMarketIndexToken
 contract StaticOracleProvider is IOracleProvider, ReentrancyGuard {
     DataStore public immutable dataStore;
 
@@ -27,6 +27,10 @@ contract StaticOracleProvider is IOracleProvider, ReentrancyGuard {
     }
 
     function isChainlinkOnChainProvider() external pure returns (bool) {
+        return false;
+    }
+
+    function shouldCheckRefPrice() external pure returns (bool) {
         return false;
     }
 
@@ -45,6 +49,8 @@ contract StaticOracleProvider is IOracleProvider, ReentrancyGuard {
             token: token,
             min: priceMin,
             max: priceMax,
+            rawMin: priceMin,
+            rawMax: priceMax,
             timestamp: block.timestamp,
             provider: address(this)
         });

@@ -246,6 +246,12 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
       value: generalConfig.oracleProviderMinChangeDelay,
       label: `oracleProviderMinChangeDelay`,
     },
+    {
+      type: "address",
+      baseKey: keys.EIP6492_DEPLOYER,
+      value: generalConfig.eip6492Deployer,
+      label: `eip6492Deployer`,
+    },
   ];
 
   if (hre.network.name !== "avalanche" || process.env.SKIP_GLV_LIMITS_AVALANCHE !== "true") {

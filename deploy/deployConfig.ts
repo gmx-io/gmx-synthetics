@@ -9,7 +9,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["ConfigUtils"],
+  libraryNames: ["MarketStoreUtils", "ConfigUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },

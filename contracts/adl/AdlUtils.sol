@@ -97,7 +97,7 @@ library AdlUtils {
         }
 
         Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, _market);
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketRawPrices(oracle, _market);
         // if the MAX_PNL_FACTOR_FOR_ADL is set to be higher than MAX_PNL_FACTOR_FOR_WITHDRAWALS
         // it is possible for a pool to be in a state where withdrawals and ADL is not allowed
         // this is similar to the case where there is a large amount of open positions relative
@@ -177,6 +177,7 @@ library AdlUtils {
             0, // executionFee
             params.dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
+            0, // uiFeeFactor (uiFeeReceiver is the zero address, so no ui fee is charged)
             params.updatedAtTime, // updatedAtTime
             0, // validFromTime
             lastSrcChainId // srcChainId
