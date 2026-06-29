@@ -371,6 +371,39 @@ describe("FeeDistributor", function () {
     );
   });
 
+  it("initiateDistribute() reverts with InvalidWithdrawTarget when feeWithdrawer.withdrawTarget() != feeDistributorVault", async function () {
+    const feeWithdrawer = await deployContract("MockFeeWithdrawer", [feeDistributorVault.address]);
+
+    feeDistributor = await deployContract(
+      "FeeDistributor",
+      [
+        roleStore.address,
+        feeDistributorVault.address,
+        feeWithdrawer.address,
+        dataStore.address,
+        eventEmitter.address,
+        multichainReader.address,
+        gmx.address,
+        wnt.address,
+      ],
+      {
+        libraries: {
+          "contracts/fee/FeeDistributorUtils.sol:FeeDistributorUtils": feeDistributorUtils.address,
+        },
+      }
+    );
+
+    await feeWithdrawer.setWithdrawTarget(user0.address);
+
+    await expect(feeDistributor.initiateDistribute()).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidWithdrawTarget",
+      // @ts-expect-error: types don't reflect 3rd and 4th argument support
+      user0.address,
+      feeDistributorVault.address
+    );
+  });
+
   it("initiateDistribute() and processLzReceive() for fee deficit", async function () {
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     expect(distributionState).to.eq(0);

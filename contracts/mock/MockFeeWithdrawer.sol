@@ -11,12 +11,14 @@ contract MockFeeWithdrawer is IFeeWithdrawer {
     using SafeERC20 for IERC20;
 
     address public immutable feeDistributorVault;
+    address public withdrawTarget;
 
     mapping(address => uint256) public withdrawableAmountPerToken;
     mapping(address => uint256) public amountFactorPerToken;
 
     constructor(address _feeDistributorVault) {
         feeDistributorVault = _feeDistributorVault;
+        withdrawTarget = _feeDistributorVault;
     }
 
     function setWithdrawableAmount(address token, uint256 amount) external {
@@ -27,9 +29,13 @@ contract MockFeeWithdrawer is IFeeWithdrawer {
         amountFactorPerToken[token] = factor;
     }
 
+    function setWithdrawTarget(address target) external {
+        withdrawTarget = target;
+    }
+
     function withdrawFees(address token) external {
         uint256 amount = withdrawableAmountPerToken[token];
-        IERC20(token).safeTransfer(feeDistributorVault, amount);
+        IERC20(token).safeTransfer(withdrawTarget, amount);
     }
 
     function withdrawableAmount(address token) external view returns (uint256) {
@@ -38,9 +44,5 @@ contract MockFeeWithdrawer is IFeeWithdrawer {
 
     function amountFactor(address token) external view returns (uint256) {
         return amountFactorPerToken[token];
-    }
-
-    function withdrawTarget() external view returns (address) {
-        return feeDistributorVault;
     }
 }
