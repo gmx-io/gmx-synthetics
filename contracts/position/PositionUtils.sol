@@ -769,18 +769,17 @@ library PositionUtils {
         int256 sizeDeltaInTokens;
         if (params.position.isLong()) {
             sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() + cache.priceImpactAmount;
-        } else {
-            sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() - cache.priceImpactAmount;
 
-            // for shorts the subtraction increases sizeDeltaInTokens so the check below cannot detect
-            // negative impact exceeding the order size
+            if (sizeDeltaInTokens < 0) {
+                revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            }
+        } else {
+            // for shorts the negative impact increases sizeDeltaInTokens so it is checked against the order size directly
             if (cache.priceImpactAmount < 0 && -cache.priceImpactAmount > cache.baseSizeDeltaInTokens.toInt256()) {
                 revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
             }
-        }
 
-        if (sizeDeltaInTokens < 0) {
-            revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() - cache.priceImpactAmount;
         }
 
         // using increase of long positions as an example
