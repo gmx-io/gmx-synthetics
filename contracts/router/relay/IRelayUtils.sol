@@ -86,12 +86,19 @@ interface IRelayUtils {
         uint256[] amounts;
     }
 
+    struct BridgeFeeParams {
+        address feeToken;
+        uint256 feeAmount;
+        address[] feeSwapPath;
+    }
+
     struct BridgeOutParams {
         address token;
         uint256 amount;
         uint256 minAmountOut;
         address provider;
         bytes data; // provider specific data e.g. dstEid
+        BridgeFeeParams bridgeFee;
     }
 
     // @note all params except account should be part of the corresponding struct hash
@@ -112,5 +119,14 @@ interface IRelayUtils {
         IBaseOrderUtils.CreateOrderParams[] createOrderParamsList;
         UpdateOrderParams[] updateOrderParamsList;
         bytes32[] cancelOrderKeys;
+    }
+
+    struct HandleStakingRewardsParams {
+        bool shouldClaimGmx;
+        bool shouldStakeGmx;
+        bool shouldClaimEsGmx;
+        bool shouldStakeEsGmx;
+        bool shouldStakeMultiplierPoints;
+        bool shouldClaimWeth;
     }
 }
