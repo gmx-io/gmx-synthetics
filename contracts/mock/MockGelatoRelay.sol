@@ -35,12 +35,12 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         uint256 chainId
     ) external {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, account, key);
-        _handleSignature(structHash, relayParams.signature, account, chainId);
+        _handleSignature(structHash, relayParams.signature, account, chainId, relayParams.eip6492SignatureWrapperHash);
     }
 
     function testSimpleSignature(address account, bytes calldata signature, uint256 chainId) external {
         bytes32 structHash = keccak256(abi.encode(keccak256(bytes("PrimaryStruct(address account)")), account));
-        _handleSignature(structHash, signature, account, chainId);
+        _handleSignature(structHash, signature, account, chainId, bytes32(0));
     }
 
     function testNestedSignature(
@@ -59,7 +59,7 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
                 nestedStructHash
             )
         );
-        _handleSignature(structHash, signature, account, chainId);
+        _handleSignature(structHash, signature, account, chainId, bytes32(0));
     }
 
     function testArraySignature(
@@ -75,23 +75,30 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
                 keccak256(abi.encodePacked(array))
             )
         );
-        _handleSignature(structHash, signature, account, chainId);
+        _handleSignature(structHash, signature, account, chainId, bytes32(0));
     }
 
     // @dev Test function specifically for EIP-6492 signatures
     // @param account The expected signer (may be a counterfactual contract address)
     // @param signature The EIP-6492 wrapped signature or regular signature
     // @param chainId The chain ID for domain separator
-    function testEIP6492Signature(address account, bytes calldata signature, uint256 chainId) external {
+    // @param expectedWrapperHash keccak256(abi.encode(factory, factoryCalldata)) for EIP-6492 signatures
+    function testEIP6492Signature(
+        address account,
+        bytes calldata signature,
+        uint256 chainId,
+        bytes32 expectedWrapperHash
+    ) external {
         bytes32 structHash = keccak256(abi.encode(keccak256(bytes("PrimaryStruct(address account)")), account));
-        _handleSignature(structHash, signature, account, chainId);
+        _handleSignature(structHash, signature, account, chainId, expectedWrapperHash);
     }
 
     function _handleSignature(
         bytes32 structHash,
         bytes calldata signature,
         address account,
-        uint256 chainId
+        uint256 chainId,
+        bytes32 expectedWrapperHash
     ) internal {
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(chainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
@@ -102,7 +109,8 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
             signature,
             account,
             "call",
-            EIP6492Deployer(dataStore.getAddress(Keys.EIP6492_DEPLOYER))
+            EIP6492Deployer(dataStore.getAddress(Keys.EIP6492_DEPLOYER)),
+            expectedWrapperHash
         );
     }
 }

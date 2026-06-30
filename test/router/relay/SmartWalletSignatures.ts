@@ -9,6 +9,11 @@ import { EIP6492_DEPLOYER } from "../../../utils/keys";
 
 const EIP6492_MAGIC_BYTES = "0x6492649264926492649264926492649264926492649264926492649264926492";
 
+// keccak256(abi.encode(factory, factoryCalldata)) the signer commits to for EIP-6492 signatures
+function wrapperHash(factory: string, factoryCalldata: string) {
+  return ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [factory, factoryCalldata]));
+}
+
 // Helper to sign with minified digest (for Ledger hardware wallet support)
 async function signMinified(signer, domain, types, value) {
   // Compute the original digest
@@ -185,7 +190,7 @@ describe("Smart Wallet Signatures", () => {
       const signature = await user0._signTypedData(domain, types, value);
 
       // Validate via ERC-1271 (already deployed, no EIP-6492 needed)
-      await mockContract.testEIP6492Signature(walletAddress, signature, chainId);
+      await mockContract.testEIP6492Signature(walletAddress, signature, chainId, ethers.constants.HashZero);
     });
 
     it("should validate minified ERC-1271 signature", async () => {
@@ -206,7 +211,7 @@ describe("Smart Wallet Signatures", () => {
       const signature = await signMinified(user0, domain, types, value);
 
       // Should validate via ERC-1271 with minified digest
-      await mockContract.testEIP6492Signature(walletAddress, signature, chainId);
+      await mockContract.testEIP6492Signature(walletAddress, signature, chainId, ethers.constants.HashZero);
     });
 
     it("should reject ERC-1271 signature with wrong owner", async () => {
@@ -232,10 +237,9 @@ describe("Smart Wallet Signatures", () => {
       const signature = await user1._signTypedData(domain, types, value);
 
       // Should try ECDSA (wrong signer), then ERC-1271 (wallet rejects), then InvalidRecoveredSigner
-      await expect(mockContract.testEIP6492Signature(walletAddress, signature, chainId)).to.be.revertedWithCustomError(
-        errorsContract,
-        "InvalidRecoveredSigner"
-      );
+      await expect(
+        mockContract.testEIP6492Signature(walletAddress, signature, chainId, ethers.constants.HashZero)
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
     it("should reject minified ERC-1271 signature with wrong owner", async () => {
@@ -256,10 +260,9 @@ describe("Smart Wallet Signatures", () => {
       const signature = await signMinified(user1, domain, types, value);
 
       // Flow: ECDSA recovers user1 → ERC-1271 fails → InvalidRecoveredSigner (valid sig, wrong address)
-      await expect(mockContract.testEIP6492Signature(walletAddress, signature, chainId)).to.be.revertedWithCustomError(
-        errorsContract,
-        "InvalidRecoveredSigner"
-      );
+      await expect(
+        mockContract.testEIP6492Signature(walletAddress, signature, chainId, ethers.constants.HashZero)
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
   });
 
@@ -300,7 +303,12 @@ describe("Smart Wallet Signatures", () => {
       );
 
       // Validate via EIP-6492 (will deploy the wallet first)
-      await mockContract.testEIP6492Signature(walletAddress, wrappedSignature, chainId);
+      await mockContract.testEIP6492Signature(
+        walletAddress,
+        wrappedSignature,
+        chainId,
+        wrapperHash(mockFactory.address, factoryCalldata)
+      );
 
       // Verify wallet is now deployed
       const walletCodeAfter = await ethers.provider.getCode(walletAddress);
@@ -343,7 +351,12 @@ describe("Smart Wallet Signatures", () => {
       );
 
       // Should still validate (skips factory call since already deployed)
-      await mockContract.testEIP6492Signature(walletAddress, wrappedSignature, chainId);
+      await mockContract.testEIP6492Signature(
+        walletAddress,
+        wrappedSignature,
+        chainId,
+        wrapperHash(mockFactory.address, factoryCalldata)
+      );
     });
 
     it("should validate minified EIP-6492 signature", async () => {
@@ -380,7 +393,12 @@ describe("Smart Wallet Signatures", () => {
       );
 
       // Should validate and deploy wallet
-      await mockContract.testEIP6492Signature(walletAddress, wrappedSignature, chainId);
+      await mockContract.testEIP6492Signature(
+        walletAddress,
+        wrappedSignature,
+        chainId,
+        wrapperHash(mockFactory.address, factoryCalldata)
+      );
 
       // Verify wallet is now deployed
       expect(await ethers.provider.getCode(walletAddress)).to.not.equal("0x");
@@ -408,7 +426,12 @@ describe("Smart Wallet Signatures", () => {
       );
 
       await expect(
-        mockContract.testEIP6492Signature(walletAddress, wrappedSignature, chainId)
+        mockContract.testEIP6492Signature(
+          walletAddress,
+          wrappedSignature,
+          chainId,
+          wrapperHash(mockFactory.address, factoryCalldata)
+        )
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
@@ -441,7 +464,12 @@ describe("Smart Wallet Signatures", () => {
       );
 
       await expect(
-        mockContract.testEIP6492Signature(walletAddress, wrappedSignature, chainId)
+        mockContract.testEIP6492Signature(
+          walletAddress,
+          wrappedSignature,
+          chainId,
+          wrapperHash(mockFactory.address, badFactoryCalldata)
+        )
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
@@ -476,7 +504,12 @@ describe("Smart Wallet Signatures", () => {
 
       // Factory deploys to different address than expected, so validation should fail
       await expect(
-        mockContract.testEIP6492Signature(expectedWalletAddress, wrappedSignature, chainId)
+        mockContract.testEIP6492Signature(
+          expectedWalletAddress,
+          wrappedSignature,
+          chainId,
+          wrapperHash(mockFactory.address, wrongFactoryCalldata)
+        )
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
   });

@@ -78,6 +78,9 @@ interface IRelayUtils {
         uint256 deadline;
         bytes signature;
         uint256 desChainId;
+        // hash of the EIP-6492 wrapper: keccak256(abi.encode(factory, factoryCalldata))
+        // 0 for EOA / already-deployed ERC-1271 signatures that have no wrapper
+        bytes32 eip6492SignatureWrapperHash;
     }
 
     struct TransferRequests {
