@@ -19,6 +19,9 @@ struct SubaccountApproval {
     uint256 deadline;
     bytes32 integrationId;
     uint256 revocationCounter;
+    // hash of the EIP-6492 wrapper of `signature`: keccak256(abi.encode(factory, factoryCalldata))
+    // 0 for EOA / already-deployed ERC-1271 signatures that have no wrapper
+    bytes32 eip6492SignatureWrapperHash;
     bytes signature;
 }
 

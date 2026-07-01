@@ -6,4 +6,6 @@ interface IRewardTracker {
     function distributor() external view returns (address);
 
     function updateRewards() external;
+
+    function stakedAmounts(address _account) external view returns (uint256);
 }
