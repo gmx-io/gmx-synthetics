@@ -138,7 +138,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
       create: { ...params, isLong: false, sizeDeltaUsd: decimalToFloat(500 * 1000) },
       execute: {
         gasUsageLabel: "executeOrder",
-        expectedCancellationReason: "OrderNotFulfillableAtAcceptablePrice",
+        expectedCancellationReason: "PriceImpactLargerThanOrderSize",
       },
     });
 

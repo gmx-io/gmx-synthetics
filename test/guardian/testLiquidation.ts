@@ -913,4 +913,108 @@ describe("Guardian.Liquidation", () => {
       expect(await getPositionCount(dataStore)).to.eq(0);
     });
   });
+
+  describe("negative pending impact is counted in the liquidation check", () => {
+    const sizeInUsd = decimalToFloat(100 * 1000);
+    const priceMin = expandDecimals(5000, 12);
+    const priceMax = expandDecimals(5100, 12);
+    const prices = {
+      indexTokenPrice: { min: priceMin, max: priceMax },
+      longTokenPrice: { min: priceMin, max: priceMax },
+      shortTokenPrice: { min: expandDecimals(1, 24), max: expandDecimals(1, 24) },
+    };
+
+    const maxNegativeImpactUsd = sizeInUsd.mul(decimalToFloat(5, 3)).div(FLOAT_PRECISION).mul(-1);
+
+    const isLiquidatable = async (positionKey) => {
+      const [liquidatable, , info] = await reader.isPositionLiquidatable(
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        prices,
+        false,
+        true
+      );
+      return { liquidatable, info };
+    };
+
+    const openLongWithNegativePendingImpact = async (impactFactor, acceptablePrice) => {
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), impactFactor);
+      await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 0));
+
+      await handleOrder(fixture, {
+        create: {
+          account: user1,
+          market: ethUsdMarket,
+          initialCollateralToken: usdc,
+          initialCollateralDeltaAmount: expandDecimals(5000, 6),
+          sizeDeltaUsd: sizeInUsd,
+          acceptablePrice,
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+        },
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          precisions: [8, 18],
+        },
+      });
+
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), 0);
+    };
+
+    const getMaskedAndCountedInfo = async (positionKey) => {
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      const { info: infoMasked } = await isLiquidatable(positionKey);
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3));
+      const { info: infoCounted } = await isLiquidatable(positionKey);
+
+      return { infoMasked, infoCounted };
+    };
+
+    it("counts the pending impact below the cap and can trigger liquidation", async () => {
+      await openLongWithNegativePendingImpact(decimalToFloat(1, 8), expandDecimals(5050, 12));
+
+      const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
+      const position = await reader.getPosition(dataStore.address, positionKey);
+      expect(position.numbers.pendingImpactAmount).lt(0);
+
+      const pendingImpactUsd = position.numbers.pendingImpactAmount.mul(priceMax);
+      expect(pendingImpactUsd).gt(maxNegativeImpactUsd);
+
+      const { infoMasked, infoCounted } = await getMaskedAndCountedInfo(positionKey);
+      expect(infoCounted.remainingCollateralUsd.sub(infoMasked.remainingCollateralUsd)).to.eq(pendingImpactUsd);
+
+      const target = infoMasked.remainingCollateralUsd.add(infoCounted.remainingCollateralUsd).div(2);
+      await dataStore.setUint(
+        keys.minCollateralFactorForLiquidationKey(ethUsdMarket.marketToken),
+        target.mul(FLOAT_PRECISION).div(sizeInUsd)
+      );
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      const { liquidatable: liquidatableMasked } = await isLiquidatable(positionKey);
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3));
+      const { liquidatable: liquidatableCounted } = await isLiquidatable(positionKey);
+
+      expect(liquidatableMasked).to.eq(false);
+      expect(liquidatableCounted).to.eq(true);
+    });
+
+    it("caps the counted pending impact at the max negative factor", async () => {
+      await openLongWithNegativePendingImpact(decimalToFloat(1, 6), expandDecimals(6000, 12));
+
+      const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
+      const position = await reader.getPosition(dataStore.address, positionKey);
+
+      const pendingImpactUsd = position.numbers.pendingImpactAmount.mul(priceMax);
+      expect(pendingImpactUsd).lt(maxNegativeImpactUsd);
+
+      const { infoMasked, infoCounted } = await getMaskedAndCountedInfo(positionKey);
+      expect(infoCounted.remainingCollateralUsd.sub(infoMasked.remainingCollateralUsd)).to.eq(maxNegativeImpactUsd);
+    });
+  });
 });
