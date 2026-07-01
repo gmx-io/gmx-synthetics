@@ -1,11 +1,12 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { getBalanceOf } from "../../utils/token";
-import { getPoolAmount } from "../../utils/market";
+import { getMarketTokenPriceWithPoolValue, getPoolAmount } from "../../utils/market";
 import { getDepositCount, handleDeposit } from "../../utils/deposit";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import * as keys from "../../utils/keys";
 
 describe("Guardian.HomogenousMarkets", () => {
   let fixture;
@@ -108,5 +109,34 @@ describe("Guardian.HomogenousMarkets", () => {
 
     // Check that User0's deposit got executed and there is 0 deposits waiting to get executed
     expect(await getDepositCount(dataStore)).eq(0);
+  });
+
+  it("clamps pending borrowing fees when same-token open interest rounds down", async () => {
+    expect(ethUsdSingleTokenMarket.longToken).to.eq(ethUsdSingleTokenMarket.shortToken);
+
+    const openInterest = decimalToFloat(100_000).add(1);
+    const isLong = true;
+
+    await dataStore.setUint(
+      keys.openInterestKey(ethUsdSingleTokenMarket.marketToken, usdc.address, isLong),
+      openInterest
+    );
+    await dataStore.setUint(
+      keys.cumulativeBorrowingFactorKey(ethUsdSingleTokenMarket.marketToken, isLong),
+      decimalToFloat(1)
+    );
+    await dataStore.setUint(keys.totalBorrowingKey(ethUsdSingleTokenMarket.marketToken, isLong), openInterest);
+
+    const [, poolValueInfo] = await getMarketTokenPriceWithPoolValue(fixture, {
+      market: ethUsdSingleTokenMarket,
+      prices: {
+        longTokenPrice: {
+          min: expandDecimals(1, 6 + 18),
+          max: expandDecimals(1, 6 + 18),
+        },
+      },
+    });
+
+    expect(poolValueInfo.totalBorrowingFees).eq(0);
   });
 });
