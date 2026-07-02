@@ -1111,6 +1111,9 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
+      positionImpactPoolDistributionRate: expandDecimals(896425244, 6 + 30).div(SECONDS_PER_DAY), // ~896,425,244 SATS/day, drains current ~7,171,401,944.9936 SATS PI bucket (~$63) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
+
       negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
@@ -1876,8 +1879,8 @@ const config: {
       reserveFactor: percentageToFloat("175%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("170%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(273, 9 + 30).div(SECONDS_PER_DAY), // ~273 TON/day, drains current ~2,176.332 TON PI bucket (~$3,375) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       maxOpenInterest: decimalToFloat(1),
       maxPoolUsdForDeposit: decimalToFloat(1),
@@ -2017,8 +2020,8 @@ const config: {
       reserveFactor: percentageToFloat("125%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(179344, 6 + 30).div(SECONDS_PER_DAY), // ~179,344 BOME/day, drains current ~1,434,747.952 BOME PI bucket (~$572) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       maxOpenInterest: decimalToFloat(1),
       maxPoolUsdForDeposit: decimalToFloat(1),
@@ -2053,8 +2056,8 @@ const config: {
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(78685, 18 + 30).div(SECONDS_PER_DAY), // ~78,685 MEME/day, drains current ~629,476.5606 MEME PI bucket (~$303) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       maxOpenInterest: decimalToFloat(1),
       maxPoolUsdForDeposit: decimalToFloat(1),
@@ -2123,8 +2126,8 @@ const config: {
       reserveFactor: percentageToFloat("125%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(59236, 5 + 30).div(SECONDS_PER_DAY), // ~59,236 MEW/day, drains current ~473,886.268 MEW PI bucket (~$156) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       maxOpenInterest: decimalToFloat(1),
       maxPoolUsdForDeposit: decimalToFloat(1),
@@ -2670,8 +2673,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(850, 18),
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // stop distribution
-      minPositionImpactPoolAmount: expandDecimals(4888, 6), // leave ~10% = 4888 MELANIA
+      positionImpactPoolDistributionRate: expandDecimals(613, 6 + 30).div(SECONDS_PER_DAY), // ~613 MELANIA/day, drains current ~4,896.2973 MELANIA PI bucket (~$356) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -2751,6 +2754,9 @@ const config: {
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithLowerBase,
+
+      positionImpactPoolDistributionRate: expandDecimals(16664, 9 + 30).div(SECONDS_PER_DAY), // ~16,664 AI16Z/day, drains current ~133,308.9067 AI16Z PI bucket (~$52) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
@@ -3171,6 +3177,9 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
+      positionImpactPoolDistributionRate: expandDecimals(448, 14 + 30).div(SECONDS_PER_DAY), // ~0.0448 MKR/day, drains current ~0.3583 MKR PI bucket (~$428) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
+
       negativePositionImpactFactor: exponentToFloat("1.6e-8"),
       positivePositionImpactFactor: exponentToFloat("8e-9"),
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
@@ -3392,6 +3401,9 @@ const config: {
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      positionImpactPoolDistributionRate: expandDecimals(228, 18 + 30).div(SECONDS_PER_DAY), // ~228 PI/day, drains current ~1,816.5707 PI PI bucket (~$224) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("2.54e-8"),
@@ -3741,6 +3753,9 @@ const config: {
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithLowerBase,
+
+      positionImpactPoolDistributionRate: expandDecimals(21824, 18 + 30).div(SECONDS_PER_DAY), // ~21,824 BRETT/day, drains current ~174,589.7242 BRETT PI bucket (~$853) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactFactor: exponentToFloat("2.69e-8"),
       positivePositionImpactFactor: exponentToFloat("2.24e-8"),
@@ -4533,6 +4548,9 @@ const config: {
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      positionImpactPoolDistributionRate: expandDecimals(476, 48).div(SECONDS_PER_DAY), // ~476 IP/day, drains current ~3,800.4512 IP PI bucket (~$1,120) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactFactor: exponentToFloat("1.25e-8"),
       positivePositionImpactFactor: exponentToFloat("8.33e-9"),
