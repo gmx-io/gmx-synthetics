@@ -22,6 +22,10 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
         return true;
     }
 
+    function shouldCheckRefPrice() external pure returns (bool) {
+        return false;
+    }
+
     // @dev the timestamp returned is based on the current blockchain timestamp
     // this is because Chainlink on-chain price feeds have a lower update frequency
     // if a Chainlink on-chain price feed is used, it is assumed that the feed
@@ -61,6 +65,8 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
             token: token,
             min: priceProps.min,
             max: priceProps.max,
+            rawMin: priceProps.min,
+            rawMax: priceProps.max,
             timestamp: Chain.currentTimestamp(),
             provider: address(this)
         });

@@ -1,7 +1,8 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals } from "../../utils/math";
+import { expandDecimals, percentageToFloat, applyFactor } from "../../utils/math";
+import { handleDeposit } from "../../utils/deposit";
 import { logGasUsage } from "../../utils/gas";
 import * as keys from "../../utils/keys";
 import { getBridgeOutSignature, sendBridgeOut } from "../../utils/relay/multichain";
@@ -22,7 +23,9 @@ describe("MultichainTransferRouter", () => {
     wnt,
     usdc,
     mockStargatePoolNative,
-    mockStargatePoolUsdc;
+    mockStargatePoolUsdc,
+    ethUsdMarket,
+    chainlinkPriceFeedProvider;
   let chainId;
 
   beforeEach(async () => {
@@ -37,6 +40,8 @@ describe("MultichainTransferRouter", () => {
       usdc,
       mockStargatePoolNative,
       mockStargatePoolUsdc,
+      ethUsdMarket,
+      chainlinkPriceFeedProvider,
     } = fixture.contracts);
 
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
@@ -117,6 +122,11 @@ describe("MultichainTransferRouter", () => {
         minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
         data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
+        bridgeFee: {
+          feeToken: ethers.constants.AddressZero,
+          feeAmount: 0,
+          feeSwapPath: [],
+        },
       };
     });
 
@@ -374,6 +384,324 @@ describe("MultichainTransferRouter", () => {
       await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
     });
 
+    describe("bridge fee swap", () => {
+      const bridgeFeeUsdc = expandDecimals(10, 6); // 10 USDC for bridge fee
+      const atomicSwapFeeFactor = percentageToFloat("1%");
+
+      beforeEach(async () => {
+        // Seed ethUsdMarket with liquidity for USDC→WNT atomic swaps
+        await handleDeposit(fixture, {
+          create: {
+            longTokenAmount: expandDecimals(10, 18), // 10 WETH
+            shortTokenAmount: expandDecimals(10 * 5000, 6), // 50,000 USDC
+          },
+        });
+
+        // Set atomic swap fee factor
+        await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+
+        // Enable providers
+        await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+        await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+        await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+        await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      });
+
+      it("cross-chain bridge-out with USDC bridge fee swap", async () => {
+        const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE(); // 0.001 ETH
+
+        // Bridge in USDC for bridge-out amount + bridge fee
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount.add(bridgeFeeUsdc) });
+        // Bridge in WNT for relay fee only (no WNT for bridge fee — that will come from the swap)
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        // Verify initial state
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
+          bridgeOutAmount.add(bridgeFeeUsdc)
+        );
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(feeAmount);
+
+        // Configure cross-chain
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // Set bridge fee params on bridgeOutParams
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+
+        // Pass oracle params for the atomic swap
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        const tx = await sendBridgeOut(bridgeOutParams);
+
+        // User's USDC multichain balance should be 0 (bridgeOutAmount + bridgeFeeUsdc consumed)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+
+        // Bridge-out succeeded — USDC transferred to user on dest chain
+        expect(await usdc.balanceOf(user1.address)).eq(bridgeOutAmount);
+
+        // Bridge out fee (native) was sent to the mock Stargate pool
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolUsdc.address)).eq(bridgeOutFee);
+
+        // Relay fee was sent to relayer
+        expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(relayFeeAmount);
+
+        // Verify swap events
+        const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+        const logs = parseLogs(fixture, txReceipt);
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.not.eq(undefined);
+
+        // Verify atomic swap fee was applied
+        const swapFeesCollectedLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapFeesCollected");
+        expect(swapFeesCollectedLog.parsedEventData.swapFeeType).eq(keys.ATOMIC_SWAP_FEE_TYPE);
+        expect(swapInfoLog.parsedEventData.amountIn.sub(swapInfoLog.parsedEventData.amountInAfterFees)).eq(
+          applyFactor(swapInfoLog.parsedEventData.amountIn, atomicSwapFeeFactor)
+        );
+
+        await logGasUsage({
+          tx,
+          label: "multichainTransferRouter.bridgeOut with bridge fee swap",
+        });
+      });
+
+      it("no swap when feeSwapPath is empty (backward compat)", async () => {
+        // Bridge in USDC + WNT (with enough WNT for relay fee + bridge out fee)
+        const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount.add(bridgeOutFee) });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // bridgeFee with empty feeSwapPath (default)
+        const tx = await sendBridgeOut(bridgeOutParams);
+
+        const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+        const logs = parseLogs(fixture, txReceipt);
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.eq(undefined); // no swap happened
+      });
+
+      it("no swap when feeAmount is 0", async () => {
+        const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount.add(bridgeOutFee) });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // feeAmount is 0 but feeSwapPath is non-empty — should still skip swap
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: 0,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+
+        const tx = await sendBridgeOut(bridgeOutParams);
+
+        const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+        const logs = parseLogs(fixture, txReceipt);
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.eq(undefined); // no swap happened
+      });
+
+      it("no swap when feeToken is WNT", async () => {
+        const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount.add(bridgeOutFee) });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // feeToken is WNT — no swap needed even with non-empty path
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: wnt.address,
+            feeAmount: expandDecimals(1, 15),
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+
+        const tx = await sendBridgeOut(bridgeOutParams);
+
+        const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+        const logs = parseLogs(fixture, txReceipt);
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.eq(undefined); // no swap happened
+      });
+
+      it("should revert if insufficient USDC for bridge fee swap", async () => {
+        // Bridge in USDC for bridge-out only (not enough for bridge fee)
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+        // Bridge in WNT for relay fee
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc, // 10 USDC but user only has bridgeOutAmount
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InsufficientMultichainBalance"
+        );
+      });
+
+      it("tampering bridgeFee params invalidates signature", async () => {
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount.add(bridgeFeeUsdc) });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        // Sign with the original params
+        bridgeOutParams.userNonce = 1;
+        const relayParams = await getRelayParams(bridgeOutParams);
+        const signature = await getBridgeOutSignature({
+          ...bridgeOutParams,
+          relayParams,
+          verifyingContract: bridgeOutParams.relayRouter.address,
+        });
+        bridgeOutParams.signature = signature;
+
+        // Tamper bridgeFee.feeAmount
+        bridgeOutParams.params.bridgeFee.feeAmount = expandDecimals(5, 6); // changed from 10 to 5 USDC
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InvalidRecoveredSigner"
+        );
+
+        // Restore original feeAmount, tamper feeSwapPath
+        bridgeOutParams.params.bridgeFee.feeAmount = bridgeFeeUsdc;
+        bridgeOutParams.params.bridgeFee.feeSwapPath = []; // tampered
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InvalidRecoveredSigner"
+        );
+
+        // Restore everything — should succeed
+        bridgeOutParams.params.bridgeFee.feeSwapPath = [ethUsdMarket.marketToken];
+        await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
+      });
+
+      it("same-chain withdrawal ignores bridgeFee params (no swap)", async () => {
+        // Same-chain: srcChainId == desChainId == chainId
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        // Set bridgeFee params even though it's same-chain
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          provider: ethers.constants.AddressZero,
+          data: "0x",
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+
+        const tx = await sendBridgeOut(bridgeOutParams);
+
+        // Should succeed without swap (same-chain path doesn't call _swapBridgeFeeIfNeeded)
+        expect(await usdc.balanceOf(user1.address)).eq(bridgeOutAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+
+        const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+        const logs = parseLogs(fixture, txReceipt);
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.eq(undefined); // no swap happened
+      });
+
+      it("should revert when swap produces less WNT than needed for bridge fee", async () => {
+        // Bridge in very small amount of USDC for bridge fee (1 USDC → ~0.0002 ETH after fees)
+        // Mock BRIDGE_OUT_FEE is 0.001 ETH, so 1 USDC won't be enough
+        const tinyBridgeFeeUsdc = expandDecimals(1, 6); // 1 USDC
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount.add(tinyBridgeFeeUsdc) });
+        // Only bridge in relay fee WNT — no extra WNT for bridge out fee
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: tinyBridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        // Swap succeeds (1 USDC → ~0.0002 WNT) but bridge out fails
+        // because WNT balance is insufficient for the 0.001 ETH bridge out fee
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InsufficientMultichainBalance"
+        );
+      });
+    });
+
     it("should revert if bridge output is below minAmountOut", async () => {
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
@@ -441,6 +769,11 @@ describe("MultichainTransferRouter", () => {
         minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
         data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1
+        bridgeFee: {
+          feeToken: ethers.constants.AddressZero,
+          feeAmount: 0,
+          feeSwapPath: [],
+        },
       };
 
       // Mock initial balances and states
@@ -483,6 +816,11 @@ describe("MultichainTransferRouter", () => {
         minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
         data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]),
+        bridgeFee: {
+          feeToken: ethers.constants.AddressZero,
+          feeAmount: 0,
+          feeSwapPath: [],
+        },
       };
 
       const tx = await multichainTransferRouter.connect(user1).transferOut(transferOutParams);
@@ -510,6 +848,11 @@ describe("MultichainTransferRouter", () => {
         minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
         data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]),
+        bridgeFee: {
+          feeToken: ethers.constants.AddressZero,
+          feeAmount: 0,
+          feeSwapPath: [],
+        },
       };
 
       await expect(multichainTransferRouter.connect(user1).transferOut(transferOutParams))

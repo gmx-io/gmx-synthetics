@@ -80,7 +80,13 @@ contract MockStargatePool {
         address // _refundReceiver
     ) external payable returns (MessagingReceipt memory, OFTReceipt memory) {
         address receiver = address(uint160(uint256(_sendParam.to)));
-        IERC20(token).transferFrom(msg.sender, receiver, _sendParam.amountLD);
+        if (token == address(0)) {
+            // Native token: amountLD is included in msg.value, forward to receiver
+            (bool success, ) = receiver.call{value: _sendParam.amountLD}("");
+            require(success, "ETH transfer failed");
+        } else {
+            IERC20(token).transferFrom(msg.sender, receiver, _sendParam.amountLD);
+        }
 
         MessagingReceipt memory msgReceipt = MessagingReceipt({
             guid: bytes32(uint256(block.timestamp)),

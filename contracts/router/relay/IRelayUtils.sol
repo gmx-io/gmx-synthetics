@@ -78,6 +78,9 @@ interface IRelayUtils {
         uint256 deadline;
         bytes signature;
         uint256 desChainId;
+        // hash of the EIP-6492 wrapper: keccak256(abi.encode(factory, factoryCalldata))
+        // 0 for EOA / already-deployed ERC-1271 signatures that have no wrapper
+        bytes32 eip6492SignatureWrapperHash;
     }
 
     struct TransferRequests {
@@ -86,12 +89,19 @@ interface IRelayUtils {
         uint256[] amounts;
     }
 
+    struct BridgeFeeParams {
+        address feeToken;
+        uint256 feeAmount;
+        address[] feeSwapPath;
+    }
+
     struct BridgeOutParams {
         address token;
         uint256 amount;
         uint256 minAmountOut;
         address provider;
         bytes data; // provider specific data e.g. dstEid
+        BridgeFeeParams bridgeFee;
     }
 
     // @note all params except account should be part of the corresponding struct hash
@@ -112,5 +122,14 @@ interface IRelayUtils {
         IBaseOrderUtils.CreateOrderParams[] createOrderParamsList;
         UpdateOrderParams[] updateOrderParamsList;
         bytes32[] cancelOrderKeys;
+    }
+
+    struct HandleStakingRewardsParams {
+        bool shouldClaimGmx;
+        bool shouldStakeGmx;
+        bool shouldClaimEsGmx;
+        bool shouldStakeEsGmx;
+        bool shouldStakeMultiplierPoints;
+        bool shouldClaimWeth;
     }
 }

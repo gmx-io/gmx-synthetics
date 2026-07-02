@@ -22,6 +22,7 @@ import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
+import "../fee/FeeUtils.sol";
 import "../referral/ReferralUtils.sol";
 import "../multichain/MultichainUtils.sol";
 import "../swap/SwapUtils.sol";
@@ -251,6 +252,7 @@ library OrderUtils {
         order.setAcceptablePrice(params.numbers.acceptablePrice);
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
+        order.setUiFeeFactor(FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver));
         order.setValidFromTime(params.numbers.validFromTime);
         order.setSrcChainId(srcChainId);
         order.setIsLong(params.isLong);

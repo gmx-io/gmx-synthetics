@@ -114,6 +114,7 @@ library DecreasePositionCollateralUtils {
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
             params.order.uiFeeReceiver(), // uiFeeReceiver
+            params.order.uiFeeFactor(), // uiFeeFactor
             Order.isLiquidationOrder(params.order.orderType()) // isLiquidation
         );
 

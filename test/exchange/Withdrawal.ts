@@ -616,6 +616,128 @@ describe("Exchange.Withdrawal", () => {
     expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(1000, 6));
   });
 
+  it("withdraw with same-market longTokenSwapPath when tokenIn pool is above maxPoolAmount", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    await wnt.mint(ethUsdMarket.marketToken, expandDecimals(2, 18));
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(12, 18));
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(11, 18));
+
+    const initialLongTokenPoolAmount = await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address);
+    expect(initialLongTokenPoolAmount).eq(expandDecimals(12, 18));
+
+    await createWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      longTokenSwapPath: [ethUsdMarket.marketToken],
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: false,
+      executionFee: 700,
+      callbackGasLimit: 100000,
+      gasUsageLabel: "createWithdrawal",
+    });
+
+    await executeWithdrawal(fixture, {
+      gasUsageLabel: "executeWithdrawal",
+    });
+
+    const longTokenPoolAmount = await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address);
+    expect(longTokenPoolAmount).lte(initialLongTokenPoolAmount);
+    expect(longTokenPoolAmount).gt(expandDecimals(11, 18));
+    expect(await wnt.balanceOf(user1.address)).eq(0);
+    expect(await usdc.balanceOf(user1.address)).gt(0);
+  });
+
+  it("withdraw with same-market longTokenSwapPath when tokenIn pool is below maxPoolAmount", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(11, 18));
+
+    await createWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      longTokenSwapPath: [ethUsdMarket.marketToken],
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: false,
+      executionFee: 700,
+      callbackGasLimit: 100000,
+      gasUsageLabel: "createWithdrawal",
+    });
+
+    await executeWithdrawal(fixture, {
+      gasUsageLabel: "executeWithdrawal",
+    });
+
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).lte(expandDecimals(11, 18));
+    expect(await wnt.balanceOf(user1.address)).eq(0);
+    expect(await usdc.balanceOf(user1.address)).gt(0);
+  });
+
+  it("withdraw with multi-hop longTokenSwapPath only relaxes maxPoolAmount for the first hop", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdSpotOnlyMarket,
+        longTokenAmount: expandDecimals(10, 18),
+      },
+    });
+
+    await wnt.mint(ethUsdMarket.marketToken, expandDecimals(2, 18));
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(12, 18));
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(11, 18));
+    await dataStore.setUint(
+      keys.maxPoolAmountKey(ethUsdSpotOnlyMarket.marketToken, usdc.address),
+      expandDecimals(1, 6)
+    );
+
+    await createWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: false,
+      executionFee: 700,
+      callbackGasLimit: 100000,
+      gasUsageLabel: "createWithdrawal",
+    });
+
+    await executeWithdrawal(fixture, {
+      gasUsageLabel: "executeWithdrawal",
+      expectedCancellationReason: "MaxPoolAmountExceeded",
+    });
+  });
+
   it("withdraw with shortTokenSwapPath", async () => {
     await handleDeposit(fixture, {
       create: {

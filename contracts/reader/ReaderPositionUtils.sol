@@ -170,6 +170,7 @@ library ReaderPositionUtils {
             shortToken: cache.market.shortToken,
             sizeDeltaUsd: sizeDeltaUsd,
             uiFeeReceiver: uiFeeReceiver,
+            uiFeeFactor: type(uint256).max, // read the currently configured factor for view calls
             isLiquidation: false
         });
 

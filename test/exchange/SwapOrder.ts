@@ -52,6 +52,25 @@ describe("Exchange.SwapOrder", () => {
     expect(await usdc.balanceOf(user0.address)).eq("50000000000");
   });
 
+  it("executeOrder reverts when a normal swap adds tokenIn above maxPoolAmount", async () => {
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(1, 18));
+
+    await handleOrder(fixture, {
+      create: {
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        acceptablePrice: 0,
+        orderType: OrderType.MarketSwap,
+        swapPath: [ethUsdMarket.marketToken],
+        gasUsageLabel: "orderHandler.createOrder",
+      },
+      execute: {
+        gasUsageLabel: "orderHandler.executeOrder",
+        expectedCancellationReason: "MaxPoolAmountExceeded",
+      },
+    });
+  });
+
   it("executeOrder, spot only market", async () => {
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq(0);
@@ -294,8 +313,18 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
   let reader, dataStore, ethUsdMarket, wnt, usdc, wethPriceFeed;
 
   // execution prices above the $5,000 entry, so the long position is in profit
-  const wntPriceDouble = { contractName: "wnt", precision: 8, min: expandDecimals(10_000, 4), max: expandDecimals(10_000, 4) };
-  const wntPriceFiveX = { contractName: "wnt", precision: 8, min: expandDecimals(25_000, 4), max: expandDecimals(25_000, 4) };
+  const wntPriceDouble = {
+    contractName: "wnt",
+    precision: 8,
+    min: expandDecimals(10_000, 4),
+    max: expandDecimals(10_000, 4),
+  };
+  const wntPriceFiveX = {
+    contractName: "wnt",
+    precision: 8,
+    min: expandDecimals(25_000, 4),
+    max: expandDecimals(25_000, 4),
+  };
 
   const marketPricesAt = (wntUsd) => ({
     indexTokenPrice: { min: expandDecimals(wntUsd, 12), max: expandDecimals(wntUsd, 12) },
@@ -322,8 +351,14 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
   };
 
   const setLongPnlFactorCaps = async (factor) => {
-    await dataStore.setUint(keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_DEPOSITS, ethUsdMarket.marketToken, true), factor);
-    await dataStore.setUint(keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, ethUsdMarket.marketToken, true), factor);
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_DEPOSITS, ethUsdMarket.marketToken, true),
+      factor
+    );
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, ethUsdMarket.marketToken, true),
+      factor
+    );
   };
 
   beforeEach(async () => {

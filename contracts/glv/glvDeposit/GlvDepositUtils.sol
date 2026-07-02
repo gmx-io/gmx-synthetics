@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 
 import "../../nonce/NonceUtils.sol";
 import "../../gas/GasUtils.sol";
+import "../../fee/FeeUtils.sol";
 import "../../multichain/MultichainVault.sol";
 
 import "../GlvVault.sol";
@@ -137,6 +138,7 @@ library GlvDepositUtils {
                 initialLongTokenAmount: cache.initialLongTokenAmount,
                 initialShortTokenAmount: cache.initialShortTokenAmount,
                 minGlvTokens: params.minGlvTokens,
+                uiFeeFactor: FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver),
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit,
