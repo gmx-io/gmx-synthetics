@@ -59,8 +59,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         IBaseOrderUtils.CreateOrderParams calldata params,
         bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
-        validateDataListLength(params.dataList.length);
+        _validateCreateOrderFeature(params);
 
         return OrderUtils.createOrder(
             dataStore,
@@ -89,8 +88,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         uint256 twapCount,
         uint256 interval
     ) external override globalNonReentrant onlyController returns (bytes32[] memory orderKeys) {
-        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
-        validateDataListLength(params.dataList.length);
+        _validateCreateOrderFeature(params);
         return OrderUtils.createTwapOrder(dataStore, eventEmitter, orderVault, referralStorage, account, srcChainId, params, shouldCapMaxExecutionFee, twapCount, interval);
     }
 
@@ -253,7 +251,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Order.Props memory order = _getOrder(key);
 
         this.doExecuteOrder(
             key,
@@ -276,7 +274,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
     {
         uint256 startingGas = gasleft();
 
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Order.Props memory order = _getOrder(key);
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         GasUtils.validateExecutionGas(dataStore, startingGas, estimatedGasLimit);
 
@@ -358,7 +356,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
 
         validateNonKeeperError(errorSelector, reasonBytes);
 
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Order.Props memory order = _getOrder(key);
         bool isMarketOrder = Order.isMarketOrder(order.orderType());
 
         if (
@@ -445,6 +443,19 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
             reason,
             reasonBytes
         );
+    }
+
+    // @dev get an order from the order store
+    // @param key the order's key
+    function _getOrder(bytes32 key) internal view returns (Order.Props memory) {
+        return OrderStoreUtils.get(dataStore, key);
+    }
+
+    // @dev validate that the create order feature is enabled and the data list length is valid
+    // @param params the parameters used to create the order
+    function _validateCreateOrderFeature(IBaseOrderUtils.CreateOrderParams calldata params) internal view {
+        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
+        validateDataListLength(params.dataList.length);
     }
 
     // @dev validate that the keeper is a frozen order keeper
