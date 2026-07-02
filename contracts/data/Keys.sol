@@ -17,6 +17,9 @@ library Keys {
     bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
     bytes32 public constant RELAY_FEE_ADDRESS = keccak256(abi.encode("RELAY_FEE_ADDRESS"));
 
+    // @dev key for the EIP-6492 deployer contract used for unprivileged factory calls during signature validation
+    bytes32 public constant EIP6492_DEPLOYER = keccak256(abi.encode("EIP6492_DEPLOYER"));
+
     // @dev key for the minimum gas for execution error
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
 
@@ -201,6 +204,8 @@ library Keys {
     bytes32 public constant CHAINLINK_PAYMENT_TOKEN = keccak256(abi.encode("CHAINLINK_PAYMENT_TOKEN"));
     // @dev key for the sequencer grace duration
     bytes32 public constant SEQUENCER_GRACE_DURATION = keccak256(abi.encode("SEQUENCER_GRACE_DURATION"));
+    // @dev key for the token static price
+    bytes32 public constant STATIC_ORACLE_PRICE = keccak256(abi.encode("STATIC_ORACLE_PRICE"));
 
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));
@@ -228,6 +233,7 @@ library Keys {
     // @dev key for the max execution fee multiplier
     bytes32 public constant MAX_EXECUTION_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("MAX_EXECUTION_FEE_MULTIPLIER_FACTOR"));
 
+    bytes32 public constant MAX_RELAY_FEE_SWAP_USD = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD"));
     bytes32 public constant MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT"));
     bytes32 public constant GELATO_RELAY_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("GELATO_RELAY_FEE_MULTIPLIER_FACTOR"));
     bytes32 public constant GELATO_RELAY_FEE_BASE_AMOUNT = keccak256(abi.encode("GELATO_RELAY_FEE_BASE_AMOUNT"));
@@ -248,6 +254,18 @@ library Keys {
     bytes32 public constant SWAP_ORDER_GAS_LIMIT = keccak256(abi.encode("SWAP_ORDER_GAS_LIMIT"));
     bytes32 public constant SET_TRADER_REFERRAL_CODE_GAS_LIMIT = keccak256(abi.encode("SET_TRADER_REFERRAL_CODE_GAS_LIMIT"));
     bytes32 public constant REGISTER_CODE_GAS_LIMIT = keccak256(abi.encode("REGISTER_CODE_GAS_LIMIT"));
+
+    bytes32 public constant STAKE_GMX_GAS_LIMIT = keccak256(abi.encode("STAKE_GMX_GAS_LIMIT"));
+    bytes32 public constant UNSTAKE_GMX_GAS_LIMIT = keccak256(abi.encode("UNSTAKE_GMX_GAS_LIMIT"));
+    bytes32 public constant STAKE_ES_GMX_GAS_LIMIT = keccak256(abi.encode("STAKE_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant UNSTAKE_ES_GMX_GAS_LIMIT = keccak256(abi.encode("UNSTAKE_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant HANDLE_STAKING_REWARDS_GAS_LIMIT = keccak256(abi.encode("HANDLE_STAKING_REWARDS_GAS_LIMIT"));
+    bytes32 public constant COMPOUND_STAKING_REWARDS_GAS_LIMIT = keccak256(abi.encode("COMPOUND_STAKING_REWARDS_GAS_LIMIT"));
+    bytes32 public constant VEST_ES_GMX_GAS_LIMIT = keccak256(abi.encode("VEST_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant DELEGATE_GOV_GMX_GAS_LIMIT = keccak256(abi.encode("DELEGATE_GOV_GMX_GAS_LIMIT"));
+    bytes32 public constant SIGNAL_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("SIGNAL_STAKING_TRANSFER_GAS_LIMIT"));
+    bytes32 public constant ACCEPT_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("ACCEPT_STAKING_TRANSFER_GAS_LIMIT"));
+    bytes32 public constant WITHDRAW_FROM_WALLET_GAS_LIMIT = keccak256(abi.encode("WITHDRAW_FROM_WALLET_GAS_LIMIT"));
 
     bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
     bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
@@ -376,6 +394,8 @@ library Keys {
     bytes32 public constant SAVED_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("SAVED_FUNDING_FACTOR_PER_SECOND"));
     // @dev key for funding increase factor
     bytes32 public constant FUNDING_INCREASE_FACTOR_PER_SECOND = keccak256(abi.encode("FUNDING_INCREASE_FACTOR_PER_SECOND"));
+    // @dev key for min funding increase factor
+    bytes32 public constant MIN_FUNDING_INCREASE_RATE_PER_SECOND = keccak256(abi.encode("MIN_FUNDING_INCREASE_RATE_PER_SECOND"));
     // @dev key for funding decrease factor
     bytes32 public constant FUNDING_DECREASE_FACTOR_PER_SECOND = keccak256(abi.encode("FUNDING_DECREASE_FACTOR_PER_SECOND"));
     // @dev key for min funding factor
@@ -435,6 +455,8 @@ library Keys {
     bytes32 public constant SUBACCOUNT_INTEGRATION_ID = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_ID"));
     // @dev key for subaccount integration id disabled status
     bytes32 public constant SUBACCOUNT_INTEGRATION_DISABLED = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_DISABLED"));
+    // @dev key for the per-(account, subaccount) revocation counter used to invalidate signed SubaccountApprovals on removal
+    bytes32 public constant SUBACCOUNT_REVOCATION_COUNTER = keccak256(abi.encode("SUBACCOUNT_REVOCATION_COUNTER"));
     // @dev key for fee distributor swap order token index
     bytes32 public constant FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX"));
     // @dev key for fee distributor swap fee batch
@@ -448,6 +470,7 @@ library Keys {
     bytes32 public constant GLV_SHIFT_LAST_EXECUTED_AT = keccak256(abi.encode("GLV_SHIFT_LAST_EXECUTED_AT"));
     bytes32 public constant GLV_SHIFT_MIN_INTERVAL = keccak256(abi.encode("GLV_SHIFT_MIN_INTERVAL"));
     bytes32 public constant MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT"));
+    bytes32 public constant GLV_MARKET_REMOVAL_DUST_THRESHOLD = keccak256(abi.encode("GLV_MARKET_REMOVAL_DUST_THRESHOLD"));
 
     // @dev key for disabling automatic parameter updates via ConfigSyncer
     bytes32 public constant SYNC_CONFIG_FEATURE_DISABLED = keccak256(abi.encode("SYNC_CONFIG_FEATURE_DISABLED"));
@@ -483,6 +506,9 @@ library Keys {
     bytes32 public constant BUYBACK_MAX_PRICE_AGE = keccak256(abi.encode("BUYBACK_MAX_PRICE_AGE"));
     // @dev key for the buyback withdrawable fees
     bytes32 public constant WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = keccak256(abi.encode("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT"));
+
+    // @dev key for whether a wallet was deployed by the protocol
+    bytes32 public constant IS_DEPLOYED_WALLET = keccak256(abi.encode("IS_DEPLOYED_WALLET"));
 
     // @dev key for user's multichain balance
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
@@ -1027,6 +1053,15 @@ library Keys {
         return keccak256(abi.encode(
             ORACLE_PROVIDER_FOR_TOKEN,
             token
+        ));
+    }
+
+    // @dev key for the token static price
+    function staticOraclePriceKey(address token, bool isMax) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            STATIC_ORACLE_PRICE,
+            token,
+            isMax
         ));
     }
 
@@ -1598,6 +1633,15 @@ library Keys {
         ));
     }
 
+    // @dev the key for min funding increase factor
+    // @param market the market for the pool
+    function minFundingIncreaseRatePerSecondKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+            market
+        ));
+    }
+
     // @dev the key for funding decrease factor
     // @param market the market for the pool
     function fundingDecreaseFactorPerSecondKey(address market) internal pure returns (bytes32) {
@@ -1609,19 +1653,23 @@ library Keys {
 
     // @dev the key for min funding factor
     // @param market the market for the pool
-    function minFundingFactorPerSecondKey(address market) internal pure returns (bytes32) {
+    // @param isLong whether the min funding factor applies to longs or shorts
+    function minFundingFactorPerSecondKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MIN_FUNDING_FACTOR_PER_SECOND,
-            market
+            market,
+            isLong
         ));
     }
 
     // @dev the key for max funding factor
     // @param market the market for the pool
-    function maxFundingFactorPerSecondKey(address market) internal pure returns (bytes32) {
+    // @param isLong whether the max funding factor applies to longs or shorts
+    function maxFundingFactorPerSecondKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MAX_FUNDING_FACTOR_PER_SECOND,
-            market
+            market,
+            isLong
         ));
     }
 
@@ -1964,6 +2012,14 @@ library Keys {
         ));
     }
 
+    function subaccountRevocationCounterKey(address account, address subaccount) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_REVOCATION_COUNTER,
+            account,
+            subaccount
+        ));
+    }
+
     // @dev key for affiliate reward amount for an account
     // @param market the market to check
     // @param token the token to get the key for
@@ -2106,6 +2162,12 @@ library Keys {
     // it is used to limit amount of funds deposited into each market
     function glvMaxMarketTokenBalanceAmountKey(address glv, address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT, glv, market));
+    }
+
+    // @dev key for max GM token balance allowed to remain in the glv when removing a market
+    // it is used to allow removal of disabled markets with residual dust balances
+    function glvMarketRemovalDustThresholdKey(address glv, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_MARKET_REMOVAL_DUST_THRESHOLD, glv, market));
     }
 
     // @dev key for is glv market disabled
@@ -2404,6 +2466,15 @@ library Keys {
         return keccak256(abi.encode(
             CLAIM_TERMS_BACKREF,
             termsHash
+        ));
+    }
+
+    // @param wallet the wallet address
+    // @return key for whether a wallet was deployed by the protocol
+    function isDeployedWalletKey(address wallet) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_DEPLOYED_WALLET,
+            wallet
         ));
     }
 }

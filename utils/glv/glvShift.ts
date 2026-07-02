@@ -7,6 +7,8 @@ import { executeWithOracleParams } from "../exchange";
 import { parseLogs } from "../event";
 import { expectCancellationReason } from "../validation";
 import { getCancellationReason } from "../error";
+import { hashString } from "../hash";
+import { getMarketTokenAddress } from "../market";
 
 export async function createGlvShift(fixture, overrides: any = {}) {
   const { glvShiftHandler, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts;
@@ -103,6 +105,32 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
 
   const result = { txReceipt, logs };
   return result;
+}
+
+export async function setupDistressedGlvMarket(fixture) {
+  const { dataStore, marketFactory, roleStore, glvShiftHandler, ethUsdGlvAddress, sol, wnt, usdc } = fixture.contracts;
+
+  const marketType = hashString("distressed-market");
+  await marketFactory.createMarket(sol.address, wnt.address, usdc.address, marketType);
+  const distressedMarketAddress = getMarketTokenAddress(
+    sol.address,
+    wnt.address,
+    usdc.address,
+    marketType,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  await glvShiftHandler.addMarketToGlv(ethUsdGlvAddress, distressedMarketAddress);
+
+  const marketToken = await ethers.getContractAt("MarketToken", distressedMarketAddress);
+  await marketToken.mint(ethUsdGlvAddress, expandDecimals(1, 18));
+  const glvToken = await ethers.getContractAt("GlvToken", ethUsdGlvAddress);
+  await glvToken.syncTokenBalance(distressedMarketAddress);
+
+  await dataStore.setUint(keys.positionImpactPoolAmountKey(distressedMarketAddress), expandDecimals(1, 18));
+
+  return distressedMarketAddress;
 }
 
 export function getGlvShiftKeys(dataStore, start, end) {

@@ -2,22 +2,28 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
-import "../data/DataStore.sol";
-import "../data/Keys.sol";
-import "../data/Keys2.sol";
-import "../role/RoleModule.sol";
-import "../event/EventEmitter.sol";
-import "../utils/BasicMulticall.sol";
-import "../utils/Precision.sol";
-import "../utils/Cast.sol";
-import "../market/MarketUtils.sol";
-
-import "./ConfigUtils.sol";
+import {Chain} from "../chain/Chain.sol";
+import {DataStore} from "../data/DataStore.sol";
+import {Keys} from "../data/Keys.sol";
+import {Keys2} from "../data/Keys2.sol";
+import {Errors} from "../error/Errors.sol";
+import {EventEmitter} from "../event/EventEmitter.sol";
+import {EventUtils} from "../event/EventUtils.sol";
+import {Market} from "../market/Market.sol";
+import {MarketStoreUtils} from "../market/MarketStoreUtils.sol";
+import {IOracle} from "../oracle/IOracle.sol";
+import {OracleModule} from "../oracle/OracleModule.sol";
+import {OracleUtils} from "../oracle/OracleUtils.sol";
+import {Price} from "../price/Price.sol";
+import {Role} from "../role/Role.sol";
+import {RoleModule} from "../role/RoleModule.sol";
+import {RoleStore} from "../role/RoleStore.sol";
+import {BasicMulticall} from "../utils/BasicMulticall.sol";
+import {ConfigUtils} from "./ConfigUtils.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // @title Config
-contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
+contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;
@@ -28,19 +34,23 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
+    address public immutable staticOracleProvider;
 
     // @dev the base keys that can be set
-    mapping (bytes32 => bool) public allowedBaseKeys;
+    mapping(bytes32 => bool) public allowedBaseKeys;
     // @dev the limited base keys that can be set
-    mapping (bytes32 => bool) public allowedLimitedBaseKeys;
+    mapping(bytes32 => bool) public allowedLimitedBaseKeys;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        EventEmitter _eventEmitter
-    ) RoleModule(_roleStore) {
+        EventEmitter _eventEmitter,
+        IOracle _oracle,
+        address _staticOracleProvider
+    ) RoleModule(_roleStore) OracleModule(_oracle) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
+        staticOracleProvider = _staticOracleProvider;
 
         _initAllowedBaseKeys();
         _initAllowedLimitedBaseKeys();
@@ -49,7 +59,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     modifier onlyKeeper() {
         if (
             !roleStore.hasRole(msg.sender, Role.LIMITED_CONFIG_KEEPER) &&
-            !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)
+        !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)
         ) {
             revert Errors.Unauthorized(msg.sender, "LIMITED / CONFIG KEEPER");
         }
@@ -110,7 +120,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
-    function setOracleProviderForToken(address oracle, address token, address provider) external onlyConfigKeeper nonReentrant {
+    function _setOracleProviderForToken(address oracle, address token, address provider) internal {
         if (token == address(0)) {
             revert Errors.EmptyToken();
         }
@@ -119,9 +129,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.InvalidOracleProvider(provider);
         }
 
-        if (Chain.currentTimestamp() - dataStore.getUint(Keys.oracleProviderUpdatedAt(token, provider))
-            < dataStore.getUint(Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY)) {
-            revert Errors.OracleProviderMinChangeDelayNotYetPassed(token, provider);
+        if (provider != staticOracleProvider) {
+            if (Chain.currentTimestamp() - dataStore.getUint(Keys.oracleProviderUpdatedAt(token, provider))
+                < dataStore.getUint(Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY)) {
+                revert Errors.OracleProviderMinChangeDelayNotYetPassed(token, provider);
+            }
         }
 
         dataStore.setUint(Keys.oracleProviderUpdatedAt(token, provider), Chain.currentTimestamp());
@@ -134,6 +146,50 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.setItem(2, "provider", provider);
         eventEmitter.emitEventLog(
             "SetOracleProviderForToken",
+            eventData
+        );
+    }
+
+    function setOracleProviderForToken(address oracle, address token, address provider) external onlyConfigKeeper nonReentrant {
+        _setOracleProviderForToken(oracle, token, provider);
+    }
+
+    // @dev Offchain checks should be applied prior to executing this function
+    // token MUST be isolated to one market, be an index token for this market, no GLVs should use this token.
+    // use freezeTokenPrice script to execute those checks
+    function setStaticPriceForMarketIndexToken(
+        address market,
+        OracleUtils.SetPricesParams memory pricesParams
+    ) external onlyConfigKeeper nonReentrant withOraclePrices(pricesParams) {
+        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
+        if (marketProps.marketToken == address(0)) {
+            revert Errors.EmptyMarket();
+        }
+
+        address token = marketProps.indexToken;
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+
+        _setStaticPriceForToken(token);
+    }
+
+    function _setStaticPriceForToken(address token) internal {
+        Price.Props memory price = oracle.getPrimaryPrice(token);
+        dataStore.setUint(Keys.staticOraclePriceKey(token, false), price.min);
+        dataStore.setUint(Keys.staticOraclePriceKey(token, true), price.max);
+
+        _setOracleProviderForToken(address(oracle), token, staticOracleProvider);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "provider", staticOracleProvider);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "priceMin", price.min);
+        eventData.uintItems.setItem(1, "priceMax", price.max);
+        eventEmitter.emitEventLog(
+            "SetStaticPriceForToken",
             eventData
         );
     }
@@ -471,6 +527,17 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SWAP_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.REGISTER_CODE_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.STAKE_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.UNSTAKE_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.STAKE_ES_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.UNSTAKE_ES_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.HANDLE_STAKING_REWARDS_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.COMPOUND_STAKING_REWARDS_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.VEST_ES_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.DELEGATE_GOV_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.SIGNAL_STAKING_TRANSFER_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.ACCEPT_STAKING_TRANSFER_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.WITHDRAW_FROM_WALLET_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 
@@ -520,6 +587,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
@@ -544,6 +612,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
         allowedBaseKeys[Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_COUNT] = true;
+        allowedBaseKeys[Keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD] = true;
 
         allowedBaseKeys[Keys.SYNC_CONFIG_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;
@@ -569,8 +638,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.SUBACCOUNT_INTEGRATION_DISABLED] = true;
         allowedBaseKeys[Keys.RELAY_FEE_ADDRESS] = true;
+        allowedBaseKeys[Keys.EIP6492_DEPLOYER] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
 
         allowedBaseKeys[Keys2.MULTICHAIN_READ_CHANNEL] = true;
@@ -606,6 +677,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedLimitedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedLimitedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;

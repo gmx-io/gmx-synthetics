@@ -41,6 +41,10 @@ contract EdgeDataStreamProvider is IOracleProvider {
         return false;
     }
 
+    function shouldCheckRefPrice() external pure returns (bool) {
+        return true;
+    }
+
     function getOraclePrice(
         address token,
         bytes memory data
@@ -72,6 +76,9 @@ contract EdgeDataStreamProvider is IOracleProvider {
         // With edge price being negative we get formula: edgePrice * 10 ^ (30 - 18 - 8)
         // dataStore decimals instead of token.decimals is used here because token can be synthetic
         uint256 tokenDecimals = dataStore.getUint(Keys.edgeDataStreamTokenDecimalsKey(token));
+        if (tokenDecimals == 0) {
+            revert Errors.InvalidEdgeDataStreamDecimals(token, tokenDecimals);
+        }
         int256 floatMultiplier = int256(30) - int256(tokenDecimals) + report.expo;
         if (floatMultiplier < 0) {
             revert Errors.InvalidEdgeDataStreamExpo(report.expo);
@@ -83,6 +90,8 @@ contract EdgeDataStreamProvider is IOracleProvider {
             token: token,
             min: adjustedBidPrice,
             max: adjustedAskPrice,
+            rawMin: adjustedBidPrice,
+            rawMax: adjustedAskPrice,
             timestamp: report.timestamp,
             provider: address(this)
         });

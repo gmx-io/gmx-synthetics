@@ -127,12 +127,15 @@ async function main() {
   }
 
   // Check that deployed contracts are matching with local sources
-  for (const contractInfo of Object.values(contractInfos)) {
-    await validateSourceCode(provider, contractInfo);
-    if (!contractInfo.isCodeValidated) {
-      console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
-    } else {
-      console.log(`✅${contractInfo.name}, ${contractInfo.address} is valid`);
+  // skip validation for megaEth as megaEtherscan is contract verifier is broken atm
+  if (hre.network.name !== "megaEth") {
+    for (const contractInfo of Object.values(contractInfos)) {
+      await validateSourceCode(provider, contractInfo);
+      if (!contractInfo.isCodeValidated) {
+        console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
+      } else {
+        console.log(`✅${contractInfo.name}, ${contractInfo.address} is valid`);
+      }
     }
   }
 

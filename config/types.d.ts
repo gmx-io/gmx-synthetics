@@ -1,5 +1,5 @@
 import { TokensConfig } from "./tokens";
-import { MarketConfig } from "./markets";
+import { MarketConfig, MarketHours } from "./markets";
 import { OracleConfig } from "./oracle";
 import getGeneral from "./general";
 import { RolesConfig } from "./roles";
@@ -10,14 +10,14 @@ import { BuybackConfig } from "./buyback";
 import { LayerZeroEndpointConfig } from "./layerZero";
 import { FeeDistributorConfig } from "./feeDistributor";
 
-export type OracleProvider = "gmOracle" | "chainlinkDataStream" | "chainlinkPriceFeed";
+export type OracleProvider = "chainlinkDataStream" | "chainlinkPriceFeed";
 
 // extend hardhat config with custom gmx property
 declare module "hardhat/types/runtime" {
   interface HardhatRuntimeEnvironment {
     gmx: {
       getTokens: () => Promise<TokensConfig>;
-      getMarkets: () => Promise<MarketConfig[]>;
+      getMarkets: (marketHours?: MarketHours) => Promise<MarketConfig[]>;
       getOracle: () => Promise<OracleConfig>;
       getGeneral: () => ReturnType<typeof getGeneral>;
       getRoles: () => Promise<RolesConfig>;

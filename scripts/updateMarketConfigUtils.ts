@@ -23,6 +23,7 @@ function getRiskOracleManagedBaseKeys() {
 const KEEPER_MANAGED_BASE_KEYS_ARBITRUM = [
   keys.MAX_FUNDING_FACTOR_PER_SECOND,
   keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+  keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
   keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
 ];
 
@@ -70,6 +71,7 @@ const processMarkets = async ({
       [
         keys.MAX_FUNDING_FACTOR_PER_SECOND,
         keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+        keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
         keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       ].includes(baseKey) &&
       includeFunding
@@ -497,26 +499,59 @@ const processMarkets = async ({
 
     addConfigItem(
       "uint",
+      keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minFundingIncreaseRatePerSecond,
+      `minFundingIncreaseRatePerSecond ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
       keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       encodeData(["address"], [marketToken]),
       marketConfig.fundingDecreaseFactorPerSecond,
       `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
     );
 
+    const minFundingFactorForLongs =
+      marketConfig.minFundingFactorPerSecondForLongs ?? marketConfig.minFundingFactorPerSecond;
+    const minFundingFactorForShorts =
+      marketConfig.minFundingFactorPerSecondForShorts ?? marketConfig.minFundingFactorPerSecond;
+    const maxFundingFactorForLongs =
+      marketConfig.maxFundingFactorPerSecondForLongs ?? marketConfig.maxFundingFactorPerSecond;
+    const maxFundingFactorForShorts =
+      marketConfig.maxFundingFactorPerSecondForShorts ?? marketConfig.maxFundingFactorPerSecond;
+
     addConfigItem(
       "uint",
       keys.MAX_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.maxFundingFactorPerSecond,
-      `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      encodeData(["address", "bool"], [marketToken, true]),
+      maxFundingFactorForLongs,
+      `maxFundingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      maxFundingFactorForShorts,
+      `maxFundingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
       "uint",
       keys.MIN_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.minFundingFactorPerSecond,
-      `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      encodeData(["address", "bool"], [marketToken, true]),
+      minFundingFactorForLongs,
+      `minFundingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      minFundingFactorForShorts,
+      `minFundingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
@@ -710,6 +745,7 @@ const processMarkets = async ({
 export async function updateMarketConfig({
   write = false,
   market = undefined,
+  marketHours = undefined,
   includeRiskOracleBaseKeys = false,
   includeKeeperBaseKeys = false,
   includeFunding = false,
@@ -727,7 +763,7 @@ export async function updateMarketConfig({
 
   const generalConfig = await hre.gmx.getGeneral();
   const tokens = await hre.gmx.getTokens();
-  const markets = await hre.gmx.getMarkets();
+  const markets = await hre.gmx.getMarkets(marketHours);
 
   const dataStore = await hre.ethers.getContract("DataStore");
 
@@ -824,7 +860,8 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
     });
 
     if (!market) {
-      throw new Error(`Market with id ${supportedMarketToken} not found`);
+      console.warn(`WARN: Risk oracle market with id ${supportedMarketToken} not found in config, skipping`);
+      return;
     }
 
     supported.add(market);

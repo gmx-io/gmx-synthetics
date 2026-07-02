@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 
 import "../../nonce/NonceUtils.sol";
 import "../../gas/GasUtils.sol";
+import "../../fee/FeeUtils.sol";
 import "../../multichain/MultichainVault.sol";
 
 import "../GlvVault.sol";
@@ -137,6 +138,7 @@ library GlvDepositUtils {
                 initialLongTokenAmount: cache.initialLongTokenAmount,
                 initialShortTokenAmount: cache.initialShortTokenAmount,
                 minGlvTokens: params.minGlvTokens,
+                uiFeeFactor: FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver),
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit,
@@ -156,7 +158,7 @@ library GlvDepositUtils {
         uint256 oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             marketCount,
             params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length,
-            false // glvTokenPriceUsed. at this point we don't know if the GLV token price will be used
+            true // keepers typically provide GLV oracle price during execution
         );
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 

@@ -185,6 +185,11 @@ const config: {
       dataStreamFeedId: "0x0003c16c6aed42294f5cb4741f6e59ba2d728f0eae2eb9e6d3f555808c59fc45",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xB4AD57B52aB9141de9926a3e0C8dc6264c2ef205",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     DOGE: {
       synthetic: true,
@@ -213,6 +218,11 @@ const config: {
       dataStreamFeedId: "0x0003591ce9a9d662c43124ca14fd6f8603c9ab856ee45358189a2ce6904b5a3c",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x0E278D14B4bf6429dDB0a1B353e2Ae8A4e128C93",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     SOL: {
       address: "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07",
@@ -234,6 +244,11 @@ const config: {
       dataStreamFeedId: "0x0003364401fcbe3153adf158017cd18a2833655db5cc5eb8fad2c16cb0ec82f4",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x3a9659C071dD3C37a8b1A2363409A8D41B2Feae3",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     SATS: {
       synthetic: true,
@@ -248,6 +263,11 @@ const config: {
       dataStreamFeedId: "0x00033a4f1021830ac0e7b7a03f70ed56fecb0ac2a10c8ea5328c240c847b71f3",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x5698690a7B7B84F6aa985ef7690A8A7288FBc9c8",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     UNI: {
       address: "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
@@ -321,8 +341,11 @@ const config: {
       dataStreamFeedId: "0x0003a845b2e108468ec6f42a5c88609082e9ec86fe9d2529c9e5f8af440079f8",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // there seems to be a Chainlink on-chain feed, but it is indicated as
-      // a High Market Risk feed so has not been added
+      priceFeed: {
+        address: "0x82BA56a2fADF9C14f17D08bc51bDA0bDB83A8934",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     SUI: {
       synthetic: true,
@@ -330,7 +353,11 @@ const config: {
       dataStreamFeedId: "0x000348ce31679e9ce1f80ec929f1d7c86499569d67f1cea80a90d6e5e3c127a7",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0x4a85B128EBDaFC24d5CB611e161376ffDECeB289",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     SEI: {
       synthetic: true,
@@ -338,7 +365,11 @@ const config: {
       dataStreamFeedId: "0x0003487e79423ea3c34f4edfc8bb112b0d0fbe054906644912b04bd5a3c6243b",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0xCc9742d77622eE9abBF1Df03530594f9097bDcB3",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     APT: {
       synthetic: true,
@@ -346,7 +377,11 @@ const config: {
       dataStreamFeedId: "0x0003c6405661f306b96c352b0ed428e190b76e1f14641fb5b68652f9ca8d9af5",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0xdc49F292ad1bb3DAb6C11363d74ED06F38b9bd9C",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     TIA: {
       synthetic: true,
@@ -402,7 +437,11 @@ const config: {
       dataStreamFeedId: "0x0003f9ec12942ff27b28ab151905c8fc1cb280518d8bbd3885d410eaa50ddc56",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0x0301e5D0A8f7490444ebd1921E3d0f0fe7722786",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     PENDLE: {
       address: "0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8",
@@ -1249,6 +1288,53 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
+    GOLD: {
+      // XAU
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003cee5f549828ad1e7a7325f3244956ec493223b3408dd47a30499759ae4cd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    SILVER: {
+      // XAG
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e17a3db8679890f061d82e651e584c815fb35012ea5613593c322c598d9f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    WTIOIL: {
+      // CL
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00034a112217255cc022f9b1f8e504e38081698a141a963349cf53d0e3910a95",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    BRENTOIL: {
+      // BZ
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003c1444945554474726cf719e4f91d7bec2eac5a851a7b1ab42e3f2ec1e9a6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    NATGAS: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00035231c4651c67585a5b7526878b7bfa053ab59746c25d86e4f82c8693f4ee",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MEGA: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e5c055e11f7689db6ca622867a5e7228d76bf311c3345baef8b081bb18bd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -1589,6 +1675,14 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    MEGA: {
+      address: "0x28B7E77f82B25B95953825F1E3eA0E36c1c29861",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003e5c055e11f7689db6ca622867a5e7228d76bf311c3345baef8b081bb18bd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   arbitrumSepolia: {
     WETH: {
@@ -1640,27 +1734,58 @@ const config: {
       address: "0x095f40616FA98Ff75D1a7D0c68685c5ef806f110", // Stargate USDT
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
+      dataStreamFeedId: "0x00032874077216155926e26c159c1c20a572921371d9de605fe9633e48d136f9", // USDT
       dataStreamFeedDecimals: 18,
       priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
+        address: "0x80EDee6f667eCc9f63a0a6f55578F870651f06A4", // USDT
         decimals: 8,
         heartbeatDuration: 144 * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
     },
-    "USDT.SG": {
-      address: "0x095f40616FA98Ff75D1a7D0c68685c5ef806f110", // Stargate USDT
-      decimals: 6,
-      transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
+    XAU: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000332d678cdc95604058871774641e47841f68474316a1366433401722ad64c",
       dataStreamFeedDecimals: 18,
-      priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
-        decimals: 8,
-        heartbeatDuration: 144 * 60 * 60,
-        stablePrice: decimalToFloat(1),
-      },
+    },
+    XAG: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003df2295a030fae13d6764627bee0e4101be1b39f7e6a33deb9207b1c92bff",
+      dataStreamFeedDecimals: 18,
+    },
+    XPT: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003c9769ffbb96b88785cf5e6ba9974eb447ff0d00d6b722f57842b033c5acd",
+      dataStreamFeedDecimals: 18,
+    },
+    XPD: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00033d2059d23ee3e105d2d9a885c1afd7686a4d32767a8b6ba99316ebe0a50b",
+      dataStreamFeedDecimals: 18,
+    },
+    WTIOIL: {
+      // CL
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000336a9415df7de086262b13f25c2818c639a74ad64e30cc017c96a896c99af",
+      dataStreamFeedDecimals: 18,
+    },
+    BRENTOIL: {
+      // BZ
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00032eea59e0fc7b13010c291c2d0d0e06d178eea5ea96c481d703ab1b1bc9f7",
+      dataStreamFeedDecimals: 18,
+    },
+    NATGAS: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000361c33db98ecc0978f0657197e3d97507647b2cbf1450716737ccc6fc6fbd",
+      dataStreamFeedDecimals: 18,
     },
   },
   arbitrumGoerli: {
@@ -1782,7 +1907,7 @@ const config: {
     TEST: {
       synthetic: true,
       decimals: 18,
-      oracleProvider: "gmOracle",
+      oracleProvider: "chainlinkDataStream",
     },
     WBTC: {
       decimals: 8,
@@ -1865,20 +1990,20 @@ const config: {
     ADA: {
       decimals: 18,
       synthetic: true,
-      oracleProvider: "gmOracle",
+      oracleProvider: "chainlinkDataStream",
       oracleTimestampAdjustment: 1,
     },
     DOT: {
       decimals: 18,
       synthetic: true,
-      oracleProvider: "gmOracle",
+      oracleProvider: "chainlinkDataStream",
     },
     MATIC: {
       decimals: 18,
       synthetic: true,
       // dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
       // dataStreamFeedDecimals: 18,
-      // oracleProvider: "gmOracle",
+      // oracleProvider: "chainlinkDataStream",
       dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9",
       dataStreamFeedDecimals: 18,
     },
@@ -1891,7 +2016,7 @@ const config: {
     TRX: {
       decimals: 18,
       synthetic: true,
-      oracleProvider: "gmOracle",
+      oracleProvider: "chainlinkDataStream",
     },
   },
   // token addresses are retrieved in runtime for hardhat and localhost networks
@@ -1918,6 +2043,11 @@ const config: {
         deploy: true,
         initPrice: "10000000000",
       },
+    },
+    ESGMX: {
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     WBTC: {
       decimals: 8,

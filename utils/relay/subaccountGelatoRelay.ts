@@ -14,6 +14,7 @@ import {
   getBatchSignature,
   getCancelOrderSignature,
   getCreateOrderSignature,
+  getCreateTwapOrderSignature,
   getUpdateOrderSignature,
 } from "./signatures";
 
@@ -29,6 +30,7 @@ export async function sendCreateOrder(p: {
     deadline: BigNumberish;
     integrationId: string;
     nonce: BigNumberish;
+    revocationCounter?: BigNumberish;
     signature?: string;
     signer?: ethers.Signer;
   };
@@ -108,6 +110,41 @@ export async function sendCreateOrder(p: {
   });
 }
 
+export async function sendCreateTwapOrder(
+  p: Parameters<typeof sendCreateOrder>[0] & { twapCount: BigNumberish; interval: BigNumberish }
+) {
+  const relayParams = await getRelayParams(p);
+  const subaccountApproval = await getSubaccountApproval({
+    ...p,
+    signer: p.subaccountApprovalSigner,
+  });
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCreateTwapOrderSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+      subaccountApproval,
+    });
+  }
+
+  const createTwapOrderCalldata = p.relayRouter.interface.encodeFunctionData("createTwapOrder", [
+    { ...relayParams, signature },
+    subaccountApproval,
+    p.account,
+    p.subaccount,
+    p.params,
+    p.twapCount,
+    p.interval,
+  ]);
+
+  return sendRelayTransaction({
+    calldata: createTwapOrderCalldata,
+    ...p,
+  });
+}
+
 export async function sendUpdateOrder(p: {
   sender: ethers.Signer;
   signer: ethers.Signer;
@@ -145,6 +182,7 @@ export async function sendUpdateOrder(p: {
     deadline: BigNumberish;
     nonce?: BigNumberish;
     integrationId: string;
+    revocationCounter?: BigNumberish;
     signature?: string;
   };
   subaccountApprovalSigner: ethers.Signer;
@@ -218,13 +256,20 @@ export function getEmptySubaccountApproval() {
     signature: "0x",
     integrationId: ethers.constants.HashZero,
     deadline: 9999999999,
+    revocationCounter: 0,
+    eip6492SignatureWrapperHash: ethers.constants.HashZero,
   };
 }
 
 export async function getSubaccountApproval(p: {
-  subaccountApproval?: Omit<SubaccountApproval, "nonce" | "signature"> & {
+  subaccountApproval?: Omit<
+    SubaccountApproval,
+    "nonce" | "signature" | "revocationCounter" | "eip6492SignatureWrapperHash"
+  > & {
     nonce?: BigNumberish;
     signature?: string;
+    revocationCounter?: BigNumberish;
+    eip6492SignatureWrapperHash?: string;
   };
   desChainId: BigNumberish;
   account: string;
@@ -241,13 +286,26 @@ export async function getSubaccountApproval(p: {
     nonce = await p.relayRouter.subaccountApprovalNonces(p.account);
   }
 
+  let revocationCounter = p.subaccountApproval.revocationCounter;
+  if (revocationCounter === undefined) {
+    const dataStoreAddress = await p.relayRouter.dataStore();
+    const dataStore = await hre.ethers.getContractAt("DataStore", dataStoreAddress);
+    revocationCounter = await dataStore.getUint(
+      keys.subaccountRevocationCounterKey(p.account, p.subaccountApproval.subaccount)
+    );
+  }
+
+  const eip6492SignatureWrapperHash = p.subaccountApproval.eip6492SignatureWrapperHash || ethers.constants.HashZero;
+
   let signature = p.subaccountApproval.signature;
   if (!signature) {
     signature = await getSubaccountApprovalSignature({
       signer: p.signer,
       ...p.subaccountApproval,
       nonce,
+      revocationCounter,
       desChainId: p.desChainId,
+      eip6492SignatureWrapperHash,
       chainId: p.chainId,
       verifyingContract: p.relayRouter.address,
     });
@@ -256,7 +314,9 @@ export async function getSubaccountApproval(p: {
   return {
     ...p.subaccountApproval,
     nonce,
+    revocationCounter,
     desChainId: p.desChainId,
+    eip6492SignatureWrapperHash,
     signature,
   };
 }
@@ -350,6 +410,8 @@ async function getSubaccountApprovalSignature(p: {
   integrationId: string;
   nonce: BigNumberish;
   desChainId: BigNumberish;
+  revocationCounter: BigNumberish;
+  eip6492SignatureWrapperHash?: string;
 }) {
   const domain = {
     name: "GmxBaseGelatoRelayRouter",
@@ -369,6 +431,8 @@ async function getSubaccountApprovalSignature(p: {
       { name: "desChainId", type: "uint256" },
       { name: "deadline", type: "uint256" },
       { name: "integrationId", type: "bytes32" },
+      { name: "revocationCounter", type: "uint256" },
+      { name: "eip6492SignatureWrapperHash", type: "bytes32" },
     ],
   };
 
@@ -382,6 +446,8 @@ async function getSubaccountApprovalSignature(p: {
     nonce: p.nonce,
     desChainId: p.desChainId,
     integrationId: p.integrationId,
+    revocationCounter: p.revocationCounter,
+    eip6492SignatureWrapperHash: p.eip6492SignatureWrapperHash || ethers.constants.HashZero,
   };
 
   return signTypedData(p.signer, domain, types, typedData);
@@ -451,9 +517,10 @@ export async function sendRemoveSubaccount(p: {
   });
 }
 
-async function getRemoveSubaccountSignature({ signer, relayParams, subaccount, verifyingContract, chainId }) {
+async function getRemoveSubaccountSignature({ signer, relayParams, account, subaccount, verifyingContract, chainId }) {
   const types = {
     RemoveSubaccount: [
+      { name: "account", type: "address" },
       { name: "subaccount", type: "address" },
       { name: "relayParams", type: "bytes32" },
     ],
@@ -461,6 +528,7 @@ async function getRemoveSubaccountSignature({ signer, relayParams, subaccount, v
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
+    account,
     subaccount,
     relayParams: hashRelayParams(relayParams),
   };
@@ -500,9 +568,10 @@ export async function sendBatch(p: {
   signature?: string;
   gelatoRelayFeeToken: string;
   gelatoRelayFeeAmount: BigNumberish;
-  subaccountApproval: Omit<SubaccountApproval, "nonce" | "signature"> & {
+  subaccountApproval: Omit<SubaccountApproval, "nonce" | "signature" | "revocationCounter"> & {
     nonce?: BigNumberish;
     signature?: string;
+    revocationCounter?: BigNumberish;
   };
   subaccountApprovalSigner: ethers.Signer;
   subaccount: string;

@@ -54,6 +54,7 @@ library GlvShiftUtils {
         bytes32 shiftKey;
         uint256 glvValue;
         uint256 glvSupply;
+        bool glvValueSuccess;
     }
 
     function createGlvShift(
@@ -158,12 +159,30 @@ library GlvShiftUtils {
             Shift.Numbers({
                 minMarketTokens: glvShift.minMarketTokens(),
                 marketTokenAmount: glvShift.marketTokenAmount(),
+                uiFeeFactor: 0, // uiFeeReceiver is the zero address, so no ui fee is charged
                 updatedAtTime: glvShift.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
                 srcChainId: 0 // srcChainId is the current block.chainId
             }),
             new bytes32[](0)
+        );
+
+        cache.fromMarketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(glvShift.fromMarket())));
+        cache.fromMarket = MarketStoreUtils.get(params.dataStore, glvShift.fromMarket());
+        cache.fromMarketPoolValueInfo = MarketUtils.getPoolValueInfo(
+            params.dataStore,
+            cache.fromMarket,
+            params.oracle.getPrimaryPrice(cache.fromMarket.indexToken),
+            params.oracle.getPrimaryPrice(cache.fromMarket.longToken),
+            params.oracle.getPrimaryPrice(cache.fromMarket.shortToken),
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            true // maximize
+        );
+        cache.marketTokensUsd = MarketUtils.marketTokenAmountToUsd(
+            glvShift.marketTokenAmount(),
+            cache.fromMarketPoolValueInfo.poolValue.toUint256(),
+            cache.fromMarketTokenSupply
         );
 
         cache.shiftKey = keccak256(abi.encode(params.key, "shift"));
@@ -215,36 +234,24 @@ library GlvShiftUtils {
             cache.toMarketTokenSupply
         );
 
-        cache.fromMarket = MarketStoreUtils.get(params.dataStore, glvShift.fromMarket());
-        cache.fromMarketPoolValueInfo = MarketUtils.getPoolValueInfo(
-            params.dataStore,
-            cache.fromMarket,
-            params.oracle.getPrimaryPrice(cache.fromMarket.indexToken),
-            params.oracle.getPrimaryPrice(cache.fromMarket.longToken),
-            params.oracle.getPrimaryPrice(cache.fromMarket.shortToken),
-            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true // maximize
-        );
-        cache.fromMarketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(glvShift.fromMarket())));
-
-        cache.marketTokensUsd = MarketUtils.marketTokenAmountToUsd(
-            glvShift.marketTokenAmount(),
-            cache.fromMarketPoolValueInfo.poolValue.toUint256(),
-            cache.fromMarketTokenSupply
-        );
-
         validateGlvShiftMaxLoss(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
 
-        (cache.glvValue, ) = GlvUtils.getGlvValue(
+        // the GLV value is only needed for the informational GlvValueUpdated event here,
+        // use the non-reverting variant and skip the emission if the value can not be
+        // calculated, so that an unrelated market with negative pool value does not
+        // block shifts between healthy markets
+        (cache.glvValue, , cache.glvValueSuccess) = GlvUtils.tryGetGlvValue(
             params.dataStore,
             params.oracle,
             glvShift.glv(),
             true // maximize
         );
-        cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
-        GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);
+        if (cache.glvValueSuccess) {
+            cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
+            GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);
+        }
 
         return cache.receivedMarketTokens;
     }

@@ -53,7 +53,7 @@ library ReaderDepositUtils {
         uint256 longTokenUsd = longTokenAmount * prices.longTokenPrice.midPrice();
         uint256 shortTokenUsd = shortTokenAmount * prices.shortTokenPrice.midPrice();
         GetDepositAmountOutCache memory cache;
-        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
+        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsdForDeposit(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
                 market,
@@ -149,7 +149,7 @@ library ReaderDepositUtils {
         }
 
         if (params.priceImpactUsd > 0) {
-            (int256 positiveImpactAmount, uint256 cappedDiffUsd) = MarketUtils.getSwapImpactAmountWithCap(
+            (int256 positiveImpactAmount, /*uint256 cappedDiffUsd*/) = MarketUtils.getSwapImpactAmountWithCap(
                 params.dataStore,
                 params.market.marketToken,
                 params.tokenOut,
@@ -162,18 +162,6 @@ library ReaderDepositUtils {
                 poolValue,
                 marketTokensSupply
             );
-
-            if (cappedDiffUsd != 0) {
-                (int256 tokenInPriceImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
-                    params.dataStore,
-                    params.market.marketToken,
-                    params.tokenIn,
-                    params.tokenInPrice,
-                    cappedDiffUsd.toInt256()
-                );
-
-                amountIn += tokenInPriceImpactAmount.toUint256();
-            }
         }
 
         if (params.priceImpactUsd < 0) {

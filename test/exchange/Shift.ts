@@ -16,6 +16,9 @@ import {
 import { getShiftCount, getShiftKeys, createShift, executeShift, handleShift } from "../../utils/shift";
 import { getExecuteParams } from "../../utils/exchange";
 import { errorsContract } from "../../utils/error";
+import { grantRole } from "../../utils/role";
+import { parseLogs, getEventData } from "../../utils/event";
+import { increaseTime } from "../../utils/time";
 import * as keys from "../../utils/keys";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { SwapPricingType } from "../../utils/swap";
@@ -32,6 +35,7 @@ describe("Exchange.Shift", () => {
     shiftVault,
     shiftHandler,
     shiftStoreUtils,
+    roleStore,
     ethUsdMarket,
     solUsdMarket,
     btcUsdMarket,
@@ -52,6 +56,7 @@ describe("Exchange.Shift", () => {
       shiftVault,
       shiftHandler,
       shiftStoreUtils,
+      roleStore,
       ethUsdMarket,
       solUsdMarket,
       btcUsdMarket,
@@ -149,7 +154,7 @@ describe("Exchange.Shift", () => {
 
     await expect(shiftHandler.connect(user0).cancelShift(shiftKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
+      .withArgs(user0.address, "ORDER_KEEPER|CONTROLLER");
 
     await executeShift(fixture, {
       gasUsageLabel: "executeShift",
@@ -257,5 +262,53 @@ describe("Exchange.Shift", () => {
 
     expect(await getBalanceOf(ethUsdSingleTokenMarket.marketToken, user0.address)).eq(expandDecimals(7000, 18));
     expect(await getBalanceOf(btcUsdSingleTokenMarket.marketToken, user0.address)).eq(expandDecimals(3000, 18));
+  });
+
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
+
+  async function createCancellableShift() {
+    await createShift(fixture, {
+      receiver: user1,
+      fromMarket: ethUsdMarket,
+      toMarket: solUsdMarket,
+      marketTokenAmount: expandDecimals(7500, 18),
+      minMarketTokens: expandDecimals(7501, 18),
+      executionFee: expandDecimals(1, 15),
+    });
+
+    const shiftKeys = await getShiftKeys(dataStore, 0, 1);
+    const refTime = (await provider.getBlock()).timestamp;
+    await increaseTime(refTime, 300);
+    return shiftKeys[0];
+  }
+
+  it("cancelShift by ORDER_KEEPER pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const shiftKey = await createCancellableShift();
+
+    const txn = await shiftHandler.connect(orderKeeperSigner).cancelShift(shiftKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+
+    const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
+    expect(refundEvent.receiver).eq(user1.address); // shift.receiver()
+  });
+
+  it("cancelShift by CONTROLLER-only signer pays the keeper portion to shift.account", async () => {
+    const controllerOnlySigner = user3;
+    await grantRole(roleStore, controllerOnlySigner.address, "CONTROLLER");
+
+    const shiftKey = await createCancellableShift();
+
+    const txn = await shiftHandler.connect(controllerOnlySigner).cancelShift(shiftKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(user0.address); // shift.account()
   });
 });

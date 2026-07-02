@@ -1,8 +1,9 @@
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, decimalToFloat } from "../../utils/math";
+import { expandDecimals, decimalToFloat, FLOAT_PRECISION } from "../../utils/math";
 import { OrderType, getOrderCount, handleOrder } from "../../utils/order";
 import { handleDeposit } from "../../utils/deposit";
-import { getPositionCount } from "../../utils/position";
+import { getPositionCount, getPositionKeys } from "../../utils/position";
+import * as keys from "../../utils/keys";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { grantRole } from "../../utils/role";
@@ -18,13 +19,14 @@ describe("Guardian.Liquidation", () => {
 
   let fixture;
   let user1, wallet;
-  let dataStore, solUsdMarket, solAddr, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc, roleStore;
+  let dataStore, reader, referralStorage, solUsdMarket, solAddr, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc, roleStore;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ wallet, user1 } = fixture.accounts);
-    ({ dataStore, solUsdMarket, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc, roleStore } = fixture.contracts);
+    ({ dataStore, reader, referralStorage, solUsdMarket, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc, roleStore } =
+      fixture.contracts);
 
     await grantRole(roleStore, wallet.address, "LIQUIDATION_KEEPER");
 
@@ -752,5 +754,267 @@ describe("Guardian.Liquidation", () => {
     });
 
     expect(await getPositionCount(dataStore)).to.eq(0);
+  });
+
+  describe("positive pnl is valued at its realizable amount across the oracle spread", () => {
+    const usdcPrice = { min: expandDecimals(1, 24), max: expandDecimals(1, 24) };
+    const wntMin = expandDecimals(5500, 12); // index rose to $5,500
+    const wntMax = expandDecimals(11000, 12); // doubled, so realized pnl is halved
+    const wntMaxForLiquidation = expandDecimals(7000, 12);
+    const sizeInUsd = decimalToFloat(100 * 1000);
+    const sizeInTokens = expandDecimals(20, 18); // 20 WNT at the $5,000 open price, no price impact
+    const pnlUsd = sizeInTokens.mul(wntMin).sub(sizeInUsd);
+    const creditedNoSpread = pnlUsd.div(wntMin).mul(wntMin);
+    const creditedWithSpread = pnlUsd.div(wntMax).mul(wntMin);
+
+    const pricesNoSpread = {
+      indexTokenPrice: { min: wntMin, max: wntMin },
+      longTokenPrice: { min: wntMin, max: wntMin },
+      shortTokenPrice: usdcPrice,
+    };
+    const pricesWithSpread = {
+      indexTokenPrice: { min: wntMin, max: wntMax },
+      longTokenPrice: { min: wntMin, max: wntMax },
+      shortTokenPrice: usdcPrice,
+    };
+    const pricesWithSpreadForLiquidation = {
+      indexTokenPrice: { min: wntMin, max: wntMaxForLiquidation },
+      longTokenPrice: { min: wntMin, max: wntMaxForLiquidation },
+      shortTokenPrice: usdcPrice,
+    };
+
+    beforeEach(async () => {
+      // disable price impact so the realized pnl is the only spread dependent term
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), 0);
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+    });
+
+    // set the leverage threshold between the discounted and full remaining collateral so the
+    // position is liquidatable only when the pnl is valued at its realizable amount
+    const setThresholdBetween = async (remainingWithSpread, remainingNoSpread) => {
+      const target = remainingWithSpread.add(remainingNoSpread).div(2);
+      const factor = target.mul(FLOAT_PRECISION).div(sizeInUsd);
+      await dataStore.setUint(keys.minCollateralFactorForLiquidationKey(ethUsdMarket.marketToken), factor);
+    };
+
+    const openLong = async (collateralToken, collateralDeltaAmount) => {
+      await handleOrder(fixture, {
+        create: {
+          account: user1,
+          market: ethUsdMarket,
+          initialCollateralToken: collateralToken,
+          initialCollateralDeltaAmount: collateralDeltaAmount,
+          sizeDeltaUsd: sizeInUsd,
+          acceptablePrice: expandDecimals(5001, 12),
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+        },
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          precisions: [8, 18],
+        },
+      });
+    };
+
+    it("credits the realizable pnl when the pnl token is the collateral token", async () => {
+      await openLong(wnt, expandDecimals(1, 18));
+      const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
+
+      const [, , infoNoSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+      );
+      const [, , infoWithSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpread, false, true
+      );
+
+      expect(infoNoSpread.remainingCollateralUsd.sub(infoWithSpread.remainingCollateralUsd)).to.eq(
+        creditedNoSpread.sub(creditedWithSpread)
+      );
+
+      await setThresholdBetween(infoWithSpread.remainingCollateralUsd, infoNoSpread.remainingCollateralUsd);
+
+      const [liquidatableNoSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+      );
+      const [liquidatableWithSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpread, false, true
+      );
+
+      expect(liquidatableNoSpread).to.eq(false);
+      expect(liquidatableWithSpread).to.eq(true);
+    });
+
+    it("discounts using the pnl token price, not the collateral token price", async () => {
+      // collateral is USDC and has no spread, the pnl token WNT carries the spread
+      await openLong(usdc, expandDecimals(5500, 6));
+      const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
+
+      const [, , infoNoSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+      );
+      const [, , infoWithSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpread, false, true
+      );
+
+      expect(infoNoSpread.remainingCollateralUsd.sub(infoWithSpread.remainingCollateralUsd)).to.eq(
+        creditedNoSpread.sub(creditedWithSpread)
+      );
+
+      await setThresholdBetween(infoWithSpread.remainingCollateralUsd, infoNoSpread.remainingCollateralUsd);
+
+      const [liquidatableNoSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+      );
+      const [liquidatableWithSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpread, false, true
+      );
+
+      expect(liquidatableNoSpread).to.eq(false);
+      expect(liquidatableWithSpread).to.eq(true);
+    });
+
+    it("liquidates a profitable position only once the pnl is discounted", async () => {
+      await openLong(wnt, expandDecimals(1, 18));
+      const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
+
+      const [, , infoNoSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+      );
+      const [, , infoWithSpread] = await reader.isPositionLiquidatable(
+        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpreadForLiquidation, false, true
+      );
+      await setThresholdBetween(infoWithSpread.remainingCollateralUsd, infoNoSpread.remainingCollateralUsd);
+
+      await mine();
+
+      // without the spread the position is above the maintenance threshold
+      await expect(
+        executeLiquidation(fixture, {
+          account: user1.address,
+          market: ethUsdMarket,
+          collateralToken: wnt,
+          isLong: true,
+          minPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
+
+      // with the spread the realizable pnl drops below the threshold
+      await executeLiquidation(fixture, {
+        account: user1.address,
+        market: ethUsdMarket,
+        collateralToken: wnt,
+        isLong: true,
+        minPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(7000, 4), expandDecimals(1, 6)],
+      });
+
+      expect(await getPositionCount(dataStore)).to.eq(0);
+    });
+  });
+
+  describe("negative pending impact is counted in the liquidation check", () => {
+    const sizeInUsd = decimalToFloat(100 * 1000);
+    const priceMin = expandDecimals(5000, 12);
+    const priceMax = expandDecimals(5100, 12);
+    const prices = {
+      indexTokenPrice: { min: priceMin, max: priceMax },
+      longTokenPrice: { min: priceMin, max: priceMax },
+      shortTokenPrice: { min: expandDecimals(1, 24), max: expandDecimals(1, 24) },
+    };
+
+    const maxNegativeImpactUsd = sizeInUsd.mul(decimalToFloat(5, 3)).div(FLOAT_PRECISION).mul(-1);
+
+    const isLiquidatable = async (positionKey) => {
+      const [liquidatable, , info] = await reader.isPositionLiquidatable(
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        prices,
+        false,
+        true
+      );
+      return { liquidatable, info };
+    };
+
+    const openLongWithNegativePendingImpact = async (impactFactor, acceptablePrice) => {
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), impactFactor);
+      await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 0));
+
+      await handleOrder(fixture, {
+        create: {
+          account: user1,
+          market: ethUsdMarket,
+          initialCollateralToken: usdc,
+          initialCollateralDeltaAmount: expandDecimals(5000, 6),
+          sizeDeltaUsd: sizeInUsd,
+          acceptablePrice,
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+        },
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          precisions: [8, 18],
+        },
+      });
+
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), 0);
+    };
+
+    const getMaskedAndCountedInfo = async (positionKey) => {
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      const { info: infoMasked } = await isLiquidatable(positionKey);
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3));
+      const { info: infoCounted } = await isLiquidatable(positionKey);
+
+      return { infoMasked, infoCounted };
+    };
+
+    it("counts the pending impact below the cap and can trigger liquidation", async () => {
+      await openLongWithNegativePendingImpact(decimalToFloat(1, 8), expandDecimals(5050, 12));
+
+      const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
+      const position = await reader.getPosition(dataStore.address, positionKey);
+      expect(position.numbers.pendingImpactAmount).lt(0);
+
+      const pendingImpactUsd = position.numbers.pendingImpactAmount.mul(priceMax);
+      expect(pendingImpactUsd).gt(maxNegativeImpactUsd);
+
+      const { infoMasked, infoCounted } = await getMaskedAndCountedInfo(positionKey);
+      expect(infoCounted.remainingCollateralUsd.sub(infoMasked.remainingCollateralUsd)).to.eq(pendingImpactUsd);
+
+      const target = infoMasked.remainingCollateralUsd.add(infoCounted.remainingCollateralUsd).div(2);
+      await dataStore.setUint(
+        keys.minCollateralFactorForLiquidationKey(ethUsdMarket.marketToken),
+        target.mul(FLOAT_PRECISION).div(sizeInUsd)
+      );
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), 0);
+      const { liquidatable: liquidatableMasked } = await isLiquidatable(positionKey);
+
+      await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3));
+      const { liquidatable: liquidatableCounted } = await isLiquidatable(positionKey);
+
+      expect(liquidatableMasked).to.eq(false);
+      expect(liquidatableCounted).to.eq(true);
+    });
+
+    it("caps the counted pending impact at the max negative factor", async () => {
+      await openLongWithNegativePendingImpact(decimalToFloat(1, 6), expandDecimals(6000, 12));
+
+      const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
+      const position = await reader.getPosition(dataStore.address, positionKey);
+
+      const pendingImpactUsd = position.numbers.pendingImpactAmount.mul(priceMax);
+      expect(pendingImpactUsd).lt(maxNegativeImpactUsd);
+
+      const { infoMasked, infoCounted } = await getMaskedAndCountedInfo(positionKey);
+      expect(infoCounted.remainingCollateralUsd.sub(infoMasked.remainingCollateralUsd)).to.eq(maxNegativeImpactUsd);
+    });
   });
 });

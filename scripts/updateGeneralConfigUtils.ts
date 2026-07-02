@@ -230,6 +230,12 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.MAX_RELAY_FEE_SWAP_USD,
+      value: generalConfig.maxRelayFeeSwapUsd,
+      label: `maxRelayFeeUsd`,
+    },
+    {
+      type: "uint",
       baseKey: keys.MAX_DATA_LENGTH,
       value: generalConfig.maxDataLength,
       label: `maxDataLength`,
@@ -239,6 +245,12 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
       baseKey: keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
       value: generalConfig.oracleProviderMinChangeDelay,
       label: `oracleProviderMinChangeDelay`,
+    },
+    {
+      type: "address",
+      baseKey: keys.EIP6492_DEPLOYER,
+      value: generalConfig.eip6492Deployer,
+      label: `eip6492Deployer`,
     },
   ];
 

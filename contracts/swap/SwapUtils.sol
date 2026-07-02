@@ -32,6 +32,7 @@ library SwapUtils {
      * @param tokenIn The address of the token that is being swapped.
      * @param amountIn The amount of the token that is being swapped.
      * @param receiver The address to which the swapped tokens should be sent.
+     * @param shouldRelaxMaxPoolAmountForTokenIn A boolean indicating whether max pool amount validation for tokenIn can be skipped if tokenIn is not increased.
      * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
      */
     struct _SwapParams {
@@ -39,6 +40,7 @@ library SwapUtils {
         address tokenIn;
         uint256 amountIn;
         address receiver;
+        bool shouldRelaxMaxPoolAmountForTokenIn;
         bool shouldUnwrapNativeToken;
     }
 
@@ -49,6 +51,8 @@ library SwapUtils {
      * @param amountIn The amount of the token that is being swapped.
      * @param amountOut The amount of the token that is being received as part of the swap.
      * @param poolAmountOut The total amount of the token that is being received by all users in the swap pool.
+     * @param prevPnlToPoolFactorForLongs The long pnlToPoolFactor captured before the pool amounts are updated.
+     * @param prevPnlToPoolFactorForShorts The short pnlToPoolFactor captured before the pool amounts are updated.
      */
     struct SwapCache {
         address tokenOut;
@@ -63,6 +67,8 @@ library SwapUtils {
         bool balanceWasImproved;
         uint256 cappedDiffUsd;
         int256 tokenInPriceImpactAmount;
+        int256 prevPnlToPoolFactorForLongs;
+        int256 prevPnlToPoolFactorForShorts;
     }
 
     event SwapReverted(string reason, bytes reasonBytes);
@@ -133,6 +139,20 @@ library SwapUtils {
                 tokenOut,
                 outputAmount,
                 receiver,
+                // only the first hop in the swap path can use already-debited withdrawal inventory.
+                // Later hops receive fresh output from the previous market,
+                // so they should still enforce maxPoolAmount.
+
+                // address(params.bank) == market.marketToken means only same-bank swaps qualify.
+                // This is the case where SwapUtils does not transfer fresh tokenIn into the market.
+                // Normal swaps/deposits/orders transfer fresh tokenIn in, so their bank is never the
+                // marketToken and they never reach the relaxed path.
+
+                // even when eligible, maxPoolAmount validation is only skipped if the tokenIn pool did not increase
+                // past params.tokenInPoolAmountBeforeAction (see _shouldSkipMaxPoolAmountValidationForTokenIn).
+                // Callers that pass tokenInPoolAmountBeforeAction as 0 keep strict validation
+                // for any non-empty tokenIn pool.
+                i == 0 && address(params.bank) == market.marketToken,
                 i == params.swapPathMarkets.length - 1 ? params.shouldUnwrapNativeToken : false // only convert ETH on the last swap if needed
             );
 
@@ -222,6 +242,9 @@ library SwapUtils {
             _params.amountIn,
             cache.balanceWasImproved,
             params.uiFeeReceiver,
+            params.uiFeeFactor == type(uint256).max
+                ? FeeUtils.getUiFeeFactor(params.dataStore, params.uiFeeReceiver)
+                : params.uiFeeFactor,
             params.swapPricingType
         );
 
@@ -326,6 +349,18 @@ library SwapUtils {
             );
         }
 
+        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
+            params.oracle.getPrimaryPrice(_params.market.indexToken),
+            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
+            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
+        );
+
+        // capture the pnlToPoolFactor before the pool amounts are updated so a swap that
+        // strictly improves an already-breached side can still be allowed, see MarketUtils.validateMaxPnlForSwap
+        // maximize must be true to match the value computed in isPnlFactorExceeded
+        cache.prevPnlToPoolFactorForLongs = MarketUtils.getPnlToPoolFactor(params.dataStore, _params.market, prices, true, true);
+        cache.prevPnlToPoolFactorForShorts = MarketUtils.getPnlToPoolFactor(params.dataStore, _params.market, prices, false, true);
+
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
@@ -344,13 +379,9 @@ library SwapUtils {
             -cache.poolAmountOut.toInt256()
         );
 
-        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
-            params.oracle.getPrimaryPrice(_params.market.indexToken),
-            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
-            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
-        );
-
-        MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        if (!_shouldSkipMaxPoolAmountValidationForTokenIn(params, _params)) {
+            MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        }
 
         // for single token markets cache.tokenOut will always equal _params.market.longToken
         // so only the reserve for longs will be validated
@@ -362,7 +393,7 @@ library SwapUtils {
             cache.tokenOut == _params.market.longToken
         );
 
-        MarketUtils.validateMaxPnl(
+        MarketUtils.validateMaxPnlForSwap(
             params.dataStore,
             _params.market,
             prices,
@@ -371,7 +402,9 @@ library SwapUtils {
                 : Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             cache.tokenOut == _params.market.shortToken
                 ? Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
-                : Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
+                : Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            cache.prevPnlToPoolFactorForLongs,
+            cache.prevPnlToPoolFactorForShorts
         );
 
         SwapPricingUtils.EmitSwapInfoParams memory emitSwapInfoParams;
@@ -403,5 +436,18 @@ library SwapUtils {
         );
 
         return (cache.tokenOut, cache.amountOut);
+    }
+
+    function _shouldSkipMaxPoolAmountValidationForTokenIn(
+        ISwapUtils.SwapParams memory params,
+        _SwapParams memory _params
+    ) internal view returns (bool) {
+        if (!_params.shouldRelaxMaxPoolAmountForTokenIn) {
+            return false;
+        }
+
+        // if token amount not increased, return true, and skip the validation
+        uint256 poolAmount = MarketUtils.getPoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        return poolAmount <= params.tokenInPoolAmountBeforeAction;
     }
 }

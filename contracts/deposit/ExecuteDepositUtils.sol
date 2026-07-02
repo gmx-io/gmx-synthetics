@@ -48,6 +48,7 @@ library ExecuteDepositUtils {
         address account;
         address receiver;
         address uiFeeReceiver;
+        uint256 uiFeeFactor;
         address tokenIn;
         address tokenOut;
         Price.Props tokenInPrice;
@@ -156,7 +157,8 @@ library ExecuteDepositUtils {
             deposit.initialLongTokenAmount(),
             cache.market.marketToken,
             cache.market.longToken,
-            deposit.uiFeeReceiver()
+            deposit.uiFeeReceiver(),
+            deposit.uiFeeFactor()
         );
 
         cache.shortTokenAmount = swap(
@@ -166,7 +168,8 @@ library ExecuteDepositUtils {
             deposit.initialShortTokenAmount(),
             cache.market.marketToken,
             cache.market.shortToken,
-            deposit.uiFeeReceiver()
+            deposit.uiFeeReceiver(),
+            deposit.uiFeeFactor()
         );
 
         if (cache.longTokenAmount == 0 && cache.shortTokenAmount == 0) {
@@ -176,7 +179,7 @@ library ExecuteDepositUtils {
         cache.longTokenUsd = cache.longTokenAmount * cache.prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * cache.prices.shortTokenPrice.midPrice();
 
-        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
+        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsdForDeposit(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 cache.market,
@@ -196,6 +199,7 @@ library ExecuteDepositUtils {
                 deposit.account(),
                 deposit.receiver(),
                 deposit.uiFeeReceiver(),
+                deposit.uiFeeFactor(),
                 cache.market.longToken,
                 cache.market.shortToken,
                 cache.prices.longTokenPrice,
@@ -214,6 +218,7 @@ library ExecuteDepositUtils {
                 deposit.account(),
                 deposit.receiver(),
                 deposit.uiFeeReceiver(),
+                deposit.uiFeeFactor(),
                 cache.market.shortToken,
                 cache.market.longToken,
                 cache.prices.shortTokenPrice,
@@ -317,6 +322,7 @@ library ExecuteDepositUtils {
             _params.amount,
             balanceWasImproved,
             _params.uiFeeReceiver,
+            _params.uiFeeFactor,
             params.swapPricingType
         );
 
@@ -413,14 +419,11 @@ library ExecuteDepositUtils {
             // an additional 0.005 ETH may be used to mint market tokens
             // the swap impact pool is decreased by the used amount
             //
-            // priceImpactUsd is calculated based on pricing assuming only depositAmount of tokenIn
-            // was added to the pool
-            // since impactAmount of tokenOut is added to the pool here, the calculation of
-            // the price impact would not be entirely accurate
-            //
-            // it is possible that the addition of the positive impact amount of tokens into the pool
-            // could increase the imbalance of the pool, for most cases this should not be a significant
-            // change compared to the improvement of balance from the actual deposit
+            // the impactAmount of tokenOut is added to the pool below, which on its own would
+            // increase the imbalance of the pool and partially offset the balance improvement from
+            // the deposit; this added tokenOut is accounted for by SwapPricingUtils.getPriceImpactUsdForDeposit
+            // which recalculates priceImpactUsd with the rebate included, so the impact reflects the
+            // genuine post-rebate balance improvement
             (int256 positiveImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
@@ -535,7 +538,8 @@ library ExecuteDepositUtils {
         uint256 inputAmount,
         address market,
         address expectedOutputToken,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        uint256 uiFeeFactor
     ) internal returns (uint256) {
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
             params.dataStore,
@@ -555,6 +559,8 @@ library ExecuteDepositUtils {
                 0, // minOutputAmount
                 market, // receiver
                 uiFeeReceiver, // uiFeeReceiver
+                uiFeeFactor, // uiFeeFactor
+                0, // tokenInPoolAmountBeforeAction
                 false, // shouldUnwrapNativeToken
                 ISwapPricingUtils.SwapPricingType.Swap
             )

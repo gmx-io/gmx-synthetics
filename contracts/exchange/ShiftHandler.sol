@@ -58,7 +58,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         );
     }
 
-    function cancelShift(bytes32 key) external override globalNonReentrant onlyController {
+    function cancelShift(bytes32 key) external override globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -77,7 +77,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
             multichainVault,
             shiftVault,
             key,
-            shift.account(),
+            roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : shift.account(),
             startingGas,
             Keys.USER_INITIATED_CANCEL,
             ""

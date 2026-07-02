@@ -181,7 +181,7 @@ describe("MultichainLifeCycle", () => {
     // multichainVault balance
     expect(await usdc.balanceOf(multichainVault.address)).eq(0);
     expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
-      "2095383984763072", // ~0.0021 ETH --> execution fee refunds (from deposit)
+      "2053221984505776", // ~0.0021 ETH --> execution fee refunds (from deposit)
       GAS_BUFFER.DEPOSIT
     );
     expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(expandDecimals(95_000, 18)); // 95,000 GM
@@ -189,7 +189,7 @@ describe("MultichainLifeCycle", () => {
     expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq(usdcAmount);
     // user's multichain balance
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-      "2095383984763072",
+      "2053221984505776",
       GAS_BUFFER.DEPOSIT
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
@@ -274,7 +274,7 @@ describe("MultichainLifeCycle", () => {
     ); // GLV
     // user's multichain assets
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-      "5093772976750184", // 0.0051 ETH --> execution fee refunds (from deposit + glvDeposit)
+      "5040333976322672", // 0.0051 ETH --> execution fee refunds (from deposit + glvDeposit)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
@@ -356,7 +356,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6898295959186368"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6815404958523240"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
@@ -409,7 +409,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6898295959186368"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6815403958523232"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
@@ -430,7 +430,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6898295959186368"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6815403958523232"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
@@ -452,7 +452,7 @@ describe("MultichainLifeCycle", () => {
     // user's multichain balance
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount // 100% of WNT deposited
-        .add("9383301947066416"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal + withdrawal)
+        .add("9269026946152216"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal + withdrawal)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
@@ -472,6 +472,11 @@ describe("MultichainLifeCycle", () => {
       minAmountOut: 0,
       provider: mockStargatePoolUsdc.address,
       data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
+      bridgeFee: {
+        feeToken: ethers.constants.AddressZero,
+        feeAmount: 0,
+        feeSwapPath: [],
+      },
     };
 
     const bridgeOutParams: Parameters<typeof sendBridgeOut>[0] = {

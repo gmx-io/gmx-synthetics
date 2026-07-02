@@ -11,6 +11,8 @@ export type SubaccountApproval = {
   nonce: BigNumberish;
   integrationId: string;
   deadline: BigNumberish;
+  revocationCounter: BigNumberish;
+  eip6492SignatureWrapperHash: string;
   signature: string;
 };
 
@@ -53,6 +55,7 @@ export type RelayParams = {
   fee: FeeParams;
   userNonce: BigNumberish;
   deadline: BigNumberish;
+  eip6492SignatureWrapperHash: string;
   desChainId: BigNumberish;
 };
 
@@ -111,6 +114,7 @@ export async function getRelayParams(p: {
   userNonce?: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
+  eip6492SignatureWrapperHash?: string;
   relayRouter: ethers.Contract;
   signer: ethers.Signer;
 }) {
@@ -132,6 +136,7 @@ export async function getRelayParams(p: {
     fee: p.feeParams,
     userNonce,
     deadline: p.deadline,
+    eip6492SignatureWrapperHash: p.eip6492SignatureWrapperHash || ethers.constants.HashZero,
     desChainId: p.desChainId,
   };
 }
@@ -161,6 +166,7 @@ export function hashRelayParams(relayParams: RelayParams) {
       "uint256",
       "uint256",
       "uint256",
+      "bytes32",
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
@@ -179,6 +185,7 @@ export function hashRelayParams(relayParams: RelayParams) {
       relayParams.userNonce,
       relayParams.deadline,
       relayParams.desChainId,
+      relayParams.eip6492SignatureWrapperHash,
     ]
   );
 
@@ -196,13 +203,15 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
     "desChainId",
     "deadline",
     "integrationId",
+    "revocationCounter",
+    "eip6492SignatureWrapperHash",
     "signature",
   ]);
 
   const hash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,bytes signature)",
+        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,uint256 revocationCounter,bytes32 eip6492SignatureWrapperHash,bytes signature)",
       ],
       [subaccountApproval]
     )

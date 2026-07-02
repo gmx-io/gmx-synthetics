@@ -174,6 +174,22 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(user0).addSubaccount(subaccount.address);
 
+    // addSubaccount only restores set membership; expiresAt and autoTopUp (cleared
+    // by removeSubaccount above) need to be re-set.
+    await subaccountRouter
+      .connect(user0)
+      .multicall([
+        subaccountRouter.interface.encodeFunctionData("setSubaccountExpiresAt", [
+          subaccount.address,
+          keys.SUBACCOUNT_ORDER_ACTION,
+          9999999999,
+        ]),
+        subaccountRouter.interface.encodeFunctionData("setSubaccountAutoTopUpAmount", [
+          subaccount.address,
+          expandDecimals(2, 17),
+        ]),
+      ]);
+
     await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, params))
       .to.be.revertedWithCustomError(errorsContract, "MaxSubaccountActionCountExceeded")
       .withArgs(user0.address, subaccount.address, 1, 0);
@@ -268,7 +284,10 @@ describe("SubaccountRouter", () => {
 
     // 0.1 WETH in total
     expect(order.numbers.executionFee).closeTo("2411149120000000", "1000000000000000");
-    await expectBalance(wnt.address, user2.address, ["97887749120000000", "1000000000000"]);
+    // user2 = HOLDING_ADDRESS. createOrder caps executionFee at
+    // gasLimit * basefee * MAX_EXECUTION_FEE_MULTIPLIER_FACTOR (subaccount orders
+    // with a callbackContract); the excess is forwarded here.
+    await expectBalance(wnt.address, user2.address, ["98147491420000000", "1000000000000000"]);
 
     expect(
       await dataStore.getUint(
@@ -677,7 +696,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1659893219353356", "10000000000000"); // 0.001635869004900372 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1686577520338340", "10000000000000"); // 0.001635869004900372 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

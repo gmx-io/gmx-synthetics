@@ -19,6 +19,8 @@ library GlvUtils {
         bytes32 marketListKey;
         uint256 marketCount;
         uint256 glvValue;
+        uint256 marketValueUsd;
+        bool hasNegativePoolValue;
         Price.Props indexTokenPrice;
         Price.Props longTokenPrice;
         Price.Props shortTokenPrice;
@@ -29,23 +31,57 @@ library GlvUtils {
     // @param oracle IOracle
     // @param glv GLV
     // @param maximize
-    // @param forceCalculation if true, the GLV value will be calculated even if the GLV token price is not empty
     // @return the USD value of the GLV
     // NOTE GLV value can be calculated with GLV oracle price, the actual value may be changed slightly after the shift, deposit or withdrawal due to paid fees
     // and the oracle price timestamp always lag behind the current block and may be calculated based on different contracts state
     // so GLV glv value might be slightly inaccurate
-    // if accuracy is critical then pass forceCalculation = true
     function getGlvValue(
         DataStore dataStore,
         IOracle oracle,
         address glv,
         bool maximize
     ) public view returns (uint256 glvValue, bool glvTokenPriceUsed) {
+        address invalidMarket;
+        (glvValue, glvTokenPriceUsed, invalidMarket) = _getGlvValue(dataStore, oracle, glv, maximize);
+        if (invalidMarket != address(0)) {
+            revert Errors.GlvNegativeMarketPoolValue(glv, invalidMarket);
+        }
+    }
+
+    // @dev non-reverting variant of getGlvValue for informational use (e.g. event emission) only,
+    // it MUST NOT be used for GLV token mint/burn pricing
+    // returns success = false instead of reverting with GlvNegativeMarketPoolValue
+    // returns glvValue = 0 when success is false, never a partially calculated value
+    // NOTE oracle prices are validated for markets up to and including the first market with
+    // negative pool value; EmptyPrimaryPrice for markets after that point is not surfaced on this path
+    function tryGetGlvValue(
+        DataStore dataStore,
+        IOracle oracle,
+        address glv,
+        bool maximize
+    ) public view returns (uint256 glvValue, bool glvTokenPriceUsed, bool success) {
+        address invalidMarket;
+        (glvValue, glvTokenPriceUsed, invalidMarket) = _getGlvValue(dataStore, oracle, glv, maximize);
+        if (invalidMarket != address(0)) {
+            return (0, false, false);
+        }
+        return (glvValue, glvTokenPriceUsed, true);
+    }
+
+    // @dev returns the first market with negative pool value as invalidMarket instead of reverting,
+    // so callers can choose whether to revert with GlvNegativeMarketPoolValue; returns early on
+    // the first such market so getGlvValue reverts on that market without reading later markets
+    function _getGlvValue(
+        DataStore dataStore,
+        IOracle oracle,
+        address glv,
+        bool maximize
+    ) internal view returns (uint256, bool, address) {
         {
             Price.Props memory glvTokenPrice = getGlvTokenPrice(oracle, glv);
             if (!glvTokenPrice.isEmpty()) {
                 uint256 supply = ERC20(glv).totalSupply();
-                return ((maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply, true);
+                return ((maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply, true, address(0));
             }
         }
 
@@ -61,7 +97,7 @@ library GlvUtils {
                 cache.longTokenPrice = oracle.getPrimaryPrice(market.longToken);
                 cache.shortTokenPrice = oracle.getPrimaryPrice(market.shortToken);
             }
-            cache.glvValue += _getGlvMarketValue(
+            (cache.marketValueUsd, cache.hasNegativePoolValue) = _getGlvMarketValue(
                 dataStore,
                 glv,
                 marketAddress,
@@ -70,9 +106,13 @@ library GlvUtils {
                 cache.shortTokenPrice,
                 maximize
             );
+            if (cache.hasNegativePoolValue) {
+                return (0, false, marketAddress);
+            }
+            cache.glvValue += cache.marketValueUsd;
         }
 
-        return (cache.glvValue, false);
+        return (cache.glvValue, false, address(0));
     }
 
     function getGlvTokenPrice(
@@ -99,7 +139,7 @@ library GlvUtils {
             address marketAddress = marketAddresses[i];
             cache.indexTokenPrice = indexTokenPrices[i];
 
-            cache.glvValue += _getGlvMarketValue(
+            (cache.marketValueUsd, cache.hasNegativePoolValue) = _getGlvMarketValue(
                 dataStore,
                 glv,
                 marketAddress,
@@ -108,11 +148,17 @@ library GlvUtils {
                 shortTokenPrice,
                 maximize
             );
+            if (cache.hasNegativePoolValue) {
+                revert Errors.GlvNegativeMarketPoolValue(glv, marketAddress);
+            }
+            cache.glvValue += cache.marketValueUsd;
         }
 
         return cache.glvValue;
     }
 
+    // @dev returns hasNegativePoolValue instead of reverting so that callers can decide
+    // whether to revert with GlvNegativeMarketPoolValue or to handle it
     function _getGlvMarketValue(
         DataStore dataStore,
         address glv,
@@ -121,14 +167,14 @@ library GlvUtils {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         bool maximize
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256 marketValueUsd, bool hasNegativePoolValue) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
 
         uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(marketAddress)));
         uint256 balance = GlvToken(payable(glv)).tokenBalances(marketAddress);
 
         if (balance == 0) {
-            return 0;
+            return (0, false);
         }
 
         MarketPoolValueInfo.Props memory marketPoolValueInfo = MarketUtils.getPoolValueInfo(
@@ -142,11 +188,13 @@ library GlvUtils {
         );
 
         if (marketPoolValueInfo.poolValue < 0) {
-            revert Errors.GlvNegativeMarketPoolValue(glv, marketAddress);
+            return (0, true);
         }
 
-        return
-            MarketUtils.marketTokenAmountToUsd(balance, marketPoolValueInfo.poolValue.toUint256(), marketTokenSupply);
+        return (
+            MarketUtils.marketTokenAmountToUsd(balance, marketPoolValueInfo.poolValue.toUint256(), marketTokenSupply),
+            false
+        );
     }
 
     function getGlvTokenPrice(
@@ -333,14 +381,26 @@ library GlvUtils {
             revert Errors.GlvEnabledMarket(glvAddress, marketAddress);
         }
 
+        // a disabled market may hold a residual GM balance that can not be shifted out
+        // (e.g. when its pool value is negative), which would otherwise keep it stuck in
+        // the supported market list, the dust threshold allows such a market to be removed
+        // the GM tokens are not moved, re-adding the market restores the balance accounting
+        bytes32 dustThresholdKey = Keys.glvMarketRemovalDustThresholdKey(glvAddress, marketAddress);
         uint256 balance = GlvToken(payable(glvAddress)).tokenBalances(marketAddress);
-        if (balance != 0) {
+        uint256 dustThreshold = dataStore.getUint(dustThresholdKey);
+        if (balance > dustThreshold) {
             revert Errors.GlvNonZeroMarketBalance(glvAddress, marketAddress);
         }
 
         bytes32 key = Keys.glvSupportedMarketListKey(glvAddress);
         dataStore.removeAddress(key, marketAddress);
 
-        GlvEventUtils.emitGlvMarketRemoved(eventEmitter, glvAddress, marketAddress);
+        // clear the dust threshold so a stale value can not silently apply if the market
+        // is re-added and removed again later
+        if (dustThreshold != 0) {
+            dataStore.removeUint(dustThresholdKey);
+        }
+
+        GlvEventUtils.emitGlvMarketRemoved(eventEmitter, glvAddress, marketAddress, balance);
     }
 }

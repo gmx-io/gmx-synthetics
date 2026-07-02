@@ -52,6 +52,7 @@ contract Oracle is IOracle, RoleModule {
     // set in setPrices are cleared after use
     EnumerableSet.AddressSet internal tokensWithPrices;
     mapping(address => Price.Props) public primaryPrices;
+    mapping(address => Price.Props) public primaryRawPrices;
 
     uint256 public minTimestamp;
     uint256 public maxTimestamp;
@@ -171,6 +172,20 @@ contract Oracle is IOracle, RoleModule {
         return price;
     }
 
+    // @dev get the primary raw price of a token, before provider-side spread reduction
+    // @param token the token to get the price for
+    // @return the primary raw price of a token
+    function getPrimaryRawPrice(address token) external view returns (Price.Props memory) {
+        if (token == address(0)) { return Price.Props(0, 0); }
+
+        Price.Props memory price = primaryRawPrices[token];
+        if (price.isEmpty()) {
+            revert Errors.EmptyPrimaryPrice(token);
+        }
+
+        return price;
+    }
+
     function validatePrices(
         OracleUtils.SetPricesParams memory params,
         bool forAtomicAction
@@ -201,6 +216,9 @@ contract Oracle is IOracle, RoleModule {
             _setPrimaryPrice(validatedPrice.token, Price.Props(
                 validatedPrice.min,
                 validatedPrice.max
+            ), Price.Props(
+                validatedPrice.rawMin,
+                validatedPrice.rawMax
             ));
 
             if (validatedPrice.timestamp < _minTimestamp) {
@@ -301,7 +319,7 @@ contract Oracle is IOracle, RoleModule {
                 revert Errors.MaxPriceAgeExceeded(validatedPrice.timestamp, Chain.currentTimestamp());
             }
 
-            if (!provider.isChainlinkOnChainProvider()) {
+            if (!provider.isChainlinkOnChainProvider() && provider.shouldCheckRefPrice()) {
                 (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
 
                 if (hasRefPrice) {
@@ -347,8 +365,16 @@ contract Oracle is IOracle, RoleModule {
     }
 
     function _setPrimaryPrice(address token, Price.Props memory price) internal {
+        _setPrimaryPrice(token, price, price);
+    }
+
+    function _setPrimaryPrice(address token, Price.Props memory price, Price.Props memory rawPrice) internal {
         if (price.min > price.max) {
             revert Errors.InvalidMinMaxForPrice(token, price.min, price.max);
+        }
+
+        if (rawPrice.min > rawPrice.max) {
+            revert Errors.InvalidMinMaxForPrice(token, rawPrice.min, rawPrice.max);
         }
 
         Price.Props memory existingPrice = primaryPrices[token];
@@ -358,11 +384,13 @@ contract Oracle is IOracle, RoleModule {
         }
 
         primaryPrices[token] = price;
+        primaryRawPrices[token] = rawPrice;
         tokensWithPrices.add(token);
     }
 
     function _removePrimaryPrice(address token) internal {
         delete primaryPrices[token];
+        delete primaryRawPrices[token];
         tokensWithPrices.remove(token);
     }
 

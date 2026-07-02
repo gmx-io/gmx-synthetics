@@ -402,6 +402,13 @@ async function deployContracts(): Promise<DeploymentResult> {
     console.log("Oracle deployed to:", oracle.address);
     await delay(txDelay);
 
+    const FeeVault: ContractFactory = await getFactory(deployer, "FeeVault");
+    const feeVault: Contract = await FeeVault.deploy(contracts.roleStore, contracts.dataStore);
+    await feeVault.deployed();
+    console.log("FeeVault deployed to:", feeVault.address);
+    contracts.feeVault = feeVault.address;
+    await delay(txDelay);
+
     const FeeHandler: ContractFactory = await getFactory(deployer, "FeeHandler", {
       libraries: {
         MarketUtils: contracts.marketUtils,
@@ -412,6 +419,7 @@ async function deployContracts(): Promise<DeploymentResult> {
       oracle.address,
       contracts.dataStore,
       contracts.eventEmitter,
+      feeVault.address,
       contracts.mockVaultV1,
       contracts.gmx
     );

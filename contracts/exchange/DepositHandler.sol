@@ -68,7 +68,7 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
 
     // @dev cancels a deposit
     // @param key the deposit key
-    function cancelDeposit(bytes32 key) external override globalNonReentrant onlyController {
+    function cancelDeposit(bytes32 key) external override globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -87,7 +87,7 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
             multichainVault,
             depositVault,
             key,
-            deposit.account(),
+            roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : deposit.account(),
             startingGas,
             Keys.USER_INITIATED_CANCEL,
             ""

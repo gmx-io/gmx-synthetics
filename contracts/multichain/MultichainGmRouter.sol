@@ -47,7 +47,7 @@ contract MultichainGmRouter is IMultichainGmRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IDepositUtils.CreateDepositParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
+        bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, account, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         return _createDeposit(account, srcChainId, transferRequests, params);
@@ -74,7 +74,7 @@ contract MultichainGmRouter is IMultichainGmRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
+        bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, account, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _processTransferRequests(account, transferRequests, srcChainId);
@@ -92,7 +92,7 @@ contract MultichainGmRouter is IMultichainGmRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IShiftUtils.CreateShiftParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
+        bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, account, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _processTransferRequests(account, transferRequests, srcChainId);

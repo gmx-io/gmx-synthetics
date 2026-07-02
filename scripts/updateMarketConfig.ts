@@ -1,4 +1,19 @@
 import { updateMarketConfig } from "./updateMarketConfigUtils";
+import { MarketHours } from "../config/markets";
+
+function getMarketHours(): MarketHours | undefined {
+  const value = process.env.MARKET_STATE;
+
+  if (!value) {
+    return undefined;
+  }
+
+  if (Object.values(MarketHours).includes(value as MarketHours)) {
+    return value as MarketHours;
+  }
+
+  throw new Error(`Invalid MARKET_STATE: "${value}". Expected "${MarketHours.OnHours}" or "${MarketHours.OffHours}".`);
+}
 
 async function main() {
   await updateMarketConfig({
@@ -9,6 +24,7 @@ async function main() {
     includePositionImpact: process.env.INCLUDE_POSITION_IMPACT === "true",
     includeFunding: process.env.INCLUDE_FUNDING === "true",
     market: process.env.MARKET,
+    marketHours: getMarketHours(),
   });
 }
 

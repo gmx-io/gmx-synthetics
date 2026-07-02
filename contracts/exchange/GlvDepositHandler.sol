@@ -118,7 +118,7 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
         GlvDepositUtils.cancelGlvDeposit(params);
     }
 
-    function cancelGlvDeposit(bytes32 key) external globalNonReentrant onlyController {
+    function cancelGlvDeposit(bytes32 key) external globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -134,7 +134,7 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
             glvVault: glvVault,
             oracle: oracle,
             key: key,
-            keeper: glvDeposit.account(),
+            keeper: roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : glvDeposit.account(),
             startingGas: startingGas,
             reason: Keys.USER_INITIATED_CANCEL,
             reasonBytes: ""

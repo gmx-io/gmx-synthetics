@@ -68,7 +68,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
 
     // @dev cancels a withdrawal
     // @param key the withdrawal key
-    function cancelWithdrawal(bytes32 key) external override globalNonReentrant onlyController {
+    function cancelWithdrawal(bytes32 key) external override globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -87,7 +87,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
             multichainVault,
             withdrawalVault,
             key,
-            withdrawal.account(),
+            roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : withdrawal.account(),
             startingGas,
             Keys.USER_INITIATED_CANCEL,
             ""

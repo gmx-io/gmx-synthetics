@@ -117,11 +117,13 @@ export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER
 
 export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
+export const MAX_RELAY_FEE_SWAP_USD = hashString("MAX_RELAY_FEE_SWAP_USD");
 export const MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = hashString("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT");
 export const GELATO_RELAY_FEE_BASE_AMOUNT = hashString("GELATO_RELAY_FEE_BASE_AMOUNT");
 export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_MULTIPLIER_FACTOR");
 
 export const RELAY_FEE_ADDRESS = hashString("RELAY_FEE_ADDRESS");
+export const EIP6492_DEPLOYER = hashString("EIP6492_DEPLOYER");
 
 export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 
@@ -203,6 +205,7 @@ export const FUNDING_EXPONENT_FACTOR = hashString("FUNDING_EXPONENT_FACTOR");
 
 export const SAVED_FUNDING_FACTOR_PER_SECOND = hashString("SAVED_FUNDING_FACTOR_PER_SECOND");
 export const FUNDING_INCREASE_FACTOR_PER_SECOND = hashString("FUNDING_INCREASE_FACTOR_PER_SECOND");
+export const MIN_FUNDING_INCREASE_RATE_PER_SECOND = hashString("MIN_FUNDING_INCREASE_RATE_PER_SECOND");
 export const FUNDING_DECREASE_FACTOR_PER_SECOND = hashString("FUNDING_DECREASE_FACTOR_PER_SECOND");
 export const MIN_FUNDING_FACTOR_PER_SECOND = hashString("MIN_FUNDING_FACTOR_PER_SECOND");
 export const MAX_FUNDING_FACTOR_PER_SECOND = hashString("MAX_FUNDING_FACTOR_PER_SECOND");
@@ -267,6 +270,7 @@ export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 export const SUBACCOUNT_EXPIRES_AT = hashString("SUBACCOUNT_EXPIRES_AT");
 export const SUBACCOUNT_INTEGRATION_ID = hashString("SUBACCOUNT_INTEGRATION_ID");
 export const SUBACCOUNT_INTEGRATION_DISABLED = hashString("SUBACCOUNT_INTEGRATION_DISABLED");
+export const SUBACCOUNT_REVOCATION_COUNTER = hashString("SUBACCOUNT_REVOCATION_COUNTER");
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
 export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
 
@@ -275,6 +279,7 @@ export const GLV_MAX_MARKET_COUNT = hashString("GLV_MAX_MARKET_COUNT");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT");
 export const GLV_SHIFT_MIN_INTERVAL = hashString("GLV_SHIFT_MIN_INTERVAL");
+export const GLV_MARKET_REMOVAL_DUST_THRESHOLD = hashString("GLV_MARKET_REMOVAL_DUST_THRESHOLD");
 export const IS_GLV_MARKET_DISABLED = hashString("IS_GLV_MARKET_DISABLED");
 
 export const SYNC_CONFIG_FEATURE_DISABLED = hashString("SYNC_CONFIG_FEATURE_DISABLED");
@@ -292,6 +297,7 @@ export const BUYBACK_PRIMARY_TOKEN_FACTOR = hashString("BUYBACK_PRIMARY_TOKEN_FA
 export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMPACT_FACTOR");
 export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
+export const IS_DEPLOYED_WALLET = hashString("IS_DEPLOYED_WALLET");
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
@@ -741,16 +747,20 @@ export function fundingIncreaseFactorPerSecondKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_INCREASE_FACTOR_PER_SECOND, market]);
 }
 
+export function minFundingIncreaseRatePerSecondKey(market: string) {
+  return hashData(["bytes32", "address"], [MIN_FUNDING_INCREASE_RATE_PER_SECOND, market]);
+}
+
 export function fundingDecreaseFactorPerSecondKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_DECREASE_FACTOR_PER_SECOND, market]);
 }
 
-export function minFundingFactorPerSecondKey(market: string) {
-  return hashData(["bytes32", "address"], [MIN_FUNDING_FACTOR_PER_SECOND, market]);
+export function minFundingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MIN_FUNDING_FACTOR_PER_SECOND, market, isLong]);
 }
 
-export function maxFundingFactorPerSecondKey(market: string) {
-  return hashData(["bytes32", "address"], [MAX_FUNDING_FACTOR_PER_SECOND, market]);
+export function maxFundingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_FUNDING_FACTOR_PER_SECOND, market, isLong]);
 }
 
 export function thresholdForStableFundingKey(market: string) {
@@ -880,6 +890,18 @@ export function subaccountAutoTopUpAmountKey(account: string, subaccount: string
   return hashData(["bytes32", "address", "address"], [SUBACCOUNT_AUTO_TOP_UP_AMOUNT, account, subaccount]);
 }
 
+export function subaccountIntegrationIdKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_INTEGRATION_ID, account, subaccount]);
+}
+
+export function subaccountIntegrationDisabledKey(integrationId: string) {
+  return hashData(["bytes32", "bytes32"], [SUBACCOUNT_INTEGRATION_DISABLED, integrationId]);
+}
+
+export function subaccountRevocationCounterKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_REVOCATION_COUNTER, account, subaccount]);
+}
+
 export function glvSupportedMarketListKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SUPPORTED_MARKET_LIST, glv]);
 }
@@ -906,6 +928,10 @@ export function glvMaxMarketTokenBalanceAmountKey(glv: string, market: string) {
 
 export function glvShiftMinIntervalKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SHIFT_MIN_INTERVAL, glv]);
+}
+
+export function glvMarketRemovalDustThresholdKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [GLV_MARKET_REMOVAL_DUST_THRESHOLD, glv, market]);
 }
 
 export function glvShiftMaxLossFactorKey(glv: string) {
@@ -1038,4 +1064,8 @@ export function contributorTokenAmountKey(account: string, token: string) {
 
 export function creReceiverAuthorizedWorkflowIdsKey(workflowId: string) {
   return hashData(["bytes32", "bytes32"], [CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS, workflowId]);
+}
+
+export function isDeployedWalletKey(wallet: string) {
+  return hashData(["bytes32", "address"], [IS_DEPLOYED_WALLET, wallet]);
 }

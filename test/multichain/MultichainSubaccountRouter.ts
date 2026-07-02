@@ -121,6 +121,7 @@ describe("MultichainSubaccountRouter", () => {
     await impersonateAccount(GELATO_RELAY_ADDRESS);
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
 
+    await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(10000));
     await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(100));
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
@@ -1187,6 +1188,34 @@ describe("MultichainSubaccountRouter", () => {
 
       expect(createOrderParams.gelatoRelayFeeAmount).gt(0);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
+    });
+
+    // Two different main accounts that have approved the same subaccount
+    // address must each be able to revoke it independently. The two signed
+    // payloads share every field except the signer's account, so the digests
+    // must differ.
+    it("two users revoking the same subaccount do not collide", async () => {
+      // both user1 and user3 approve user0 as a subaccount
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.addAddress(keys.subaccountListKey(user3.address), user0.address);
+
+      // top up both main accounts' multichain WNT balances to pay the relay fee
+      await bridgeInTokens(fixture, { account: user1, amount: expandDecimals(2, 15) });
+      await bridgeInTokens(fixture, { account: user3, amount: expandDecimals(2, 15) });
+
+      const user3Params = {
+        ...params,
+        signer: user3,
+        account: user3.address,
+      };
+
+      // user1 revokes user0 first
+      await expect(sendRemoveSubaccount(params)).to.not.be.reverted;
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
+
+      // user3's identical-shape payload (different signer/account) must also succeed;
+      await expect(sendRemoveSubaccount(user3Params)).to.not.be.reverted;
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user3.address))).to.eq(0);
     });
 
     it("swap relay fee with external call", async () => {
