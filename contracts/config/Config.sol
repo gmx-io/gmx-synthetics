@@ -527,6 +527,17 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.SWAP_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.REGISTER_CODE_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.STAKE_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.UNSTAKE_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.STAKE_ES_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.UNSTAKE_ES_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.HANDLE_STAKING_REWARDS_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.COMPOUND_STAKING_REWARDS_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.VEST_ES_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.DELEGATE_GOV_GMX_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.SIGNAL_STAKING_TRANSFER_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.ACCEPT_STAKING_TRANSFER_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.WITHDRAW_FROM_WALLET_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 

@@ -452,6 +452,9 @@ library Errors {
     // Reader errors
     error EmptyMarketPrice(address market);
 
+    // GmxAccountWalletFactory errors
+    error InvalidWallet(address wallet);
+
     // Multichain errors
     error InvalidTransferRequestsLength();
     error EmptyMultichainTransferInAmount(address account, address token);
@@ -479,8 +482,10 @@ library Errors {
     // Gelato relay errors
     error InvalidSignature(string signatureType);
     error InvalidRecoveredSigner(string signatureType, address recovered, address recoveredFromMinified, address expectedSigner);
+    error InvalidEIP6492SignatureWrapper();
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
+    error UnexpectedBridgeFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
     error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay
     error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);

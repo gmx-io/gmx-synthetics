@@ -35,6 +35,7 @@ library BridgeOutFromControllerUtils {
         uint256 deadline;
         address provider;
         bytes providerData;
+        IRelayUtils.BridgeFeeParams bridgeFee;
     }
 
     struct BridgeOutActionData {
@@ -43,9 +44,11 @@ library BridgeOutFromControllerUtils {
         address provider;
         bytes providerData;
         uint256 minAmountOut;
+        IRelayUtils.BridgeFeeParams bridgeFee;
         address secondaryProvider;
         bytes secondaryProviderData;
         uint256 secondaryMinAmountOut;
+        IRelayUtils.BridgeFeeParams secondaryBridgeFee;
     }
 
     /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
@@ -80,9 +83,9 @@ library BridgeOutFromControllerUtils {
         );
 
         if (_bridgeOutParams.actionType == IMultichainProvider.ActionType.BridgeOut) {
-            (_bridgeOutParams.desChainId, _bridgeOutParams.deadline, _bridgeOutParams.provider, _bridgeOutParams.providerData, _bridgeOutParams.minAmountOut) = abi.decode(
+            (_bridgeOutParams.desChainId, _bridgeOutParams.deadline, _bridgeOutParams.provider, _bridgeOutParams.providerData, _bridgeOutParams.minAmountOut, _bridgeOutParams.bridgeFee) = abi.decode(
                 actionData,
-                (uint256, uint256, address, bytes, uint256)
+                (uint256, uint256, address, bytes, uint256, IRelayUtils.BridgeFeeParams)
             );
 
             _bridgeOutParams.account = account;
@@ -130,10 +133,11 @@ library BridgeOutFromControllerUtils {
                     _bridgeOutParams.deadline,
                     _bridgeOutParams.provider,
                     _bridgeOutParams.providerData,
-                    _bridgeOutParams.minAmountOut
+                    _bridgeOutParams.minAmountOut,
+                    _bridgeOutParams.bridgeFee
                 ) = abi.decode(
                     actionData,
-                    (uint256, uint256, address, bytes, uint256)
+                    (uint256, uint256, address, bytes, uint256, IRelayUtils.BridgeFeeParams)
                 );
 
                 _bridgeOutParams.account = params.account;
@@ -162,7 +166,8 @@ library BridgeOutFromControllerUtils {
                         minAmountOut: decodedActionData.minAmountOut,
                         deadline: decodedActionData.deadline,
                         provider: decodedActionData.provider,
-                        providerData: decodedActionData.providerData
+                        providerData: decodedActionData.providerData,
+                        bridgeFee: decodedActionData.bridgeFee
                     })
                 );
 
@@ -179,7 +184,8 @@ library BridgeOutFromControllerUtils {
                         minAmountOut: decodedActionData.secondaryMinAmountOut,
                         deadline: decodedActionData.deadline,
                         provider: decodedActionData.secondaryProvider,
-                        providerData: decodedActionData.secondaryProviderData
+                        providerData: decodedActionData.secondaryProviderData,
+                        bridgeFee: decodedActionData.secondaryBridgeFee
                     })
                 );
             }
@@ -200,7 +206,8 @@ library BridgeOutFromControllerUtils {
             amount: params.amount,
             minAmountOut: params.minAmountOut,
             provider: params.provider,
-            data: params.providerData
+            data: params.providerData,
+            bridgeFee: params.bridgeFee
         });
 
         try multichainTransferRouter.bridgeOutFromController(params.account, params.srcChainId, params.desChainId, params.deadline, bridgeOutParams) {

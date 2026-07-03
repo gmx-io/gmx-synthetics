@@ -581,6 +581,13 @@ library GasUtils {
         return dataStore.getUint(Keys.REGISTER_CODE_GAS_LIMIT);
     }
 
+    function estimateStakingActionGasLimit(
+        DataStore dataStore,
+        bytes32 gasLimitKey
+    ) internal view returns (uint256) {
+        return dataStore.getUint(gasLimitKey);
+    }
+
     function emitKeeperExecutionFee(EventEmitter eventEmitter, address keeper, uint256 executionFeeAmount) internal {
         EventUtils.EventLogData memory eventData;
 
