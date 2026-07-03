@@ -198,13 +198,13 @@ library PositionUtils {
             cache.poolTokenAmount = MarketUtils.getPoolAmount(dataStore, market, cache.pnlToken);
             cache.poolTokenPrice = position.isLong() ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
             cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice;
-            cache.poolPnl = MarketUtils.getPnl(
+            cache.poolPnl = MarketUtils.getPositivePnl(
                 dataStore,
                 market,
                 prices.indexTokenPrice,
                 position.isLong(),
                 true
-            );
+            ).toInt256();
 
             cache.cappedPoolPnl = MarketUtils.getCappedPnl(
                 dataStore,
@@ -366,39 +366,13 @@ library PositionUtils {
             )
         );
 
-        // cap positive priceImpactUsd based on the max positive position impact factor
-        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+        cache.priceImpactUsd = getImpactUsdForLiquidationCheck(
             dataStore,
-            market.marketToken,
-            cache.priceImpactUsd,
-            position.sizeInUsd()
+            market,
+            prices,
+            position,
+            cache.priceImpactUsd
         );
-
-        cache.priceImpactUsd += position.pendingImpactAmount() > 0
-            ? position.pendingImpactAmount() * prices.indexTokenPrice.min.toInt256()
-            : position.pendingImpactAmount() * prices.indexTokenPrice.max.toInt256();
-
-        // even if there is a large positive price impact, positions that would be liquidated
-        // if the positive price impact is reduced should not be allowed to be created
-        // as they would be easily liquidated if the price impact changes
-        // cap the priceImpactUsd to zero to prevent these positions from being created
-        if (cache.priceImpactUsd >= 0) {
-            cache.priceImpactUsd = 0;
-        } else {
-            uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactorForLiquidations(
-                dataStore,
-                market.marketToken
-            );
-
-            // if there is a large build up of open interest and a sudden large price movement
-            // it may result in a large imbalance between longs and shorts
-            // this could result in very large price impact temporarily
-            // cap the max negative price impact to prevent cascading liquidations
-            int256 maxNegativePriceImpactUsd = -Precision.applyFactor(position.sizeInUsd(), maxPriceImpactFactor).toInt256();
-            if (cache.priceImpactUsd < maxNegativePriceImpactUsd) {
-                cache.priceImpactUsd = maxNegativePriceImpactUsd;
-            }
-        }
 
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             dataStore, // dataStore
@@ -410,6 +384,7 @@ library PositionUtils {
             market.shortToken, // shortToken
             position.sizeInUsd(), // sizeDeltaUsd
             address(0), // uiFeeReceiver
+            type(uint256).max, // uiFeeFactor (unused since uiFeeReceiver is the zero address)
 
             // should not account for liquidation fees to determine if position should be liquidated
             false // isLiquidation
@@ -458,6 +433,61 @@ library PositionUtils {
         }
 
         return (false, "", info);
+    }
+
+    // priceImpactUsd is the exit price impact for fully closing the position
+    function getImpactUsdForLiquidationCheck(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        Position.Props memory position,
+        int256 priceImpactUsd
+    ) internal view returns (int256) {
+        // cap positive priceImpactUsd based on the max positive position impact factor
+        priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+            dataStore,
+            market.marketToken,
+            priceImpactUsd,
+            position.sizeInUsd()
+        );
+
+        // if there is a large build up of open interest and a sudden large price movement
+        // it may result in a large imbalance between longs and shorts
+        // this could result in very large exit price impact temporarily
+        // cap the negative exit impact to prevent cascading liquidations
+        int256 maxNegativeExitImpactUsd = -Precision.applyFactor(
+            position.sizeInUsd(),
+            MarketUtils.getMaxPositionImpactFactorForLiquidations(dataStore, market.marketToken)
+        ).toInt256();
+        if (priceImpactUsd < maxNegativeExitImpactUsd) {
+            priceImpactUsd = maxNegativeExitImpactUsd;
+        }
+
+        // the pending impact is a fixed liability from entry, value it consistently with
+        // the decrease realization, minimizing the positive value and maximizing the negative value
+        priceImpactUsd += position.pendingImpactAmount() > 0
+            ? position.pendingImpactAmount() * prices.indexTokenPrice.min.toInt256()
+            : position.pendingImpactAmount() * prices.indexTokenPrice.max.toInt256();
+
+        // even if there is a large positive price impact, positions that would be liquidated
+        // if the positive price impact is reduced should not be allowed to be created
+        // as they would be easily liquidated if the price impact changes
+        // cap the priceImpactUsd to zero to prevent these positions from being created
+        if (priceImpactUsd >= 0) {
+            return 0;
+        }
+
+        // cap the combined negative impact at the max negative factor so the check is not
+        // stricter than the impact that would be realized when the position is decreased
+        int256 maxNegativePriceImpactUsd = -Precision.applyFactor(
+            position.sizeInUsd(),
+            MarketUtils.getMaxPositionImpactFactor(dataStore, market.marketToken, false)
+        ).toInt256();
+        if (priceImpactUsd < maxNegativePriceImpactUsd) {
+            priceImpactUsd = maxNegativePriceImpactUsd;
+        }
+
+        return priceImpactUsd;
     }
 
     // fees and price impact are not included for the willPositionCollateralBeSufficient validation
@@ -739,12 +769,17 @@ library PositionUtils {
         int256 sizeDeltaInTokens;
         if (params.position.isLong()) {
             sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() + cache.priceImpactAmount;
-        } else {
-            sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() - cache.priceImpactAmount;
-        }
 
-        if (sizeDeltaInTokens < 0) {
-            revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            if (sizeDeltaInTokens < 0) {
+                revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            }
+        } else {
+            // for shorts the negative impact increases sizeDeltaInTokens so it is checked against the order size directly
+            if (cache.priceImpactAmount < 0 && -cache.priceImpactAmount > cache.baseSizeDeltaInTokens.toInt256()) {
+                revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            }
+
+            sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() - cache.priceImpactAmount;
         }
 
         // using increase of long positions as an example

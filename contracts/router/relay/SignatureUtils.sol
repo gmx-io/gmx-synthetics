@@ -41,6 +41,8 @@ library SignatureUtils {
      * @param signature The signature to validate
      * @param expectedSigner The expected signer address
      * @param signatureType The signature type string for error messages
+     * @param expectedWrapperHash the signed wrapper hash keccak256(abi.encode(factory, factoryCalldata));
+     *  only read for EIP-6492 signatures, ignored for EOA / ERC-1271
      */
     function validateSignature(
         bytes32 domainSeparator,
@@ -48,7 +50,8 @@ library SignatureUtils {
         bytes calldata signature,
         address expectedSigner,
         string memory signatureType,
-        EIP6492Deployer eip6492Deployer
+        EIP6492Deployer eip6492Deployer,
+        bytes32 expectedWrapperHash
     ) external {
         // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
         // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
@@ -63,12 +66,24 @@ library SignatureUtils {
 
         // 1. EIP-6492 for counterfactual smart contract wallets
         if (_isEIP6492Signature(signature)) {
+            // decode the wrapper once, then validate against the standard and minified digests
+            // Remove the magic bytes (last 32 bytes)
+            bytes calldata wrappedSig = signature[:signature.length - 32];
+            (address factory, bytes memory factoryCalldata, bytes memory originalSignature) =
+                abi.decode(wrappedSig, (address, bytes, bytes));
+
+            // the wrapper must match the signed hash, otherwise a relayer could
+            // change the factory call that runs during validation while funds sit unaccounted
+            if (keccak256(abi.encode(factory, factoryCalldata)) != expectedWrapperHash) {
+                revert Errors.InvalidEIP6492SignatureWrapper();
+            }
+
             // with standard digest
-            if (_validateEIP6492Signature(eip6492Deployer, expectedSigner, digest, signature)) {
+            if (_validateEIP6492Signature(eip6492Deployer, expectedSigner, digest, factory, factoryCalldata, originalSignature)) {
                 return;
             }
             // with minified digest
-            if (_validateEIP6492Signature(eip6492Deployer, expectedSigner, minifiedDigest, signature)) {
+            if (_validateEIP6492Signature(eip6492Deployer, expectedSigner, minifiedDigest, factory, factoryCalldata, originalSignature)) {
                 return;
             }
             revert Errors.InvalidSignature(signatureType);
@@ -135,21 +150,19 @@ library SignatureUtils {
      *
      * @param signer The expected signer address (counterfactual or deployed)
      * @param hash The hash to validate against
-     * @param signature The EIP-6492 wrapped signature
+     * @param factory The wrapper factory (already checked against the signed hash)
+     * @param factoryCalldata The wrapper factory calldata
+     * @param originalSignature The inner ERC-1271 signature
      * @return True if the signature is valid
      */
     function _validateEIP6492Signature(
         EIP6492Deployer eip6492Deployer,
         address signer,
         bytes32 hash,
-        bytes calldata signature
+        address factory,
+        bytes memory factoryCalldata,
+        bytes memory originalSignature
     ) private returns (bool) {
-        // Remove the magic bytes (last 32 bytes)
-        bytes calldata wrappedSig = signature[:signature.length - 32];
-
-        (address factory, bytes memory factoryCalldata, bytes memory originalSignature) =
-            abi.decode(wrappedSig, (address, bytes, bytes));
-
         bool alreadyDeployed = signer.code.length > 0;
 
         // If contract not deployed, deploy it via factory

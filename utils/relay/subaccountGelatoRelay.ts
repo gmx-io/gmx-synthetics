@@ -258,14 +258,19 @@ export function getEmptySubaccountApproval() {
     integrationId: ethers.constants.HashZero,
     deadline: 9999999999,
     revocationCounter: 0,
+    eip6492SignatureWrapperHash: ethers.constants.HashZero,
   };
 }
 
 export async function getSubaccountApproval(p: {
-  subaccountApproval?: Omit<SubaccountApproval, "nonce" | "signature" | "revocationCounter"> & {
+  subaccountApproval?: Omit<
+    SubaccountApproval,
+    "nonce" | "signature" | "revocationCounter" | "eip6492SignatureWrapperHash"
+  > & {
     nonce?: BigNumberish;
     signature?: string;
     revocationCounter?: BigNumberish;
+    eip6492SignatureWrapperHash?: string;
   };
   desChainId: BigNumberish;
   account: string;
@@ -291,6 +296,8 @@ export async function getSubaccountApproval(p: {
     );
   }
 
+  const eip6492SignatureWrapperHash = p.subaccountApproval.eip6492SignatureWrapperHash || ethers.constants.HashZero;
+
   let signature = p.subaccountApproval.signature;
   if (!signature) {
     signature = await getSubaccountApprovalSignature({
@@ -299,6 +306,7 @@ export async function getSubaccountApproval(p: {
       nonce,
       revocationCounter,
       desChainId: p.desChainId,
+      eip6492SignatureWrapperHash,
       chainId: p.chainId,
       verifyingContract: p.relayRouter.address,
     });
@@ -309,6 +317,7 @@ export async function getSubaccountApproval(p: {
     nonce,
     revocationCounter,
     desChainId: p.desChainId,
+    eip6492SignatureWrapperHash,
     signature,
   };
 }
@@ -403,6 +412,7 @@ async function getSubaccountApprovalSignature(p: {
   nonce: BigNumberish;
   desChainId: BigNumberish;
   revocationCounter: BigNumberish;
+  eip6492SignatureWrapperHash?: string;
 }) {
   const domain = {
     name: "GmxBaseGelatoRelayRouter",
@@ -423,6 +433,7 @@ async function getSubaccountApprovalSignature(p: {
       { name: "deadline", type: "uint256" },
       { name: "integrationId", type: "bytes32" },
       { name: "revocationCounter", type: "uint256" },
+      { name: "eip6492SignatureWrapperHash", type: "bytes32" },
     ],
   };
 
@@ -437,6 +448,7 @@ async function getSubaccountApprovalSignature(p: {
     desChainId: p.desChainId,
     integrationId: p.integrationId,
     revocationCounter: p.revocationCounter,
+    eip6492SignatureWrapperHash: p.eip6492SignatureWrapperHash || ethers.constants.HashZero,
   };
 
   return signTypedData(p.signer, domain, types, typedData);

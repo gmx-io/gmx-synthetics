@@ -57,6 +57,8 @@ library ExecuteWithdrawalUtils {
         SwapPricingUtils.SwapFees shortTokenFees;
         uint256 longTokenPoolAmountDelta;
         uint256 shortTokenPoolAmountDelta;
+        uint256 longTokenPoolAmountBeforeAction;
+        uint256 shortTokenPoolAmountBeforeAction;
     }
 
     struct SwapCache {
@@ -213,6 +215,7 @@ library ExecuteWithdrawalUtils {
             cache.longTokenOutputAmount,
             false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
+            withdrawal.uiFeeFactor(),
             params.swapPricingType
         );
 
@@ -241,6 +244,7 @@ library ExecuteWithdrawalUtils {
             cache.shortTokenOutputAmount,
             false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
+            withdrawal.uiFeeFactor(),
             params.swapPricingType
         );
 
@@ -269,6 +273,9 @@ library ExecuteWithdrawalUtils {
 
         cache.shortTokenPoolAmountDelta = cache.shortTokenOutputAmount - cache.shortTokenFees.feeAmountForPool;
         cache.shortTokenOutputAmount = cache.shortTokenFees.amountAfterFees;
+
+        cache.longTokenPoolAmountBeforeAction = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
+        cache.shortTokenPoolAmountBeforeAction = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
 
         // it is rare but possible for withdrawals to be blocked because pending borrowing fees
         // have not yet been deducted from position collateral and credited to the poolAmount value
@@ -309,26 +316,24 @@ library ExecuteWithdrawalUtils {
         IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory result;
         (result.outputToken, result.outputAmount) = _swap(
             params,
+            withdrawal,
             market,
             market.longToken,
             cache.longTokenOutputAmount,
             withdrawal.longTokenSwapPath(),
             withdrawal.minLongTokenAmount(),
-            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
-            withdrawal.uiFeeReceiver(),
-            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
+            cache.longTokenPoolAmountBeforeAction
         );
 
         (result.secondaryOutputToken, result.secondaryOutputAmount) = _swap(
             params,
+            withdrawal,
             market,
             market.shortToken,
             cache.shortTokenOutputAmount,
             withdrawal.shortTokenSwapPath(),
             withdrawal.minShortTokenAmount(),
-            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
-            withdrawal.uiFeeReceiver(),
-            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
+            cache.shortTokenPoolAmountBeforeAction
         );
 
         // for multichain action, receiver is the multichainVault; increase user's multichain balances
@@ -402,14 +407,13 @@ library ExecuteWithdrawalUtils {
 
     function _swap(
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
+        Withdrawal.Props memory withdrawal,
         Market.Props memory market,
         address tokenIn,
         uint256 amountIn,
         address[] memory swapPath,
         uint256 minOutputAmount,
-        address receiver,
-        address uiFeeReceiver,
-        bool shouldUnwrapNativeToken
+        uint256 tokenInPoolAmountBeforeAction
     ) internal returns (address, uint256) {
         SwapCache memory cache;
 
@@ -425,9 +429,11 @@ library ExecuteWithdrawalUtils {
             amountIn: amountIn,
             swapPathMarkets: cache.swapPathMarkets,
             minOutputAmount: minOutputAmount,
-            receiver: receiver,
-            uiFeeReceiver: uiFeeReceiver,
-            shouldUnwrapNativeToken: shouldUnwrapNativeToken,
+            receiver: withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
+            uiFeeReceiver: withdrawal.uiFeeReceiver(),
+            uiFeeFactor: withdrawal.uiFeeFactor(),
+            tokenInPoolAmountBeforeAction: tokenInPoolAmountBeforeAction,
+            shouldUnwrapNativeToken: withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false,
             swapPricingType: params.swapPricingType
         });
 

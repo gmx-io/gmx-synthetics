@@ -17,4 +17,7 @@ interface IOracleProvider {
 
     /// @dev for ChainlinkPriceFeedProvider
     function isChainlinkOnChainProvider() external pure returns (bool);
+
+    /// @dev for StaticOracleProvider
+    function shouldCheckRefPrice() external pure returns (bool);
 }

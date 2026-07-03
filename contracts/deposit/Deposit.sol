@@ -45,6 +45,7 @@ library Deposit {
     // @param initialLongTokenAmount the amount of long tokens to deposit
     // @param initialShortTokenAmount the amount of short tokens to deposit
     // @param minMarketTokens the minimum acceptable number of liquidity tokens
+    // @param uiFeeFactor the UI fee factor snapshotted when the deposit was created
     // sending funds back to the user in case the deposit gets cancelled
     // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
@@ -53,6 +54,7 @@ library Deposit {
         uint256 initialLongTokenAmount;
         uint256 initialShortTokenAmount;
         uint256 minMarketTokens;
+        uint256 uiFeeFactor;
         uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
@@ -158,6 +160,14 @@ library Deposit {
 
     function setMinMarketTokens(Props memory props, uint256 value) internal pure {
         props.numbers.minMarketTokens = value;
+    }
+
+    function uiFeeFactor(Props memory props) internal pure returns (uint256) {
+        return props.numbers.uiFeeFactor;
+    }
+
+    function setUiFeeFactor(Props memory props, uint256 value) internal pure {
+        props.numbers.uiFeeFactor = value;
     }
 
     function updatedAtTime(Props memory props) internal pure returns (uint256) {

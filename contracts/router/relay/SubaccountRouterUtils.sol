@@ -87,7 +87,8 @@ library SubaccountRouterUtils {
             subaccountApproval.signature,
             account,
             "subaccount approval",
-            eip6492Deployer
+            eip6492Deployer,
+            subaccountApproval.eip6492SignatureWrapperHash
         );
 
         SubaccountUtils.handleSubaccountApproval(dataStore, eventEmitter, account, subaccountApproval);

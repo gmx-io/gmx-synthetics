@@ -213,7 +213,7 @@ library OrderEventUtils {
         eventData.addressItems.initArrayItems(1);
         eventData.addressItems.setItem(0, "swapPath", order.swapPath());
 
-        eventData.uintItems.initItems(12);
+        eventData.uintItems.initItems(13);
         eventData.uintItems.setItem(0, "orderType", uint256(order.orderType()));
         eventData.uintItems.setItem(1, "decreasePositionSwapType", uint256(order.decreasePositionSwapType()));
         eventData.uintItems.setItem(2, "sizeDeltaUsd", order.sizeDeltaUsd());
@@ -223,9 +223,10 @@ library OrderEventUtils {
         eventData.uintItems.setItem(6, "executionFee", order.executionFee());
         eventData.uintItems.setItem(7, "callbackGasLimit", order.callbackGasLimit());
         eventData.uintItems.setItem(8, "minOutputAmount", order.minOutputAmount());
-        eventData.uintItems.setItem(9, "updatedAtTime", order.updatedAtTime());
-        eventData.uintItems.setItem(10, "validFromTime", order.validFromTime());
-        eventData.uintItems.setItem(11, "srcChainId", order.srcChainId());
+        eventData.uintItems.setItem(9, "uiFeeFactor", order.uiFeeFactor());
+        eventData.uintItems.setItem(10, "updatedAtTime", order.updatedAtTime());
+        eventData.uintItems.setItem(11, "validFromTime", order.validFromTime());
+        eventData.uintItems.setItem(12, "srcChainId", order.srcChainId());
 
         eventData.boolItems.initItems(3);
         eventData.boolItems.setItem(0, "isLong", order.isLong());

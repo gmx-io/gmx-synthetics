@@ -78,7 +78,7 @@ library RelayUtils {
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,uint256 revocationCounter)"
+                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,uint256 revocationCounter,bytes32 eip6492SignatureWrapperHash)"
             )
         );
 
@@ -167,7 +167,7 @@ library RelayUtils {
         keccak256(bytes("TransferRequests(address[] tokens,address[] receivers,uint256[] amounts)"));
 
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
-        keccak256(bytes("BridgeOut(address account,address token,uint256 amount,uint256 minAmountOut,address provider,bytes data,bytes32 relayParams)"));
+        keccak256(bytes("BridgeOut(address account,address token,uint256 amount,uint256 minAmountOut,address provider,bytes data,address bridgeFeeToken,uint256 bridgeFeeAmount,address[] bridgeFeeSwapPath,bytes32 relayParams)"));
 
     bytes32 public constant CLAIM_FUNDING_FEES_TYPEHASH =
         keccak256(bytes("ClaimFundingFees(address account,address[] markets,address[] tokens,address receiver,bytes32 relayParams)"));
@@ -223,6 +223,8 @@ library RelayUtils {
                 minOutputAmount: 0,
                 receiver: address(this),
                 uiFeeReceiver: address(0),
+                uiFeeFactor: type(uint256).max,
+                tokenInPoolAmountBeforeAction: 0,
                 shouldUnwrapNativeToken: false,
                 swapPricingType: ISwapPricingUtils.SwapPricingType.AtomicSwap
             })
@@ -243,7 +245,8 @@ library RelayUtils {
                     relayParams.fee,
                     relayParams.userNonce,
                     relayParams.deadline,
-                    relayParams.desChainId
+                    relayParams.desChainId,
+                    relayParams.eip6492SignatureWrapperHash
                 )
             );
     }
@@ -272,7 +275,8 @@ library RelayUtils {
                     subaccountApproval.desChainId,
                     subaccountApproval.deadline,
                     subaccountApproval.integrationId,
-                    subaccountApproval.revocationCounter
+                    subaccountApproval.revocationCounter,
+                    subaccountApproval.eip6492SignatureWrapperHash
                 )
             );
     }
@@ -932,8 +936,12 @@ library RelayUtils {
                     params.minAmountOut,
                     params.provider,
                     keccak256(abi.encodePacked(params.data)),
+                    params.bridgeFee.feeToken,
+                    params.bridgeFee.feeAmount,
+                    keccak256(abi.encodePacked(params.bridgeFee.feeSwapPath)),
                     _getRelayParamsHash(relayParams)
                 )
             );
     }
+
 }

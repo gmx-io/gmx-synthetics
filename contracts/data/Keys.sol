@@ -255,6 +255,18 @@ library Keys {
     bytes32 public constant SET_TRADER_REFERRAL_CODE_GAS_LIMIT = keccak256(abi.encode("SET_TRADER_REFERRAL_CODE_GAS_LIMIT"));
     bytes32 public constant REGISTER_CODE_GAS_LIMIT = keccak256(abi.encode("REGISTER_CODE_GAS_LIMIT"));
 
+    bytes32 public constant STAKE_GMX_GAS_LIMIT = keccak256(abi.encode("STAKE_GMX_GAS_LIMIT"));
+    bytes32 public constant UNSTAKE_GMX_GAS_LIMIT = keccak256(abi.encode("UNSTAKE_GMX_GAS_LIMIT"));
+    bytes32 public constant STAKE_ES_GMX_GAS_LIMIT = keccak256(abi.encode("STAKE_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant UNSTAKE_ES_GMX_GAS_LIMIT = keccak256(abi.encode("UNSTAKE_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant HANDLE_STAKING_REWARDS_GAS_LIMIT = keccak256(abi.encode("HANDLE_STAKING_REWARDS_GAS_LIMIT"));
+    bytes32 public constant COMPOUND_STAKING_REWARDS_GAS_LIMIT = keccak256(abi.encode("COMPOUND_STAKING_REWARDS_GAS_LIMIT"));
+    bytes32 public constant VEST_ES_GMX_GAS_LIMIT = keccak256(abi.encode("VEST_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant DELEGATE_GOV_GMX_GAS_LIMIT = keccak256(abi.encode("DELEGATE_GOV_GMX_GAS_LIMIT"));
+    bytes32 public constant SIGNAL_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("SIGNAL_STAKING_TRANSFER_GAS_LIMIT"));
+    bytes32 public constant ACCEPT_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("ACCEPT_STAKING_TRANSFER_GAS_LIMIT"));
+    bytes32 public constant WITHDRAW_FROM_WALLET_GAS_LIMIT = keccak256(abi.encode("WITHDRAW_FROM_WALLET_GAS_LIMIT"));
+
     bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
     bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
 
@@ -494,6 +506,9 @@ library Keys {
     bytes32 public constant BUYBACK_MAX_PRICE_AGE = keccak256(abi.encode("BUYBACK_MAX_PRICE_AGE"));
     // @dev key for the buyback withdrawable fees
     bytes32 public constant WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = keccak256(abi.encode("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT"));
+
+    // @dev key for whether a wallet was deployed by the protocol
+    bytes32 public constant IS_DEPLOYED_WALLET = keccak256(abi.encode("IS_DEPLOYED_WALLET"));
 
     // @dev key for user's multichain balance
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
@@ -2451,6 +2466,15 @@ library Keys {
         return keccak256(abi.encode(
             CLAIM_TERMS_BACKREF,
             termsHash
+        ));
+    }
+
+    // @param wallet the wallet address
+    // @return key for whether a wallet was deployed by the protocol
+    function isDeployedWalletKey(address wallet) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_DEPLOYED_WALLET,
+            wallet
         ));
     }
 }

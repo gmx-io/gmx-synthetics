@@ -442,7 +442,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             relayParams.signature,
             account,
             "call",
-            EIP6492Deployer(dataStore.getAddress(Keys.EIP6492_DEPLOYER))
+            EIP6492Deployer(dataStore.getAddress(Keys.EIP6492_DEPLOYER)),
+            relayParams.eip6492SignatureWrapperHash
         );
     }
 
