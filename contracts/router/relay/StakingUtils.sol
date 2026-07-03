@@ -124,7 +124,8 @@ library StakingUtils {
                     relayParams.fee,
                     relayParams.userNonce,
                     relayParams.deadline,
-                    relayParams.desChainId
+                    relayParams.desChainId,
+                    relayParams.eip6492SignatureWrapperHash
                 )
             );
     }
