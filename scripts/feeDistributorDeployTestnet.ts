@@ -268,16 +268,38 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.feeDistributorUtils = feeDistributorUtils.address;
     await delay(txDelay);
 
+    const Oracle: ContractFactory = await getFactory(deployer, "Oracle");
+    const oracle: Contract = await Oracle.deploy(
+      contracts.roleStore,
+      contracts.dataStore,
+      contracts.eventEmitter,
+      ethers.constants.AddressZero
+    );
+    await oracle.deployed();
+    console.log("Oracle deployed to:", oracle.address);
+    contracts.oracle = oracle.address;
+    await delay(txDelay);
+
+    const StaticOracleProvider: ContractFactory = await getFactory(deployer, "StaticOracleProvider");
+    const staticOracleProvider: Contract = await StaticOracleProvider.deploy(contracts.dataStore);
+    await staticOracleProvider.deployed();
+    console.log("StaticOracleProvider deployed to:", staticOracleProvider.address);
+    contracts.staticOracleProvider = staticOracleProvider.address;
+    await delay(txDelay);
+
     // Config
     const Config: ContractFactory = await getFactory(deployer, "Config", {
       libraries: {
+        MarketStoreUtils: contracts.marketStoreUtils,
         ConfigUtils: contracts.configUtils,
       },
     });
     const configContract: Contract = await Config.deploy(
       contracts.roleStore,
       contracts.dataStore,
-      contracts.eventEmitter
+      contracts.eventEmitter,
+      contracts.oracle,
+      contracts.staticOracleProvider
     );
     await configContract.deployed();
     console.log("Config deployed to:", configContract.address);
@@ -388,19 +410,8 @@ async function deployContracts(): Promise<DeploymentResult> {
   }
 
   // Deploy fee-related contracts
-  if (!checkpoint || checkpoint.step < 7) {
-    console.log("\n7. Deploying oracle and fee contracts...");
-
-    const Oracle: ContractFactory = await getFactory(deployer, "Oracle");
-    const oracle: Contract = await Oracle.deploy(
-      contracts.roleStore,
-      contracts.dataStore,
-      contracts.eventEmitter,
-      ethers.constants.AddressZero
-    );
-    await oracle.deployed();
-    console.log("Oracle deployed to:", oracle.address);
-    await delay(txDelay);
+  if (!checkpoint || checkpoint.step < 6) {
+    console.log("\n7. Deploying fee contracts...");
 
     const FeeVault: ContractFactory = await getFactory(deployer, "FeeVault");
     const feeVault: Contract = await FeeVault.deploy(contracts.roleStore, contracts.dataStore);
@@ -416,7 +427,7 @@ async function deployContracts(): Promise<DeploymentResult> {
     });
     const feeHandler: Contract = await FeeHandler.deploy(
       contracts.roleStore,
-      oracle.address,
+      contracts.oracle,
       contracts.dataStore,
       contracts.eventEmitter,
       feeVault.address,

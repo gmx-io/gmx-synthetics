@@ -211,9 +211,8 @@ async function setupTestData(
   const MintableToken = await getFactory(deployer, "MintableToken");
   const gmx = MintableToken.attach(contracts.gmx);
   const wnt = MintableToken.attach(contracts.wnt);
-  const esGmx = MintableToken.attach(contracts.esGmx);
-  const feeVault = await ethers.getContract("FeeVault");
-  const feeVaultAddress = await feeVault.getAddress();
+  const feeHandler = await ethers.getContractAt("FeeHandler", contracts.feeHandler);
+  const feeVaultAddress = await feeHandler.feeVault();
 
   const MockRewardTrackerV1 = await getFactory(deployer, "MockRewardTrackerV1");
   const mockExtendedGmxTracker = MockRewardTrackerV1.attach(contracts.mockExtendedGmxTracker);
@@ -358,12 +357,9 @@ async function configureContracts(
   }
 
   // Get contract instances
-  const Config: ContractFactory = await getFactory(deployer, "Config", {
-    libraries: {
-      ConfigUtils: contracts.configUtils,
-    },
-  });
-  const config: Contract = Config.attach(contracts.config);
+  // Config has library deps (MarketStoreUtils + ConfigUtils); we only attach to the already-deployed
+  // Config, so use getContractAt to avoid requiring the library links.
+  const config: Contract = await ethers.getContractAt("Config", contracts.config);
 
   const DataStore: ContractFactory = await getFactory(deployer, "DataStore");
   const dataStore: Contract = DataStore.attach(contracts.dataStore);
