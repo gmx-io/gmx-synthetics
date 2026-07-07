@@ -79,9 +79,9 @@ async function getGrantRoleActionKeysToCancel({ timelock }) {
 }
 
 // to update roles
-// 1. update roles in config/roles.ts
+// 1. update roles in config/roles.ts or config/roleConfigs/<network>.ts
 // 2. then run scripts/validateRoles.ts, it should output the role changes
-// 3. update rolesToAdd and rolesToRemove here
+// 3. update rolesToAdd and rolesToRemove from scripts/roles/rolesToAdd/<network>.ts and scripts/roles/rolesToRemove/<network>.ts
 // 4. then run e.g. WRITE=true TIMELOCK_METHOD=signalGrantRole npx hardhat run --network arbitrum scripts/updateRoles.ts
 // 5. after the timelock delay, run WRITE=true TIMELOCK_METHOD=grantRoleAfterSignal npx hardhat run --network arbitrum scripts/updateRoles.ts
 // see utils/signer.ts for steps on how to sign the transactions
