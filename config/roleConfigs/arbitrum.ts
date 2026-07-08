@@ -14,19 +14,23 @@ export function getRoles({
     LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
     CLAIM_ADMIN: {
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
+      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2 (retired, still granted on-chain)
       ...claimAdmins.mainnet,
       ...generalConfigKeepers.mainnet,
     },
     CONTRIBUTOR_KEEPER: {
       "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7": true, // protocol_multisig_1
+      "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b": true, // contributor_keeper_1 (retired, still granted on-chain)
     },
     CONTRIBUTOR_DISTRIBUTOR: {
+      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2 (retired, still granted on-chain)
       ...generalConfigKeepers.mainnet,
       ...fundDistributors.mainnet,
     },
     CONFIG_KEEPER: {
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
       "0x4C8569E2F8A8Af32E0464E53d76449Ca7a004baF": true, // ConfigSyncer (CONFIG_KEEPER)
+      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2 (retired, still granted on-chain)
       ...generalConfigKeepers.mainnet,
     },
     FEE_KEEPER: {
@@ -34,12 +38,14 @@ export function getRoles({
     },
     // FEE_DISTRIBUTION_KEEPER: generalConfigKeepers.mainnet,
     MARKET_KEEPER: {
+      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2 (retired, still granted on-chain)
       ...generalConfigKeepers.mainnet,
     },
     TIMELOCK_ADMIN: {
       "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_1
       "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7": true, // protocol_multisig_1
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
+      "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // former timelock_admin (retired, still granted on-chain)
     },
     TIMELOCK_MULTISIG: {
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
@@ -55,6 +61,7 @@ export function getRoles({
       "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4": true, // FeeHandler Oracle
       "0x4729D9f61c0159F5e02D2C2e5937B3225e55442C": true, // ContributorHandler
       "0x7F01614cA5198Ec979B1aAd1DAF0DE7e0a215BDF": true, // Oracle
+      "0xF302C3583E4e6D3A34236539Cf7AeAcFdBcD84C4": true, // CollateralFactorManager (OM market only, granted 2026-02)
 
       "0x33D1a645B9E9fc19b06Fe02981180c8DDAeE75B1": true, // Config (CONTROLLER)
       "0x5cA40cBb5321bBe4EF74Ddf01CCd2b4BCC76a9f9": true, // RiskOracleConfig (CONTROLLER)
