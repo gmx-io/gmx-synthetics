@@ -4506,7 +4506,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_NoKink_50,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("1.07e-10"),
       positivePositionImpactFactor: exponentToFloat("7.15e-11"),
@@ -4536,7 +4536,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("1.07e-10"),
       positivePositionImpactFactor: exponentToFloat("7.15e-11"),

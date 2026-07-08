@@ -28,6 +28,7 @@ const SYMBOL_ALIAS: Record<string, string> = {
   kBONK: "BONK",
   kFLOKI: "FLOKI",
   mSATS: "SATS",
+  XAUT: "XAUT.v2", // keeper labels it "XAUT"; the GLV member / on-chain market is XAUT.v2 (verified by address)
 };
 const normSym = (s: string) => SYMBOL_ALIAS[s] ?? s;
 const poolTokens = (p: string): [string, string] =>
