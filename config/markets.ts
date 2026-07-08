@@ -5005,7 +5005,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_NoKink_55,
+      ...borrowingRateConfig_NoKink_50,
 
       positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
       positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
