@@ -19,6 +19,7 @@ const requiredRolesForContracts = {
     "ConfigSyncer",
     "ConfigTimelockController",
     "ContributorHandler",
+    "RiskOracleConfig",
 
     "MarketFactory",
     "GlvFactory",

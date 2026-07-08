@@ -42,6 +42,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xE1d5a068c5b75E0c7Ea1A9Fe8EA056f9356C6fFD": true, // Oracle
 
       "0x11e9E7464f3Bc887a7290ec41fCd22f619b177fd": true, // Config (CONTROLLER)
+      "0x23BaFd10C7c15eaff7754D624BC660cbAA7d2Ec9": true, // RiskOracleConfig (CONTROLLER)
       "0xFe6bDB87e59484Db1494a467CdbA7C051FB2A604": true, // ConfigSyncer (CONTROLLER)
       "0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36": true, // ConfigTimelockController (CONTROLLER)
       "0x37e1AeB6118B0106810D2eF7662875C414e39Ca4": true, // TimelockConfig (CONTROLLER)
@@ -90,5 +91,9 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36": true, // ConfigTimelockController (ROLE_ADMIN)
     },
     MULTICHAIN_READER: {},
+    RISK_ORACLE: {
+      "0x16ffB5a90bE6a0c0c5179d62Ced944fdD8108C72": true, // KMS generated
+      "0xB630FDb99b5D50Ef26891E2cf4494027fc4C1289": true,
+    },
   };
 }
