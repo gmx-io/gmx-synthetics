@@ -4768,7 +4768,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_50,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
@@ -4822,7 +4822,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_50,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
@@ -4876,7 +4876,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_50,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
@@ -4930,7 +4930,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6), // ~8M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_50,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
@@ -4984,7 +4984,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_55,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
@@ -5040,7 +5040,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6), // ~5M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_55,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.06%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
