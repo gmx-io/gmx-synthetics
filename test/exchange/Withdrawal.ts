@@ -640,6 +640,128 @@ describe("Exchange.Withdrawal", () => {
     expect(await usdc.balanceOf(user1.address)).eq(0);
   });
 
+  it("createWithdrawal is blocked with a swap path when withdrawalSwapFeatureDisabled is set", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    const _withdrawalSwapFeatureDisabledKey = keys.withdrawalSwapFeatureDisabledKey(withdrawalHandler.address);
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await expect(
+      createWithdrawal(fixture, {
+        account: user0,
+        receiver: user1,
+        market: ethUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        longTokenSwapPath: [ethUsdMarket.marketToken],
+        gasUsageLabel: "createWithdrawal",
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    await expect(
+      createWithdrawal(fixture, {
+        account: user0,
+        receiver: user1,
+        market: ethUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        shortTokenSwapPath: [ethUsdMarket.marketToken],
+        gasUsageLabel: "createWithdrawal",
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    expect(await getWithdrawalCount(dataStore)).eq(0);
+  });
+
+  it("plain LP exit is unaffected when withdrawalSwapFeatureDisabled is set", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    await dataStore.setBool(keys.withdrawalSwapFeatureDisabledKey(withdrawalHandler.address), true);
+
+    await createWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      market: ethUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: false,
+      executionFee: 700,
+      callbackGasLimit: 100000,
+      gasUsageLabel: "createWithdrawal",
+    });
+
+    expect(await getWithdrawalCount(dataStore)).eq(1);
+
+    await executeWithdrawal(fixture, {
+      gasUsageLabel: "executeWithdrawal",
+    });
+
+    expect(await getWithdrawalCount(dataStore)).eq(0);
+    expect(await wnt.balanceOf(user1.address)).eq(expandDecimals(1, 17)); // 0.1 ETH, 500 USD
+    expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(500, 6)); // 500 USDC
+  });
+
+  it("executeWithdrawal is blocked with a swap path when withdrawalSwapFeatureDisabled is set and stays pending", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    await createWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      shortTokenSwapPath: [ethUsdMarket.marketToken],
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: false,
+      executionFee: 700,
+      callbackGasLimit: 100000,
+      gasUsageLabel: "createWithdrawal",
+    });
+
+    expect(await getWithdrawalCount(dataStore)).eq(1);
+
+    const _withdrawalSwapFeatureDisabledKey = keys.withdrawalSwapFeatureDisabledKey(withdrawalHandler.address);
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await expect(executeWithdrawal(fixture, { gasUsageLabel: "executeWithdrawal" }))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    expect(await getWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, false);
+
+    await executeWithdrawal(fixture, {
+      gasUsageLabel: "executeWithdrawal",
+    });
+
+    expect(await getWithdrawalCount(dataStore)).eq(0);
+    expect(await wnt.balanceOf(user1.address)).eq(expandDecimals(2, 17)); // 0.2 ETH, 1000 USD
+    expect(await usdc.balanceOf(user1.address)).eq(0);
+  });
+
   it("executeAtomicWithdrawal", async () => {
     await handleDeposit(fixture, {
       create: {

@@ -55,6 +55,13 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
+        if (
+            params.addresses.longTokenSwapPath.length != 0 ||
+            params.addresses.shortTokenSwapPath.length != 0
+        ) {
+            FeatureUtils.validateFeature(dataStore, Keys.withdrawalSwapFeatureDisabledKey(address(this)));
+        }
+
         return WithdrawalUtils.createWithdrawal(
             dataStore,
             eventEmitter,

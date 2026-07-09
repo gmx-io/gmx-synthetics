@@ -147,6 +147,8 @@ library Keys {
     bytes32 public constant EXECUTE_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_WITHDRAWAL_FEATURE_DISABLED"));
     // @dev key for whether the execute atomic withdrawal feature is disabled
     bytes32 public constant EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED"));
+    // @dev key for whether swaps within withdrawals are disabled
+    bytes32 public constant WITHDRAWAL_SWAP_FEATURE_DISABLED = keccak256(abi.encode("WITHDRAWAL_SWAP_FEATURE_DISABLED"));
 
     // @dev key for whether the create shift feature is disabled
     bytes32 public constant CREATE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_SHIFT_FEATURE_DISABLED"));
@@ -849,6 +851,16 @@ library Keys {
     function executeAtomicWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether swaps within withdrawals are disabled
+    // @param the withdrawal swap module
+    // @return key for whether swaps within withdrawals are disabled
+    function withdrawalSwapFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            WITHDRAWAL_SWAP_FEATURE_DISABLED,
             module
         ));
     }

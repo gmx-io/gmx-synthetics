@@ -29,6 +29,14 @@ export async function main() {
     //   data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
     // },
     // {
+    //   baseKey: keys.WITHDRAWAL_SWAP_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0x7671E75Ce90A62eD5CE2E2c835DfDfe29d869a18"]),
+    // },
+    // {
+    //   baseKey: keys.WITHDRAWAL_SWAP_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0x885b0581f3c95c68d32A15B9f58DAE9c47B51c8D"]),
+    // },
+    // {
     //   baseKey: keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
     //   data: encodeData(["address"], ["0x26DdDaA629Bb35FC1853d051561f2200dD190588"]),
     // },
