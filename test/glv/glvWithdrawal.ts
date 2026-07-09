@@ -646,7 +646,7 @@ describe("Glv Withdrawals", () => {
     });
     expect(await getGlvWithdrawalCount(dataStore)).eq(1);
 
-    const _withdrawalSwapFeatureDisabledKey = keys.withdrawalSwapFeatureDisabledKey(glvWithdrawalHandler.address);
+    const _withdrawalSwapFeatureDisabledKey = keys.withdrawalSwapFeatureDisabledKey(withdrawalHandler.address);
     await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
 
     await expect(executeGlvWithdrawal(fixture))
