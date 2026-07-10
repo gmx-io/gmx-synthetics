@@ -97,10 +97,12 @@ export class GcpSignerProvider extends ProviderWrapperWithChainId {
       let maxPriorityFeePerGas = txRequest.maxPriorityFeePerGas;
 
       if (!hasEip1559Fields && gasPrice === undefined) {
-        gasPrice = (await this._wrappedProvider.request({
+        const gasPriceQuote = (await this._wrappedProvider.request({
           method: "eth_gasPrice",
           params: [],
         })) as string;
+        // the node quotes the bare base fee; double it so txs don't stall when the base fee rises
+        gasPrice = ethers.BigNumber.from(gasPriceQuote).mul(2).toHexString();
       }
 
       if (hasEip1559Fields) {
