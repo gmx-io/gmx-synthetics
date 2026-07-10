@@ -113,7 +113,9 @@ contract Oracle is IOracle, RoleModule {
     function setPricesForAtomicAction(
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
-        validateSequencerUp();
+        if (params.tokens.length != 0) {
+            validateSequencerUp();
+        }
 
         OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params, true);
 
