@@ -27,6 +27,7 @@ declare module "hardhat/types/runtime" {
       getBuyback: () => Promise<BuybackConfig>;
       getLayerZeroEndpoint: () => Promise<LayerZeroEndpointConfig>;
       getFeeDistributor: () => Promise<FeeDistributorConfig>;
+      isExistingMainnetDeployment: boolean;
     };
     deployTags: string;
   }

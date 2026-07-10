@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { GcpSigner } from "@gmx-io/ethers-kms-signer";
 import { BackwardsCompatibilityProviderAdapter } from "hardhat/internal/core/providers/backwards-compatibility";
 import { ProviderWrapperWithChainId } from "hardhat/internal/core/providers/chainId";
-import { EIP1193Provider, RequestArguments } from "hardhat/types";
+import { EIP1193Provider, EthereumProvider, RequestArguments } from "hardhat/types";
 
 const REQUIRED_GCP_ENV_VARS = [
   "GCP_PROJECT_ID",
@@ -159,7 +159,7 @@ export class GcpSignerProvider extends ProviderWrapperWithChainId {
   }
 }
 
-export function wrapProviderWithGcpSigner(provider: EIP1193Provider): EIP1193Provider {
+export function wrapProviderWithGcpSigner(provider: EIP1193Provider): EthereumProvider {
   const signer = createGcpSignerFromEnv();
   const wrapped = new GcpSignerProvider(provider, signer);
   return new BackwardsCompatibilityProviderAdapter(wrapped);
