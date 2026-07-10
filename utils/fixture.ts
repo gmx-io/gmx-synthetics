@@ -38,6 +38,7 @@ async function setup() {
   await wnt.deposit({ value: expandDecimals(50, 18) });
 
   const gmx = await hre.ethers.getContract("GMX");
+  const esGmx = await hre.ethers.getContract("ESGMX");
 
   const wbtc = await hre.ethers.getContract("WBTC");
   const sol = { address: getSyntheticTokenAddress(hre.network.config.chainId, "SOL") };
@@ -364,6 +365,7 @@ async function setup() {
       gmxPriceFeed,
       wnt,
       gmx,
+      esGmx,
       wbtc,
       sol,
       usdc,
