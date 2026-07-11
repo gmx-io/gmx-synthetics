@@ -2,8 +2,8 @@
 
 **Network Type:** Mainnet  
 **Chain ID:** 3637  
-**Total Contracts:** 132  
-**Last Updated:** Dec 19, 2025, 06:06 AM UTC
+**Total Contracts:** 133  
+**Last Updated:** Jul 14, 2026, 02:35 PM UTC
 
 ## Deployed Contracts
 
@@ -47,6 +47,7 @@
 | FeeDistributorUtils | `0xc2144EDB8604b77309F95302797fC8a67456af20` | [View on Explorer](https://botanixscan.io/address/0xc2144EDB8604b77309F95302797fC8a67456af20) |
 | FeeDistributorVault | `0xeBe8d0Af904fEd115ca00f212859f58A76431B71` | [View on Explorer](https://botanixscan.io/address/0xeBe8d0Af904fEd115ca00f212859f58A76431B71) |
 | FeeUtils | `0x46088fA22988c40CE5aBC0647a7638D27A8bF7d1` | [View on Explorer](https://botanixscan.io/address/0x46088fA22988c40CE5aBC0647a7638D27A8bF7d1) |
+| FeeVault | `0xD863BbE7D4D3d7961F658d1705edF49423FbE9eB` | [View on Explorer](https://botanixscan.io/address/0xD863BbE7D4D3d7961F658d1705edF49423FbE9eB) |
 | GasUtils | `0x2ef89bC324D389Ce0535F392ac5d16bB8dB23D75` | [View on Explorer](https://botanixscan.io/address/0x2ef89bC324D389Ce0535F392ac5d16bB8dB23D75) |
 | GelatoRelayRouter | `0x98e86155abf8bCbA566b4a909be8cF4e3F227FAf` | [View on Explorer](https://botanixscan.io/address/0x98e86155abf8bCbA566b4a909be8cF4e3F227FAf) |
 | GlvDepositCalc | `0x129124E4f1c1C338E8Ab12e2c5dD14552d90fceC` | [View on Explorer](https://botanixscan.io/address/0x129124E4f1c1C338E8Ab12e2c5dD14552d90fceC) |
@@ -79,10 +80,10 @@
 | LayerZeroProvider | `0x9E721ef9b908B4814Aa18502692E4c5666d1942e` | [View on Explorer](https://botanixscan.io/address/0x9E721ef9b908B4814Aa18502692E4c5666d1942e) |
 | LiquidationHandler | `0x1bC32eeCAa8F504D2225096649A0347153A37f10` | [View on Explorer](https://botanixscan.io/address/0x1bC32eeCAa8F504D2225096649A0347153A37f10) |
 | LiquidationUtils | `0x86A6235377202ba74b54316dfB043A7Af0f20E21` | [View on Explorer](https://botanixscan.io/address/0x86A6235377202ba74b54316dfB043A7Af0f20E21) |
-| MarketEventUtils | `0xAA31CF8C39b1C5D56E1d87Fe940128492cC218e4` | [View on Explorer](https://botanixscan.io/address/0xAA31CF8C39b1C5D56E1d87Fe940128492cC218e4) |
+| MarketEventUtils | `0x97BeB5A20FBd4596c8B19a89Ec399a100e57d14d` | [View on Explorer](https://botanixscan.io/address/0x97BeB5A20FBd4596c8B19a89Ec399a100e57d14d) |
 | MarketFactory | `0xcb7656751B0f8aFCBe15D135D7aC58727DE06768` | [View on Explorer](https://botanixscan.io/address/0xcb7656751B0f8aFCBe15D135D7aC58727DE06768) |
-| MarketStoreUtils | `0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2` | [View on Explorer](https://botanixscan.io/address/0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2) |
-| MarketUtils | `0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457` | [View on Explorer](https://botanixscan.io/address/0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457) |
+| MarketStoreUtils | `0x91807c701ce38018f69a45c90aeDaD2140AF923A` | [View on Explorer](https://botanixscan.io/address/0x91807c701ce38018f69a45c90aeDaD2140AF923A) |
+| MarketUtils | `0x305219565c0A0f56A6247EBF5fa704b625339462` | [View on Explorer](https://botanixscan.io/address/0x305219565c0A0f56A6247EBF5fa704b625339462) |
 | MockPriceFeed | `0xa9F2F994C6B0d66e3C0E3C6F3AebCae4C1195357` | [View on Explorer](https://botanixscan.io/address/0xa9F2F994C6B0d66e3C0E3C6F3AebCae4C1195357) |
 | Multicall3 | `0x4BaA24f93a657f0c1b4A0Ffc72B91011E35cA46b` | [View on Explorer](https://botanixscan.io/address/0x4BaA24f93a657f0c1b4A0Ffc72B91011E35cA46b) |
 | MultichainClaimsRouter | `0x421eB756B8f887f036e7332801288BC2bbA600aC` | [View on Explorer](https://botanixscan.io/address/0x421eB756B8f887f036e7332801288BC2bbA600aC) |
