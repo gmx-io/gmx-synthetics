@@ -1615,6 +1615,11 @@
       "txHash": "0x7dc336370d2084a4bca3b1f6cffd2b7a45ee36a2d92241c82ede5746f5715b27"
     },
     {
+      "contractName": "FeeVault",
+      "contractAddress": "0xD863BbE7D4D3d7961F658d1705edF49423FbE9eB",
+      "txHash": "0x2efdd308d5c729adeb499182d36f03ba3db886344adce23886ca3922f6a8b28a"
+    },
+    {
       "contractName": "GasUtils",
       "contractAddress": "0x2ef89bC324D389Ce0535F392ac5d16bB8dB23D75",
       "txHash": "0xf69d3673f24e007924570a737dd7ca91044fe63245d2e384fcea46dee7fb6e28"
@@ -1776,8 +1781,8 @@
     },
     {
       "contractName": "MarketEventUtils",
-      "contractAddress": "0xAA31CF8C39b1C5D56E1d87Fe940128492cC218e4",
-      "txHash": "0x77692a9910b867774ee1e0f8d15840a26ee4ea0b449d8c96994d1dc3b7eb37f6"
+      "contractAddress": "0x97BeB5A20FBd4596c8B19a89Ec399a100e57d14d",
+      "txHash": "0xb4c9dbf35ccb6e17bd0ba26d9556b733aea1a8723de522d7918945e0d508c15f"
     },
     {
       "contractName": "MarketFactory",
@@ -1786,13 +1791,13 @@
     },
     {
       "contractName": "MarketStoreUtils",
-      "contractAddress": "0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2",
-      "txHash": "0x97f9c3421327008a51013bccf84ee075ea2aa4b3c5b35d0ee2193f459ee4c389"
+      "contractAddress": "0x91807c701ce38018f69a45c90aeDaD2140AF923A",
+      "txHash": "0xe032b78cf657a22c7a18202b540de82938043ba388236f393d35dfd76c4c1ffa"
     },
     {
       "contractName": "MarketUtils",
-      "contractAddress": "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457",
-      "txHash": "0xdee07c2896ea1bf32958e0658d047af989c2ed32acc3d91dade6cd52aa9c5c9f"
+      "contractAddress": "0x305219565c0A0f56A6247EBF5fa704b625339462",
+      "txHash": "0x303dc93c9abe82373b4a7318e13be15000c65bdb53c72e55b5aca2076108d988"
     },
     {
       "contractName": "MockPriceFeed",
