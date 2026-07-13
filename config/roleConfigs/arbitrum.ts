@@ -42,11 +42,20 @@ export function getRoles({
       ...generalConfigKeepers.mainnet,
     },
     TIMELOCK_ADMIN: {
+      // deployConfigTimelockController.ts uses this list as the controller's proposers and executors
+      // (each proposer is also a canceller). These roles are set at deployment. Afterwards the role
+      // admin of all of them is the controller itself, so no EOA or multisig can grant or revoke them
+      // with a direct call. These role assignments (proposer/executor/canceller) can still change,
+      // but only in these two ways:
+      //   1. the controller acting on itself through its own timelock: a current proposer schedules an
+      //      operation that calls grantRole / revokeRole on the controller, an executor runs it after
+      //      the 24h delay, and any canceller (including the address being removed) can cancel it first.
+      //   2. an address renouncing its own roles: direct and immediate, no delay and cannot be cancelled,
+      //      but it only works on the caller's own roles.
       "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_1
       "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7": true, // protocol_multisig_1
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      // deployConfigTimelockController.ts uses this list as the controller's proposers / executors,
-      // so the retired admin must stay commented out; it still holds the role on-chain (SCDEV-307)
+      // The retired admin must stay commented out; it still holds the role on-chain (SCDEV-307).
       // "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // former timelock_admin (retired, still granted on-chain)
     },
     TIMELOCK_MULTISIG: {
