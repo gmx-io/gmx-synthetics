@@ -364,6 +364,8 @@ library Keys {
     // @dev key for data stream feed multiplier
     bytes32 public constant DATA_STREAM_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_MULTIPLIER"));
     bytes32 public constant DATA_STREAM_SPREAD_REDUCTION_FACTOR = keccak256(abi.encode("DATA_STREAM_SPREAD_REDUCTION_FACTOR"));
+    // @dev key for the max allowed interval (observationsTimestamp - validFromTimestamp) of a data stream report
+    bytes32 public constant DATA_STREAM_MAX_INTERVAL = keccak256(abi.encode("DATA_STREAM_MAX_INTERVAL"));
     // @dev key for stable price
     bytes32 public constant STABLE_PRICE = keccak256(abi.encode("STABLE_PRICE"));
     // @dev key for reserve factor
@@ -2101,6 +2103,16 @@ library Keys {
     function dataStreamSpreadReductionFactorKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             DATA_STREAM_SPREAD_REDUCTION_FACTOR,
+            token
+        ));
+    }
+
+    // @dev key for the max allowed interval of a data stream report
+    // @param token the token to get the key for
+    // @return key for the max data stream report interval
+    function dataStreamMaxIntervalKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            DATA_STREAM_MAX_INTERVAL,
             token
         ));
     }

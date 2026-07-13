@@ -85,6 +85,20 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
             revert Errors.InvalidDataStreamBidAsk(token, report.bid, report.ask);
         }
 
+        if (report.validFromTimestamp > report.observationsTimestamp) {
+            revert Errors.InvalidDataStreamTimestamps(token, report.validFromTimestamp, report.observationsTimestamp);
+        }
+
+        uint256 maxDataStreamInterval = dataStore.getUint(Keys.dataStreamMaxIntervalKey(token));
+        if (maxDataStreamInterval != 0 && report.observationsTimestamp - report.validFromTimestamp > maxDataStreamInterval) {
+            revert Errors.MaxDataStreamIntervalExceeded(
+                token,
+                report.validFromTimestamp,
+                report.observationsTimestamp,
+                maxDataStreamInterval
+            );
+        }
+
         uint256 precision = _getDataStreamMultiplier(token);
         uint256 adjustedBidPrice = Precision.mulDiv(uint256(uint192(report.bid)), precision, Precision.FLOAT_PRECISION);
         uint256 adjustedAskPrice = Precision.mulDiv(uint256(uint192(report.ask)), precision, Precision.FLOAT_PRECISION);
