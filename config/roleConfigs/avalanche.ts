@@ -14,6 +14,9 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     CONFIG_KEEPER: {
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
       "0xFe6bDB87e59484Db1494a467CdbA7C051FB2A604": true, // ConfigSyncer (CONFIG_KEEPER)
+
+      // v2.2c 2026-07-15 (fresh redeploy; live entries above kept until later revoke round)
+      "0x804f206a2ec78F505FD5D397450EAB9E7CBD1b21": true, // ConfigSyncer (CONFIG_KEEPER)
       "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2 (retired, still granted on-chain)
       ...generalConfigKeepers.mainnet,
     },
@@ -88,6 +91,41 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xd099565957046a2d2CF41B0CC9F95e14a8afD13b": true, // MultichainOrderRouter (CONTROLLER)
       "0x5872E84e5ea23292b40183BE86D25fb428621fC1": true, // MultichainSubaccountRouter (CONTROLLER)
       "0x5A44a3b026d50EC039582fDb3aFDD88e2092E211": true, // MultichainTransferRouter (CONTROLLER)
+
+      // v2.2c 2026-07-15 (fresh redeploy; live entries above kept until later revoke round)
+      "0x3002cA0dC434823272062f055D2999293392878e": true, // Config (CONTROLLER)
+      "0x804f206a2ec78F505FD5D397450EAB9E7CBD1b21": true, // ConfigSyncer (CONTROLLER)
+      "0x854a176289958DD875b0a256FF0dd47f747e39B0": true, // ConfigTimelockController (CONTROLLER)
+      "0xE8505736A5631e036b84b946e56B56D25F28b68E": true, // TimelockConfig (CONTROLLER)
+      "0x29220fA3b24279279C211701DE4a7b035122B911": true, // Oracle (CONTROLLER)
+      "0xc002Db96E682FFF6675966F959677285a0C45Efa": true, // ExchangeRouter (CONTROLLER)
+      "0xAda708aFf0f1D784D28cd8Ff4d6D977fF9599e5D": true, // SubaccountRouter (CONTROLLER)
+      "0x603B3D3aB077CA433b888c05fa59c777d5b6dCAD": true, // GlvRouter (CONTROLLER)
+      "0x51fe0b7919e1208a717E9B16a097C1C3D70eFbf6": true, // GelatoRelayRouter (CONTROLLER)
+      "0xa62BD1cFE2066c5bF4180b4125BBb5116eEA26c9": true, // SubaccountGelatoRelayRouter (CONTROLLER)
+      "0xaB409fCaCc14Dd4234f6f86a2547f04ACC90a55e": true, // SimulationRouter (CONTROLLER)
+      "0xC993eF170859DAE0241a3c12B8186e456Fa1c1B0": true, // OrderHandler (CONTROLLER)
+      "0x66437ac7Db8dA224C9179AA59B76f1027C87da20": true, // JitOrderHandler (CONTROLLER)
+      "0x7e99d14DB15FE16B58B05bEb101BbC69c2203679": true, // IncreaseOrderExecutor (CONTROLLER)
+      "0x8D3FeC13225f611ad7F5fA77442625749a29b057": true, // DecreaseOrderExecutor (CONTROLLER)
+      "0x7313C9FAc0AD3511Cf30a1dD603C3255b455fDE8": true, // SwapOrderExecutor (CONTROLLER)
+      "0xe93fA5956199d1e395885AB10BBE45b0Bd04F0F2": true, // DepositHandler (CONTROLLER)
+      "0xa334b4e3f92a91e927f061494A95d84B7F0D134d": true, // WithdrawalHandler (CONTROLLER)
+      "0xF68560cA917717639be497BF6283aC08C9Bf0264": true, // AdlHandler (CONTROLLER)
+      "0x1eAa0E46a40CB7D6F656193d053493658548114e": true, // LiquidationHandler (CONTROLLER)
+      "0x5F65a3B91923840cD5254489A57c873427bA3A91": true, // ShiftHandler (CONTROLLER)
+      "0xf9B01d45B2c5022429c3f745e5A2E700B02cEBeb": true, // GlvDepositHandler (CONTROLLER)
+      "0xCb60d0A8372Cb8f8a074d304F88bA851FC5E8e29": true, // GlvWithdrawalHandler (CONTROLLER)
+      "0xDB8906520812840b9835E3B84dE62C826249e20B": true, // GlvShiftHandler (CONTROLLER)
+      "0xe1ed31707677d961eA8056c23e6153701e7414B9": true, // SwapHandler (CONTROLLER)
+      "0x07d8115676362Cf0d6672Dd71B23A43DB1e69C06": true, // ClaimHandler (CONTROLLER)
+      "0x74eECe8cC29b3d549db97F566a4445F48ed62a0d": true, // LayerZeroProvider (CONTROLLER)
+      "0xa664B7E894ad5777f3419C2883911Af3692a4569": true, // MultichainClaimsRouter (CONTROLLER)
+      "0x206B582F309724dAd259058Bc3289Ca3519F34B1": true, // MultichainGlvRouter (CONTROLLER)
+      "0x00205f26BCc52537D12fA9b0eFA5Fcc58F03ab76": true, // MultichainGmRouter (CONTROLLER)
+      "0x204CC947Fddd11c90e302db2A5ac3865021D1618": true, // MultichainOrderRouter (CONTROLLER)
+      "0x4A2826cAee8FF70d9392B171eaF398E0a2B55047": true, // MultichainSubaccountRouter (CONTROLLER)
+      "0xd4F6C2332b36D1Ccb22C7ac479b270fa0cA26a41": true, // MultichainTransferRouter (CONTROLLER)
     },
     ROUTER_PLUGIN: {
       "0x8f550E53DFe96C055D5Bdb267c21F268fCAF63B2": true, // ExchangeRouter (ROUTER_PLUGIN)
@@ -100,10 +138,27 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xd099565957046a2d2CF41B0CC9F95e14a8afD13b": true, // MultichainOrderRouter (ROUTER_PLUGIN)
       "0x5872E84e5ea23292b40183BE86D25fb428621fC1": true, // MultichainSubaccountRouter (ROUTER_PLUGIN)
       "0x5A44a3b026d50EC039582fDb3aFDD88e2092E211": true, // MultichainTransferRouter (ROUTER_PLUGIN)
+
+      // v2.2c 2026-07-15 (fresh redeploy; live entries above kept until later revoke round)
+      "0xc002Db96E682FFF6675966F959677285a0C45Efa": true, // ExchangeRouter (ROUTER_PLUGIN)
+      "0xAda708aFf0f1D784D28cd8Ff4d6D977fF9599e5D": true, // SubaccountRouter (ROUTER_PLUGIN)
+      "0x603B3D3aB077CA433b888c05fa59c777d5b6dCAD": true, // GlvRouter (ROUTER_PLUGIN)
+      "0x51fe0b7919e1208a717E9B16a097C1C3D70eFbf6": true, // GelatoRelayRouter (ROUTER_PLUGIN)
+      "0xa62BD1cFE2066c5bF4180b4125BBb5116eEA26c9": true, // SubaccountGelatoRelayRouter (ROUTER_PLUGIN)
+      "0xaB409fCaCc14Dd4234f6f86a2547f04ACC90a55e": true, // SimulationRouter (ROUTER_PLUGIN)
+      "0x206B582F309724dAd259058Bc3289Ca3519F34B1": true, // MultichainGlvRouter (ROUTER_PLUGIN)
+      "0x00205f26BCc52537D12fA9b0eFA5Fcc58F03ab76": true, // MultichainGmRouter (ROUTER_PLUGIN)
+      "0x204CC947Fddd11c90e302db2A5ac3865021D1618": true, // MultichainOrderRouter (ROUTER_PLUGIN)
+      "0x4A2826cAee8FF70d9392B171eaF398E0a2B55047": true, // MultichainSubaccountRouter (ROUTER_PLUGIN)
+      "0xd4F6C2332b36D1Ccb22C7ac479b270fa0cA26a41": true, // MultichainTransferRouter (ROUTER_PLUGIN)
     },
     ROLE_ADMIN: {
       "0x37e1AeB6118B0106810D2eF7662875C414e39Ca4": true, // TimelockConfig (ROLE_ADMIN)
       "0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36": true, // ConfigTimelockController (ROLE_ADMIN)
+
+      // v2.2c 2026-07-15 (fresh redeploy; live entries above kept until later revoke round)
+      "0xE8505736A5631e036b84b946e56B56D25F28b68E": true, // TimelockConfig (ROLE_ADMIN)
+      "0x854a176289958DD875b0a256FF0dd47f747e39B0": true, // ConfigTimelockController (ROLE_ADMIN)
     },
     MULTICHAIN_READER: {},
     RISK_ORACLE: {
