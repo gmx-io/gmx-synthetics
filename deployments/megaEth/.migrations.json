@@ -27,5 +27,10 @@
   "FeeDistributorVault_1": 1768458506,
   "StaticOracleProvider_1": 1777231215,
   "EIP6492Deployer_1": 1778123435,
-  "FeeVault_1": 1778123466
+  "FeeVault_1": 1778123466,
+  "ChainlinkPriceFeedProvider_7": 1784066248,
+  "Oracle_7": 1784066251,
+  "StaticOracleProvider_2": 1784066254,
+  "ChainlinkDataStreamProvider_7": 1784066456,
+  "EdgeDataStreamProvider_7": 1784066475
 }
