@@ -15,6 +15,7 @@ import "../pricing/SwapPricingUtils.sol";
 import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
 import "../fee/FeeUtils.sol";
+import "../feature/FeatureUtils.sol";
 import "../swap/SwapUtils.sol";
 
 import "../multichain/BridgeOutFromControllerUtils.sol";
@@ -97,6 +98,10 @@ library ExecuteWithdrawalUtils {
         }
         if (withdrawal.marketTokenAmount() == 0) {
             revert Errors.EmptyWithdrawalAmount();
+        }
+
+        if (withdrawal.longTokenSwapPath().length != 0 || withdrawal.shortTokenSwapPath().length != 0) {
+            FeatureUtils.validateFeature(params.dataStore, Keys.withdrawalSwapFeatureDisabledKey(address(this)));
         }
 
         if (params.oracle.minTimestamp() < withdrawal.updatedAtTime()) {

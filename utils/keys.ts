@@ -62,6 +62,7 @@ export const CREATE_WITHDRAWAL_FEATURE_DISABLED = hashString("CREATE_WITHDRAWAL_
 export const CANCEL_WITHDRAWAL_FEATURE_DISABLED = hashString("CANCEL_WITHDRAWAL_FEATURE_DISABLED");
 export const EXECUTE_WITHDRAWAL_FEATURE_DISABLED = hashString("EXECUTE_WITHDRAWAL_FEATURE_DISABLED");
 export const EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED = hashString("EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED");
+export const WITHDRAWAL_SWAP_FEATURE_DISABLED = hashString("WITHDRAWAL_SWAP_FEATURE_DISABLED");
 
 export const CREATE_SHIFT_FEATURE_DISABLED = hashString("CREATE_SHIFT_FEATURE_DISABLED");
 export const EXECUTE_SHIFT_FEATURE_DISABLED = hashString("EXECUTE_SHIFT_FEATURE_DISABLED");
@@ -399,6 +400,10 @@ export function cancelDepositFeatureDisabledKey(contract) {
 
 export function gaslessFeatureDisabledKey(module: string) {
   return hashData(["bytes32", "address"], [GASLESS_FEATURE_DISABLED, module]);
+}
+
+export function withdrawalSwapFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [WITHDRAWAL_SWAP_FEATURE_DISABLED, module]);
 }
 
 export function jitFeatureDisabledKey(contract) {

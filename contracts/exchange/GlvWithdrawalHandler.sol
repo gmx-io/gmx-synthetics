@@ -46,6 +46,13 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
+        if (
+            params.addresses.longTokenSwapPath.length != 0 ||
+            params.addresses.shortTokenSwapPath.length != 0
+        ) {
+            FeatureUtils.validateFeature(_dataStore, Keys.withdrawalSwapFeatureDisabledKey(address(this)));
+        }
+
         return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 

@@ -36,6 +36,7 @@ describe("Exchange.Shift", () => {
     shiftHandler,
     shiftStoreUtils,
     roleStore,
+    withdrawalHandler,
     ethUsdMarket,
     solUsdMarket,
     btcUsdMarket,
@@ -57,6 +58,7 @@ describe("Exchange.Shift", () => {
       shiftHandler,
       shiftStoreUtils,
       roleStore,
+      withdrawalHandler,
       ethUsdMarket,
       solUsdMarket,
       btcUsdMarket,
@@ -200,6 +202,22 @@ describe("Exchange.Shift", () => {
         gasUsageLabel: "executeShift",
       })
     ).to.be.revertedWithCustomError(errorsContract, "EmptyShift");
+  });
+
+  it("shift is unaffected by withdrawalSwapFeatureDisabled", async () => {
+    await dataStore.setBool(keys.withdrawalSwapFeatureDisabledKey(withdrawalHandler.address), true);
+
+    await createShift(fixture, {
+      marketTokenAmount: expandDecimals(7500, 18),
+      receiver: user1,
+    });
+
+    expect(await getShiftCount(dataStore)).eq(1);
+
+    await executeShift(fixture, { gasUsageLabel: "executeShift" });
+
+    expect(await getShiftCount(dataStore)).eq(0);
+    expect(await getBalanceOf(solUsdMarket.marketToken, user1.address)).eq(expandDecimals(7500, 18));
   });
 
   it("_executeShift", async () => {

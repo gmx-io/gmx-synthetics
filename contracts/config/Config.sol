@@ -450,6 +450,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.WITHDRAWAL_SWAP_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.CREATE_SHIFT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_SHIFT_FEATURE_DISABLED] = true;
