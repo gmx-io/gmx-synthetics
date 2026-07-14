@@ -7,16 +7,19 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
     CLAIM_ADMIN: {
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
+      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2 (retired, still granted on-chain)
       ...claimAdmins.mainnet,
       ...generalConfigKeepers.mainnet,
     },
     CONFIG_KEEPER: {
+      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2 (retired, still granted on-chain)
       ...generalConfigKeepers.mainnet,
     },
     FEE_KEEPER: {
       "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
     },
     MARKET_KEEPER: {
+      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2 (retired, still granted on-chain)
       ...generalConfigKeepers.mainnet,
     },
     TIMELOCK_ADMIN: {
@@ -33,6 +36,8 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_1
       "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7": true, // protocol_multisig_1
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
+      // The retired admin must stay commented out; it still holds the role on-chain (SCDEV-307).
+      // "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // former timelock_admin (retired, still granted on-chain)
     },
     TIMELOCK_MULTISIG: {
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
