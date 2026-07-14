@@ -19,7 +19,16 @@ describe("Guardian.Liquidation", () => {
 
   let fixture;
   let user1, wallet;
-  let dataStore, reader, referralStorage, solUsdMarket, solAddr, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc, roleStore;
+  let dataStore,
+    reader,
+    referralStorage,
+    solUsdMarket,
+    solAddr,
+    ethUsdMarket,
+    ethUsdSpotOnlyMarket,
+    wnt,
+    usdc,
+    roleStore;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -822,10 +831,22 @@ describe("Guardian.Liquidation", () => {
       const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
 
       const [, , infoNoSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesNoSpread,
+        false,
+        true
       );
       const [, , infoWithSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesWithSpread,
+        false,
+        true
       );
 
       expect(infoNoSpread.remainingCollateralUsd.sub(infoWithSpread.remainingCollateralUsd)).to.eq(
@@ -835,10 +856,22 @@ describe("Guardian.Liquidation", () => {
       await setThresholdBetween(infoWithSpread.remainingCollateralUsd, infoNoSpread.remainingCollateralUsd);
 
       const [liquidatableNoSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesNoSpread,
+        false,
+        true
       );
       const [liquidatableWithSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesWithSpread,
+        false,
+        true
       );
 
       expect(liquidatableNoSpread).to.eq(false);
@@ -851,10 +884,22 @@ describe("Guardian.Liquidation", () => {
       const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
 
       const [, , infoNoSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesNoSpread,
+        false,
+        true
       );
       const [, , infoWithSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesWithSpread,
+        false,
+        true
       );
 
       expect(infoNoSpread.remainingCollateralUsd.sub(infoWithSpread.remainingCollateralUsd)).to.eq(
@@ -864,10 +909,22 @@ describe("Guardian.Liquidation", () => {
       await setThresholdBetween(infoWithSpread.remainingCollateralUsd, infoNoSpread.remainingCollateralUsd);
 
       const [liquidatableNoSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesNoSpread,
+        false,
+        true
       );
       const [liquidatableWithSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesWithSpread,
+        false,
+        true
       );
 
       expect(liquidatableNoSpread).to.eq(false);
@@ -879,10 +936,22 @@ describe("Guardian.Liquidation", () => {
       const positionKey = (await getPositionKeys(dataStore, 0, 1))[0];
 
       const [, , infoNoSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesNoSpread, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesNoSpread,
+        false,
+        true
       );
       const [, , infoWithSpread] = await reader.isPositionLiquidatable(
-        dataStore.address, referralStorage.address, positionKey, ethUsdMarket, pricesWithSpreadForLiquidation, false, true
+        dataStore.address,
+        referralStorage.address,
+        positionKey,
+        ethUsdMarket,
+        pricesWithSpreadForLiquidation,
+        false,
+        true
       );
       await setThresholdBetween(infoWithSpread.remainingCollateralUsd, infoNoSpread.remainingCollateralUsd);
 
@@ -941,7 +1010,10 @@ describe("Guardian.Liquidation", () => {
 
     const openLongWithNegativePendingImpact = async (impactFactor, acceptablePrice) => {
       await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), impactFactor);
-      await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 0));
+      await dataStore.setUint(
+        keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+        decimalToFloat(2, 0)
+      );
 
       await handleOrder(fixture, {
         create: {

@@ -313,8 +313,18 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
   let reader, dataStore, ethUsdMarket, wnt, usdc, wethPriceFeed;
 
   // execution prices above the $5,000 entry, so the long position is in profit
-  const wntPriceDouble = { contractName: "wnt", precision: 8, min: expandDecimals(10_000, 4), max: expandDecimals(10_000, 4) };
-  const wntPriceFiveX = { contractName: "wnt", precision: 8, min: expandDecimals(25_000, 4), max: expandDecimals(25_000, 4) };
+  const wntPriceDouble = {
+    contractName: "wnt",
+    precision: 8,
+    min: expandDecimals(10_000, 4),
+    max: expandDecimals(10_000, 4),
+  };
+  const wntPriceFiveX = {
+    contractName: "wnt",
+    precision: 8,
+    min: expandDecimals(25_000, 4),
+    max: expandDecimals(25_000, 4),
+  };
 
   const marketPricesAt = (wntUsd) => ({
     indexTokenPrice: { min: expandDecimals(wntUsd, 12), max: expandDecimals(wntUsd, 12) },
@@ -341,8 +351,14 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
   };
 
   const setLongPnlFactorCaps = async (factor) => {
-    await dataStore.setUint(keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_DEPOSITS, ethUsdMarket.marketToken, true), factor);
-    await dataStore.setUint(keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, ethUsdMarket.marketToken, true), factor);
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_DEPOSITS, ethUsdMarket.marketToken, true),
+      factor
+    );
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, ethUsdMarket.marketToken, true),
+      factor
+    );
   };
 
   beforeEach(async () => {

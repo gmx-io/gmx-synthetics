@@ -439,7 +439,9 @@ library ExecuteWithdrawalUtils {
             uiFeeFactor: withdrawal.uiFeeFactor(),
             tokenInPoolAmountBeforeAction: tokenInPoolAmountBeforeAction,
             shouldUnwrapNativeToken: withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false,
-            swapPricingType: params.swapPricingType
+            // the swap-path hops are ordinary swaps and must be priced with the swap fee factor;
+            // the GM redemption fee is charged separately in _executeWithdrawal using the withdrawal pricing type
+            swapPricingType: ISwapPricingUtils.SwapPricingType.Swap
         });
 
         (cache.outputToken, cache.outputAmount) = params.swapHandler.swap(cache.swapParams);
