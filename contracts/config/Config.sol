@@ -626,6 +626,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_AGE] = true;
 
         allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
+        allowedBaseKeys[Keys.DATA_STREAM_MAX_INTERVAL] = true;
 
         allowedBaseKeys[Keys.IS_MULTICHAIN_PROVIDER_ENABLED] = true;
         allowedBaseKeys[Keys.IS_MULTICHAIN_ENDPOINT_ENABLED] = true;

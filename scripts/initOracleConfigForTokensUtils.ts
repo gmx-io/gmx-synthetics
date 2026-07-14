@@ -65,6 +65,14 @@ export async function initOracleConfigForTokens({ write }) {
       ]),
     });
 
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        getFullKey(keys.DATA_STREAM_MAX_INTERVAL, encodeData(["address"], [token.address])),
+      ]),
+    });
+
     if (paramsCount === undefined) {
       paramsCount = multicallReadParams.length;
     }
@@ -82,6 +90,7 @@ export async function initOracleConfigForTokens({ write }) {
       dataStreamId: result[i * paramsCount + 1].returnData,
       oracleProvider: defaultAbiCoder.decode(["address"], result[i * paramsCount + 2].returnData)[0],
       oracleTimestampAdjustment: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 3].returnData)[0],
+      dataStreamMaxInterval: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 4].returnData)[0],
     };
   }
 
@@ -157,6 +166,23 @@ export async function initOracleConfigForTokens({ write }) {
           keys.ORACLE_TIMESTAMP_ADJUSTMENT,
           defaultAbiCoder.encode(["address", "address"], [oracleProviderAddress, token.address]),
           token.oracleTimestampAdjustment,
+        ])
+      );
+    }
+
+    if (
+      token.dataStreamMaxInterval !== undefined &&
+      !onchainConfig.dataStreamMaxInterval.eq(token.dataStreamMaxInterval)
+    ) {
+      console.log(
+        `${multicallWriteParams.length}: set data stream max interval ${tokenSymbol} ${token.dataStreamMaxInterval}`
+      );
+
+      multicallWriteParams.push(
+        config.interface.encodeFunctionData("setUint", [
+          keys.DATA_STREAM_MAX_INTERVAL,
+          defaultAbiCoder.encode(["address"], [token.address]),
+          token.dataStreamMaxInterval,
         ])
       );
     }

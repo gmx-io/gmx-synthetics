@@ -42,6 +42,7 @@ type BaseTokenConfig = {
   dataStreamFeedId?: string;
   dataStreamFeedDecimals?: number;
   dataStreamSpreadReductionFactor?: BigNumberish;
+  dataStreamMaxInterval?: number;
   priceFeed?: OraclePriceFeed;
   edge?: OracleEdge;
 };

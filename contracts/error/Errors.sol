@@ -230,6 +230,8 @@ library Errors {
     error InvalidDataStreamFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
     error InvalidDataStreamBidAsk(address token, int192 bid, int192 ask);
     error InvalidDataStreamPrices(address token, int192 bid, int192 ask);
+    error InvalidDataStreamTimestamps(address token, uint256 validFromTimestamp, uint256 observationsTimestamp);
+    error MaxDataStreamIntervalExceeded(address token, uint256 validFromTimestamp, uint256 observationsTimestamp, uint256 maxInterval);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp, uint256 currentTimestamp);
     error MaxOracleTimestampRangeExceeded(uint256 range, uint256 maxRange);
     error EmptyChainlinkPriceFeedMultiplier(address token);

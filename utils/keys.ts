@@ -136,6 +136,7 @@ export const EDGE_DATA_STREAM_ID = hashString("EDGE_DATA_STREAM_ID");
 export const EDGE_DATA_STREAM_TOKEN_DECIMALS = hashString("EDGE_DATA_STREAM_TOKEN_DECIMALS");
 export const DATA_STREAM_MULTIPLIER = hashString("DATA_STREAM_MULTIPLIER");
 export const DATA_STREAM_SPREAD_REDUCTION_FACTOR = hashString("DATA_STREAM_SPREAD_REDUCTION_FACTOR");
+export const DATA_STREAM_MAX_INTERVAL = hashString("DATA_STREAM_MAX_INTERVAL");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
@@ -549,6 +550,10 @@ export function dataStreamMultiplierKey(token: string) {
 
 export function dataStreamSpreadReductionFactorKey(token: string) {
   return hashData(["bytes32", "address"], [DATA_STREAM_SPREAD_REDUCTION_FACTOR, token]);
+}
+
+export function dataStreamMaxIntervalKey(token: string) {
+  return hashData(["bytes32", "address"], [DATA_STREAM_MAX_INTERVAL, token]);
 }
 
 export function stablePriceKey(token: string) {
