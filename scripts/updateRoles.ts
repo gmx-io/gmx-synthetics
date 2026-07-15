@@ -1,11 +1,16 @@
 import hre from "hardhat";
 import { hashString } from "../utils/hash";
 import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWriteMulticall } from "../utils/timelock";
+import { writeSafeBatchJson } from "../utils/safeTx";
 import { TimelockConfig } from "../typechain-types";
 import { ContractInfo, validateSourceCode } from "./validateDeploymentUtils";
 
 import * as _rolesToAdd from "./roles/rolesToAdd";
 import * as _rolesToRemove from "./roles/rolesToRemove";
+
+// GMX protocol multisig, same address on every network; holds TIMELOCK_ADMIN and executes the batch.
+// Only stamped into the Safe batch meta (provenance), does not affect the transactions.
+const PROTOCOL_MULTISIG = "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7";
 
 const expectedTimelockMethods = [
   "signalGrantRole",
@@ -79,12 +84,16 @@ async function getGrantRoleActionKeysToCancel({ timelock }) {
 }
 
 // to update roles
-// 1. update roles in config/roles.ts
+// 1. update roles in config/roles.ts or config/roleConfigs/<network>.ts
 // 2. then run scripts/validateRoles.ts, it should output the role changes
-// 3. update rolesToAdd and rolesToRemove here
+// 3. update rolesToAdd and rolesToRemove from scripts/roles/rolesToAdd/<network>.ts and scripts/roles/rolesToRemove/<network>.ts
 // 4. then run e.g. WRITE=true TIMELOCK_METHOD=signalGrantRole npx hardhat run --network arbitrum scripts/updateRoles.ts
 // 5. after the timelock delay, run WRITE=true TIMELOCK_METHOD=grantRoleAfterSignal npx hardhat run --network arbitrum scripts/updateRoles.ts
 // see utils/signer.ts for steps on how to sign the transactions
+//
+// each run also writes Safe Transaction Builder batch(es) to out/safe-batch-updateRoles-<method>-<network>-<stamp>.json
+// (load in Safe --> Transaction Builder to execute from the protocol multisig instead of signing from an EOA).
+// large batches are split into files of up to SAFE_TX_BATCH_SIZE txs (default 50) so air-gapped signers don't freeze.
 async function main() {
   // NOTE: the existing Timelock needs to be used to grant roles to new contracts including new Timelocks
   const timelock = await getTimelock();
@@ -177,6 +186,59 @@ async function main() {
   }
 
   console.log(`updating ${multicallWriteParams.length} roles`);
+
+  // Write a Safe Transaction Builder batch so the change can be reviewed per-row and executed
+  // from the protocol multisig instead of an EOA. Every multicall payload is a single timelock
+  // call (signalGrantRole / signalRevokeRole / execute) with primitive + bytes params, so decode
+  // each one back into a Safe tx row. The timelockWriteMulticall path below is unchanged and still
+  // sends timelock.multicall(bytes[]); the batch here mirrors it exactly.
+  const safeBatchTransactions: any[] = [];
+  for (const data of multicallWriteParams) {
+    if (typeof data !== "string") {
+      console.warn("skipping non-encoded multicall entry for the Safe batch");
+      continue;
+    }
+    const parsed = timelock.interface.parseTransaction({ data });
+    safeBatchTransactions.push({
+      to: timelock.address,
+      value: "0",
+      data: null,
+      contractMethod: {
+        name: parsed.name,
+        payable: false,
+        inputs: parsed.functionFragment.inputs.map((p) => ({ name: p.name, type: p.type, internalType: p.type })),
+      },
+      contractInputsValues: Object.fromEntries(
+        parsed.functionFragment.inputs.map((p) => {
+          const v = parsed.args[p.name];
+          return [p.name, ethers.BigNumber.isBigNumber(v) ? v.toString() : typeof v === "boolean" ? String(v) : v];
+        })
+      ),
+    });
+  }
+
+  // Air-gapped Safe signers can freeze on very large batches, so split into files of at most
+  // SAFE_TX_BATCH_SIZE txs (default 50). Each timelock call here is independent (predecessor = HashZero),
+  // so executing the parts as separate Safe txs is equivalent to one combined batch.
+  const batchSize = Number(process.env.SAFE_TX_BATCH_SIZE) || 50;
+  const chunks: any[][] = [];
+  for (let i = 0; i < safeBatchTransactions.length; i += batchSize) {
+    chunks.push(safeBatchTransactions.slice(i, i + batchSize));
+  }
+  if (chunks.length > 1) {
+    console.log(
+      `splitting ${safeBatchTransactions.length} txs into ${chunks.length} Safe batches of up to ${batchSize}`
+    );
+  }
+  chunks.forEach((chunk, i) => {
+    writeSafeBatchJson({
+      scriptName: "updateRoles",
+      label: chunks.length > 1 ? `${timelockMethod}-${i + 1}of${chunks.length}` : timelockMethod,
+      transactions: chunk,
+      createdFromSafeAddress: PROTOCOL_MULTISIG,
+    });
+  });
+
   await timelockWriteMulticall({ timelock, multicallWriteParams });
 }
 

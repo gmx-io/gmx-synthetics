@@ -16,6 +16,8 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
     return;
   }
 
+  // if TimelockConfig is also redeployed, use SKIP_VALIDATION=true to skip the pre-flight simulation (flag needed because the simulation
+  // is using the newly deployed contract which doesn't have the CONTROLLER role yet, actual tx will use previous hardcoded TimelockConfig)
   if (process.env.SKIP_VALIDATION === undefined) {
     await hre.deployments.read(
       "TimelockConfig",
