@@ -1,10 +1,11 @@
 import hre from "hardhat";
 import { getPositionImpactPoolWithdrawalPayload, timelockWriteMulticall } from "../utils/timelock";
-import { expandDecimals, formatAmount } from "../utils/math";
-import { constants } from "ethers";
+import { formatAmount } from "../utils/math";
+import { constants, utils } from "ethers";
 import { fetchSignedPrices } from "../utils/prices";
 import { fetchMarketAddress } from "../utils/market";
 import * as keys from "../utils/keys";
+import { writeSafeBatchJson } from "../utils/safeTx";
 
 /*
 Executes signalWithdrawFromPositionImpactPool and executeWithOraclePrice timelock methods.
@@ -14,20 +15,23 @@ Timelock methods need same salt param for both calls. This salt is generated dur
  stored in the cache folder locally. If cache is missing script will try to load salt from env variable.
  Original salt param can be obtained through the explorer if no one knows it.
 
-Args are passing as env vars.
+Args are passing as env vars. Markets and amounts to withdraw are configured in the
+withdrawalItems array below (not env vars). Each entry is
+{ marketKey: "INDEX:LONG:SHORT", amount: "<human readable index token amount>" }.
 
-@arg MARKET - market key to withdraw from
-@arg AMOUNT - amount in market _index_ token to withdraw (decimals should be taken from token. e.g ETH has 18 decimals)
 @arg RECEIVER - funds receiver address
 @arg TIMELOCK_METHOD - should be one of "signalWithdrawFromPositionImpactPool" || "executeWithOraclePrice"
 @arg SALT(optional) - provide custom salt for execute* method
 @arg ORACLE(optional) - which oracle to use for prices. Possible options: "chainlinkPriceFeed" | "chainlinkDataStream".
 default: chainlinkPriceFeed
 
-example for ETH-USDC market to withdraw 1 ETH worth of funds:
-MARKET=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 AMOUNT=1000000000000000000 \
-RECEIVER=0xE63F81517D622405E2C04410c933ad4ab6c78731 \
 TIMELOCK_METHOD=signalWithdrawFromPositionImpactPool \
+npx hardhat run scripts/withdrawFromPositionImpactPool.ts --network arbitrum
+
+!!! IMPORTANT !!!
+For execution via Safe, chainlinkPriceFeed must be used, and markets must have CL price feeds registered.
+
+TIMELOCK_METHOD=executeWithOraclePrice \
 npx hardhat run scripts/withdrawFromPositionImpactPool.ts --network arbitrum
  */
 
@@ -35,12 +39,6 @@ const expectedTimelockMethods = ["signalWithdrawFromPositionImpactPool", "execut
 
 async function fetchChainlinkPriceFeedInfo({ indexToken, longToken, shortToken }) {
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
-  const result = {
-    shortToken: {},
-    longToken: {},
-    indexToken: {},
-  };
-
   return {
     indexToken: {
       address: indexToken.address.toLowerCase(),
@@ -58,8 +56,6 @@ async function fetchChainlinkPriceFeedInfo({ indexToken, longToken, shortToken }
       data: "0x",
     },
   };
-
-  return result;
 }
 
 async function fetchChainlinkDataStreamInfo({ indexToken, longToken, shortToken }) {
@@ -88,10 +84,10 @@ async function fetchOracleParams({ indexToken, longToken, shortToken }) {
   const marketInfo = { indexToken, longToken, shortToken };
 
   let oracleParams: { shortToken: any; longToken: any; indexToken: any };
-  if (process.env.ORACLE === "chainlinkPriceFeed") {
-    oracleParams = await fetchChainlinkPriceFeedInfo(marketInfo);
-  } else {
+  if (process.env.ORACLE === "chainlinkDataStream") {
     oracleParams = await fetchChainlinkDataStreamInfo(marketInfo);
+  } else {
+    oracleParams = await fetchChainlinkPriceFeedInfo(marketInfo);
   }
   if (!oracleParams.shortToken) {
     throw new Error(`Token ${marketInfo.shortToken} not found`);
@@ -145,21 +141,24 @@ async function main() {
     throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
   }
 
-  const receiver = "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E";
+  const receiver = process.env.RECEIVER || "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E"; // GMX DAO Treasury
 
-  /*
-  // OM market address: 0x89EB78679921499632fF16B1be3ee48295cfCD91
-  Retrieve position impact pool amount:
-    POOL_KEY=$(cast keccak $(cast abi-encode "f(bytes32,address)" "0x8d05e344d016decb2483e1a2db6dfebdef3f67c47ac787f0ac505b4d45d3e16c" "0x89EB78679921499632fF16B1be3ee48295cfCD91")) \
-    cast call 0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8 "getUint(bytes32)(uint256)" "$POOL_KEY" --rpc-url https://arb1.arbitrum.io/rpc
-
-  output: 57798402402081225282171 (57798.4024 OM)
-  */
-  const withdrawalItems = [
-    {
-      marketKey: "OM:WBTC.e:USDC",
-      amount: 57_798, // ignored when FULL_WITHDRAWAL=true
-    },
+  // NOTE: amount is the human readable token amount
+  // e.g. to withdraw 500 ETH, amount would be "500"
+  // and not 500 * (10 ** 18)
+  // SCDEV-212: ~$2.7M batch, totals per Linear table.
+  const withdrawalItems: any[] = [
+    { marketKey: "BTC:WBTC.e:USDC", amount: "13.35" }, // ~$1,084,682
+    { marketKey: "WETH:WETH:USDC", amount: "441" }, // ~$1,027,010
+    { marketKey: "XRP:WETH:USDC", amount: "103453" }, // ~$153,261
+    { marketKey: "LINK:LINK:USDC", amount: "10074" }, // ~$106,211
+    { marketKey: "DOGE:WETH:USDC", amount: "586446" }, // ~$64,792
+    { marketKey: "VVV:WETH:USDC", amount: "3803" }, // ~$64,229
+    { marketKey: "FARTCOIN:WBTC.e:USDC", amount: "245074" }, // ~$63,026
+    { marketKey: "GMX:GMX:USDC", amount: "6898" }, // ~$52,661
+    { marketKey: "ORDI:WBTC.e:USDC", amount: "7146" }, // ~$36,062
+    { marketKey: "ARB:ARB:USDC", amount: "221831" }, // ~$31,420
+    { marketKey: "HYPE:WBTC.e:USDC", amount: "416" }, // ~$17,276
   ];
 
   let salt = ethers.constants.HashZero;
@@ -168,6 +167,7 @@ async function main() {
   }
 
   const multicallWriteParams = [];
+  const safeBatchTransactions: any[] = [];
   const timelock = await hre.ethers.getContract("TimelockConfig");
   const dataStore = await ethers.getContract("DataStore");
 
@@ -206,7 +206,7 @@ async function main() {
     if (process.env.FULL_WITHDRAWAL === "true") {
       adjustedAmount = priceImpactPoolAmount;
     } else {
-      adjustedAmount = expandDecimals(amount, indexToken.decimals);
+      adjustedAmount = utils.parseUnits(amount, indexToken.decimals);
       if (adjustedAmount.gt(priceImpactPoolAmount)) {
         throw new Error(
           `adjustedAmount > priceImpactPoolAmount for ${marketKey}: ${adjustedAmount.toString()}, ${priceImpactPoolAmount.toString()}`
@@ -239,6 +239,30 @@ async function main() {
           salt,
         ])
       );
+
+      safeBatchTransactions.push({
+        to: timelock.address,
+        value: "0",
+        data: null,
+        contractMethod: {
+          name: "signalWithdrawFromPositionImpactPool",
+          payable: false,
+          inputs: [
+            { name: "market", type: "address", internalType: "address" },
+            { name: "receiver", type: "address", internalType: "address" },
+            { name: "amount", type: "uint256", internalType: "uint256" },
+            { name: "predecessor", type: "bytes32", internalType: "bytes32" },
+            { name: "salt", type: "bytes32", internalType: "bytes32" },
+          ],
+        },
+        contractInputsValues: {
+          market: marketAddress,
+          receiver: receiver,
+          amount: adjustedAmount.toString(),
+          predecessor: constants.HashZero,
+          salt: salt,
+        },
+      });
     }
 
     if (timelockMethod === "executeWithOraclePrice") {
@@ -255,10 +279,49 @@ async function main() {
           oracleParams,
         ])
       );
+
+      safeBatchTransactions.push({
+        to: timelock.address,
+        value: "0",
+        data: null,
+        contractMethod: {
+          name: "executeWithOraclePrice",
+          payable: false,
+          inputs: [
+            { name: "target", type: "address", internalType: "address" },
+            { name: "payload", type: "bytes", internalType: "bytes" },
+            { name: "predecessor", type: "bytes32", internalType: "bytes32" },
+            { name: "salt", type: "bytes32", internalType: "bytes32" },
+            {
+              name: "oracleParams",
+              type: "tuple",
+              internalType: "struct OracleUtils.SetPricesParams",
+              components: [
+                { name: "tokens", type: "address[]", internalType: "address[]" },
+                { name: "providers", type: "address[]", internalType: "address[]" },
+                { name: "data", type: "bytes[]", internalType: "bytes[]" },
+              ],
+            },
+          ],
+        },
+        contractInputsValues: {
+          target: target,
+          payload: payload,
+          predecessor: constants.HashZero,
+          salt: salt,
+          oracleParams: JSON.stringify([oracleParams.tokens, oracleParams.providers, oracleParams.data]),
+        },
+      });
     }
   }
 
   console.log(`sending ${multicallWriteParams.length} updates`);
+  writeSafeBatchJson({
+    scriptName: "withdrawFromPositionImpactPool",
+    label: timelockMethod,
+    transactions: safeBatchTransactions,
+    createdFromSafeAddress: "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7", // protocol_multisig_1
+  });
   await timelockWriteMulticall({ timelock, multicallWriteParams });
 }
 

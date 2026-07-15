@@ -381,7 +381,7 @@ const config: {
       priceFeed: {
         address: "0xdc49F292ad1bb3DAb6C11363d74ED06F38b9bd9C",
         decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
+        heartbeatDuration: 255 + 1 * 60 * 60, // 255 seconds + 1 hour
       },
     },
     TIA: {
@@ -651,7 +651,11 @@ const config: {
       dataStreamFeedId: "0x0003c800d35ffd2dbac08e275530d56e254ef08aaacacaa8e84dfc4a615504db",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0x4f861F14246229530a881D32C8d26D78b8c48BE6",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     VIRTUAL: {
       synthetic: true,
@@ -696,7 +700,11 @@ const config: {
       dataStreamFeedId: "0x0003bda9e85d7d4eccc82d4a5d5f074ce25ff7ba23892ca3abf2ea0d2250ad11",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0xFeaC1A3936514746e70170c0f539e70b23d36F19",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     CAKE: {
       synthetic: true,
@@ -727,7 +735,11 @@ const config: {
       dataStreamFeedId: "0x0003d34539af562867c3cb309b59efccf40e74b404fb415eeb7699d61322aed9",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      priceFeed: {
+        address: "0xf9ce4fE2F0EcE0362cb416844AE179a49591D567",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     JUP: {
       synthetic: true,
@@ -767,7 +779,7 @@ const config: {
       dataStreamFeedId: "0x000355d06b40dff314c9a283f9fd647690f5ebdce666453af72e3fbf08fdce5e",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      // Chainlink on-chain feed not available
+      // Chainlink on-chain feed available, but marked as High risk. Skipped for now.
     },
     ZRO: {
       synthetic: true,
@@ -826,6 +838,11 @@ const config: {
       dataStreamFeedId: "0x00032ce910d5ee7e47506b9f0607acdc017fb6cd92ed3696eb3573db6ad41cb9",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x0C997958ccE7A0403AEA7E34d14bbaDA897B5bb3",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     MNT: {
       synthetic: true,
@@ -938,6 +955,11 @@ const config: {
       dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x4b13Dd76De990Db9A2Dab58D35C2c02E5e3AE848",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     WELL: {
       synthetic: true,
@@ -1008,6 +1030,11 @@ const config: {
       dataStreamFeedId: "0x0003db12da014dbc5a928b9e7a8c6bc1fbab0c60d332ce26c644cc7477b6fe7f",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x76998C22eEa325A11dc6971Cedcf533E9740F854",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     GMX: {
       address: "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
@@ -1057,6 +1084,11 @@ const config: {
       dataStreamFeedId: "0x0003214a4da85e2fed5cdee4f7edb5f1205dec8dffaf0186e7663ddab99e1772",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x1b47b4124b9A5094C59710E6b9126e5e32a4fb8E",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     ANIME: {
       address: "0x37a645648df29205c6261289983fb04ecd70b4b3",
@@ -1154,6 +1186,11 @@ const config: {
       dataStreamFeedId: "0x0003242d01a117767fb02954edb3fa22523785423ba8690f682cb599530bb2b4",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x47C38C695639aE97A00f57D6D9f5ece1DebB033C",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     AVNT: {
       synthetic: true,
@@ -1182,6 +1219,11 @@ const config: {
       dataStreamFeedId: "0x00039f8a144f4a62715ca60aec1cf848c4821375c57e2259c6c90b7fa49db693",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x21082CA28570f0ccfb089465bFaEfDc77b00D367",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     MON: {
       synthetic: true,
@@ -1333,6 +1375,14 @@ const config: {
       synthetic: true,
       decimals: 18,
       dataStreamFeedId: "0x0003e5c055e11f7689db6ca622867a5e7228d76bf311c3345baef8b081bb18bd",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    SPCX: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003f769383ad721a5521200b1914c58371677b58c93b686f968dafcd38a7432",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },

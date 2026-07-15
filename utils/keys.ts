@@ -90,6 +90,7 @@ export const MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS = hashString(
 );
 
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
+export const RISK_ORACLE_MARKET_ENABLED = hashString("RISK_ORACLE_MARKET_ENABLED");
 export const MAX_SWAP_PATH_LENGTH = hashString("MAX_SWAP_PATH_LENGTH");
 export const MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT");
 
@@ -376,6 +377,10 @@ export function autoCancelOrderListKey(positionKey) {
 
 export function isMarketDisabledKey(market) {
   return hashData(["bytes32", "address"], [IS_MARKET_DISABLED, market]);
+}
+
+export function isRiskOracleMarketEnabledKey(market) {
+  return hashData(["bytes32", "address"], [RISK_ORACLE_MARKET_ENABLED, market]);
 }
 
 export function minMarketTokensForFirstDeposit(market) {
@@ -802,6 +807,18 @@ export function fundingUpdatedAtKey(market: string) {
 
 export function borrowingFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [BORROWING_FACTOR, market, isLong]);
+}
+
+export function optimalUsageFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [OPTIMAL_USAGE_FACTOR, market, isLong]);
+}
+
+export function baseBorrowingFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [BASE_BORROWING_FACTOR, market, isLong]);
+}
+
+export function aboveOptimalUsageBorrowingFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR, market, isLong]);
 }
 
 export function borrowingExponentFactorKey(market: string, isLong: boolean) {

@@ -26,6 +26,7 @@ const externalContractsAllowedForRoles = {
   [hashString("CONTRIBUTOR_KEEPER")]: true,
   [hashString("CONTRIBUTOR_DISTRIBUTOR")]: true,
   [hashString("CLAIM_ADMIN")]: true,
+  [hashString("RISK_ORACLE")]: true,
 };
 
 export interface SignalRoleInfo {

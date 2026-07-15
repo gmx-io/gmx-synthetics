@@ -250,7 +250,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         42161: true, // Arbitrum
         1: true, // Ethereum
         56: true, // BSC
-        3637: true, // Botanix
         80094: true, // Berachain
       },
       eids: {
@@ -258,7 +257,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         42161: 30110, // Arbitrum
         1: 30101, // Ethereum
         56: 30102, // BSC
-        3637: 30376, // Botanix
         80094: 30362, // Berachain
       },
     },

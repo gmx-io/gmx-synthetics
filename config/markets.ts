@@ -28,6 +28,12 @@ export type ClosedMarketConfig = {
   minCollateralFactorForOpenInterestMultiplierLong?: BigNumberish;
   minCollateralFactorForOpenInterestMultiplierShort?: BigNumberish;
 
+  maxPnlFactorForTraders?: BigNumberish;
+  maxPnlFactorForDeposits?: BigNumberish;
+  maxPnlFactorForAdl?: BigNumberish;
+  minPnlFactorAfterAdl?: BigNumberish;
+  maxPnlFactorForWithdrawals?: BigNumberish;
+
   maxOpenInterest: BigNumberish;
   maxOpenInterestForLongs?: BigNumberish;
   maxOpenInterestForShorts?: BigNumberish;
@@ -170,6 +176,7 @@ export type BaseMarketConfig = {
   isDisabled?: boolean;
 
   closedState?: ClosedMarketConfig;
+  riskOracleEnabled?: boolean;
 };
 
 export type SpotMarketConfig = Partial<BaseMarketConfig> & {
@@ -311,6 +318,28 @@ const borrowingRateConfig_LowerMax_WithHigherOptimal: BorrowingRateConfig = {
   aboveOptimalUsageBorrowingFactor: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 };
 
+// @see OPS-28
+const borrowingRateConfig_NoKink_45: BorrowingRateConfig = {
+  optimalUsageFactor: percentageToFloat("100%"),
+  baseBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
+};
+const borrowingRateConfig_NoKink_50: BorrowingRateConfig = {
+  optimalUsageFactor: percentageToFloat("100%"),
+  baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+};
+const borrowingRateConfig_NoKink_55: BorrowingRateConfig = {
+  optimalUsageFactor: percentageToFloat("100%"),
+  baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+};
+const borrowingRateConfig_NoKink_65: BorrowingRateConfig = {
+  optimalUsageFactor: percentageToFloat("100%"),
+  baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
+};
+
 const baseMarketConfig: Partial<BaseMarketConfig> = {
   minCollateralFactor: percentageToFloat("1%"), // 1%
   minCollateralFactorForLiquidation: percentageToFloat("1%"), // 1%
@@ -375,6 +404,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   minPositionImpactPoolAmount: 0,
 
   liquidationFeeFactor: percentageToFloat("0.20%"),
+  riskOracleEnabled: false,
 };
 
 const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
@@ -760,7 +790,7 @@ const config: {
 
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_45,
 
       negativePositionImpactFactor: exponentToFloat("21e-9"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
@@ -798,7 +828,7 @@ const config: {
 
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_45,
 
       negativePositionImpactExponentFactor: exponentToFloat("1.62e0"),
       positivePositionImpactExponentFactor: exponentToFloat("1.62e0"),
@@ -839,7 +869,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 2.5e-10,
@@ -877,7 +907,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
@@ -988,7 +1018,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
@@ -1068,7 +1098,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -1103,7 +1133,10 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
+
+      positionImpactPoolDistributionRate: expandDecimals(896425244, 6 + 30).div(SECONDS_PER_DAY), // ~896,425,244 SATS/day, drains current ~7,171,401,944.9936 SATS PI bucket (~$63) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -1138,7 +1171,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("2.7e-8"),
       positivePositionImpactFactor: exponentToFloat("9e-9"),
@@ -1361,7 +1394,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       maxLongTokenPoolAmount: expandDecimals(900, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
@@ -1399,7 +1432,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       maxLongTokenPoolAmount: expandDecimals(1515, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
@@ -1470,7 +1503,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -1642,7 +1675,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1677,7 +1710,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1712,7 +1745,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1747,7 +1780,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1782,7 +1815,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1817,7 +1850,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1852,7 +1885,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1870,11 +1903,11 @@ const config: {
       reserveFactor: percentageToFloat("175%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("170%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(273, 9 + 30).div(SECONDS_PER_DAY), // ~273 TON/day, drains current ~2,176.332 TON PI bucket (~$3,375) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+      maxOpenInterest: decimalToFloat(1),
+      maxPoolUsdForDeposit: decimalToFloat(1),
 
       maxLongTokenPoolAmount: expandDecimals(800, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
@@ -1888,7 +1921,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1923,7 +1956,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1958,7 +1991,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1993,7 +2026,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -2011,8 +2044,8 @@ const config: {
       reserveFactor: percentageToFloat("125%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(179344, 6 + 30).div(SECONDS_PER_DAY), // ~179,344 BOME/day, drains current ~1,434,747.952 BOME PI bucket (~$572) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       maxOpenInterest: decimalToFloat(1),
       maxPoolUsdForDeposit: decimalToFloat(1),
@@ -2029,7 +2062,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -2047,8 +2080,8 @@ const config: {
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(78685, 18 + 30).div(SECONDS_PER_DAY), // ~78,685 MEME/day, drains current ~629,476.5606 MEME PI bucket (~$303) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       maxOpenInterest: decimalToFloat(1),
       maxPoolUsdForDeposit: decimalToFloat(1),
@@ -2065,7 +2098,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -2100,7 +2133,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -2117,8 +2150,8 @@ const config: {
       reserveFactor: percentageToFloat("125%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(59236, 5 + 30).div(SECONDS_PER_DAY), // ~59,236 MEW/day, drains current ~473,886.268 MEW PI bucket (~$156) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       maxOpenInterest: decimalToFloat(1),
       maxPoolUsdForDeposit: decimalToFloat(1),
@@ -2225,7 +2258,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"), // 0.01% for 20,000 USD of imbalance
       positiveSwapImpactFactor: exponentToFloat("5e-9"), // 0.01% for 20,000 USD of imbalance
@@ -2308,7 +2341,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -2340,7 +2373,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -2372,7 +2405,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       positivePositionImpactFactor: exponentToFloat("1.25e-9"),
@@ -2402,7 +2435,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       positivePositionImpactFactor: exponentToFloat("1.25e-9"),
@@ -2434,7 +2467,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       positivePositionImpactFactor: exponentToFloat("1.25e-9"),
@@ -2458,6 +2491,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "FIL", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2466,7 +2500,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -2499,8 +2533,7 @@ const config: {
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // timeToDecreaseFromMaxFundingToZero is "-" in initial recomandations
-      ...borrowingRateConfig_HighMax_WithHigherBase,
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("9e-9"),
       positivePositionImpactFactor: exponentToFloat("4.5e-9"),
@@ -2533,8 +2566,7 @@ const config: {
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // timeToDecreaseFromMaxFundingToZero is "-" in initial recomandations
-      ...borrowingRateConfig_HighMax_WithHigherBase,
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("9e-9"),
       positivePositionImpactFactor: exponentToFloat("4.5e-9"),
@@ -2566,7 +2598,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       positivePositionImpactFactor: exponentToFloat("1.25e-9"),
@@ -2601,7 +2633,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("9.39e-7"),
       positivePositionImpactFactor: exponentToFloat("6.26e-7"),
@@ -2638,7 +2670,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("9.39e-7"),
       positivePositionImpactFactor: exponentToFloat("6.26e-7"),
@@ -2663,8 +2695,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(850, 18),
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // stop distribution
-      minPositionImpactPoolAmount: expandDecimals(4888, 6), // leave ~10% = 4888 MELANIA
+      positionImpactPoolDistributionRate: expandDecimals(613, 6 + 30).div(SECONDS_PER_DAY), // ~613 MELANIA/day, drains current ~4,896.2973 MELANIA PI bucket (~$356) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -2675,7 +2707,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("8e-7"),
       positivePositionImpactFactor: exponentToFloat("4e-7"),
@@ -2710,7 +2742,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
@@ -2743,7 +2775,10 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_65,
+
+      positionImpactPoolDistributionRate: expandDecimals(16664, 9 + 30).div(SECONDS_PER_DAY), // ~16,664 AI16Z/day, drains current ~133,308.9067 AI16Z PI bucket (~$52) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
@@ -2805,7 +2840,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("1.4e-8"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
@@ -2836,7 +2871,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("1e-7"),
       positivePositionImpactFactor: exponentToFloat("5e-8"),
@@ -2871,7 +2906,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("2e-8"),
       positivePositionImpactFactor: exponentToFloat("1e-8"),
@@ -2902,7 +2937,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("1.6e-8"),
       positivePositionImpactFactor: exponentToFloat("8e-9"),
@@ -2933,7 +2968,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("8e-9"),
       positivePositionImpactFactor: exponentToFloat("4e-9"),
@@ -2964,7 +2999,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("1e-8"),
       positivePositionImpactFactor: exponentToFloat("5e-9"),
@@ -2998,7 +3033,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("1.2e-8"),
       positivePositionImpactFactor: exponentToFloat("6e-9"),
@@ -3029,7 +3064,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("1.8e-8"),
       positivePositionImpactFactor: exponentToFloat("9e-9"),
@@ -3052,6 +3087,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "AIXBT", longToken: "WETH", shortToken: "USDC" },
@@ -3060,7 +3096,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("2e-8"),
       positivePositionImpactFactor: exponentToFloat("1e-8"),
@@ -3094,7 +3130,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_45,
 
       negativePositionImpactFactor: exponentToFloat("4e-7"),
       positivePositionImpactFactor: exponentToFloat("2e-7"),
@@ -3129,7 +3165,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("1.5e-8"),
       positivePositionImpactFactor: exponentToFloat("7.5e-9"),
@@ -3152,6 +3188,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "MKR", longToken: "WETH", shortToken: "USDC" },
@@ -3161,6 +3198,9 @@ const config: {
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      positionImpactPoolDistributionRate: expandDecimals(448, 14 + 30).div(SECONDS_PER_DAY), // ~0.0448 MKR/day, drains current ~0.3583 MKR PI bucket (~$428) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactFactor: exponentToFloat("1.6e-8"),
       positivePositionImpactFactor: exponentToFloat("8e-9"),
@@ -3225,7 +3265,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("1e-7"),
       positivePositionImpactFactor: exponentToFloat("8.33e-8"),
@@ -3257,7 +3297,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("5e-8"),
       positivePositionImpactFactor: exponentToFloat("4.17e-8"),
@@ -3289,7 +3329,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.4e-8"),
@@ -3321,7 +3361,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.2e-8"),
@@ -3350,7 +3390,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.8e-8"),
@@ -3382,7 +3422,10 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
+
+      positionImpactPoolDistributionRate: expandDecimals(228, 18 + 30).div(SECONDS_PER_DAY), // ~228 PI/day, drains current ~1,816.5707 PI PI bucket (~$224) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("2.54e-8"),
@@ -3398,8 +3441,8 @@ const config: {
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+      maxOpenInterest: decimalToFloat(1),
+      maxPoolUsdForDeposit: decimalToFloat(1),
 
       maxLongTokenPoolAmount: expandDecimals(18, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
@@ -3411,7 +3454,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("6e-8"),
@@ -3468,7 +3511,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("4.12e-8"),
@@ -3497,7 +3540,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.44e-8"),
@@ -3526,7 +3569,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.47e-8"),
@@ -3555,7 +3598,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("7.4e-8"),
@@ -3584,7 +3627,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("2.42e-8"),
@@ -3613,7 +3656,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("8.45e-8"),
       positivePositionImpactFactor: exponentToFloat("7.04e-8"),
@@ -3644,7 +3687,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("2.08e-8"),
       positivePositionImpactFactor: exponentToFloat("1.73e-8"),
@@ -3672,7 +3715,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("5.82e-8"),
       positivePositionImpactFactor: exponentToFloat("4.85e-8"),
@@ -3700,7 +3743,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("2.43e-8"),
       positivePositionImpactFactor: exponentToFloat("2.02e-8"),
@@ -3731,7 +3774,10 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_65,
+
+      positionImpactPoolDistributionRate: expandDecimals(21824, 18 + 30).div(SECONDS_PER_DAY), // ~21,824 BRETT/day, drains current ~174,589.7242 BRETT PI bucket (~$853) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactFactor: exponentToFloat("2.69e-8"),
       positivePositionImpactFactor: exponentToFloat("2.24e-8"),
@@ -3759,7 +3805,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("3.13e-09"),
       positivePositionImpactFactor: exponentToFloat("2.60e-09"),
@@ -3787,7 +3833,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("6.00e-08"),
       positivePositionImpactFactor: exponentToFloat("5.00e-08"),
@@ -3820,7 +3866,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Low,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_45,
 
       negativePositionImpactFactor: exponentToFloat("4.99e-09"),
       positivePositionImpactFactor: exponentToFloat("4.16e-09"),
@@ -3848,7 +3894,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Low,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_45,
 
       negativePositionImpactFactor: exponentToFloat("8.26e-09"),
       positivePositionImpactFactor: exponentToFloat("6.88e-09"),
@@ -3876,7 +3922,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("2.35e-8"),
       positivePositionImpactFactor: exponentToFloat("1.95e-8"),
@@ -3921,14 +3967,15 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(375_000),
-      maxPoolUsdForDeposit: decimalToFloat(560_500),
+      maxOpenInterest: decimalToFloat(1),
+      maxPoolUsdForDeposit: decimalToFloat(1),
 
       maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
       maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // stop distribution
-      minPositionImpactPoolAmount: expandDecimals(12136, 18), // leave ~10% = 12136 KTA
+      // KTA/USD [WETH-USDC] [0x970b730b5dD18de53A230eE8F4af088dBC3a6F8d] — start distribution and drain PI bucket
+      positionImpactPoolDistributionRate: expandDecimals(45457, 18 + 30).div(SECONDS_PER_DAY), // ~45,457 KTA/day, drains current ~363,656 KTA PI bucket in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
     },
     {
       tokens: { indexToken: "WLFI", longToken: "WETH", shortToken: "USDC" },
@@ -3937,7 +3984,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("6e-8"),
       positivePositionImpactFactor: exponentToFloat("5e-8"),
@@ -3965,6 +4012,8 @@ const config: {
       tokens: { indexToken: "WELL", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:WELL/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      isDisabled: true,
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
@@ -3999,7 +4048,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("1.02e-7"),
       positivePositionImpactFactor: exponentToFloat("8.5e-8"),
@@ -4030,7 +4079,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("4.89e-8"),
       positivePositionImpactFactor: exponentToFloat("4.07e-8"),
@@ -4058,7 +4107,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Low,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("4.1e-11"),
       positivePositionImpactFactor: exponentToFloat("3.4e-11"),
@@ -4086,7 +4135,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("9.69e-9"),
       positivePositionImpactFactor: exponentToFloat("8.08e-9"),
@@ -4117,7 +4166,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("1.26e-8"),
       positivePositionImpactFactor: exponentToFloat("1.05e-8"),
@@ -4148,7 +4197,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("9.5e-9"),
       positivePositionImpactFactor: exponentToFloat("7.92e-9"),
@@ -4179,7 +4228,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("1.08e-8"),
       positivePositionImpactFactor: exponentToFloat("9.02e-9"),
@@ -4207,7 +4256,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("7.25e-8"),
       positivePositionImpactFactor: exponentToFloat("4.84e-8"),
@@ -4241,7 +4290,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_45,
 
       negativePositionImpactFactor: exponentToFloat("3.39e-9"),
       positivePositionImpactFactor: exponentToFloat("2.26e-9"),
@@ -4256,8 +4305,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("4.44e-8"),
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("155%"),
+      openInterestReserveFactor: percentageToFloat("150%"),
 
       maxOpenInterest: decimalToFloat(1_250_000),
       maxPoolUsdForDeposit: decimalToFloat(1_875_000),
@@ -4272,7 +4321,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("2.94e-8"),
       positivePositionImpactFactor: exponentToFloat("1.96e-8"),
@@ -4303,7 +4352,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("1.3e-8"),
       positivePositionImpactFactor: exponentToFloat("8.66e-9"),
@@ -4334,7 +4383,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("3.89e-9"),
       positivePositionImpactFactor: exponentToFloat("2.59e-9"),
@@ -4365,7 +4414,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_65,
 
       negativePositionImpactFactor: exponentToFloat("5.65e-8"),
       positivePositionImpactFactor: exponentToFloat("3.77e-8"),
@@ -4396,7 +4445,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("3.52e-8"),
       positivePositionImpactFactor: exponentToFloat("2.35e-8"),
@@ -4427,7 +4476,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("3.93e-8"),
       positivePositionImpactFactor: exponentToFloat("2.62e-8"),
@@ -4489,7 +4538,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("1.07e-10"),
       positivePositionImpactFactor: exponentToFloat("7.15e-11"),
@@ -4520,7 +4569,10 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
+
+      positionImpactPoolDistributionRate: expandDecimals(476, 48).div(SECONDS_PER_DAY), // ~476 IP/day, drains current ~3,800.4512 IP PI bucket (~$1,120) in ~8 days
+      minPositionImpactPoolAmount: bigNumberify(0), // distribute all remaining PI
 
       negativePositionImpactFactor: exponentToFloat("1.25e-8"),
       positivePositionImpactFactor: exponentToFloat("8.33e-9"),
@@ -4538,8 +4590,8 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxOpenInterest: 1,
+      maxPoolUsdForDeposit: 1,
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
@@ -4551,7 +4603,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_50,
 
       negativePositionImpactFactor: exponentToFloat("2.51e-8"),
       positivePositionImpactFactor: exponentToFloat("1.68e-8"),
@@ -4582,7 +4634,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("5.85e-8"),
       positivePositionImpactFactor: exponentToFloat("3.90e-8"),
@@ -4613,7 +4665,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_55,
 
       negativePositionImpactFactor: exponentToFloat("3.44e-8"),
       positivePositionImpactFactor: exponentToFloat("2.29e-8"),
@@ -4685,7 +4737,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_45,
 
       positionFeeFactorForPositiveImpact: percentageToFloat("0.01%"),
       positionFeeFactorForNegativeImpact: percentageToFloat("0.02%"),
@@ -4718,7 +4770,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_50,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
@@ -4727,7 +4779,7 @@ const config: {
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
         minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        minCollateralFactorForLiquidation: percentageToFloat("0.8%"),
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
@@ -4739,7 +4791,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_45,
 
       positionFeeFactorForPositiveImpact: percentageToFloat("0.01%"),
       positionFeeFactorForNegativeImpact: percentageToFloat("0.02%"),
@@ -4772,7 +4824,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_50,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
@@ -4781,7 +4833,7 @@ const config: {
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
         minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        minCollateralFactorForLiquidation: percentageToFloat("0.8%"),
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
@@ -4793,7 +4845,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_45,
 
       positionFeeFactorForPositiveImpact: percentageToFloat("0.01%"),
       positionFeeFactorForNegativeImpact: percentageToFloat("0.02%"),
@@ -4826,7 +4878,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_50,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
@@ -4835,7 +4887,7 @@ const config: {
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
         minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        minCollateralFactorForLiquidation: percentageToFloat("0.8%"),
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
@@ -4847,7 +4899,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_45,
 
       positionFeeFactorForPositiveImpact: percentageToFloat("0.01%"),
       positionFeeFactorForNegativeImpact: percentageToFloat("0.02%"),
@@ -4880,7 +4932,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6), // ~8M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_50,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
@@ -4889,7 +4941,7 @@ const config: {
         positivePositionImpactFactor: exponentToFloat("4.0e-10"),
 
         minCollateralFactor: percentageToFloat("3.5%"), // ~30x leverage
-        minCollateralFactorForLiquidation: percentageToFloat("1%"),
+        minCollateralFactorForLiquidation: percentageToFloat("0.8%"),
 
         maxOpenInterest: decimalToFloat(1_500_000),
       },
@@ -4901,7 +4953,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_NoKink_50,
 
       positionFeeFactorForPositiveImpact: percentageToFloat("0.02%"),
       positionFeeFactorForNegativeImpact: percentageToFloat("0.04%"),
@@ -4934,7 +4986,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
 
       closedState: {
-        ...borrowingRateConfig_LowMax_WithHigherBase,
+        ...borrowingRateConfig_NoKink_55,
 
         positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
         positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
@@ -4947,6 +4999,62 @@ const config: {
 
         maxOpenInterest: decimalToFloat(250_000),
       },
+    },
+    {
+      tokens: { indexToken: "SPCX", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:SPCX/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_NoKink_50,
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+      liquidationFeeFactor: percentageToFloat("0.9%"),
+
+      negativePositionImpactFactor: exponentToFloat("1.0e-8"),
+      positivePositionImpactFactor: exponentToFloat("4.0e-10"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("3%"),
+      positiveMaxPositionImpactFactor: percentageToFloat("0.4%"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.0e-7"),
+
+      reserveFactor: percentageToFloat("255%"),
+      openInterestReserveFactor: percentageToFloat("250%"),
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+      maxPnlFactorForDeposits: percentageToFloat("50%"),
+      maxPnlFactorForAdl: percentageToFloat("45%"),
+      minPnlFactorAfterAdl: percentageToFloat("40%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("35%"),
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
+
+      maxLongTokenPoolAmount: expandDecimals(2950, 18), // ~5M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6), // ~5M USD (2x max open interest)
+
+      closedState: {
+        ...borrowingRateConfig_NoKink_55,
+
+        positionFeeFactorForPositiveImpact: percentageToFloat("0.06%"),
+        positionFeeFactorForNegativeImpact: percentageToFloat("0.08%"),
+
+        maxPnlFactorForTraders: percentageToFloat("45%"),
+        maxPnlFactorForDeposits: percentageToFloat("45%"),
+        maxPnlFactorForAdl: percentageToFloat("40%"),
+        minPnlFactorAfterAdl: percentageToFloat("35%"),
+        maxPnlFactorForWithdrawals: percentageToFloat("30%"),
+
+        maxOpenInterest: decimalToFloat(1_000_000),
+      } as ClosedMarketConfig,
     },
   ],
   avalanche: [
@@ -5149,6 +5257,7 @@ const config: {
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
 
       atomicSwapFeeFactor: percentageToFloat("2%"),
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -5456,7 +5565,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1),
 
       atomicSwapFeeFactor: percentageToFloat("0.5%"),
     },
@@ -6060,12 +6169,12 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
-      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(3_250_000),
+      maxOpenInterest: 1,
+      maxPoolUsdForDeposit: 1,
 
       maxLongTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
@@ -6084,7 +6193,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(50, 18),
       maxShortTokenPoolAmount: expandDecimals(50, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxPoolUsdForDeposit: 1,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
@@ -6093,12 +6202,12 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
+      maxOpenInterest: 1,
     },
     {
       tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "USDC.e" },
@@ -6117,7 +6226,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(50, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxPoolUsdForDeposit: 1,
 
       negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
@@ -6130,12 +6239,54 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
+      maxOpenInterest: 1,
+    },
+    // disabled dev market
+    {
+      tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "USDC.e (Archived)" },
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      // swapFeeFactorForNegativeImpact left at baseMarketConfig default (0.07%) to match on-chain;
+      // deposit/withdrawal negative-impact fee factors inherit it
+
+      reserveFactor: percentageToFloat("135%"),
+      openInterestReserveFactor: percentageToFloat("130%"),
+
+      maxLongTokenPoolAmount: expandDecimals(50, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
+
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"), // on-chain value (default is 0.4%)
+
+      swapImpactExponentFactor: exponentToFloat("2e0"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-09"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-09"),
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      minCollateralFactor: percentageToFloat("5%"), // 20x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
+
+      maxCollateralSum: bigNumberify(0), // on-chain value (never configured for this market)
+
+      maxOpenInterest: 1,
+      maxPoolUsdForDeposit: 1,
+      isDisabled: true,
     },
   ],
   megaEth: [
