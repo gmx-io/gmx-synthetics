@@ -3172,9 +3172,7 @@ library MarketUtils {
             return 0;
         }
 
-        unchecked {
-            return expectedTotalBorrowing - totalBorrowing;
-        }
+        return expectedTotalBorrowing - totalBorrowing;
     }
 
     // @dev get the total borrowing value
