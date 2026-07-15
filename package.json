@@ -53,6 +53,7 @@
     "@apollo/client": "^3.9.3",
     "@chainlink/contracts": "1.1.0",
     "@gelatonetwork/relay-context": "4.1.1",
+    "@gmx-io/ethers-kms-signer": "^1.0.2",
     "@layerzerolabs/lz-evm-messagelib-v2": "3.0.74",
     "@layerzerolabs/lz-evm-oapp-v2": "3.0.75",
     "@layerzerolabs/lz-evm-protocol-v2": "3.0.74",
@@ -96,7 +97,7 @@
     "solidity-coverage": "^0.7.22",
     "surya": "^0.4.6",
     "swr": "^2.2.4",
-    "viem": "^1.19.5",
+    "viem": "^2",
     "vite": "^5.0.0",
     "wagmi": "^1.4.7"
   }

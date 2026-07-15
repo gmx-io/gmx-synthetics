@@ -9,6 +9,8 @@ function getOracleAbi() {
     return "https://arbitrum-api.gmxinfra.io/";
   } else if (hre.network.name === "avalanche") {
     return "https://avalanche-api.gmxinfra.io/";
+  } else if (hre.network.name === "botanix") {
+    return "https://botanix-api.gmxinfra.io/";
   }
   throw new Error("Unsupported network");
 }

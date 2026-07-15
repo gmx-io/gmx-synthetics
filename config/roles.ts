@@ -19,6 +19,7 @@ const requiredRolesForContracts = {
     "ConfigSyncer",
     "ConfigTimelockController",
     "ContributorHandler",
+    "RiskOracleConfig",
 
     "MarketFactory",
     "GlvFactory",
@@ -31,6 +32,7 @@ const requiredRolesForContracts = {
     "GlvRouter",
     "GelatoRelayRouter",
     "SubaccountGelatoRelayRouter",
+    "SimulationRouter",
 
     "OrderHandler",
     "JitOrderHandler",
@@ -65,6 +67,7 @@ const requiredRolesForContracts = {
     "GlvRouter",
     "GelatoRelayRouter",
     "SubaccountGelatoRelayRouter",
+    "SimulationRouter",
 
     "MultichainGlvRouter",
     "MultichainGmRouter",
