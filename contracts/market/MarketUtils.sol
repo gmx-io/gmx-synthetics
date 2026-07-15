@@ -1858,6 +1858,7 @@ library MarketUtils {
     // @param shortToken the market's short token
     // @param prices the prices of the market tokens
     // @param isLong whether to update the long or short side
+    // @param allowZeroPoolBorrowingFactor whether skip borrowing factor accrual for depleted pools
     function updateCumulativeBorrowingFactor(
         DataStore dataStore,
         EventEmitter eventEmitter,

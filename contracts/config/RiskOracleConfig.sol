@@ -174,7 +174,8 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             eventEmitter,
             marketProps,
             prices,
-            isLong
+            isLong,
+            true /*allowZeroPoolBorrowingFactor*/
         );
     }
 
