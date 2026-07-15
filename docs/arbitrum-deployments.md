@@ -2,8 +2,8 @@
 
 **Network Type:** Mainnet  
 **Chain ID:** 42161  
-**Total Contracts:** 145  
-**Last Updated:** Jul 14, 2026, 11:56 PM UTC
+**Total Contracts:** 150  
+**Last Updated:** Jul 15, 2026, 04:52 PM UTC
 
 ## Deployed Contracts
 
@@ -79,6 +79,7 @@
 | GlvWithdrawalStoreUtils | `0x05c5b144e7991db15d3dC1822E175a2e8DA24B62` | [View on Explorer](https://arbiscan.io/address/0x05c5b144e7991db15d3dC1822E175a2e8DA24B62) |
 | GlvWithdrawalUtils | `0x9FDF46bEc34183Fa60bAa39744d8488f0A580853` | [View on Explorer](https://arbiscan.io/address/0x9FDF46bEc34183Fa60bAa39744d8488f0A580853) |
 | GmOracleProvider | `0x5d6B84086DA6d4B0b6C0dF7E02f8a6A039226530` | [View on Explorer](https://arbiscan.io/address/0x5d6B84086DA6d4B0b6C0dF7E02f8a6A039226530) |
+| GmxAccountWalletFactory | `0xf4fecD9713D86CeC3b782a231e208E3C2d98290A` | [View on Explorer](https://arbiscan.io/address/0xf4fecD9713D86CeC3b782a231e208E3C2d98290A) |
 | GovTimelockController | `0xFBEff82f2DD5E51B8AF34b57cf788b4b09d466F9` | [View on Explorer](https://arbiscan.io/address/0xFBEff82f2DD5E51B8AF34b57cf788b4b09d466F9) |
 | GovToken | `0x2A29D3a792000750807cc401806d6fd539928481` | [View on Explorer](https://arbiscan.io/address/0x2A29D3a792000750807cc401806d6fd539928481) |
 | IncreaseOrderExecutor | `0x8f83A77A8f075466904b7B926Dc3C80052A59Ff8` | [View on Explorer](https://arbiscan.io/address/0x8f83A77A8f075466904b7B926Dc3C80052A59Ff8) |
@@ -86,6 +87,7 @@
 | IncreasePositionUtils | `0x00F39bbbBAB35bA47Daa17A18D833350EC398Ff6` | [View on Explorer](https://arbiscan.io/address/0x00F39bbbBAB35bA47Daa17A18D833350EC398Ff6) |
 | JitOrderHandler | `0xCA9313dBBe56309ADdf56C0aed7113eA7B158615` | [View on Explorer](https://arbiscan.io/address/0xCA9313dBBe56309ADdf56C0aed7113eA7B158615) |
 | LayerZeroProvider | `0x0B33EBA531e5a5A331a3Ff9F418B8205F01C2869` | [View on Explorer](https://arbiscan.io/address/0x0B33EBA531e5a5A331a3Ff9F418B8205F01C2869) |
+| LayerZeroProviderUtils | `0xACD8F2BdB921E04c01d947CC25e39adFe5c6855D` | [View on Explorer](https://arbiscan.io/address/0xACD8F2BdB921E04c01d947CC25e39adFe5c6855D) |
 | LiquidationHandler | `0x01B85C1e0682418f59C4fe37A2cC56c1213C1fa8` | [View on Explorer](https://arbiscan.io/address/0x01B85C1e0682418f59C4fe37A2cC56c1213C1fa8) |
 | LiquidationUtils | `0xd655ED52fC724a3Ab158339fFBb006d7ffcc26D1` | [View on Explorer](https://arbiscan.io/address/0xd655ED52fC724a3Ab158339fFBb006d7ffcc26D1) |
 | MarketEventUtils | `0xD2F3fAc902fBe7Ddc6BA3D4381333bC4eDa8409D` | [View on Explorer](https://arbiscan.io/address/0xD2F3fAc902fBe7Ddc6BA3D4381333bC4eDa8409D) |
@@ -99,6 +101,7 @@
 | MultichainGmRouter | `0xFd26a7E3c4A9b75Bd0dce495290Fa33af2bb4b00` | [View on Explorer](https://arbiscan.io/address/0xFd26a7E3c4A9b75Bd0dce495290Fa33af2bb4b00) |
 | MultichainOrderRouter | `0xABFC734f7CFc9352AED7a97b1F6a236eae831e8A` | [View on Explorer](https://arbiscan.io/address/0xABFC734f7CFc9352AED7a97b1F6a236eae831e8A) |
 | MultichainReader | `0xD9d0e72f53dA0D2aeeDfe02B365CC09b52efc55a` | [View on Explorer](https://arbiscan.io/address/0xD9d0e72f53dA0D2aeeDfe02B365CC09b52efc55a) |
+| MultichainStakingUtils | `0x40dA84ca2DDd63EF58b981d4A22258f268B33494` | [View on Explorer](https://arbiscan.io/address/0x40dA84ca2DDd63EF58b981d4A22258f268B33494) |
 | MultichainSubaccountRouter | `0xAb3EDf0f3eed6804BAe1bD9bF90109ccadFD262e` | [View on Explorer](https://arbiscan.io/address/0xAb3EDf0f3eed6804BAe1bD9bF90109ccadFD262e) |
 | MultichainTransferRouter | `0x3f6772B95423fC03264adf90Efb8A9922B6C8c6e` | [View on Explorer](https://arbiscan.io/address/0x3f6772B95423fC03264adf90Efb8A9922B6C8c6e) |
 | MultichainUtils | `0x5048aC27ccad3Ee4248b4f16A25252F63C5DB7B4` | [View on Explorer](https://arbiscan.io/address/0x5048aC27ccad3Ee4248b4f16A25252F63C5DB7B4) |
@@ -127,6 +130,7 @@
 | ReferralEventUtils | `0xe5Df1358bA3eE17ca65440daf98F8bb737E7A623` | [View on Explorer](https://arbiscan.io/address/0xe5Df1358bA3eE17ca65440daf98F8bb737E7A623) |
 | ReferralUtils | `0xeE4D16d0dF5d131917524FA939926f8999699Cd8` | [View on Explorer](https://arbiscan.io/address/0xeE4D16d0dF5d131917524FA939926f8999699Cd8) |
 | RelayUtils | `0x1528d611974324e2e72FEB86D1236e25D4D91c62` | [View on Explorer](https://arbiscan.io/address/0x1528d611974324e2e72FEB86D1236e25D4D91c62) |
+| RiskOracleConfig | `0x5cA40cBb5321bBe4EF74Ddf01CCd2b4BCC76a9f9` | [View on Explorer](https://arbiscan.io/address/0x5cA40cBb5321bBe4EF74Ddf01CCd2b4BCC76a9f9) |
 | RoleStore | `0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72` | [View on Explorer](https://arbiscan.io/address/0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72) |
 | Router | `0x7452c558d45f8afC8c83dAe62C3f8A5BE19c71f6` | [View on Explorer](https://arbiscan.io/address/0x7452c558d45f8afC8c83dAe62C3f8A5BE19c71f6) |
 | ShiftEventUtils | `0x3271CCD7162cc1a2f93515c4f550BD0aD5EE8AA5` | [View on Explorer](https://arbiscan.io/address/0x3271CCD7162cc1a2f93515c4f550BD0aD5EE8AA5) |
@@ -136,6 +140,7 @@
 | ShiftVault | `0xfe99609C4AA83ff6816b64563Bdffd7fa68753Ab` | [View on Explorer](https://arbiscan.io/address/0xfe99609C4AA83ff6816b64563Bdffd7fa68753Ab) |
 | SignatureUtils | `0x3be080E01316Ab034515620Eed8672339b183A14` | [View on Explorer](https://arbiscan.io/address/0x3be080E01316Ab034515620Eed8672339b183A14) |
 | SimulationRouter | `0xaD3051cB1aE3a86b335f12A9a41BD4d995a137ea` | [View on Explorer](https://arbiscan.io/address/0xaD3051cB1aE3a86b335f12A9a41BD4d995a137ea) |
+| StakingUtils | `0xcAEF7fD8A0A150B58630F92fC20780dE33eD51D2` | [View on Explorer](https://arbiscan.io/address/0xcAEF7fD8A0A150B58630F92fC20780dE33eD51D2) |
 | StaticOracleProvider | `0x5dc2fD8a21E77A4C678959CdB384791a2Ef481c3` | [View on Explorer](https://arbiscan.io/address/0x5dc2fD8a21E77A4C678959CdB384791a2Ef481c3) |
 | SubaccountGelatoRelayRouter | `0xfD0596f708d9D950E0eF7b5d191e5F8e55b8a67f` | [View on Explorer](https://arbiscan.io/address/0xfD0596f708d9D950E0eF7b5d191e5F8e55b8a67f) |
 | SubaccountRouter | `0x9c05880A2AaD7530c69e18e342eDC9E06cc757db` | [View on Explorer](https://arbiscan.io/address/0x9c05880A2AaD7530c69e18e342eDC9E06cc757db) |

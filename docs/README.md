@@ -18,8 +18,8 @@ The documentation is generated from the deployment artifacts in `/deployments/` 
 
 | Network | Contracts | Documentation | Last Updated |
 |---------|-----------|---------------|-------------|
-| Arbitrum One | 145 | [View](./arbitrum-deployments.md) | Jul 14, 2026, 11:56 PM UTC |
-| Avalanche C-Chain | 143 | [View](./avalanche-deployments.md) | Jul 14, 2026, 09:44 PM UTC |
+| Arbitrum One | 150 | [View](./arbitrum-deployments.md) | Jul 15, 2026, 04:52 PM UTC |
+| Avalanche C-Chain | 144 | [View](./avalanche-deployments.md) | Jul 15, 2026, 04:52 PM UTC |
 | Botanix | 133 | [View](./botanix-deployments.md) | Jul 11, 2026, 09:55 AM UTC |
 | MegaETH | 134 | [View](./megaEth-deployments.md) | Jul 14, 2026, 10:14 PM UTC |
 
@@ -27,5 +27,5 @@ The documentation is generated from the deployment artifacts in `/deployments/` 
 
 | Network | Contracts | Documentation | Last Updated |
 |---------|-----------|---------------|-------------|
-| Arbitrum Sepolia | 141 | [View](./arbitrumSepolia-deployments.md) | Jun 12, 2026, 01:47 PM UTC |
-| Avalanche Fuji | 142 | [View](./avalancheFuji-deployments.md) | Aug 21, 2025, 11:02 AM UTC |
+| Arbitrum Sepolia | 142 | [View](./arbitrumSepolia-deployments.md) | Jul 15, 2026, 04:35 PM UTC |
+| Avalanche Fuji | 143 | [View](./avalancheFuji-deployments.md) | May 27, 2026, 08:25 AM UTC |
