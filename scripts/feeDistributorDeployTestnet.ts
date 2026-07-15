@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
-import { Contract, ContractFactory } from "ethers";
+import { Contract, ContractFactory, Signer } from "ethers";
 import { hashString } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
 
@@ -15,6 +15,7 @@ if (DEPLOYMENT_TAG !== "chainA" && DEPLOYMENT_TAG !== "chainB") {
 
 type NetworkConfig = {
   chainId: number;
+  creForwarder: string;
   eid: number;
   counterEid: number;
   channelId: number;
@@ -77,6 +78,7 @@ async function delay(ms: number) {
 const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   localhost: {
     chainId: 31337,
+    creForwarder: "0x76c9cf548b4179F8901cda1f8623568b58215E62", // Placeholder
     eid: DEPLOYMENT_TAG === "chainA" ? 1000 : 2000,
     counterEid: DEPLOYMENT_TAG === "chainA" ? 2000 : 1000,
     channelId: 1001,
@@ -84,6 +86,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
   arbitrumSepolia: {
     chainId: 421614,
+    creForwarder: "0x76c9cf548b4179F8901cda1f8623568b58215E62",
     eid: 40231,
     counterEid: 40245,
     channelId: 4294967295,
@@ -91,6 +94,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
   baseSepolia: {
     chainId: 84532,
+    creForwarder: "0xF8344CFd5c43616a4366C34E3EEE75af79a74482",
     eid: 40245,
     counterEid: 40231,
     channelId: 4294967295,
@@ -98,6 +102,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
   arbitrum: {
     chainId: 42161,
+    creForwarder: "0xF8344CFd5c43616a4366C34E3EEE75af79a74482",
     eid: 30110,
     counterEid: 30106,
     channelId: 4294967295,
@@ -105,6 +110,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
   avalanche: {
     chainId: 43114,
+    creForwarder: "0x76c9cf548b4179F8901cda1f8623568b58215E62",
     eid: 30106,
     counterEid: 30110,
     channelId: 4294967295,
@@ -112,7 +118,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
 };
 
-async function getFactory(deployer: ethers.SignerWithAddress, contractName: string, libraries?: any) {
+async function getFactory(deployer: Signer, contractName: string, libraries?: any) {
   if (libraries) {
     return await ethers.getContractFactory(contractName, {
       signer: deployer,
@@ -175,6 +181,22 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.eventEmitter = eventEmitter.address;
     await delay(txDelay);
 
+    // EventHandler
+    const EventHandler: ContractFactory = await getFactory(deployer, "EventHandler");
+    const eventHandler: Contract = await EventHandler.deploy(roleStore.address, eventEmitter.address);
+    await eventHandler.deployed();
+    console.log("EventHandler deployed to:", eventHandler.address);
+    contracts.eventHandler = eventHandler.address;
+    await delay(txDelay);
+
+    // CreReceiver
+    const CreReceiver: ContractFactory = await getFactory(deployer, "CreReceiver");
+    const creReceiver: Contract = await CreReceiver.deploy(roleStore.address, dataStore.address, eventHandler.address);
+    await creReceiver.deployed();
+    console.log("CreReceiver deployed to:", creReceiver.address);
+    contracts.creReceiver = creReceiver.address;
+    await delay(txDelay);
+
     // Grant roles early for configuration
     await (await roleStore.grantRole(deployerAddress, hashString("CONTROLLER"))).wait();
     await delay(txDelay);
@@ -183,6 +205,16 @@ async function deployContracts(): Promise<DeploymentResult> {
     await (await roleStore.grantRole(deployerAddress, hashString("FEE_DISTRIBUTION_KEEPER"))).wait();
     await delay(txDelay);
     await (await roleStore.grantRole(deployerAddress, hashString("CONFIG_KEEPER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(deployerAddress, hashString("CRE_KEEPER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(config.creForwarder, hashString("CRE_FORWARDER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(creReceiver.address, hashString("FEE_DISTRIBUTION_KEEPER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(creReceiver.address, hashString("EVENT_CONTROLLER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(eventHandler.address, hashString("CONTROLLER"))).wait();
     await delay(txDelay);
 
     saveCheckpoint(1, contracts);
@@ -236,23 +268,38 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.feeDistributorUtils = feeDistributorUtils.address;
     await delay(txDelay);
 
-    const ClaimUtils: ContractFactory = await getFactory(deployer, "ClaimUtils");
-    const claimUtils: Contract = await ClaimUtils.deploy();
-    await claimUtils.deployed();
-    console.log("ClaimUtils deployed to:", claimUtils.address);
-    contracts.claimUtils = claimUtils.address;
+    const Oracle: ContractFactory = await getFactory(deployer, "Oracle");
+    const oracle: Contract = await Oracle.deploy(
+      contracts.roleStore,
+      contracts.dataStore,
+      contracts.eventEmitter,
+      ethers.constants.AddressZero
+    );
+    await oracle.deployed();
+    console.log("Oracle deployed to:", oracle.address);
+    contracts.oracle = oracle.address;
+    await delay(txDelay);
+
+    const StaticOracleProvider: ContractFactory = await getFactory(deployer, "StaticOracleProvider");
+    const staticOracleProvider: Contract = await StaticOracleProvider.deploy(contracts.dataStore);
+    await staticOracleProvider.deployed();
+    console.log("StaticOracleProvider deployed to:", staticOracleProvider.address);
+    contracts.staticOracleProvider = staticOracleProvider.address;
     await delay(txDelay);
 
     // Config
     const Config: ContractFactory = await getFactory(deployer, "Config", {
       libraries: {
+        MarketStoreUtils: contracts.marketStoreUtils,
         ConfigUtils: contracts.configUtils,
       },
     });
     const configContract: Contract = await Config.deploy(
       contracts.roleStore,
       contracts.dataStore,
-      contracts.eventEmitter
+      contracts.eventEmitter,
+      contracts.oracle,
+      contracts.staticOracleProvider
     );
     await configContract.deployed();
     console.log("Config deployed to:", configContract.address);
@@ -280,12 +327,6 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.gmx = gmx.address;
     await delay(txDelay);
 
-    const esGmx: Contract = await MintableToken.deploy("esGMX", "esGMX", 18);
-    await esGmx.deployed();
-    console.log("esGMX deployed to:", esGmx.address);
-    contracts.esGmx = esGmx.address;
-    await delay(txDelay);
-
     const wnt: Contract = await MintableToken.deploy("WETH", "WETH", 18);
     await wnt.deployed();
     console.log("WNT deployed to:", wnt.address);
@@ -295,61 +336,8 @@ async function deployContracts(): Promise<DeploymentResult> {
     saveCheckpoint(3, contracts);
   }
 
-  // Deploy Oracle components
-  if (!checkpoint || checkpoint.step < 4) {
-    console.log("\n4. Deploying Oracle components...");
-
-    const Oracle: ContractFactory = await getFactory(deployer, "Oracle");
-    const oracle: Contract = await Oracle.deploy(
-      contracts.roleStore,
-      contracts.dataStore,
-      contracts.eventEmitter,
-      ethers.constants.AddressZero
-    );
-    await oracle.deployed();
-    console.log("Oracle deployed to:", oracle.address);
-    contracts.oracle = oracle.address;
-    await delay(txDelay);
-
-    const ChainlinkPriceFeedProvider: ContractFactory = await getFactory(deployer, "ChainlinkPriceFeedProvider");
-    const chainlinkPriceFeedProvider: Contract = await ChainlinkPriceFeedProvider.deploy(contracts.dataStore);
-    await chainlinkPriceFeedProvider.deployed();
-    console.log("ChainlinkPriceFeedProvider deployed to:", chainlinkPriceFeedProvider.address);
-    contracts.chainlinkPriceFeedProvider = chainlinkPriceFeedProvider.address;
-    await delay(txDelay);
-
-    // Grant role to price feed provider and oracle
-    const RoleStoreContract = await getFactory(deployer, "RoleStore");
-    const roleStore = RoleStoreContract.attach(contracts.roleStore);
-    await (await roleStore.grantRole(contracts.chainlinkPriceFeedProvider, hashString("CONTROLLER"))).wait();
-    await delay(txDelay);
-    await (await roleStore.grantRole(contracts.oracle, hashString("CONTROLLER"))).wait();
-    await delay(txDelay);
-
-    // Deploy mock price feeds
-    const WETHPriceFeed: ContractFactory = await getFactory(deployer, "MockPriceFeed");
-    const wethPriceFeed: Contract = await WETHPriceFeed.deploy();
-    await wethPriceFeed.deployed();
-    await delay(txDelay);
-    await (await wethPriceFeed.setAnswer(expandDecimals(5_000, 8))).wait(); // $5000
-    console.log("WETH Price Feed deployed to:", wethPriceFeed.address);
-    contracts.wethPriceFeed = wethPriceFeed.address;
-    await delay(txDelay);
-
-    const GMXPriceFeed: ContractFactory = await getFactory(deployer, "MockPriceFeed");
-    const gmxPriceFeed: Contract = await GMXPriceFeed.deploy();
-    await gmxPriceFeed.deployed();
-    await delay(txDelay);
-    await (await gmxPriceFeed.setAnswer(expandDecimals(20, 8))).wait(); // $20
-    console.log("GMX Price Feed deployed to:", gmxPriceFeed.address);
-    contracts.gmxPriceFeed = gmxPriceFeed.address;
-    await delay(txDelay);
-
-    saveCheckpoint(4, contracts);
-  }
-
   // Handle endpoint deployment/configuration
-  if (!checkpoint || checkpoint.step < 5) {
+  if (!checkpoint || checkpoint.step < 4) {
     console.log("\n5. Setting up LayerZero endpoint...");
 
     let endpointAddressForMultichainReader: string;
@@ -390,11 +378,11 @@ async function deployContracts(): Promise<DeploymentResult> {
       contracts.mockEndpointGmxAdapter = "N/A";
     }
 
-    saveCheckpoint(5, contracts);
+    saveCheckpoint(4, contracts);
   }
 
   // Deploy other mock contracts
-  if (!checkpoint || checkpoint.step < 6) {
+  if (!checkpoint || checkpoint.step < 5) {
     console.log("\n6. Deploying mock contracts...");
 
     const MockVaultV1: ContractFactory = await getFactory(deployer, "MockVaultV1");
@@ -418,18 +406,11 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.mockExtendedGmxTracker = mockExtendedGmxTracker.address;
     await delay(txDelay);
 
-    const MockVesterV1: ContractFactory = await getFactory(deployer, "MockVesterV1");
-    const mockVester: Contract = await MockVesterV1.deploy([deployerAddress], [expandDecimals(1, 18)]);
-    await mockVester.deployed();
-    console.log("MockVesterV1 deployed to:", mockVester.address);
-    contracts.mockVester = mockVester.address;
-    await delay(txDelay);
-
-    saveCheckpoint(6, contracts);
+    saveCheckpoint(5, contracts);
   }
 
   // Deploy fee-related contracts
-  if (!checkpoint || checkpoint.step < 7) {
+  if (!checkpoint || checkpoint.step < 6) {
     console.log("\n7. Deploying fee contracts...");
 
     const FeeVault: ContractFactory = await getFactory(deployer, "FeeVault");
@@ -465,13 +446,6 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.feeDistributorVault = feeDistributorVault.address;
     await delay(txDelay);
 
-    const ClaimVault: ContractFactory = await getFactory(deployer, "ClaimVault");
-    const claimVault: Contract = await ClaimVault.deploy(contracts.roleStore, contracts.dataStore);
-    await claimVault.deployed();
-    console.log("ClaimVault deployed to:", claimVault.address);
-    contracts.claimVault = claimVault.address;
-    await delay(txDelay);
-
     // Deploy MultichainReader with its dedicated endpoint
     const MultichainReader: ContractFactory = await getFactory(deployer, "MultichainReader");
     const multichainReader: Contract = await MultichainReader.deploy(
@@ -497,17 +471,16 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.gmxAdapter = gmxAdapter.address;
     await delay(txDelay);
 
-    saveCheckpoint(7, contracts);
+    saveCheckpoint(6, contracts);
   }
 
   // Deploy FeeDistributor
-  if (!checkpoint || checkpoint.step < 8) {
+  if (!checkpoint || checkpoint.step < 7) {
     console.log("\n8. Deploying FeeDistributor...");
 
     const FeeDistributor: ContractFactory = await getFactory(deployer, "FeeDistributor", {
       libraries: {
         FeeDistributorUtils: contracts.feeDistributorUtils,
-        ClaimUtils: contracts.claimUtils,
       },
     });
     const feeDistributor: Contract = await FeeDistributor.deploy(
@@ -517,9 +490,7 @@ async function deployContracts(): Promise<DeploymentResult> {
       contracts.dataStore,
       contracts.eventEmitter,
       contracts.multichainReader,
-      contracts.claimVault,
       contracts.gmx,
-      contracts.esGmx,
       contracts.wnt
     );
     await feeDistributor.deployed();
@@ -527,11 +498,11 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.feeDistributor = feeDistributor.address;
     await delay(txDelay);
 
-    saveCheckpoint(8, contracts);
+    saveCheckpoint(7, contracts);
   }
 
   // Grant remaining roles
-  if (!checkpoint || checkpoint.step < 9) {
+  if (!checkpoint || checkpoint.step < 8) {
     console.log("\n9. Granting remaining roles...");
 
     const RoleStoreContract = await getFactory(deployer, "RoleStore");
@@ -551,7 +522,7 @@ async function deployContracts(): Promise<DeploymentResult> {
 
     console.log("Roles granted successfully");
 
-    saveCheckpoint(9, contracts);
+    saveCheckpoint(8, contracts);
   }
 
   // Clear checkpoint after successful deployment

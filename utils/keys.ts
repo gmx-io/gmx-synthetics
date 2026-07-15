@@ -295,7 +295,7 @@ export const MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT = hashString("MAX_TOTAL_CONTRIBU
 
 export const BUYBACK_BATCH_AMOUNT = hashString("BUYBACK_BATCH_AMOUNT");
 export const BUYBACK_AVAILABLE_FEE_AMOUNT = hashString("BUYBACK_AVAILABLE_FEE_AMOUNT");
-export const BUYBACK_GMX_FACTOR = hashString("BUYBACK_GMX_FACTOR");
+export const BUYBACK_PRIMARY_TOKEN_FACTOR = hashString("BUYBACK_PRIMARY_TOKEN_FACTOR");
 export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMPACT_FACTOR");
 export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
@@ -322,17 +322,6 @@ export const MULTICHAIN_AUTHORIZED_ORIGINATORS = hashString("MULTICHAIN_AUTHORIZ
 export const FEE_DISTRIBUTOR_DISTRIBUTION_DAY = hashString("FEE_DISTRIBUTOR_DISTRIBUTION_DAY");
 export const FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = hashString("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP");
 export const FEE_DISTRIBUTOR_STATE = hashString("FEE_DISTRIBUTOR_STATE");
-export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT = hashString(
-  "FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT"
-);
-export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR = hashString(
-  "FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR"
-);
-export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT = hashString(
-  "FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT"
-);
-export const FEE_DISTRIBUTOR_GMX_PRICE = hashString("FEE_DISTRIBUTOR_GMX_PRICE");
-export const FEE_DISTRIBUTOR_WNT_PRICE = hashString("FEE_DISTRIBUTOR_WNT_PRICE");
 export const FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = hashString("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY");
 export const FEE_DISTRIBUTOR_GAS_LIMIT = hashString("FEE_DISTRIBUTOR_GAS_LIMIT");
 export const FEE_DISTRIBUTOR_CHAIN_ID = hashString("FEE_DISTRIBUTOR_CHAIN_ID");
@@ -347,13 +336,14 @@ export const FEE_DISTRIBUTOR_ADDRESS_INFO = hashString("FEE_DISTRIBUTOR_ADDRESS_
 export const FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN = hashString("FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN");
 export const FEE_DISTRIBUTOR_KEEPER_COSTS = hashString("FEE_DISTRIBUTOR_KEEPER_COSTS");
 export const FEE_DISTRIBUTOR_CHAINLINK_FACTOR = hashString("FEE_DISTRIBUTOR_CHAINLINK_FACTOR");
-export const FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = hashString("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY");
-export const FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR = hashString("FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR");
-export const FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR = hashString("FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR");
+export const FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY = hashString("FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY");
+export const FEE_DISTRIBUTOR_DISTRIBUTE_FEES = hashString("FEE_DISTRIBUTOR_DISTRIBUTE_FEES");
 
 export const CONTRIBUTOR_LAST_PAYMENT_AT = hashString("CONTRIBUTOR_LAST_PAYMENT_AT");
 export const CONTRIBUTOR_ACCOUNT_LIST = hashString("CONTRIBUTOR_ACCOUNT_LIST");
 export const CONTRIBUTOR_TOKEN_AMOUNT = hashString("CONTRIBUTOR_TOKEN_AMOUNT");
+
+export const CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS = hashString("CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -998,8 +988,8 @@ export function buybackAvailableFeeAmountKey(feeToken: string, swapToken: string
   return hashData(["bytes32", "address", "address"], [BUYBACK_AVAILABLE_FEE_AMOUNT, feeToken, swapToken]);
 }
 
-export function buybackGmxFactorKey(version: number) {
-  return hashData(["bytes32", "uint256"], [BUYBACK_GMX_FACTOR, version]);
+export function buybackPrimaryTokenFactorKey(version: number) {
+  return hashData(["bytes32", "uint256"], [BUYBACK_PRIMARY_TOKEN_FACTOR, version]);
 }
 
 export function buybackMaxPriceImpactFactorKey(token: string) {
@@ -1080,6 +1070,10 @@ export function feeDistributorAddressInfoForChainKey(chainId: number, addressNam
 
 export function contributorTokenAmountKey(account: string, token: string) {
   return hashData(["bytes32", "address", "address"], [CONTRIBUTOR_TOKEN_AMOUNT, account, token]);
+}
+
+export function creReceiverAuthorizedWorkflowIdsKey(workflowId: string) {
+  return hashData(["bytes32", "bytes32"], [CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS, workflowId]);
 }
 
 export function isDeployedWalletKey(wallet: string) {

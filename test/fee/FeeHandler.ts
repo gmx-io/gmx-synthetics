@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { type BigNumber } from "ethers";
 
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat, applyFactor, percentageToFloat, FLOAT_PRECISION } from "../../utils/math";
@@ -72,9 +73,9 @@ describe("FeeHandler", () => {
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(100, 18)); // 100 * 10 ^ 18
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(1, 18)); // 1 * 10 ^ 18
 
-    // Set BUYBACK_GMX_FACTOR for V1 and V2
-    await config.setUint(keys.BUYBACK_GMX_FACTOR, encodeData(["uint256"], [1]), percentageToFloat("30%")); // 30/100 = 30%
-    await config.setUint(keys.BUYBACK_GMX_FACTOR, encodeData(["uint256"], [2]), percentageToFloat("72.97%")); // 27/37 = 72.97%
+    // Set BUYBACK_PRIMARY_TOKEN_FACTOR for V1 and V2
+    await config.setUint(keys.BUYBACK_PRIMARY_TOKEN_FACTOR, encodeData(["uint256"], [1]), percentageToFloat("30%")); // 30/100 = 30%
+    await config.setUint(keys.BUYBACK_PRIMARY_TOKEN_FACTOR, encodeData(["uint256"], [2]), percentageToFloat("72.97%")); // 27/37 = 72.97%
 
     // Set BUYBACK_MAX_PRICE_IMPACT_FACTOR for GMX, WETH and USDC
     await config.setUint(
@@ -244,14 +245,18 @@ describe("FeeHandler", () => {
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17)); // 5 * 10 ^ 17 = 0.5
 
     // Calculate cumulative max price impact factor for GMX and USDC
-    const maxPriceImpactFactorGmxUsdc =
-      BigInt(await dataStore.getUint(keys.buybackMaxPriceImpactFactorKey(gmx.address))) +
-      BigInt(await dataStore.getUint(keys.buybackMaxPriceImpactFactorKey(usdc.address)));
+    const maxPriceImpactFactorGmx: BigNumber = await dataStore.getUint(
+      keys.buybackMaxPriceImpactFactorKey(gmx.address)
+    );
+    const maxPriceImpactFactorUsdc: BigNumber = await dataStore.getUint(
+      keys.buybackMaxPriceImpactFactorKey(usdc.address)
+    );
+    const maxPriceImpactFactorGmxUsdc = maxPriceImpactFactorGmx.add(maxPriceImpactFactorUsdc);
 
     // Calculate the max fee token amount using max price impact factor for GMX and USDC
     const maxFeeTokenAmountGmxUsdc = applyFactor(
-      BigInt(expandDecimals(10, 6)),
-      maxPriceImpactFactorGmxUsdc + BigInt(FLOAT_PRECISION)
+      expandDecimals(10, 6),
+      maxPriceImpactFactorGmxUsdc.add(FLOAT_PRECISION)
     );
 
     // Validate that for V1 USDC/GMX after the batch size decrease returns maxFeeTokenAmountGmxUsdc
@@ -350,15 +355,17 @@ describe("FeeHandler", () => {
     await feeHandler.connect(user0).buyback(usdc.address, gmx.address, expandDecimals(10, 6), usdcGmxParams);
     expect(await usdc.balanceOf(user0.address)).eq(maxFeeTokenAmountGmxUsdc);
 
-    // Calculate cumulative max price impact factor for WETH and USDC
-    const maxPriceImpactFactorWethUsdc =
-      BigInt(await dataStore.getUint(keys.buybackMaxPriceImpactFactorKey(wnt.address))) +
-      BigInt(await dataStore.getUint(keys.buybackMaxPriceImpactFactorKey(usdc.address)));
+    // Calculate cumulative max price impact factor for GMX and USDC
+    const maxPriceImpactFactorWeth: BigNumber = await dataStore.getUint(
+      keys.buybackMaxPriceImpactFactorKey(wnt.address)
+    );
+
+    const maxPriceImpactFactorWethUsdc = maxPriceImpactFactorWeth.add(maxPriceImpactFactorUsdc);
 
     // Calculate the max fee token amount using max price impact factor for WETH and USDC
     const maxFeeTokenAmountWethUsdc = applyFactor(
-      BigInt(expandDecimals(5, 6)),
-      maxPriceImpactFactorWethUsdc + BigInt(FLOAT_PRECISION)
+      expandDecimals(5, 6),
+      maxPriceImpactFactorWethUsdc.add(FLOAT_PRECISION)
     );
 
     // Set USDC/WETH params for the buyback function's withOraclePrices modifier
@@ -370,9 +377,7 @@ describe("FeeHandler", () => {
 
     // Buyback USDC fees with WETH
     await feeHandler.connect(user0).buyback(usdc.address, wnt.address, "5000000", usdcWntParams);
-    expect(await usdc.balanceOf(user0.address)).eq(
-      BigInt(maxFeeTokenAmountGmxUsdc) + BigInt(maxFeeTokenAmountWethUsdc)
-    );
+    expect(await usdc.balanceOf(user0.address)).eq(maxFeeTokenAmountGmxUsdc.add(maxFeeTokenAmountWethUsdc));
 
     // Set user1 as the FEE_RECEIVER
     await dataStore.setAddress(keys.FEE_RECEIVER, user1.address);
@@ -400,8 +405,8 @@ describe("FeeHandler", () => {
 
     // Validate that WETH WithdrawableBuybackTokenAmount equals claimed WETH fees * (1 - gmx buyback factor)
     const wethAvailableToWithdraw = applyFactor(
-      BigInt(expandDecimals(8, 15)),
-      BigInt(FLOAT_PRECISION) - BigInt(await dataStore.getUint(keys.buybackGmxFactorKey(1)))
+      expandDecimals(8, 15),
+      FLOAT_PRECISION.sub(await dataStore.getUint(keys.buybackPrimaryTokenFactorKey(1)))
     );
     expect(await dataStore.getUint(keys.withdrawableBuybackTokenAmountKey(wnt.address))).eq(wethAvailableToWithdraw);
 
@@ -413,14 +418,12 @@ describe("FeeHandler", () => {
     };
 
     // Calculate cumulative max price impact factor for GMX and WETH
-    const maxPriceImpactFactorGmxWeth =
-      BigInt(await dataStore.getUint(keys.buybackMaxPriceImpactFactorKey(gmx.address))) +
-      BigInt(await dataStore.getUint(keys.buybackMaxPriceImpactFactorKey(wnt.address)));
+    const maxPriceImpactFactorGmxWeth = maxPriceImpactFactorGmx.add(maxPriceImpactFactorWeth);
 
     // Calculate the max fee token amount using max price impact factor for GMX and WETH
     const maxFeeTokenAmountGmxWeth = applyFactor(
-      BigInt(expandDecimals(2, 15)),
-      maxPriceImpactFactorGmxWeth + BigInt(FLOAT_PRECISION)
+      expandDecimals(2, 15),
+      maxPriceImpactFactorGmxWeth.add(FLOAT_PRECISION)
     );
 
     // Mint and approve more GMX for user0 to test the buyback function and validate wethAvailableToWithdraw is correct
@@ -436,7 +439,7 @@ describe("FeeHandler", () => {
 
     // Validate that user1's WETH balance increased by wethAvailableToWithdraw after executing withdrawFees
     expect(await wnt.balanceOf(user1.address)).eq(
-      BigInt(await dataStore.getUint(keys.buybackBatchAmountKey(wnt.address))) + BigInt(wethAvailableToWithdraw)
+      wethAvailableToWithdraw.add(await dataStore.getUint(keys.buybackBatchAmountKey(wnt.address)))
     );
 
     // Withdraw GMX from feeHandler
@@ -450,7 +453,7 @@ describe("FeeHandler", () => {
     expect(await dataStore.getUint(keys.buybackAvailableFeeAmountKey(usdc.address, gmx.address))).eq("20202500"); // $25 * 72.97% = 18.2425 + 12 - 10.04
     expect(await dataStore.getUint(keys.buybackAvailableFeeAmountKey(usdc.address, wnt.address))).eq("29742500"); // $25 * 27.03% = 6.7575 + 28 - 5.015
     expect(await dataStore.getUint(keys.buybackAvailableFeeAmountKey(wnt.address, gmx.address))).eq(
-      expandDecimals(8, 15) - wethAvailableToWithdraw - maxFeeTokenAmountGmxWeth
+      expandDecimals(8, 15).sub(wethAvailableToWithdraw).sub(maxFeeTokenAmountGmxWeth)
     ); // 0.0008 WETH - 0.00056 WETH - 0.000201 WETH = 0.000039 WETH
   });
 });

@@ -447,7 +447,7 @@ library ConfigUtils {
             baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.PRO_DISCOUNT_FACTOR ||
-            baseKey == Keys.BUYBACK_GMX_FACTOR ||
+            baseKey == Keys.BUYBACK_PRIMARY_TOKEN_FACTOR ||
             baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR
         ) {
             // revert if value > 100%

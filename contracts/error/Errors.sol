@@ -530,18 +530,18 @@ library Errors {
     error OutdatedReadResponse(uint256 timestamp);
     error InvalidDistributionState(uint256 distributionStateUint);
     error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
-    error BridgingTransactionFailed(bytes result);
-    error MaxWntReferralRewardsInUsdAmountExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsdAmount);
-    error MaxWntReferralRewardsInUsdExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
-    error MaxEsGmxReferralRewardsAmountExceeded(uint256 tokensForReferralRewards, uint256 maxEsGmxReferralRewards);
-    error MaxReferralRewardsExceeded(address token, uint256 cumulativeTransferAmount, uint256 tokensForReferralRewards);
-    error MaxWntFromTreasuryExceeded(uint256 maxWntFromTreasury, uint256 additionalWntFromTreasury);
-    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
-    error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
-    error KeeperAmountMismatch(uint256 wntForKeepers, uint256 wntToKeepers);
+    error MaxFeesFromTreasuryExceeded(uint256 maxFeesFromTreasury, uint256 additionalFeesFromTreasury);
+    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength);
+    error KeeperAmountMismatch(uint256 feesForKeepers, uint256 feesToKeepers);
     error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
-    error InvalidReferralRewardToken(address token);
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
     error ZeroTreasuryAddress();
+    error InvalidWithdrawTarget(address withdrawTarget, address expected);
+
+    // CreReceiver errors
+    error UnauthorizedWorkflowOwner(address workflowOwner);
+    error UnauthorizedWorkflow(bytes32 workflowId, bytes10 workflowName, address workflowOwner);
+    error InvalidCreReceiverTarget(address target);
+    error CreReceiverCallFailed(bytes data);
 }
 
