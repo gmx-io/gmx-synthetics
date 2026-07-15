@@ -178,14 +178,16 @@ library ReaderUtils {
             dataStore,
             market,
             prices,
-            true
+            true, // isLong
+            false // allowZeroPoolBorrowingFactor
         );
 
         uint256 borrowingFactorPerSecondForShorts = MarketUtils.getBorrowingFactorPerSecond(
             dataStore,
             market,
             prices,
-            false
+            false, // isLong
+            false // allowZeroPoolBorrowingFactor
         );
 
         BaseFundingValues memory baseFunding = getBaseFundingValues(dataStore, market);

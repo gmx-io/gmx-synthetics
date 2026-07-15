@@ -129,7 +129,14 @@ library ExecuteWithdrawalUtils {
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
         cache.prices = MarketUtils.getMarketPrices(params.oracle, cache.market);
 
-        PositionUtils.updateFundingAndBorrowingState(params.dataStore, params.eventEmitter, cache.market, cache.prices);
+        PositionUtils.updateFundingAndBorrowingState(
+            params.dataStore,
+            params.eventEmitter,
+            cache.market,
+            cache.prices,
+            false, // allowZeroPoolBorrowingFactorForLongs
+            false // allowZeroPoolBorrowingFactorForShorts
+        );
 
         cache.marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(
             address(params.withdrawalVault)
@@ -393,7 +400,8 @@ library ExecuteWithdrawalUtils {
             prices.longTokenPrice,
             prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            false
+            false, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
 
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
@@ -471,7 +479,8 @@ library ExecuteWithdrawalUtils {
             prices.longTokenPrice,
             prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            false
+            false, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
 
         if (poolValueInfo.poolValue <= 0) {

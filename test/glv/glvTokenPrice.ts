@@ -9,6 +9,7 @@ import { handleDeposit } from "../../utils/deposit";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as keys from "../../utils/keys";
 import { expectBalances } from "../../utils/validation";
+import { errorsContract } from "../../utils/error";
 
 function getPriceProp(price: BigNumberish, decimals: number) {
   return {
@@ -27,6 +28,35 @@ describe("Glv Token Price", () => {
 
     ({ user0 } = fixture.accounts);
     ({ glvReader, wnt, usdc, dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts);
+  });
+
+  it("glv token price remains strict for a zero-pool constituent market", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), 0);
+    await dataStore.setUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true), decimalToFloat(5000));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+
+    await expect(
+      glvReader.getGlvTokenPrice(
+        dataStore.address,
+        [ethUsdMarket.marketToken, solUsdMarket.marketToken],
+        [getPriceProp(5000, 12), getPriceProp(600, 12)],
+        getPriceProp(5000, 12),
+        getPriceProp(1, 24),
+        ethUsdGlvAddress,
+        true
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "UnableToGetBorrowingFactorEmptyPoolUsd");
   });
 
   it("glv token price", async () => {

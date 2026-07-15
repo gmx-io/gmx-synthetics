@@ -565,8 +565,10 @@ library PositionUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         Market.Props memory market,
-        MarketUtils.MarketPrices memory prices
-    ) external {
+        MarketUtils.MarketPrices memory prices,
+        bool allowZeroPoolBorrowingFactorForLongs,
+        bool allowZeroPoolBorrowingFactorForShorts
+    ) public {
         // update the funding amount per size for the market
         MarketUtils.updateFundingState(
             dataStore,
@@ -581,7 +583,8 @@ library PositionUtils {
             eventEmitter,
             market,
             prices,
-            true // isLong
+            true, // isLong
+            allowZeroPoolBorrowingFactorForLongs
         );
 
         // update the cumulative borrowing factor for shorts
@@ -590,7 +593,8 @@ library PositionUtils {
             eventEmitter,
             market,
             prices,
-            false // isLong
+            false, // isLong
+            allowZeroPoolBorrowingFactorForShorts
         );
     }
 

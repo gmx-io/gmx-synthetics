@@ -58,7 +58,9 @@ library PositionImpactPoolUtils {
             dataStore,
             eventEmitter,
             marketProps,
-            prices
+            prices,
+            false, // allowZeroPoolBorrowingFactorForLongs
+            false // allowZeroPoolBorrowingFactorForShorts
         );
 
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
@@ -68,7 +70,8 @@ library PositionImpactPoolUtils {
             prices.longTokenPrice,
             prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            false
+            false, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
 
         if (poolValueInfo.poolValue <= 0) {
@@ -165,7 +168,9 @@ library PositionImpactPoolUtils {
             dataStore,
             eventEmitter,
             marketProps,
-            prices
+            prices,
+            true, // allowZeroPoolBorrowingFactorForLongs
+            true // allowZeroPoolBorrowingFactorForShorts
         );
 
         uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market));

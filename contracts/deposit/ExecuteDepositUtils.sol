@@ -133,7 +133,9 @@ library ExecuteDepositUtils {
             params.dataStore,
             params.eventEmitter,
             cache.market,
-            cache.prices
+            cache.prices,
+            true, // allowZeroPoolBorrowingFactorForLongs
+            true // allowZeroPoolBorrowingFactorForShorts
         );
 
         // deposits should improve the pool state but it should be checked if
@@ -256,7 +258,8 @@ library ExecuteDepositUtils {
             cache.prices.longTokenPrice,
             cache.prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true
+            true,
+            true // allowZeroPoolBorrowingFactor
         );
 
         cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(cache.market.marketToken)));
@@ -364,7 +367,8 @@ library ExecuteDepositUtils {
             _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
             _params.tokenIn == _params.market.shortToken ? _params.tokenInPrice : _params.tokenOutPrice,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true
+            true,
+            true // allowZeroPoolBorrowingFactor
         );
 
         if (poolValueInfo.poolValue < 0) {

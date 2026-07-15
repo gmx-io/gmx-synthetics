@@ -39,10 +39,11 @@ library GlvUtils {
         DataStore dataStore,
         IOracle oracle,
         address glv,
-        bool maximize
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
     ) public view returns (uint256 glvValue, bool glvTokenPriceUsed) {
         address invalidMarket;
-        (glvValue, glvTokenPriceUsed, invalidMarket) = _getGlvValue(dataStore, oracle, glv, maximize);
+        (glvValue, glvTokenPriceUsed, invalidMarket) = _getGlvValue(dataStore, oracle, glv, maximize, allowZeroPoolBorrowingFactor);
         if (invalidMarket != address(0)) {
             revert Errors.GlvNegativeMarketPoolValue(glv, invalidMarket);
         }
@@ -58,10 +59,11 @@ library GlvUtils {
         DataStore dataStore,
         IOracle oracle,
         address glv,
-        bool maximize
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
     ) public view returns (uint256 glvValue, bool glvTokenPriceUsed, bool success) {
         address invalidMarket;
-        (glvValue, glvTokenPriceUsed, invalidMarket) = _getGlvValue(dataStore, oracle, glv, maximize);
+        (glvValue, glvTokenPriceUsed, invalidMarket) = _getGlvValue(dataStore, oracle, glv, maximize, allowZeroPoolBorrowingFactor);
         if (invalidMarket != address(0)) {
             return (0, false, false);
         }
@@ -75,7 +77,8 @@ library GlvUtils {
         DataStore dataStore,
         IOracle oracle,
         address glv,
-        bool maximize
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
     ) internal view returns (uint256, bool, address) {
         {
             Price.Props memory glvTokenPrice = getGlvTokenPrice(oracle, glv);
@@ -92,19 +95,23 @@ library GlvUtils {
         address[] memory marketAddresses = dataStore.getAddressValuesAt(cache.marketListKey, 0, cache.marketCount);
         for (uint256 i = 0; i < marketAddresses.length; i++) {
             address marketAddress = marketAddresses[i];
-            Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
-            if (i == 0) {
-                cache.longTokenPrice = oracle.getPrimaryPrice(market.longToken);
-                cache.shortTokenPrice = oracle.getPrimaryPrice(market.shortToken);
+            {
+                Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+                if (i == 0) {
+                    cache.longTokenPrice = oracle.getPrimaryPrice(market.longToken);
+                    cache.shortTokenPrice = oracle.getPrimaryPrice(market.shortToken);
+                }
+                cache.indexTokenPrice = oracle.getPrimaryPrice(market.indexToken);
             }
             (cache.marketValueUsd, cache.hasNegativePoolValue) = _getGlvMarketValue(
                 dataStore,
                 glv,
                 marketAddress,
-                oracle.getPrimaryPrice(market.indexToken),
+                cache.indexTokenPrice,
                 cache.longTokenPrice,
                 cache.shortTokenPrice,
-                maximize
+                maximize,
+                allowZeroPoolBorrowingFactor
             );
             if (cache.hasNegativePoolValue) {
                 return (0, false, marketAddress);
@@ -131,7 +138,8 @@ library GlvUtils {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         address glv,
-        bool maximize
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
     ) public view returns (uint256) {
         GetGlvValueCache memory cache;
 
@@ -146,7 +154,8 @@ library GlvUtils {
                 cache.indexTokenPrice,
                 longTokenPrice,
                 shortTokenPrice,
-                maximize
+                maximize,
+                allowZeroPoolBorrowingFactor
             );
             if (cache.hasNegativePoolValue) {
                 revert Errors.GlvNegativeMarketPoolValue(glv, marketAddress);
@@ -166,7 +175,8 @@ library GlvUtils {
         Price.Props memory indexTokenPrice,
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
-        bool maximize
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
     ) internal view returns (uint256 marketValueUsd, bool hasNegativePoolValue) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
 
@@ -184,7 +194,8 @@ library GlvUtils {
             longTokenPrice,
             shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            maximize
+            maximize,
+            allowZeroPoolBorrowingFactor
         );
 
         if (marketPoolValueInfo.poolValue < 0) {
@@ -213,7 +224,8 @@ library GlvUtils {
             longTokenPrice,
             shortTokenPrice,
             glv,
-            maximize
+            maximize,
+            false // allowZeroPoolBorrowingFactor
         );
         uint256 supply = ERC20(glv).totalSupply();
 
