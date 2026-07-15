@@ -40,7 +40,7 @@ const func = createDeployFunction({
       dependencyContracts.GlvVault.address,
     ];
   },
-  libraryNames: ["GasUtils", "MultichainUtils", "RelayUtils", "SignatureUtils"],
+  libraryNames: ["GasUtils", "MultichainRelayUtils", "MultichainUtils", "RelayUtils", "SignatureUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");

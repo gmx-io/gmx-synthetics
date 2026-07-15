@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./MultichainRouter.sol";
+import "../router/relay/MultichainRelayUtils.sol";
 import "./IMultichainTransferRouter.sol";
 
 import "../market/MarketUtils.sol";
@@ -65,7 +66,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         uint256 srcChainId,
         IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, account, params);
+        bytes32 structHash = MultichainRelayUtils.getBridgeOutStructHash(relayParams, account, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         if (params.bridgeFee.feeAmount > 0 && params.bridgeFee.feeSwapPath.length > 0) {

@@ -8,6 +8,7 @@ import "../referral/ITimelock.sol";
 import "../referral/IGov.sol";
 import "./IMultichainOrderRouter.sol";
 import "./MultichainRouter.sol";
+import "../router/relay/MultichainRelayUtils.sol";
 
 contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
     IReferralStorage public immutable referralStorage;
@@ -89,7 +90,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         uint256 srcChainId,
         bytes32 referralCode
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = RelayUtils.getTraderReferralCodeStructHash(relayParams, account, referralCode);
+        bytes32 structHash = MultichainRelayUtils.getTraderReferralCodeStructHash(relayParams, account, referralCode);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         referralStorage.setTraderReferralCode(account, referralCode);
@@ -101,7 +102,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         uint256 srcChainId,
         bytes32 referralCode
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = RelayUtils.getRegisterCodeStructHash(relayParams, account, referralCode);
+        bytes32 structHash = MultichainRelayUtils.getRegisterCodeStructHash(relayParams, account, referralCode);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         // Check if code already exists (govSetCodeOwner doesn't prevent overrides)

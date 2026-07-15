@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../fee/FeeUtils.sol";
 import "../referral/ReferralUtils.sol";
 import "./MultichainRouter.sol";
+import "../router/relay/MultichainRelayUtils.sol";
 
 
 /*
@@ -42,7 +43,7 @@ contract MultichainClaimsRouter is MultichainRouter {
         address[] memory tokens,
         address receiver
     ) external nonReentrant withRelayForClaims(relayParams, account, srcChainId, false) returns (uint256[] memory) {
-        bytes32 structHash = RelayUtils.getClaimFundingFeesStructHash(relayParams, account, markets, tokens, receiver);
+        bytes32 structHash = MultichainRelayUtils.getClaimFundingFeesStructHash(relayParams, account, markets, tokens, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
         return _claimFundingFees(account, srcChainId, markets, tokens, receiver);
     }
@@ -90,7 +91,7 @@ contract MultichainClaimsRouter is MultichainRouter {
         address receiver
     ) private returns (uint256[] memory claimedAmounts) {
         // validation added here instead of claimCollateral to avoid stack too deep error
-        bytes32 structHash = RelayUtils.getClaimCollateralStructHash(relayParams, account, markets, tokens, timeKeys, receiver);
+        bytes32 structHash = MultichainRelayUtils.getClaimCollateralStructHash(relayParams, account, markets, tokens, timeKeys, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         claimedAmounts = MarketUtils.batchClaimCollateral(
@@ -116,7 +117,7 @@ contract MultichainClaimsRouter is MultichainRouter {
         address[] memory tokens,
         address receiver
     ) external nonReentrant withRelayForClaims(relayParams, account, srcChainId, false) returns (uint256[] memory) {
-        bytes32 structHash = RelayUtils.getClaimAffiliateRewardsStructHash(relayParams, account, markets, tokens, receiver);
+        bytes32 structHash = MultichainRelayUtils.getClaimAffiliateRewardsStructHash(relayParams, account, markets, tokens, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
         return _claimAffiliateRewards(account, srcChainId, markets, tokens, receiver);
     }

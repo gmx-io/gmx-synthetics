@@ -8,6 +8,7 @@ import "../glv/GlvVault.sol";
 
 import "./IMultichainGlvRouter.sol";
 import "./MultichainRouter.sol";
+import "../router/relay/MultichainRelayUtils.sol";
 
 contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
     using SafeERC20 for IERC20;
@@ -34,7 +35,7 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IGlvDepositUtils.CreateGlvDepositParams memory params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, account, transferRequests, params);
+        bytes32 structHash = MultichainRelayUtils.getCreateGlvDepositStructHash(relayParams, account, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         return _createGlvDeposit(account, srcChainId, transferRequests, params);
@@ -61,7 +62,7 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, account, transferRequests, params);
+        bytes32 structHash = MultichainRelayUtils.getCreateGlvWithdrawalStructHash(relayParams, account, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _processTransferRequests(account, transferRequests, srcChainId);

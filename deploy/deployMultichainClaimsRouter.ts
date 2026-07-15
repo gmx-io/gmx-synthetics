@@ -40,6 +40,7 @@ const func = createDeployFunction({
     "GasUtils",
     "MarketEventUtils",
     "MarketStoreUtils",
+    "MultichainRelayUtils",
     "MultichainUtils",
     "ReferralUtils",
     "RelayUtils",
