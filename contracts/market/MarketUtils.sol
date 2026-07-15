@@ -3165,9 +3165,16 @@ library MarketUtils {
             allowZeroPoolBorrowingFactor
         );
 
+        uint256 expectedTotalBorrowing = Precision.applyFactor(openInterest, nextCumulativeBorrowingFactor);
         uint256 totalBorrowing = getTotalBorrowing(dataStore, market.marketToken, isLong);
 
-        return Precision.applyFactor(openInterest, nextCumulativeBorrowingFactor) - totalBorrowing;
+        if (expectedTotalBorrowing <= totalBorrowing) {
+            return 0;
+        }
+
+        unchecked {
+            return expectedTotalBorrowing - totalBorrowing;
+        }
     }
 
     // @dev get the total borrowing value
