@@ -351,6 +351,11 @@
       "txHash": "0x97a061a13d12b757a11e9e4703413565f05bf01d80b43fd6e363380903339832"
     },
     {
+      "contractName": "GmxAccountWalletFactory",
+      "contractAddress": "0xf4fecD9713D86CeC3b782a231e208E3C2d98290A",
+      "txHash": "0xc1be9358fdcfbe1672f0996827e5f8f4834a6e533ea6bb7e732d30d565a7eeb0"
+    },
+    {
       "contractName": "GovTimelockController",
       "contractAddress": "0xFBEff82f2DD5E51B8AF34b57cf788b4b09d466F9",
       "txHash": "0x49cf803ab808731f403d478391b79bc39db2d4937684ef5bf4ad6f7a7301837f"
@@ -384,6 +389,11 @@
       "contractName": "LayerZeroProvider",
       "contractAddress": "0x0B33EBA531e5a5A331a3Ff9F418B8205F01C2869",
       "txHash": "0x5e98781da631e858b95907bed049c4a943f6dc02953bbc1c0982466a103a1a04"
+    },
+    {
+      "contractName": "LayerZeroProviderUtils",
+      "contractAddress": "0xACD8F2BdB921E04c01d947CC25e39adFe5c6855D",
+      "txHash": "0xfd22de8987067df73dce847ea8facddf05dadab5645e28046155bbc7e752b64f"
     },
     {
       "contractName": "LiquidationHandler",
@@ -449,6 +459,11 @@
       "contractName": "MultichainReader",
       "contractAddress": "0xD9d0e72f53dA0D2aeeDfe02B365CC09b52efc55a",
       "txHash": "0x067f5c26210eb678260702d96cdd4a765205d76928e93170b4d773650e501ffa"
+    },
+    {
+      "contractName": "MultichainStakingUtils",
+      "contractAddress": "0x40dA84ca2DDd63EF58b981d4A22258f268B33494",
+      "txHash": "0xa91a9b2f767da0a359b915f01f68fe9d506837e40bd83b1a459d114328ea6eb9"
     },
     {
       "contractName": "MultichainSubaccountRouter",
@@ -591,6 +606,11 @@
       "txHash": "0x47bc8a357f484410eccb93f7a02064d0388e50de19ab1716d2799169c2a74624"
     },
     {
+      "contractName": "RiskOracleConfig",
+      "contractAddress": "0x5cA40cBb5321bBe4EF74Ddf01CCd2b4BCC76a9f9",
+      "txHash": "0x459c72b6abb1945783ab2fe1035c0738e9e2da3048f7697608f6f46bfb9dc3b1"
+    },
+    {
       "contractName": "RoleStore",
       "contractAddress": "0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72",
       "txHash": "0x913bbba4d56b0c04199ba0f3f8700e64c4b547f770becc03ab12756472cb06cd"
@@ -634,6 +654,11 @@
       "contractName": "SimulationRouter",
       "contractAddress": "0xaD3051cB1aE3a86b335f12A9a41BD4d995a137ea",
       "txHash": "0x858b4e487e4d80038913ad381febe5c36835c9a25fce68cc68f65a58abf669fc"
+    },
+    {
+      "contractName": "StakingUtils",
+      "contractAddress": "0xcAEF7fD8A0A150B58630F92fC20780dE33eD51D2",
+      "txHash": "0xba439e68c9eeaccb44e78c57f5d2c6dab1808fc34e02d6dbd4f97daa01d4b2fe"
     },
     {
       "contractName": "StaticOracleProvider",
@@ -1306,6 +1331,11 @@
       "contractName": "RelayUtils",
       "contractAddress": "0xC6Ef7209127A8337bB2F71E10c441D3CdA80bc92",
       "txHash": "0xe2f28a312eb0ae6df697ca7b4fba9244adff5e2937e80ad70961b874f33555f7"
+    },
+    {
+      "contractName": "RiskOracleConfig",
+      "contractAddress": "0x23BaFd10C7c15eaff7754D624BC660cbAA7d2Ec9",
+      "txHash": "0x20a65b1fc9c8e0068e69b8a28a1eb6ead53b6bbe2a525a51a2040b6655f70ed7"
     },
     {
       "contractName": "RoleStore",
