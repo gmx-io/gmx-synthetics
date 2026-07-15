@@ -2,7 +2,7 @@ import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
-import { OrderType, createOrder, getOrderKeys } from "../../utils/order";
+import { OrderType, DecreasePositionSwapType, createOrder, getOrderKeys } from "../../utils/order";
 
 describe("Guardian.UpdateOrder", () => {
   let fixture;
@@ -41,6 +41,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
         0, // validFromTime
+        DecreasePositionSwapType.NoSwap,
         false // autoCancel
       )
     )
@@ -79,6 +80,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
         0, // validFromTime
+        DecreasePositionSwapType.NoSwap,
         false // autoCancel
       )
     )
@@ -117,6 +119,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
         0, // validFromTime
+        DecreasePositionSwapType.NoSwap,
         false // autoCancel
       )
     )
@@ -155,6 +158,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
         0, // validFromTime
+        DecreasePositionSwapType.NoSwap,
         false // autoCancel
       )
     )
@@ -193,6 +197,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
         0, // validFromTime
+        DecreasePositionSwapType.NoSwap,
         false // autoCancel
       )
     )
@@ -231,6 +236,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
         0, // validFromTime
+        DecreasePositionSwapType.NoSwap,
         false // autoCancel
       )
     )
@@ -268,6 +274,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 
@@ -304,6 +311,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 
@@ -340,6 +348,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 
@@ -376,6 +385,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 
@@ -412,6 +422,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 
@@ -448,6 +459,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 

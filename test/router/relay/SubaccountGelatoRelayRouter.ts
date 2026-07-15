@@ -1963,6 +1963,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           triggerPrice: decimalToFloat(4800),
           minOutputAmount: 700,
           validFromTime: 0,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: false,
           executionFeeIncrease: 0,
         },
@@ -2113,8 +2114,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // 0.2 WETH in total (initial 0.001 + 0.199 from update)
-      expect(order.numbers.executionFee).closeTo("8039135020000000", "10000000000000");
-      expect(await wnt.balanceOf(holdingAddress)).closeTo("92960864980000000", "10000000000000");
+      expect(order.numbers.executionFee).closeTo("8049979000000000", "10000000000000");
+      expect(await wnt.balanceOf(holdingAddress)).closeTo("92950020080000000", "10000000000000");
     });
 
     it("EmptyOrder", async () => {
@@ -2523,6 +2524,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           triggerPrice: 303,
           minOutputAmount: 304,
           validFromTime: 305,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: true,
           executionFeeIncrease: 0,
         },
@@ -2542,6 +2544,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       expect(order2After.numbers.triggerPrice).eq(303);
       expect(order2After.numbers.minOutputAmount).eq(304);
       expect(order2After.numbers.validFromTime).eq(305);
+      expect(order2After.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.NoSwap);
       expect(order2After.flags.autoCancel).eq(true);
 
       const orderKeysAfter = await getOrderKeys(dataStore, 0, 2);

@@ -470,6 +470,7 @@ describe("MultichainOrderRouter", () => {
           triggerPrice: decimalToFloat(3),
           minOutputAmount: 4,
           validFromTime: 5,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: true,
           executionFeeIncrease: 0,
         },
@@ -512,6 +513,7 @@ describe("MultichainOrderRouter", () => {
       expect(order.numbers.triggerPrice).eq(decimalToFloat(3));
       expect(order.numbers.minOutputAmount).eq(4);
       expect(order.numbers.validFromTime).eq(5);
+      expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.NoSwap);
       expect(order.flags.autoCancel).eq(true);
       // relayFeeAmount was paid twice in total: once for create order and once for update order
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, relayFeeAmount.mul(2));

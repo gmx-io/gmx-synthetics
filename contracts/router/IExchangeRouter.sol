@@ -7,6 +7,7 @@ import "../withdrawal/IWithdrawalUtils.sol";
 import "../oracle/OracleUtils.sol";
 import "../shift/IShiftUtils.sol";
 import "../order/IBaseOrderUtils.sol";
+import "../order/Order.sol";
 
 interface IExchangeRouter {
     function createDeposit(
@@ -49,6 +50,7 @@ interface IExchangeRouter {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         uint256 validFromTime,
+        Order.DecreasePositionSwapType decreasePositionSwapType,
         bool autoCancel
     ) external payable;
 

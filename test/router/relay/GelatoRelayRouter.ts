@@ -1641,6 +1641,7 @@ describe("GelatoRelayRouter", () => {
           triggerPrice: decimalToFloat(3),
           minOutputAmount: 4,
           validFromTime: 5,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: true,
           executionFeeIncrease: 0,
         },
@@ -1739,6 +1740,7 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.triggerPrice).eq(decimalToFloat(3));
       expect(order.numbers.minOutputAmount).eq(4);
       expect(order.numbers.validFromTime).eq(5);
+      expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.NoSwap);
       expect(order.flags.autoCancel).eq(true);
     });
 
@@ -1942,6 +1944,7 @@ describe("GelatoRelayRouter", () => {
           triggerPrice: 303,
           minOutputAmount: 304,
           validFromTime: 305,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: true,
           executionFeeIncrease: expandDecimals(1, 15),
         },
@@ -1961,6 +1964,7 @@ describe("GelatoRelayRouter", () => {
       expect(order2After.numbers.triggerPrice).eq(303);
       expect(order2After.numbers.minOutputAmount).eq(304);
       expect(order2After.numbers.validFromTime).eq(305);
+      expect(order2After.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.NoSwap);
       expect(order2After.flags.autoCancel).eq(true);
 
       const orderKeysAfter = await getOrderKeys(dataStore, 0, 2);

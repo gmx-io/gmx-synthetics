@@ -149,6 +149,7 @@ export async function sendUpdateOrder(p: {
     triggerPrice: BigNumberish;
     minOutputAmount: BigNumberish;
     validFromTime: BigNumberish;
+    decreasePositionSwapType: BigNumberish;
     autoCancel: boolean;
     executionFeeIncrease: BigNumberish;
   };

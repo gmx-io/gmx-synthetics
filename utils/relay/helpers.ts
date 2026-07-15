@@ -94,6 +94,7 @@ export type UpdateOrderParams = {
   triggerPrice: BigNumberish;
   minOutputAmount: BigNumberish;
   validFromTime: BigNumberish;
+  decreasePositionSwapType: BigNumberish;
   autoCancel: boolean;
   executionFeeIncrease: BigNumberish;
 };

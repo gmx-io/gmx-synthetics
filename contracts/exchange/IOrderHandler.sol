@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../order/IBaseOrderUtils.sol";
+import "../order/Order.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IOrderHandler {
@@ -31,6 +32,7 @@ interface IOrderHandler {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         uint256 validFromTime,
+        Order.DecreasePositionSwapType decreasePositionSwapType,
         bool autoCancel,
         Order.Props memory order,
         bool shouldCapMaxExecutionFee
