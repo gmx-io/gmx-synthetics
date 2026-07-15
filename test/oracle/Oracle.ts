@@ -87,4 +87,42 @@ describe("Oracle", () => {
       })
     ).to.be.revertedWithCustomError(errorsContract, "InvalidOracleProvider");
   });
+
+  it("reverts when setting prices while prices are already set (re-entrancy guard)", async () => {
+    await mine();
+    const block = await hre.ethers.provider.getBlock();
+
+    const params = await getOracleParams({
+      oracleSalt,
+      minOracleBlockNumbers: [block.number],
+      maxOracleBlockNumbers: [block.number],
+      oracleTimestamps: [block.timestamp],
+      blockHashes: [block.hash],
+      signerIndexes,
+      tokens: [],
+      tokenOracleTypes: [],
+      precisions: [],
+      minPrices: [],
+      maxPrices: [],
+      signers,
+      dataStreamTokens: [],
+      dataStreamData: [],
+      priceFeedTokens: [usdc.address],
+    });
+
+    await oracle.setPrices(params);
+    expect(await oracle.getTokensWithPrices(0, 10)).eql([usdc.address]);
+
+    const emptyParams = { tokens: [], providers: [], data: [] };
+
+    await expect(oracle.setPrices(emptyParams)).to.be.revertedWithCustomError(
+      errorsContract,
+      "NonEmptyTokensWithPrices"
+    );
+
+    await expect(oracle.setPricesForAtomicAction(emptyParams)).to.be.revertedWithCustomError(
+      errorsContract,
+      "NonEmptyTokensWithPrices"
+    );
+  });
 });

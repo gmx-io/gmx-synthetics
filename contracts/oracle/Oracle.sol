@@ -200,13 +200,13 @@ contract Oracle is IOracle, RoleModule {
     function _setPrices(
         OracleUtils.ValidatedPrice[] memory prices
     ) internal {
+        if (tokensWithPrices.length() != 0) {
+            revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
+        }
+
         // in case of gasless relay the prices are not required if there is no need to swap fee tokens
         if (prices.length == 0) {
             return;
-        }
-
-        if (tokensWithPrices.length() != 0) {
-            revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
         }
 
         uint256 _minTimestamp = prices[0].timestamp;
