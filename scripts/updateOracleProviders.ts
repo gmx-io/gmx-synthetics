@@ -34,7 +34,7 @@ async function main() {
   const providersToAdd = [
     chainlinkPriceFeedProvider.address,
     chainlinkDataStreamProvider.address,
-    edgeDataStreamProvider.address,
+    // edgeDataStreamProvider.address,
     staticPriceProvider.address,
   ];
 
