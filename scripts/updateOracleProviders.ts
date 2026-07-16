@@ -35,7 +35,7 @@ async function main() {
     chainlinkPriceFeedProvider.address,
     chainlinkDataStreamProvider.address,
     // edgeDataStreamProvider.address,
-    staticPriceProvider.address,
+    // staticPriceProvider.address,
   ];
 
   const multicallWriteParams = [];
