@@ -12,10 +12,10 @@ async function main() {
   };
   const timelock = await hre.ethers.getContractAt("TimelockConfig", timelockConfigAddresses[hre.network.name]);
 
-  // const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
-  const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
+  const oracleProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
+  // const oracleProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
 
-  const providersToAdd = [chainlinkDataStreamProvider.address];
+  const providersToAdd = [oracleProvider.address];
 
   const multicallWriteParams = [];
 
