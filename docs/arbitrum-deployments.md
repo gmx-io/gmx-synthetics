@@ -2,8 +2,8 @@
 
 **Network Type:** Mainnet  
 **Chain ID:** 42161  
-**Total Contracts:** 145  
-**Last Updated:** Jul 14, 2026, 11:56 PM UTC
+**Total Contracts:** 146  
+**Last Updated:** Jul 20, 2026, 02:39 AM UTC
 
 ## Deployed Contracts
 
@@ -127,6 +127,7 @@
 | ReferralEventUtils | `0xe5Df1358bA3eE17ca65440daf98F8bb737E7A623` | [View on Explorer](https://arbiscan.io/address/0xe5Df1358bA3eE17ca65440daf98F8bb737E7A623) |
 | ReferralUtils | `0xeE4D16d0dF5d131917524FA939926f8999699Cd8` | [View on Explorer](https://arbiscan.io/address/0xeE4D16d0dF5d131917524FA939926f8999699Cd8) |
 | RelayUtils | `0x1528d611974324e2e72FEB86D1236e25D4D91c62` | [View on Explorer](https://arbiscan.io/address/0x1528d611974324e2e72FEB86D1236e25D4D91c62) |
+| RiskOracleConfig | `0x5cA40cBb5321bBe4EF74Ddf01CCd2b4BCC76a9f9` | [View on Explorer](https://arbiscan.io/address/0x5cA40cBb5321bBe4EF74Ddf01CCd2b4BCC76a9f9) |
 | RoleStore | `0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72` | [View on Explorer](https://arbiscan.io/address/0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72) |
 | Router | `0x7452c558d45f8afC8c83dAe62C3f8A5BE19c71f6` | [View on Explorer](https://arbiscan.io/address/0x7452c558d45f8afC8c83dAe62C3f8A5BE19c71f6) |
 | ShiftEventUtils | `0x3271CCD7162cc1a2f93515c4f550BD0aD5EE8AA5` | [View on Explorer](https://arbiscan.io/address/0x3271CCD7162cc1a2f93515c4f550BD0aD5EE8AA5) |
