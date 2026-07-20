@@ -6,14 +6,38 @@ import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../uti
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [
-  keys.MAX_OPEN_INTEREST,
   keys.POSITION_IMPACT_FACTOR,
   keys.POSITION_IMPACT_EXPONENT_FACTOR,
+  keys.MAX_POSITION_IMPACT_FACTOR,
+  keys.MAX_POOL_AMOUNT,
+  keys.MAX_POOL_USD_FOR_DEPOSIT,
+  keys.MAX_OPEN_INTEREST,
+  keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD,
+  keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT,
+  keys.FUNDING_FACTOR,
+  keys.FUNDING_EXPONENT_FACTOR,
+  keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+  keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+  keys.MIN_FUNDING_FACTOR_PER_SECOND,
+  keys.MAX_FUNDING_FACTOR_PER_SECOND,
+  keys.THRESHOLD_FOR_STABLE_FUNDING,
+  keys.THRESHOLD_FOR_DECREASE_FUNDING,
+  keys.MIN_COLLATERAL_FACTOR,
+  keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
+  keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
+  keys.OPTIMAL_USAGE_FACTOR,
+  keys.BASE_BORROWING_FACTOR,
+  keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
 ];
 
 const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
-function getRiskOracleManagedBaseKeys() {
+const RISK_ORACLE_MARKETS_URL_BY_NETWORK = {
+  arbitrum: "https://arbitrum.gmxapi.io/v1/risk-oracle/markets/",
+  avalanche: "https://avalanche.gmxapi.io/v1/risk-oracle/markets/",
+};
+
+export function getRiskOracleManagedBaseKeys() {
   if (RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
     return RISK_ORACLE_MANAGED_BASE_KEYS;
   }
@@ -27,7 +51,7 @@ const KEEPER_MANAGED_BASE_KEYS_ARBITRUM = [
   keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
 ];
 
-function getKeeperManagedBaseKeys() {
+export function getKeeperManagedBaseKeys() {
   if (hre.network.name === "arbitrum") {
     return KEEPER_MANAGED_BASE_KEYS_ARBITRUM;
   }
@@ -35,7 +59,7 @@ function getKeeperManagedBaseKeys() {
   return [];
 }
 
-const processMarkets = async ({
+export const processMarkets = async ({
   markets,
   includeMarket,
   onchainMarketsByTokens,
@@ -110,7 +134,7 @@ const processMarkets = async ({
     }]`;
 
     const addConfigItem = (type: string, baseKey: string, keyData: string, value: any, label: string) => {
-      if (!value) {
+      if (value === undefined) {
         return;
       }
       const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));
@@ -834,24 +858,14 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
     return supported;
   }
 
-  // Chaos API does not support fuji
-  if (hre.network.name === "avalancheFuji") {
+  const url = RISK_ORACLE_MARKETS_URL_BY_NETWORK[hre.network.name];
+  if (!url) {
     return supported;
   }
 
-  const response = await fetch("https://cloud.chaoslabs.co/query/ccar-perpetuals", {
-    method: "POST",
-    headers: {
-      protocol: `gmx-v2-${hre.network.name}`,
-      "content-type": "application/json",
-    },
-    body: `{
-      "query": "{ markets { id } }"
-    }`,
-  });
-
-  const { data } = await response.json();
-  const supportedMarketTokens = data.markets.map((market) => market.id);
+  const response = await fetch(url);
+  const riskOracleMarkets = await response.json();
+  const supportedMarketTokens = riskOracleMarkets.map((market) => market.market_token);
 
   supportedMarketTokens.forEach((supportedMarketToken) => {
     const market = markets.find((market) => {

@@ -2,8 +2,8 @@
 
 **Network Type:** Testnet  
 **Chain ID:** 43113  
-**Total Contracts:** 142  
-**Last Updated:** Aug 21, 2025, 11:02 AM UTC
+**Total Contracts:** 143  
+**Last Updated:** May 27, 2026, 08:25 AM UTC
 
 ## Deployed Contracts
 
@@ -23,7 +23,7 @@
 | Config | `0x63725E32b05324042Fe78C34be3E72497C91e1E0` | [View on Explorer](https://testnet.snowtrace.io/address/0x63725E32b05324042Fe78C34be3E72497C91e1E0) |
 | ConfigSyncer | `0x732601695aF10A0824d28526F49e15201bDf8035` | [View on Explorer](https://testnet.snowtrace.io/address/0x732601695aF10A0824d28526F49e15201bDf8035) |
 | ConfigTimelockController | `0xc120bD6756171691fC2e2D5EE876ae79526412c1` | [View on Explorer](https://testnet.snowtrace.io/address/0xc120bD6756171691fC2e2D5EE876ae79526412c1) |
-| ConfigUtils | `0xd9947f8660866131562B71a5e5B3bD69517d7a53` | [View on Explorer](https://testnet.snowtrace.io/address/0xd9947f8660866131562B71a5e5B3bD69517d7a53) |
+| ConfigUtils | `0xf4d496D3811d37ae4b4Fcd5Ce0A67B43d865aBE6` | [View on Explorer](https://testnet.snowtrace.io/address/0xf4d496D3811d37ae4b4Fcd5Ce0A67B43d865aBE6) |
 | DAI | `0x51290cb93bE5062A6497f16D9cd3376Adf54F920` | [View on Explorer](https://testnet.snowtrace.io/address/0x51290cb93bE5062A6497f16D9cd3376Adf54F920) |
 | DataStore | `0xEA1BFb4Ea9A412dCCd63454AbC127431eBB0F0d4` | [View on Explorer](https://testnet.snowtrace.io/address/0xEA1BFb4Ea9A412dCCd63454AbC127431eBB0F0d4) |
 | DecreaseOrderExecutor | `0x9585DfF191D487E5C7DE3b702294865eb8C9Ef45` | [View on Explorer](https://testnet.snowtrace.io/address/0x9585DfF191D487E5C7DE3b702294865eb8C9Ef45) |
@@ -79,11 +79,11 @@
 | LayerZeroProvider | `0xdaa9194bFD143Af71A8d2cFc8F2c0643094a77C5` | [View on Explorer](https://testnet.snowtrace.io/address/0xdaa9194bFD143Af71A8d2cFc8F2c0643094a77C5) |
 | LiquidationHandler | `0x4092cC8E8dC0893f93f35f5998585a6109d91a46` | [View on Explorer](https://testnet.snowtrace.io/address/0x4092cC8E8dC0893f93f35f5998585a6109d91a46) |
 | LiquidationUtils | `0x2C6EadA1f2bbDbE203141a18A855fF3094cbBEc8` | [View on Explorer](https://testnet.snowtrace.io/address/0x2C6EadA1f2bbDbE203141a18A855fF3094cbBEc8) |
-| MarketEventUtils | `0xf84C8aBd3663d0E170d536d086940996A2F0A208` | [View on Explorer](https://testnet.snowtrace.io/address/0xf84C8aBd3663d0E170d536d086940996A2F0A208) |
+| MarketEventUtils | `0xdb267Ed11340e70fB119032fEc6068cC26EE0676` | [View on Explorer](https://testnet.snowtrace.io/address/0xdb267Ed11340e70fB119032fEc6068cC26EE0676) |
 | MarketFactory | `0x89810f23585FDCfAFfB1712e5B76d9b0F722e1d6` | [View on Explorer](https://testnet.snowtrace.io/address/0x89810f23585FDCfAFfB1712e5B76d9b0F722e1d6) |
 | MarketStore | `0x01F9283f5F763Cd423bAbFddCbFB8c4fF7f83fBF` | [View on Explorer](https://testnet.snowtrace.io/address/0x01F9283f5F763Cd423bAbFddCbFB8c4fF7f83fBF) |
-| MarketStoreUtils | `0xc0484C52d97Cfe0b48cbcBE7aC17C533227d35a4` | [View on Explorer](https://testnet.snowtrace.io/address/0xc0484C52d97Cfe0b48cbcBE7aC17C533227d35a4) |
-| MarketUtils | `0xbf8849C04b673da02ac2ad5b8909B8C9E4E0c936` | [View on Explorer](https://testnet.snowtrace.io/address/0xbf8849C04b673da02ac2ad5b8909B8C9E4E0c936) |
+| MarketStoreUtils | `0xd2540f69bcd303953809B10eF3224728a11D132E` | [View on Explorer](https://testnet.snowtrace.io/address/0xd2540f69bcd303953809B10eF3224728a11D132E) |
+| MarketUtils | `0x6fb319afe9e91A299305Abe108299db8c57914e2` | [View on Explorer](https://testnet.snowtrace.io/address/0x6fb319afe9e91A299305Abe108299db8c57914e2) |
 | MockPriceFeed | `0x12aCAC00028345Aa8Dd326D2c61bE2385eD925e0` | [View on Explorer](https://testnet.snowtrace.io/address/0x12aCAC00028345Aa8Dd326D2c61bE2385eD925e0) |
 | Multicall3 | `0x966D1F5c54a714C6443205F0Ec49eEF81F10fdfD` | [View on Explorer](https://testnet.snowtrace.io/address/0x966D1F5c54a714C6443205F0Ec49eEF81F10fdfD) |
 | MultichainClaimsRouter | `0xa080c3E026467E1fa6E76D29A057Bf1261a4ec86` | [View on Explorer](https://testnet.snowtrace.io/address/0xa080c3E026467E1fa6E76D29A057Bf1261a4ec86) |
@@ -122,6 +122,7 @@
 | ReferralStorage | `0x192e82A18a4ab446dD9968f055431b60640B155D` | [View on Explorer](https://testnet.snowtrace.io/address/0x192e82A18a4ab446dD9968f055431b60640B155D) |
 | ReferralUtils | `0xF0D56D24E88C711BC475dA6534F32BbaF63e3Ff4` | [View on Explorer](https://testnet.snowtrace.io/address/0xF0D56D24E88C711BC475dA6534F32BbaF63e3Ff4) |
 | RelayUtils | `0xc01b4f1C8cAFb04e4b30820f354b56F610fF2751` | [View on Explorer](https://testnet.snowtrace.io/address/0xc01b4f1C8cAFb04e4b30820f354b56F610fF2751) |
+| RiskOracleConfig | `0x32fC3c81F75a7bDd77AfB7d6AFcf4324bb5c52D5` | [View on Explorer](https://testnet.snowtrace.io/address/0x32fC3c81F75a7bDd77AfB7d6AFcf4324bb5c52D5) |
 | RoleStore | `0x19a8085537078e7847a332A76ABaDD5b02B1e736` | [View on Explorer](https://testnet.snowtrace.io/address/0x19a8085537078e7847a332A76ABaDD5b02B1e736) |
 | Router | `0x5e7d61e4C52123ADF651961e4833aCc349b61491` | [View on Explorer](https://testnet.snowtrace.io/address/0x5e7d61e4C52123ADF651961e4833aCc349b61491) |
 | ShiftEventUtils | `0x7CF66F5bd3CEeeee6cA80dbBbd87cE696C735Fd8` | [View on Explorer](https://testnet.snowtrace.io/address/0x7CF66F5bd3CEeeee6cA80dbBbd87cE696C735Fd8) |

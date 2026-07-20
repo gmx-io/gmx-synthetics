@@ -54,7 +54,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WETH",
         shortToken: "USDC",
         shiftMaxLossFactor: percentageToFloat("0.025%"),
-        // shiftMinInterval: 4 * 60, // 4 minutes (will be 0 after new keeper testing)
         shiftMinInterval: 0,
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
@@ -103,7 +102,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("MORPHO", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LINK", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("ZORA", arbitrum_ethUsdcDefaultCap, 1),
-          createGlvMarketConfig("KTA", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("KTA", arbitrum_ethUsdcDefaultCap, 1, true),
           createGlvMarketConfig("AVNT", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LINEA", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("SKY", arbitrum_ethUsdcDefaultCap, 1),
@@ -112,6 +111,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("CHZ", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LIT", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("MEGA", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("SPCX", arbitrum_ethUsdcDefaultCap, 1),
           // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
           createGlvMarketConfig("GOLD", arbitrum_ethUsdcDefaultCap, 1), // XAU
           createGlvMarketConfig("SILVER", arbitrum_ethUsdcDefaultCap, 1), // XAG
@@ -127,7 +127,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WBTC.e",
         shortToken: "USDC",
         shiftMaxLossFactor: percentageToFloat("0.025%"),
-        shiftMinInterval: 4 * 60, // 4 minutes (will be 0 after new keeper testing)
+        shiftMinInterval: 0,
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("BTC", 30_000_000, 2.7),
