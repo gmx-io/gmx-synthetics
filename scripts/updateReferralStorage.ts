@@ -1,7 +1,10 @@
 /*
-Grants the ReferralStorage handler role to the new OrderHandler, JitOrderHandler and
-MultichainOrderRouter, and sets MultichainOrderRouter as a keeper on the ReferralStorage
-timelock so it can call govSetCodeOwner.
+Grants the ReferralStorage handler role to the new OrderHandler and MultichainOrderRouter,
+and sets MultichainOrderRouter as a keeper on the ReferralStorage timelock so it can call
+govSetCodeOwner.
+
+JitOrderHandler is intentionally not granted: it only executes existing orders (delegating to
+OrderHandler.doExecuteOrder) and never writes to ReferralStorage.
 
 Usage:
   # write a Safe Transaction Builder batch JSON for the multisig (default, no broadcast)
@@ -23,14 +26,7 @@ import { signExternally } from "../utils/signer";
 // Writes the setHandler/setKeeper calls as a Safe Transaction Builder batch JSON.
 // A named-param ABI is used here because the MockTimelock handle leaves params unnamed,
 // which would break Safe's input/value pairing.
-async function writeSafeBatch({
-  timelockMethod,
-  govAddress,
-  referralStorage,
-  orderHandler,
-  jitOrderHandler,
-  multichainOrderRouter,
-}) {
+async function writeSafeBatch({ timelockMethod, govAddress, referralStorage, orderHandler, multichainOrderRouter }) {
   const gov = await hre.ethers.getContractAt(
     [
       "function signalSetHandler(address _target, address _handler, bool _isActive) external",
@@ -43,7 +39,7 @@ async function writeSafeBatch({
 
   const transactions = [];
 
-  for (const handler of [orderHandler, jitOrderHandler, multichainOrderRouter]) {
+  for (const handler of [orderHandler, multichainOrderRouter]) {
     transactions.push({
       to: govAddress,
       value: "0",
@@ -99,17 +95,12 @@ export async function main() {
   const gov = await hre.ethers.getContractAt("MockTimelock", govAddress);
 
   const orderHandler = await hre.ethers.getContract("OrderHandler");
-  const jitOrderHandler = await hre.ethers.getContract("JitOrderHandler");
   const multichainOrderRouter = await hre.ethers.getContract("MultichainOrderRouter");
 
   const multicallWriteParams = [];
 
   multicallWriteParams.push(
     gov.interface.encodeFunctionData(timelockMethod, [referralStorage.address, orderHandler.address, true])
-  );
-
-  multicallWriteParams.push(
-    gov.interface.encodeFunctionData(timelockMethod, [referralStorage.address, jitOrderHandler.address, true])
   );
 
   multicallWriteParams.push(
@@ -123,14 +114,7 @@ export async function main() {
   } else {
     // the same calls as a Safe Transaction Builder batch, to sign via the multisig instead of the signExternally flow above.
     // Load in Safe -> Transaction Builder.
-    await writeSafeBatch({
-      timelockMethod,
-      govAddress,
-      referralStorage,
-      orderHandler,
-      jitOrderHandler,
-      multichainOrderRouter,
-    });
+    await writeSafeBatch({ timelockMethod, govAddress, referralStorage, orderHandler, multichainOrderRouter });
   }
 }
 
