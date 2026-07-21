@@ -93,6 +93,10 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
 
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
 
+        if (glvWithdrawal.longTokenSwapPath().length != 0 || glvWithdrawal.shortTokenSwapPath().length != 0) {
+            FeatureUtils.validateFeature(dataStore, Keys.withdrawalSwapFeatureDisabledKey(address(this)));
+        }
+
         GlvWithdrawalUtils.ExecuteGlvWithdrawalParams memory params = GlvWithdrawalUtils.ExecuteGlvWithdrawalParams({
             key: key,
             dataStore: dataStore,
