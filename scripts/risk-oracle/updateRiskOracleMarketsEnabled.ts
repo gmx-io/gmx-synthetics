@@ -51,11 +51,18 @@ async function main() {
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
   const multicallWriteParams = [];
 
+  let lastLogType;
   for (let i = 0; i < marketItems.length; i++) {
     const marketItem = marketItems[i];
     const currentValue = hre.ethers.utils.defaultAbiCoder.decode(["bool"], result[i].returnData)[0];
+    const logType = currentValue === marketItem.enabled ? "skipping" : "updating";
 
-    if (currentValue === marketItem.enabled) {
+    if (lastLogType !== undefined && lastLogType !== logType) {
+      console.info("");
+    }
+    lastLogType = logType;
+
+    if (logType === "skipping") {
       console.info(`skipping ${marketItem.label} as riskOracleEnabled is already ${marketItem.enabled}`);
       continue;
     }
