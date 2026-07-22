@@ -11,6 +11,7 @@ import {
   sendHandleStakingRewards,
   sendCompoundStakingRewards,
   sendVestEsGmx,
+  sendWithdrawVesting,
   sendDelegateGovGmx,
   sendSignalStakingTransfer,
   sendAcceptStakingTransfer,
@@ -18,6 +19,7 @@ import {
 } from "../../utils/relay/gelatoRelay";
 import { grantRole } from "../../utils/role";
 import { fundMultichainBalance } from "../../utils/multichain";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("MultichainStakingRouter", () => {
@@ -320,6 +322,90 @@ describe("MultichainStakingRouter", () => {
 
       // Multichain balance should be 0
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, esGmx.address))).to.equal(0);
+    });
+  });
+
+  // withdrawVesting is the exit for vestEsGmx: the wallet calls vester.withdraw and the
+  // claimed GMX and returned esGMX are swept back to the multichain balance
+  describe("withdrawVesting", () => {
+    it("returns esGMX and claimed GMX to multichain balance", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      const walletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+
+      // pretend part of the deposit already vested into claimable GMX
+      const claimableAmount = expandDecimals(40, 18);
+      await gmx.mint(mockGmxVester.address, claimableAmount);
+      await mockGmxVester.setClaimable(walletAddress, claimableAmount);
+
+      await sendWithdrawVesting(getDefaultStakingRelayParams());
+
+      // vester position is closed
+      expect(await mockGmxVester.depositedAmounts(walletAddress)).to.equal(0);
+      expect(await mockGmxVester.claimableAmounts(walletAddress)).to.equal(0);
+
+      // esGMX and GMX are back in the multichain balance, nothing is left in the wallet
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, esGmx.address))).to.equal(stakeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(claimableAmount);
+      expect(await esGmx.balanceOf(walletAddress)).to.equal(0);
+      expect(await gmx.balanceOf(walletAddress)).to.equal(0);
+    });
+
+    it("reverts when nothing is vested", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+      await sendWithdrawVesting(getDefaultStakingRelayParams());
+
+      await expect(sendWithdrawVesting(getDefaultStakingRelayParams())).to.be.revertedWith(
+        "Vester: vested amount is zero"
+      );
+    });
+
+    it("reverts when signed by a different account", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      await expect(sendWithdrawVesting(getDefaultStakingRelayParams({ signer: user1 }))).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+    });
+
+    it("only the signed action can drive the wallet", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      const walletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      const wallet = await hre.ethers.getContractAt("GmxAccountWallet", walletAddress);
+      const withdrawCalldata = new hre.ethers.utils.Interface(["function withdraw()"]).encodeFunctionData("withdraw");
+
+      // the wallet rejects callers without the controller role
+      await expect(wallet.connect(user0)["execute(address,bytes)"](mockGmxVester.address, withdrawCalldata))
+        .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+        .withArgs(user0.address, "CONTROLLER");
+
+      // relay external calls cannot drive the wallet either, ExternalHandler has no controller role
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: 1 });
+      await expect(
+        sendCompoundStakingRewards(
+          getDefaultStakingRelayParams({
+            externalCalls: {
+              sendTokens: [esGmx.address],
+              sendAmounts: [1],
+              externalCallTargets: [walletAddress],
+              externalCallDataList: [
+                wallet.interface.encodeFunctionData("execute(address,bytes)", [
+                  mockGmxVester.address,
+                  withdrawCalldata,
+                ]),
+              ],
+              refundTokens: [],
+              refundReceivers: [],
+            },
+          })
+        )
+      ).to.be.revertedWithCustomError(errorsContract, "ExternalCallFailed");
     });
   });
 

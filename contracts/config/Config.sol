@@ -539,6 +539,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.SIGNAL_STAKING_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.ACCEPT_STAKING_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.WITHDRAW_FROM_WALLET_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.WITHDRAW_VESTING_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 

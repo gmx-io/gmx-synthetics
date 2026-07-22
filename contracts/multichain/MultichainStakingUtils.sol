@@ -150,6 +150,27 @@ library MultichainStakingUtils {
         IGmxAccountWallet(wallet).execute(gmxVester, abi.encodeCall(IVester.deposit, (amount)));
     }
 
+    // the vester sends the claimed GMX, the remaining esGMX and the reserved pair tokens
+    // to the wallet; GMX and esGMX are swept to the user's multichain balance, the pair
+    // tokens stay in the wallet since they represent the staked position
+    function withdrawVesting(
+        StakingContracts memory contracts,
+        address account,
+        uint256 srcChainId
+    ) external {
+        address wallet = contracts.walletFactory.getWalletAddress(account);
+        address gmx = contracts.rewardRouter.gmx();
+        address esGmx = contracts.rewardRouter.esGmx();
+
+        uint256 gmxBefore = IERC20(gmx).balanceOf(wallet);
+        uint256 esGmxBefore = IERC20(esGmx).balanceOf(wallet);
+
+        IGmxAccountWallet(wallet).execute(contracts.rewardRouter.gmxVester(), abi.encodeCall(IVester.withdraw, ()));
+
+        _sweepTokenIncrease(contracts, wallet, account, srcChainId, gmx, gmxBefore);
+        _sweepTokenIncrease(contracts, wallet, account, srcChainId, esGmx, esGmxBefore);
+    }
+
     function delegateGovGmx(
         StakingContracts memory contracts,
         address account,

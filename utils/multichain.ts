@@ -8,6 +8,7 @@ import {
   sendHandleStakingRewards,
   sendCompoundStakingRewards,
   sendVestEsGmx,
+  sendWithdrawVesting,
   sendDelegateGovGmx,
   sendSignalStakingTransfer,
   sendAcceptStakingTransfer,
@@ -24,6 +25,7 @@ import {
   getHandleStakingRewardsSignature,
   getCompoundStakingRewardsSignature,
   getVestEsGmxSignature,
+  getWithdrawVestingSignature,
   getDelegateGovGmxSignature,
   getSignalStakingTransferSignature,
   getAcceptStakingTransferSignature,
@@ -573,6 +575,29 @@ export async function encodeVestEsGmxMessage(
   );
 
   const ActionType = 14; // VestEsGmx
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeWithdrawVestingMessage(
+  params: Parameters<typeof sendWithdrawVesting>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getWithdrawVestingSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode([relayParamsType], [{ ...relayParams, signature }]);
+
+  const ActionType = 19; // WithdrawVesting
   const data = ethers.utils.defaultAbiCoder.encode(
     ["uint8", "uint256", "bytes"],
     [ActionType, expectedNativeValue, actionData]
