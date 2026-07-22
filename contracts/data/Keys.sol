@@ -176,6 +176,7 @@ library Keys {
     bytes32 public constant CLAIM_UI_FEES_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_UI_FEES_FEATURE_DISABLED"));
     bytes32 public constant SUBACCOUNT_FEATURE_DISABLED = keccak256(abi.encode("SUBACCOUNT_FEATURE_DISABLED"));
     bytes32 public constant GASLESS_FEATURE_DISABLED = keccak256(abi.encode("GASLESS_FEATURE_DISABLED"));
+    bytes32 public constant ATOMIC_SWAP_FEATURE_DISABLED = keccak256(abi.encode("ATOMIC_SWAP_FEATURE_DISABLED"));
     bytes32 public constant GENERAL_CLAIM_FEATURE_DISABLED = keccak256(abi.encode("GENERAL_CLAIM_FEATURE_DISABLED"));
 
     // @dev key for the minimum required oracle signers for an oracle observation
@@ -1002,6 +1003,15 @@ library Keys {
     function gaslessFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             GASLESS_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether atomic swaps are disabled
+    // @param the atomic swap module
+    function atomicSwapFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ATOMIC_SWAP_FEATURE_DISABLED,
             module
         ));
     }

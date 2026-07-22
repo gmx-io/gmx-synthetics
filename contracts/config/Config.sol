@@ -485,6 +485,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
 
         allowedBaseKeys[Keys.SUBACCOUNT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.GASLESS_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.ATOMIC_SWAP_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
