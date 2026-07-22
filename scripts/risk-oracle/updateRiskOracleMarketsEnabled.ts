@@ -50,25 +50,34 @@ async function main() {
   }
 
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
-  const multicallWriteParams = [];
 
-  let lastLogType;
+  const skippedItems = [];
+  const updatedItems = [];
+
   for (let i = 0; i < marketItems.length; i++) {
     const marketItem = marketItems[i];
     const currentValue = hre.ethers.utils.defaultAbiCoder.decode(["bool"], result[i].returnData)[0];
-    const logType = currentValue === marketItem.enabled ? "skipping" : "updating";
 
-    if (lastLogType !== undefined && lastLogType !== logType) {
-      console.info("");
+    if (currentValue === marketItem.enabled) {
+      skippedItems.push(marketItem);
+    } else {
+      updatedItems.push({ ...marketItem, currentValue });
     }
-    lastLogType = logType;
+  }
 
-    if (logType === "skipping") {
-      console.info(`skipping ${marketItem.label} as riskOracleEnabled is already ${marketItem.enabled}`);
-      continue;
-    }
+  for (const marketItem of skippedItems) {
+    console.info(`skipping ${marketItem.label} as riskOracleEnabled is already ${marketItem.enabled}`);
+  }
 
-    console.info(`updating ${marketItem.label} riskOracleEnabled from ${currentValue} to ${marketItem.enabled}`);
+  if (skippedItems.length > 0 && updatedItems.length > 0) {
+    console.info("");
+  }
+
+  const multicallWriteParams = [];
+  for (const marketItem of updatedItems) {
+    console.info(
+      `updating ${marketItem.label} riskOracleEnabled from ${marketItem.currentValue} to ${marketItem.enabled}`
+    );
     multicallWriteParams.push(
       config.interface.encodeFunctionData("setRiskOracleMarketEnabled", [marketItem.marketToken, marketItem.enabled])
     );
