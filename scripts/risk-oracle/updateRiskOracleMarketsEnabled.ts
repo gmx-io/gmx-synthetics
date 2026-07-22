@@ -1,4 +1,5 @@
 import hre from "hardhat";
+import prompts from "prompts";
 
 import { handleInBatches } from "../../utils/batch";
 import { isRiskOracleMarketEnabledKey } from "../../utils/keys";
@@ -81,7 +82,16 @@ async function main() {
   console.info(`updating ${multicallWriteParams.length} params`);
   console.info("multicallWriteParams", multicallWriteParams);
 
-  if (process.env.WRITE === "true") {
+  let write = process.env.WRITE === "true";
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (write) {
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       const tx = await config.multicall(batch);
       console.info(`tx sent: ${tx.hash}`);
