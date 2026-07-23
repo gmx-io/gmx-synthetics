@@ -1,4 +1,5 @@
 import hre from "hardhat";
+import prompts from "prompts";
 
 import { handleInBatches } from "../../utils/batch";
 import { isRiskOracleMarketEnabledKey } from "../../utils/keys";
@@ -49,18 +50,34 @@ async function main() {
   }
 
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
-  const multicallWriteParams = [];
+
+  const skippedItems = [];
+  const updatedItems = [];
 
   for (let i = 0; i < marketItems.length; i++) {
     const marketItem = marketItems[i];
     const currentValue = hre.ethers.utils.defaultAbiCoder.decode(["bool"], result[i].returnData)[0];
 
     if (currentValue === marketItem.enabled) {
-      console.info(`skipping ${marketItem.label} as riskOracleEnabled is already ${marketItem.enabled}`);
-      continue;
+      skippedItems.push(marketItem);
+    } else {
+      updatedItems.push({ ...marketItem, currentValue });
     }
+  }
 
-    console.info(`updating ${marketItem.label} riskOracleEnabled from ${currentValue} to ${marketItem.enabled}`);
+  for (const marketItem of skippedItems) {
+    console.info(`skipping ${marketItem.label} as riskOracleEnabled is already ${marketItem.enabled}`);
+  }
+
+  if (skippedItems.length > 0 && updatedItems.length > 0) {
+    console.info("");
+  }
+
+  const multicallWriteParams = [];
+  for (const marketItem of updatedItems) {
+    console.info(
+      `updating ${marketItem.label} riskOracleEnabled from ${marketItem.currentValue} to ${marketItem.enabled}`
+    );
     multicallWriteParams.push(
       config.interface.encodeFunctionData("setRiskOracleMarketEnabled", [marketItem.marketToken, marketItem.enabled])
     );
@@ -74,7 +91,16 @@ async function main() {
   console.info(`updating ${multicallWriteParams.length} params`);
   console.info("multicallWriteParams", multicallWriteParams);
 
-  if (process.env.WRITE === "true") {
+  let write = process.env.WRITE === "true";
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (write) {
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       const tx = await config.multicall(batch);
       console.info(`tx sent: ${tx.hash}`);
