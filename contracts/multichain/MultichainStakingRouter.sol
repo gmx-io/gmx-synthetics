@@ -28,7 +28,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         uint256 amount
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getStakeGmxStructHash(relayParams, amount);
+        bytes32 structHash = StakingUtils.getStakeGmxStructHash(relayParams, account, amount);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.stakeGmx(_stakingContracts(), account, srcChainId, amount);
     }
@@ -39,7 +39,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         uint256 amount
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getUnstakeGmxStructHash(relayParams, amount);
+        bytes32 structHash = StakingUtils.getUnstakeGmxStructHash(relayParams, account, amount);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.unstakeGmx(_stakingContracts(), account, srcChainId, amount);
     }
@@ -50,7 +50,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         uint256 amount
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getStakeEsGmxStructHash(relayParams, amount);
+        bytes32 structHash = StakingUtils.getStakeEsGmxStructHash(relayParams, account, amount);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.stakeEsGmx(_stakingContracts(), account, srcChainId, amount);
     }
@@ -61,7 +61,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         uint256 amount
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getUnstakeEsGmxStructHash(relayParams, amount);
+        bytes32 structHash = StakingUtils.getUnstakeEsGmxStructHash(relayParams, account, amount);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.unstakeEsGmx(_stakingContracts(), account, srcChainId, amount);
     }
@@ -72,7 +72,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         IRelayUtils.HandleStakingRewardsParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getHandleStakingRewardsStructHash(relayParams, params);
+        bytes32 structHash = StakingUtils.getHandleStakingRewardsStructHash(relayParams, account, params);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.handleStakingRewards(_stakingContracts(), account, srcChainId, params);
     }
@@ -82,7 +82,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         address account,
         uint256 srcChainId
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getCompoundStakingRewardsStructHash(relayParams);
+        bytes32 structHash = StakingUtils.getCompoundStakingRewardsStructHash(relayParams, account);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.compoundStakingRewards(_stakingContracts(), account);
     }
@@ -93,7 +93,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         uint256 amount
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getVestEsGmxStructHash(relayParams, amount);
+        bytes32 structHash = StakingUtils.getVestEsGmxStructHash(relayParams, account, amount);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.vestEsGmx(_stakingContracts(), account, srcChainId, amount);
     }
@@ -104,7 +104,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         address delegatee
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getDelegateGovGmxStructHash(relayParams, delegatee);
+        bytes32 structHash = StakingUtils.getDelegateGovGmxStructHash(relayParams, account, delegatee);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.delegateGovGmx(_stakingContracts(), account, delegatee);
     }
@@ -115,7 +115,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         address receiver
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getSignalStakingTransferStructHash(relayParams, receiver);
+        bytes32 structHash = StakingUtils.getSignalStakingTransferStructHash(relayParams, account, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.signalStakingTransfer(_stakingContracts(), account, receiver);
     }
@@ -126,7 +126,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         uint256 srcChainId,
         address sender
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getAcceptStakingTransferStructHash(relayParams, sender);
+        bytes32 structHash = StakingUtils.getAcceptStakingTransferStructHash(relayParams, account, sender);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.acceptStakingTransfer(_stakingContracts(), account, sender);
     }
@@ -138,7 +138,7 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         address token,
         uint256 amount
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = StakingUtils.getWithdrawFromWalletStructHash(relayParams, token, amount);
+        bytes32 structHash = StakingUtils.getWithdrawFromWalletStructHash(relayParams, account, token, amount);
         _validateCall(relayParams, account, structHash, srcChainId);
         MultichainStakingUtils.withdrawFromWallet(_stakingContracts(), account, srcChainId, token, amount);
     }
