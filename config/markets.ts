@@ -4783,6 +4783,7 @@ const config: {
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "SILVER", longToken: "WETH", shortToken: "USDC" }, // XAG
@@ -4837,6 +4838,7 @@ const config: {
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "WTIOIL", longToken: "WETH", shortToken: "USDC" }, // CL
@@ -4891,6 +4893,7 @@ const config: {
 
         maxOpenInterest: decimalToFloat(2_500_000),
       },
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "BRENTOIL", longToken: "WETH", shortToken: "USDC" }, // BZ
@@ -4945,6 +4948,7 @@ const config: {
 
         maxOpenInterest: decimalToFloat(1_500_000),
       },
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "NATGAS", longToken: "WETH", shortToken: "USDC" },
@@ -4999,6 +5003,7 @@ const config: {
 
         maxOpenInterest: decimalToFloat(250_000),
       },
+      riskOracleEnabled: true,
     },
     {
       tokens: { indexToken: "SPCX", longToken: "WETH", shortToken: "USDC" },
@@ -5055,6 +5060,7 @@ const config: {
 
         maxOpenInterest: decimalToFloat(1_000_000),
       } as ClosedMarketConfig,
+      riskOracleEnabled: true,
     },
   ],
   avalanche: [
