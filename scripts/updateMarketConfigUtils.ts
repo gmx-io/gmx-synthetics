@@ -668,6 +668,22 @@ export const processMarkets = async ({
 
     addConfigItem(
       "uint",
+      keys.MAX_BORROWING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.maxBorrowingFactorPerSecondForLongs,
+      `maxBorrowingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_BORROWING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.maxBorrowingFactorPerSecondForShorts,
+      `maxBorrowingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
       keys.BORROWING_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.borrowingFactorForLongs,

@@ -120,6 +120,8 @@ async function main() {
       ["minFundingFactorPerSecondShort", keys.minFundingFactorPerSecondKey(market.marketToken, false)],
       ["maxFundingFactorPerSecondLong", keys.maxFundingFactorPerSecondKey(market.marketToken, true)],
       ["maxFundingFactorPerSecondShort", keys.maxFundingFactorPerSecondKey(market.marketToken, false)],
+      ["maxBorrowingFactorPerSecondLong", keys.maxBorrowingFactorPerSecondKey(market.marketToken, true)],
+      ["maxBorrowingFactorPerSecondShort", keys.maxBorrowingFactorPerSecondKey(market.marketToken, false)],
       ["maxPnlFactorForTradersLong", keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_TRADERS, market.marketToken, true)],
       ["maxPnlFactorForTradersShort", keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_TRADERS, market.marketToken, false)],
       ["maxPnlFactorForAdlLong", keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, market.marketToken, true)],

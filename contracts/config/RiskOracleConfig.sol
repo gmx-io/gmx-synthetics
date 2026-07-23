@@ -209,6 +209,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         allowedRiskOracleBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
         allowedRiskOracleBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
         allowedRiskOracleBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
+        allowedRiskOracleBaseKeys[Keys.MAX_BORROWING_FACTOR_PER_SECOND] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used and market is valid and allowed to edit
@@ -264,7 +265,8 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         return
             baseKey == Keys.BASE_BORROWING_FACTOR ||
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
-            baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR;
+            baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR ||
+            baseKey == Keys.MAX_BORROWING_FACTOR_PER_SECOND;
     }
 
     function _isRiskOracleTwoParamMarketBaseKey(bytes32 baseKey) internal pure returns (bool) {
@@ -278,6 +280,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             baseKey == Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER ||
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.BASE_BORROWING_FACTOR ||
-            baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR;
+            baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR ||
+            baseKey == Keys.MAX_BORROWING_FACTOR_PER_SECOND;
     }
 }

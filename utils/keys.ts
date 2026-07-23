@@ -222,6 +222,7 @@ export const FUNDING_UPDATED_AT = hashString("FUNDING_UPDATED_AT");
 export const OPTIMAL_USAGE_FACTOR = hashString("OPTIMAL_USAGE_FACTOR");
 export const BASE_BORROWING_FACTOR = hashString("BASE_BORROWING_FACTOR");
 export const ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = hashString("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR");
+export const MAX_BORROWING_FACTOR_PER_SECOND = hashString("MAX_BORROWING_FACTOR_PER_SECOND");
 
 export const BORROWING_FACTOR = hashString("BORROWING_FACTOR");
 export const BORROWING_EXPONENT_FACTOR = hashString("BORROWING_EXPONENT_FACTOR");
@@ -819,6 +820,10 @@ export function baseBorrowingFactorKey(market: string, isLong: boolean) {
 
 export function aboveOptimalUsageBorrowingFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR, market, isLong]);
+}
+
+export function maxBorrowingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_BORROWING_FACTOR_PER_SECOND, market, isLong]);
 }
 
 export function borrowingExponentFactorKey(market: string, isLong: boolean) {

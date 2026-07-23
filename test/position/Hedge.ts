@@ -183,12 +183,14 @@ describe("Hedge GM", () => {
       },
     });
 
-    await time.increase(60 * 24 * 60 * 60);
+    // Use a longer accrual period because the borrowing rate is capped at
+    // MAX_BORROWING_FACTOR_PER_SECOND.
+    await time.increase(12_461_361);
 
     // about $7.5m(15% pool value) transferred to the pool as borrowing fees.
     const position0 = await getPositionInfo(0);
     expect(position0.fees.borrowing.borrowingFeeUsd).closeTo(
-      "7476819288868449579307115616840000000",
+      "7476819000000000000000000000000000000",
       "1000000000000000000000"
     );
   }
