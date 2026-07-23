@@ -12,7 +12,7 @@ import {
   createOrder,
   handleOrder,
 } from "../../utils/order";
-import { getAccountPositionCount } from "../../utils/position";
+import { getAccountPositionCount, getPositionKeys } from "../../utils/position";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { usingResult } from "../../utils/use";
@@ -84,7 +84,7 @@ describe("Exchange.MarketDecreaseOrder", () => {
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
   });
 
-  it("executeOrder allows decreases but not increases when borrowing accrual sees zero pool value", async () => {
+  it("executeOrder allows recovery actions but not size increases when borrowing accrual sees zero pool value", async () => {
     await handleOrder(fixture, {
       create: {
         market: ethUsdMarket,
@@ -113,6 +113,27 @@ describe("Exchange.MarketDecreaseOrder", () => {
         expectedCancellationReason: "UnableToGetBorrowingFactorEmptyPoolUsd",
       },
     });
+
+    const [positionKey] = await getPositionKeys(dataStore, 0, 1);
+    let position = await reader.getPosition(dataStore.address, positionKey);
+    expect(position.numbers.sizeInUsd).eq(decimalToFloat(200 * 1000));
+    expect(position.numbers.collateralAmount).eq(expandDecimals(10, 18));
+
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 18),
+        sizeDeltaUsd: 0,
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    position = await reader.getPosition(dataStore.address, positionKey);
+    expect(position.numbers.sizeInUsd).eq(decimalToFloat(200 * 1000));
+    expect(position.numbers.collateralAmount).eq(expandDecimals(11, 18));
 
     await handleOrder(fixture, {
       create: {
