@@ -249,7 +249,7 @@ library GlvShiftUtils {
             params.oracle,
             glvShift.glv(),
             true, // maximize
-            false // allowZeroPoolBorrowingFactor
+            true // allowZeroPoolBorrowingFactor
         );
         if (cache.glvValueSuccess) {
             cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
