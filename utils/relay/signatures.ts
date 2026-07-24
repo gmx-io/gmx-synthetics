@@ -534,53 +534,65 @@ export async function getClaimAffiliateRewardsSignature({
 
 // Staking signature helpers
 
-export async function getStakeGmxSignature({ signer, relayParams, verifyingContract, amount, chainId }) {
+export async function getStakeGmxSignature({ signer, relayParams, account, verifyingContract, amount, chainId }) {
   const types = {
     StakeGmx: [
+      { name: "account", type: "address" },
       { name: "amount", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { amount, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, amount, relayParams: hashRelayParams(relayParams) });
 }
 
-export async function getUnstakeGmxSignature({ signer, relayParams, verifyingContract, amount, chainId }) {
+export async function getUnstakeGmxSignature({ signer, relayParams, account, verifyingContract, amount, chainId }) {
   const types = {
     UnstakeGmx: [
+      { name: "account", type: "address" },
       { name: "amount", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { amount, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, amount, relayParams: hashRelayParams(relayParams) });
 }
 
-export async function getStakeEsGmxSignature({ signer, relayParams, verifyingContract, amount, chainId }) {
+export async function getStakeEsGmxSignature({ signer, relayParams, account, verifyingContract, amount, chainId }) {
   const types = {
     StakeEsGmx: [
+      { name: "account", type: "address" },
       { name: "amount", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { amount, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, amount, relayParams: hashRelayParams(relayParams) });
 }
 
-export async function getUnstakeEsGmxSignature({ signer, relayParams, verifyingContract, amount, chainId }) {
+export async function getUnstakeEsGmxSignature({ signer, relayParams, account, verifyingContract, amount, chainId }) {
   const types = {
     UnstakeEsGmx: [
+      { name: "account", type: "address" },
       { name: "amount", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { amount, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, amount, relayParams: hashRelayParams(relayParams) });
 }
 
-export async function getHandleStakingRewardsSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+export async function getHandleStakingRewardsSignature({
+  signer,
+  relayParams,
+  account,
+  verifyingContract,
+  params,
+  chainId,
+}) {
   const types = {
     HandleStakingRewards: [
+      { name: "account", type: "address" },
       { name: "shouldClaimGmx", type: "bool" },
       { name: "shouldStakeGmx", type: "bool" },
       { name: "shouldClaimEsGmx", type: "bool" },
@@ -592,6 +604,7 @@ export async function getHandleStakingRewardsSignature({ signer, relayParams, ve
   };
   const domain = getDomain(chainId, verifyingContract);
   return signTypedData(signer, domain, types, {
+    account,
     shouldClaimGmx: params.shouldClaimGmx,
     shouldStakeGmx: params.shouldStakeGmx,
     shouldClaimEsGmx: params.shouldClaimEsGmx,
@@ -602,23 +615,27 @@ export async function getHandleStakingRewardsSignature({ signer, relayParams, ve
   });
 }
 
-export async function getCompoundStakingRewardsSignature({ signer, relayParams, verifyingContract, chainId }) {
+export async function getCompoundStakingRewardsSignature({ signer, relayParams, account, verifyingContract, chainId }) {
   const types = {
-    CompoundStakingRewards: [{ name: "relayParams", type: "bytes32" }],
+    CompoundStakingRewards: [
+      { name: "account", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, relayParams: hashRelayParams(relayParams) });
 }
 
-export async function getVestEsGmxSignature({ signer, relayParams, verifyingContract, amount, chainId }) {
+export async function getVestEsGmxSignature({ signer, relayParams, account, verifyingContract, amount, chainId }) {
   const types = {
     VestEsGmx: [
+      { name: "account", type: "address" },
       { name: "amount", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { amount, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, amount, relayParams: hashRelayParams(relayParams) });
 }
 
 export async function getWithdrawVestingSignature({ signer, relayParams, verifyingContract, account, chainId }) {
@@ -632,42 +649,67 @@ export async function getWithdrawVestingSignature({ signer, relayParams, verifyi
   return signTypedData(signer, domain, types, { account, relayParams: hashRelayParams(relayParams) });
 }
 
-export async function getDelegateGovGmxSignature({ signer, relayParams, verifyingContract, delegatee, chainId }) {
+export async function getDelegateGovGmxSignature({
+  signer,
+  relayParams,
+  account,
+  verifyingContract,
+  delegatee,
+  chainId,
+}) {
   const types = {
     DelegateGovGmx: [
+      { name: "account", type: "address" },
       { name: "delegatee", type: "address" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { delegatee, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, delegatee, relayParams: hashRelayParams(relayParams) });
 }
 
-export async function getSignalStakingTransferSignature({ signer, relayParams, verifyingContract, receiver, chainId }) {
+export async function getSignalStakingTransferSignature({
+  signer,
+  relayParams,
+  account,
+  verifyingContract,
+  receiver,
+  chainId,
+}) {
   const types = {
     SignalStakingTransfer: [
+      { name: "account", type: "address" },
       { name: "receiver", type: "address" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { receiver, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, receiver, relayParams: hashRelayParams(relayParams) });
 }
 
-export async function getAcceptStakingTransferSignature({ signer, relayParams, verifyingContract, sender, chainId }) {
+export async function getAcceptStakingTransferSignature({
+  signer,
+  relayParams,
+  account,
+  verifyingContract,
+  sender,
+  chainId,
+}) {
   const types = {
     AcceptStakingTransfer: [
+      { name: "account", type: "address" },
       { name: "sender", type: "address" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { sender, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, sender, relayParams: hashRelayParams(relayParams) });
 }
 
 export async function getWithdrawFromWalletSignature({
   signer,
   relayParams,
+  account,
   verifyingContract,
   token,
   amount,
@@ -675,11 +717,12 @@ export async function getWithdrawFromWalletSignature({
 }) {
   const types = {
     WithdrawFromWallet: [
+      { name: "account", type: "address" },
       { name: "token", type: "address" },
       { name: "amount", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const domain = getDomain(chainId, verifyingContract);
-  return signTypedData(signer, domain, types, { token, amount, relayParams: hashRelayParams(relayParams) });
+  return signTypedData(signer, domain, types, { account, token, amount, relayParams: hashRelayParams(relayParams) });
 }

@@ -62,8 +62,15 @@ library ExecuteOrderUtils {
         );
 
         bool allowZeroPoolBorrowingFactor =
-            Order.isDecreaseOrder(params.order.orderType()) &&
-            params.order.sizeDeltaUsd() > 0;
+            (
+                Order.isIncreaseOrder(params.order.orderType()) &&
+                params.order.sizeDeltaUsd() == 0 &&
+                params.order.initialCollateralDeltaAmount() > 0
+            ) ||
+            (
+                Order.isDecreaseOrder(params.order.orderType()) &&
+                params.order.sizeDeltaUsd() > 0
+            );
         PositionUtils.updateFundingAndBorrowingState(
             params.contracts.dataStore,
             params.contracts.eventEmitter,

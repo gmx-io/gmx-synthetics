@@ -494,4 +494,82 @@ describe("MultichainStakingRouter", () => {
       expect(await gmx.balanceOf(walletAddress)).to.equal(0);
     });
   });
+
+  // The account is part of each staking hash, so two accounts signing the same params
+  // get different digests and both go through. userNonce is pinned so the payloads only
+  // differ by account (the default nonce is random per call).
+  describe("account-bound digests", () => {
+    it("two accounts can submit identical stakeGmx payloads", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await fundMultichainBalance(fixture, { account: user1.address, token: gmx, amount: stakeAmount });
+
+      const sharedNonce = 424242;
+      const sharedDeadline = Math.floor(Date.now() / 1000) + 3600;
+      const user0Params = getDefaultStakingRelayParams({
+        amount: stakeAmount,
+        userNonce: sharedNonce,
+        deadline: sharedDeadline,
+        signer: user0,
+        account: user0.address,
+      });
+
+      // same params, signed by a different account
+      const user1Params = {
+        ...user0Params,
+        signer: user1,
+        account: user1.address,
+      };
+
+      // both go through — the digests differ by account
+      await sendStakeGmx(user0Params);
+      await expect(sendStakeGmx(user1Params)).to.not.be.reverted;
+
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, gmx.address))).to.equal(0);
+    });
+
+    it("two accounts can submit identical compoundStakingRewards payloads", async () => {
+      // compound has no action params, only the account
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await fundMultichainBalance(fixture, { account: user1.address, token: gmx, amount: stakeAmount });
+      // stake so both wallets exist
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount, signer: user1, account: user1.address }));
+
+      const sharedNonce = 515151;
+      const sharedDeadline = Math.floor(Date.now() / 1000) + 3600;
+      const user0Params = getDefaultStakingRelayParams({
+        userNonce: sharedNonce,
+        deadline: sharedDeadline,
+        signer: user0,
+        account: user0.address,
+      });
+      const user1Params = {
+        ...user0Params,
+        signer: user1,
+        account: user1.address,
+      };
+
+      await sendCompoundStakingRewards(user0Params);
+      await sendCompoundStakingRewards(user1Params);
+
+      const user0Wallet = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      const user1Wallet = await gmxAccountWalletFactory.getWalletAddress(user1.address);
+      expect(await mockRewardRouterV2.compoundCalled(user0Wallet)).to.be.true;
+      expect(await mockRewardRouterV2.compoundCalled(user1Wallet)).to.be.true;
+    });
+
+    it("the same signed staking payload cannot be submitted twice", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+
+      const params = getDefaultStakingRelayParams({
+        amount: stakeAmount,
+        userNonce: 626262,
+        deadline: Math.floor(Date.now() / 1000) + 3600,
+      });
+
+      await sendStakeGmx(params);
+      await expect(sendStakeGmx(params)).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
+    });
+  });
 });
