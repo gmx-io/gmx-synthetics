@@ -14,12 +14,12 @@ import * as keys from "../../utils/keys";
 describe("Exchange.SwapOrder", () => {
   let fixture;
   let user0;
-  let dataStore, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let dataStore, swapHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
+    ({ dataStore, swapHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -48,6 +48,24 @@ describe("Exchange.SwapOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
+    expect(await usdc.balanceOf(user0.address)).eq("50000000000");
+  });
+
+  it("executes an ordinary swap when atomic swaps are disabled", async () => {
+    await dataStore.setBool(keys.atomicSwapFeatureDisabledKey(swapHandler.address), true);
+
+    await handleOrder(fixture, {
+      create: {
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        acceptablePrice: 0,
+        orderType: OrderType.MarketSwap,
+        swapPath: [ethUsdMarket.marketToken],
+      },
+      execute: {},
+    });
+
     expect(await getOrderCount(dataStore)).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq("50000000000");
   });

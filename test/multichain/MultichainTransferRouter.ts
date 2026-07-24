@@ -20,6 +20,7 @@ describe("MultichainTransferRouter", () => {
     multichainVault,
     router,
     multichainTransferRouter,
+    swapHandler,
     wnt,
     usdc,
     mockStargatePoolNative,
@@ -36,6 +37,7 @@ describe("MultichainTransferRouter", () => {
       multichainVault,
       router,
       multichainTransferRouter,
+      swapHandler,
       wnt,
       usdc,
       mockStargatePoolNative,
@@ -475,6 +477,41 @@ describe("MultichainTransferRouter", () => {
           tx,
           label: "multichainTransferRouter.bridgeOut with bridge fee swap",
         });
+      });
+
+      it("reverts bridge fee swap when atomic swaps are disabled", async () => {
+        await bridgeInTokens(fixture, {
+          account: user1,
+          token: usdc,
+          amount: bridgeOutAmount.add(bridgeFeeUsdc),
+        });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        const featureKey = keys.atomicSwapFeatureDisabledKey(swapHandler.address);
+        await dataStore.setBool(featureKey, true);
+
+        await expect(sendBridgeOut(bridgeOutParams))
+          .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+          .withArgs(featureKey);
       });
 
       it("no swap when feeSwapPath is empty (backward compat)", async () => {
