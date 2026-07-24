@@ -144,6 +144,41 @@ describe("MarketUtils", () => {
     ).gt(0);
   });
 
+  it("getBorrowingFactorPerSecond caps the kink model rate", async () => {
+    const marketUtilsTest = await deployContract("MarketUtilsTest", []);
+    const maxBorrowingFactorPerSecond = decimalToFloat(7, 8);
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), 1);
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+    await dataStore.setUint(keys.optimalUsageFactorKey(ethUsdMarket.marketToken, true), percentageToFloat("80%"));
+    await dataStore.setUint(
+      keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, true),
+      percentageToFloat("50%")
+    );
+    await dataStore.setUint(keys.baseBorrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(
+      keys.aboveOptimalUsageBorrowingFactorKey(ethUsdMarket.marketToken, true),
+      decimalToFloat(1, 7)
+    );
+    await dataStore.setUint(
+      keys.maxBorrowingFactorPerSecondKey(ethUsdMarket.marketToken, true),
+      maxBorrowingFactorPerSecond
+    );
+
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        true,
+        false
+      )
+    ).eq(maxBorrowingFactorPerSecond);
+  });
+
   it("claimCollateral applies claimableReductionFactor correctly before timeDelay", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));

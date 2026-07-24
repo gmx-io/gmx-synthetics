@@ -3,7 +3,7 @@ import { deployFixture } from "../../utils/fixture";
 
 import { EXCLUDED_CONFIG_KEYS } from "../../utils/config";
 import { grantRole } from "../../utils/role";
-import { encodeData, hashString, keccakString } from "../../utils/hash";
+import { encodeData, hashString } from "../../utils/hash";
 import { bigNumberify, decimalToFloat, expandDecimals, percentageToFloat } from "../../utils/math";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
@@ -16,12 +16,12 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 describe("Config", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let config, riskOracleConfig, oracle, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt, usdc;
+  let config, riskOracleConfig, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt, usdc;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ config, oracle, riskOracleConfig, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt, usdc } =
+    ({ config, oracle, riskOracleConfig, configUtils, dataStore, roleStore, ethUsdMarket, wnt, usdc } =
       fixture.contracts);
     ({ user0, user1, user2, user3 } = fixture.accounts);
 
@@ -663,6 +663,28 @@ describe("Config", () => {
         4
       )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+  });
+
+  it("validates max borrowing factor per second", async () => {
+    const maxAllowedValue = await configUtils.MAX_ALLOWED_MAX_BORROWING_FACTOR_PER_SECOND();
+    const dataForLongs = encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]);
+    const dataForShorts = encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]);
+
+    await expect(
+      config.connect(user0).setUint(keys.MAX_BORROWING_FACTOR_PER_SECOND, dataForLongs, maxAllowedValue.add(1))
+    )
+      .to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange")
+      .withArgs(keys.MAX_BORROWING_FACTOR_PER_SECOND, maxAllowedValue.add(1));
+
+    await config.connect(user0).setUint(keys.MAX_BORROWING_FACTOR_PER_SECOND, dataForLongs, maxAllowedValue);
+    await config.connect(user0).setUint(keys.MAX_BORROWING_FACTOR_PER_SECOND, dataForShorts, maxAllowedValue.sub(1));
+
+    expect(await dataStore.getUint(keys.maxBorrowingFactorPerSecondKey(ethUsdMarket.marketToken, true))).eq(
+      maxAllowedValue
+    );
+    expect(await dataStore.getUint(keys.maxBorrowingFactorPerSecondKey(ethUsdMarket.marketToken, false))).eq(
+      maxAllowedValue.sub(1)
+    );
   });
 
   it("validates data stream spread reduction factor", async () => {

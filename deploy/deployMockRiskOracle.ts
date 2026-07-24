@@ -35,6 +35,7 @@ const func = createDeployFunction({
       "optimalUsageFactor",
       "baseBorrowingFactor",
       "aboveOptimalUsageBorrowingFactor",
+      "maxBorrowingFactorPerSecond",
       "maxPnlFactorForTradersLongs",
     ];
     return [initialSenders, initialUpdateTypes];

@@ -132,6 +132,10 @@ export type BaseMarketConfig = {
   aboveOptimalUsageBorrowingFactorForLongs?: BigNumberish;
   aboveOptimalUsageBorrowingFactorForShorts?: BigNumberish;
 
+  maxBorrowingFactorPerSecond?: BigNumberish;
+  maxBorrowingFactorPerSecondForLongs?: BigNumberish;
+  maxBorrowingFactorPerSecondForShorts?: BigNumberish;
+
   baseBorrowingFactor?: BigNumberish;
   baseBorrowingFactorForLongs?: BigNumberish;
   baseBorrowingFactorForShorts?: BigNumberish;
@@ -288,6 +292,7 @@ type BorrowingRateConfig = Partial<{
   optimalUsageFactor: BigNumberish;
   baseBorrowingFactor: BigNumberish;
   aboveOptimalUsageBorrowingFactor: BigNumberish;
+  maxBorrowingFactorPerSecond: BigNumberish;
 }>;
 
 const borrowingRateConfig_LowMax_WithLowerBase: BorrowingRateConfig = {
@@ -386,6 +391,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   optimalUsageFactor: 0,
   baseBorrowingFactor: 0,
   aboveOptimalUsageBorrowingFactor: 0,
+  maxBorrowingFactorPerSecond: "100000000000000000000000",
 
   borrowingExponentFactor: decimalToFloat(1),
 
@@ -497,6 +503,7 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   maxPositionImpactFactorForLiquidations: percentageToFloat("1%"), // 1%
 
   maxFundingFactorPerSecond: "100000000000000000000000",
+  maxBorrowingFactorPerSecond: "100000000000000000000000",
 };
 
 const config: {
@@ -6870,6 +6877,13 @@ export default async function (hre: HardhatRuntimeEnvironment, marketHours?: Mar
         "aboveOptimalUsageBorrowingFactor",
         "aboveOptimalUsageBorrowingFactorForLongs",
         "aboveOptimalUsageBorrowingFactorForShorts"
+      );
+
+      fillLongShortValues(
+        market,
+        "maxBorrowingFactorPerSecond",
+        "maxBorrowingFactorPerSecondForLongs",
+        "maxBorrowingFactorPerSecondForShorts"
       );
 
       fillLongShortValues(market, "baseBorrowingFactor", "baseBorrowingFactorForLongs", "baseBorrowingFactorForShorts");

@@ -434,6 +434,7 @@ library Keys {
     bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
     bytes32 public constant BASE_BORROWING_FACTOR = keccak256(abi.encode("BASE_BORROWING_FACTOR"));
     bytes32 public constant ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = keccak256(abi.encode("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR"));
+    bytes32 public constant MAX_BORROWING_FACTOR_PER_SECOND = keccak256(abi.encode("MAX_BORROWING_FACTOR_PER_SECOND"));
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
     bytes32 public constant BORROWING_EXPONENT_FACTOR = keccak256(abi.encode("BORROWING_EXPONENT_FACTOR"));
     bytes32 public constant SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = keccak256(abi.encode("SKIP_BORROWING_FEE_FOR_SMALLER_SIDE"));
@@ -1892,6 +1893,18 @@ library Keys {
     function aboveOptimalUsageBorrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
+            market,
+            isLong
+        ));
+    }
+
+    // @dev key for max borrowing factor per second
+    // @param market the market to check
+    // @param isLong whether to get the key for the long or short side
+    // @return key for max borrowing factor per second
+    function maxBorrowingFactorPerSecondKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_BORROWING_FACTOR_PER_SECOND,
             market,
             isLong
         ));
