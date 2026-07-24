@@ -269,6 +269,7 @@ library Keys {
     bytes32 public constant SIGNAL_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("SIGNAL_STAKING_TRANSFER_GAS_LIMIT"));
     bytes32 public constant ACCEPT_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("ACCEPT_STAKING_TRANSFER_GAS_LIMIT"));
     bytes32 public constant WITHDRAW_FROM_WALLET_GAS_LIMIT = keccak256(abi.encode("WITHDRAW_FROM_WALLET_GAS_LIMIT"));
+    bytes32 public constant WITHDRAW_VESTING_GAS_LIMIT = keccak256(abi.encode("WITHDRAW_VESTING_GAS_LIMIT"));
 
     bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
     bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));

@@ -19,6 +19,8 @@ library StakingUtils {
         keccak256(bytes("CompoundStakingRewards(address account,bytes32 relayParams)"));
     bytes32 public constant VEST_ES_GMX_TYPEHASH =
         keccak256(bytes("VestEsGmx(address account,uint256 amount,bytes32 relayParams)"));
+    bytes32 public constant WITHDRAW_VESTING_TYPEHASH =
+        keccak256(bytes("WithdrawVesting(address account,bytes32 relayParams)"));
     bytes32 public constant DELEGATE_GOV_GMX_TYPEHASH =
         keccak256(bytes("DelegateGovGmx(address account,address delegatee,bytes32 relayParams)"));
     bytes32 public constant SIGNAL_STAKING_TRANSFER_TYPEHASH =
@@ -91,6 +93,13 @@ library StakingUtils {
         uint256 amount
     ) external pure returns (bytes32) {
         return keccak256(abi.encode(VEST_ES_GMX_TYPEHASH, account, amount, _getRelayParamsHash(relayParams)));
+    }
+
+    function getWithdrawVestingStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account
+    ) external pure returns (bytes32) {
+        return keccak256(abi.encode(WITHDRAW_VESTING_TYPEHASH, account, _getRelayParamsHash(relayParams)));
     }
 
     function getDelegateGovGmxStructHash(

@@ -98,6 +98,16 @@ contract MultichainStakingRouter is IMultichainStakingRouter, MultichainRouter {
         MultichainStakingUtils.vestEsGmx(_stakingContracts(), account, srcChainId, amount);
     }
 
+    function withdrawVesting(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
+        bytes32 structHash = StakingUtils.getWithdrawVestingStructHash(relayParams, account);
+        _validateCall(relayParams, account, structHash, srcChainId);
+        MultichainStakingUtils.withdrawVesting(_stakingContracts(), account, srcChainId);
+    }
+
     function delegateGovGmx(
         IRelayUtils.RelayParams calldata relayParams,
         address account,

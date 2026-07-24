@@ -67,6 +67,8 @@ library LayerZeroProviderUtils {
             _handleAcceptStakingTransfer(contracts, account, srcChainId, actionType, actionData);
         } else if (actionType == IMultichainProvider.ActionType.WithdrawFromWallet) {
             _handleWithdrawFromWallet(contracts, account, srcChainId, actionType, actionData);
+        } else if (actionType == IMultichainProvider.ActionType.WithdrawVesting) {
+            _handleWithdrawVesting(contracts, account, srcChainId, actionType, actionData);
         }
     }
 
@@ -391,6 +393,19 @@ library LayerZeroProviderUtils {
         uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.WITHDRAW_FROM_WALLET_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.withdrawFromWallet(relayParams, account, srcChainId, token, amount) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(contracts.eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(contracts.eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleWithdrawVesting(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
+        IRelayUtils.RelayParams memory relayParams = abi.decode(actionData, (IRelayUtils.RelayParams));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.WITHDRAW_VESTING_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try contracts.multichainStakingRouter.withdrawVesting(relayParams, account, srcChainId) {
         } catch Error(string memory reason) {
             MultichainEventUtils.emitMultichainBridgeActionFailed(contracts.eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
         } catch (bytes memory reasonBytes) {

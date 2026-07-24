@@ -638,6 +638,17 @@ export async function getVestEsGmxSignature({ signer, relayParams, account, veri
   return signTypedData(signer, domain, types, { account, amount, relayParams: hashRelayParams(relayParams) });
 }
 
+export async function getWithdrawVestingSignature({ signer, relayParams, verifyingContract, account, chainId }) {
+  const types = {
+    WithdrawVesting: [
+      { name: "account", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = getDomain(chainId, verifyingContract);
+  return signTypedData(signer, domain, types, { account, relayParams: hashRelayParams(relayParams) });
+}
+
 export async function getDelegateGovGmxSignature({
   signer,
   relayParams,

@@ -3,9 +3,9 @@ import { createDeployFunction } from "../utils/deploy";
 
 const func = createDeployFunction({
   contractName: "MockGmxVester",
-  dependencyNames: ["ESGMX"],
+  dependencyNames: ["ESGMX", "GMX"],
   getDeployArgs: async ({ dependencyContracts }) => {
-    return [dependencyContracts.ESGMX.address];
+    return [dependencyContracts.ESGMX.address, dependencyContracts.GMX.address];
   },
 });
 
