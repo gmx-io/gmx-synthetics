@@ -632,7 +632,7 @@ describe("Glv Withdrawals", () => {
     expect(await getGlvWithdrawalCount(dataStore)).eq(1);
   });
 
-  it("executeGlvWithdrawal is blocked with a swap path when withdrawalSwapFeatureDisabled is set and stays pending", async () => {
+  it("executeGlvWithdrawal is blocked by the withdrawalHandler-scoped withdrawalSwapFeatureDisabled key and stays pending", async () => {
     await handleGlvDeposit(fixture, {
       create: {
         longTokenAmount: expandDecimals(1, 18),
@@ -656,6 +656,65 @@ describe("Glv Withdrawals", () => {
     expect(await getGlvWithdrawalCount(dataStore)).eq(1);
 
     await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, false);
+
+    await executeGlvWithdrawal(fixture);
+    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
+  });
+
+  it("executeGlvWithdrawal is blocked by the glvWithdrawalHandler-scoped withdrawalSwapFeatureDisabled key and stays pending", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    const _withdrawalSwapFeatureDisabledKey = keys.withdrawalSwapFeatureDisabledKey(glvWithdrawalHandler.address);
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+      longTokenSwapPath: [ethUsdMarket.marketToken],
+    });
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await expect(executeGlvWithdrawal(fixture))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, false);
+
+    await executeGlvWithdrawal(fixture);
+    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+      shortTokenSwapPath: [ethUsdMarket.marketToken],
+    });
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await expect(executeGlvWithdrawal(fixture))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, false);
+
+    await executeGlvWithdrawal(fixture);
+    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+    });
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
 
     await executeGlvWithdrawal(fixture);
     expect(await getGlvWithdrawalCount(dataStore)).eq(0);
