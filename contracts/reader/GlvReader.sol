@@ -40,6 +40,28 @@ contract GlvReader {
             );
     }
 
+    function getGlvValueForDeposit(
+        DataStore dataStore,
+        address[] memory marketAddresses,
+        Price.Props[] memory indexTokenPrices,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        address glv,
+        bool maximize
+    ) external view returns (uint256) {
+        return
+            GlvUtils.getGlvValue(
+                dataStore,
+                marketAddresses,
+                indexTokenPrices,
+                longTokenPrice,
+                shortTokenPrice,
+                glv,
+                maximize,
+                true // allowZeroPoolBorrowingFactor
+            );
+    }
+
     function getGlvTokenPrice(
         DataStore dataStore,
         address[] memory marketAddresses,
@@ -58,6 +80,28 @@ contract GlvReader {
                 shortTokenPrice,
                 glv,
                 maximize
+            );
+    }
+
+    function getGlvTokenPriceForDeposit(
+        DataStore dataStore,
+        address[] memory marketAddresses,
+        Price.Props[] memory indexTokenPrices,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        address glv,
+        bool maximize
+    ) external view returns (uint256, uint256, uint256) {
+        return
+            GlvUtils.getGlvTokenPrice(
+                dataStore,
+                marketAddresses,
+                indexTokenPrices,
+                longTokenPrice,
+                shortTokenPrice,
+                glv,
+                maximize,
+                true // allowZeroPoolBorrowingFactor
             );
     }
 

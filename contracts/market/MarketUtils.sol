@@ -171,6 +171,52 @@ library MarketUtils {
         bytes32 pnlFactorType,
         bool maximize
     ) external view returns (int256, MarketPoolValueInfo.Props memory) {
+        return
+            _getMarketTokenPrice(
+                dataStore,
+                market,
+                indexTokenPrice,
+                longTokenPrice,
+                shortTokenPrice,
+                pnlFactorType,
+                maximize,
+                false // allowZeroPoolBorrowingFactor
+            );
+    }
+
+    // @dev use only for quotes that model deposit or recovery executions
+    function getMarketTokenPriceForDeposit(
+        DataStore dataStore,
+        Market.Props memory market,
+        Price.Props memory indexTokenPrice,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        bytes32 pnlFactorType,
+        bool maximize
+    ) external view returns (int256, MarketPoolValueInfo.Props memory) {
+        return
+            _getMarketTokenPrice(
+                dataStore,
+                market,
+                indexTokenPrice,
+                longTokenPrice,
+                shortTokenPrice,
+                pnlFactorType,
+                maximize,
+                true // allowZeroPoolBorrowingFactor
+            );
+    }
+
+    function _getMarketTokenPrice(
+        DataStore dataStore,
+        Market.Props memory market,
+        Price.Props memory indexTokenPrice,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        bytes32 pnlFactorType,
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
+    ) private view returns (int256, MarketPoolValueInfo.Props memory) {
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
         MarketPoolValueInfo.Props memory poolValueInfo = getPoolValueInfo(
@@ -181,7 +227,7 @@ library MarketUtils {
             shortTokenPrice,
             pnlFactorType,
             maximize,
-            false // allowZeroPoolBorrowingFactor
+            allowZeroPoolBorrowingFactor
         );
 
         // if the supply is zero then treat the market token price as 1 USD
@@ -2203,13 +2249,19 @@ library MarketUtils {
     // @param market the position's market
     // @param prices the prices of the market tokens
     // @return the borrowing fees for a position
-    function getNextBorrowingFees(DataStore dataStore, Position.Props memory position, Market.Props memory market, MarketPrices memory prices) internal view returns (uint256) {
+    function getNextBorrowingFees(
+        DataStore dataStore,
+        Position.Props memory position,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool allowZeroPoolBorrowingFactor
+    ) internal view returns (uint256) {
         (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */, ) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
             position.isLong(),
-            false // allowZeroPoolBorrowingFactor
+            allowZeroPoolBorrowingFactor
         );
 
         if (position.borrowingFactor() > nextCumulativeBorrowingFactor) {
@@ -2949,6 +3001,29 @@ library MarketUtils {
         bool isLong,
         bool allowZeroPoolBorrowingFactor
     ) internal view returns (uint256) {
+        (uint256 borrowingFactorPerSecond, bool borrowingFactorAvailable) = getBorrowingFactorPerSecondWithAvailability(
+            dataStore,
+            market,
+            prices,
+            isLong
+        );
+
+        if (!borrowingFactorAvailable && !allowZeroPoolBorrowingFactor) {
+            revert Errors.UnableToGetBorrowingFactorEmptyPoolUsd();
+        }
+
+        return borrowingFactorPerSecond;
+    }
+
+    // @dev returns borrowingFactorAvailable false only when strict borrowing
+    // factor calculation would revert because reserved USD is nonzero while
+    // pool USD is zero
+    function getBorrowingFactorPerSecondWithAvailability(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong
+    ) internal view returns (uint256, bool) {
         uint256 reservedUsd = getReservedUsd(
             dataStore,
             market,
@@ -2956,7 +3031,7 @@ library MarketUtils {
             isLong
         );
 
-        if (reservedUsd == 0) { return 0; }
+        if (reservedUsd == 0) { return (0, true); }
 
         // check if the borrowing fee for the smaller side should be skipped
         // if skipBorrowingFeeForSmallerSide is true, and the longOpenInterest is exactly the same as the shortOpenInterest
@@ -2983,39 +3058,35 @@ library MarketUtils {
             // if getting the borrowing factor for longs and if the longOpenInterest
             // is smaller than the shortOpenInterest, then return zero
             if (isLong && longOpenInterest < shortOpenInterest) {
-                return 0;
+                return (0, true);
             }
 
             // if getting the borrowing factor for shorts and if the shortOpenInterest
             // is smaller than the longOpenInterest, then return zero
             if (!isLong && shortOpenInterest < longOpenInterest) {
-                return 0;
+                return (0, true);
             }
         }
 
         uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong, false);
 
         if (poolUsd == 0) {
-            if (allowZeroPoolBorrowingFactor) {
-                // Borrowing for a depleted pool is uncomputable. Recovery paths
-                // may skip accrual so they can execute without using this as a
-                // global market freeze.
-                return 0;
-            }
-
-            revert Errors.UnableToGetBorrowingFactorEmptyPoolUsd();
+            return (0, false);
         }
 
         uint256 optimalUsageFactor = getOptimalUsageFactor(dataStore, market.marketToken, isLong);
 
         if (optimalUsageFactor != 0) {
-            return getKinkBorrowingFactor(
-                dataStore,
-                market,
-                isLong,
-                reservedUsd,
-                poolUsd,
-                optimalUsageFactor
+            return (
+                getKinkBorrowingFactor(
+                    dataStore,
+                    market,
+                    isLong,
+                    reservedUsd,
+                    poolUsd,
+                    optimalUsageFactor
+                ),
+                true
             );
         }
 
@@ -3025,7 +3096,7 @@ library MarketUtils {
         uint256 reservedUsdToPoolFactor = Precision.toFactor(reservedUsdAfterExponent, poolUsd);
         uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
 
-        return Precision.applyFactor(reservedUsdToPoolFactor, borrowingFactor);
+        return (Precision.applyFactor(reservedUsdToPoolFactor, borrowingFactor), true);
     }
 
     function getKinkBorrowingFactor(

@@ -217,6 +217,29 @@ library GlvUtils {
         address glv,
         bool maximize
     ) internal view returns (uint256, uint256, uint256) {
+        return
+            getGlvTokenPrice(
+                dataStore,
+                marketAddresses,
+                indexTokenPrices,
+                longTokenPrice,
+                shortTokenPrice,
+                glv,
+                maximize,
+                false // allowZeroPoolBorrowingFactor
+            );
+    }
+
+    function getGlvTokenPrice(
+        DataStore dataStore,
+        address[] memory marketAddresses,
+        Price.Props[] memory indexTokenPrices,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        address glv,
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
+    ) internal view returns (uint256, uint256, uint256) {
         uint256 value = getGlvValue(
             dataStore,
             marketAddresses,
@@ -225,7 +248,7 @@ library GlvUtils {
             shortTokenPrice,
             glv,
             maximize,
-            false // allowZeroPoolBorrowingFactor
+            allowZeroPoolBorrowingFactor
         );
         uint256 supply = ERC20(glv).totalSupply();
 
