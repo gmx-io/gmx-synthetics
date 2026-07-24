@@ -50,7 +50,7 @@ const func = createDeployFunction({
       dependencyContracts.ShiftHandler.address,
     ];
   },
-  libraryNames: ["GasUtils", "MultichainUtils", "RelayUtils"],
+  libraryNames: ["GasUtils", "MultichainUtils", "RelayUtils", "SignatureUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");

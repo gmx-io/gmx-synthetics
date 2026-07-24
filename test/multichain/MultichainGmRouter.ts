@@ -199,11 +199,11 @@ describe("MultichainGmRouter", () => {
       // state after executing deposit
       expect(await getDepositCount(dataStore)).eq(0);
       expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
-        expandDecimals(2095, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002095)
+        expandDecimals(2053, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002063)
         GAS_BUFFER.DEPOSIT
       );
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-        expandDecimals(2095, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002095)
+        expandDecimals(2053, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002063)
         GAS_BUFFER.DEPOSIT
       );
       expect(await usdc.balanceOf(multichainVault.address)).eq(0);
@@ -597,7 +597,7 @@ describe("MultichainGmRouter", () => {
 
       // TODO: Enable test once hardhat supports changing the chain id during the test
       // without changing the chainId, tx reverts with InvalidRecoveredSigner (signature fails)
-      // to test the bridgeOut flow, could temporarily disable the signature verification (e.g. comment out the RelayUtils.validateSignature call)
+      // to test the bridgeOut flow, could temporarily disable the signature verification (e.g. comment out the SignatureUtils.validateSignature call)
       it.skip("create deposit and bridge out from controller the GM tokens, on the source chain", async () => {
         // use the StargatePoolUSDC as the StargatePoolGM --> StargatePoolGM.token() will be the GM token
         const mockStargatePoolGM = mockStargatePoolUsdc;

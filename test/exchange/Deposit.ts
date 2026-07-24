@@ -28,6 +28,7 @@ describe("Exchange.Deposit", () => {
   let user0, user1, user2;
   let reader,
     dataStore,
+    exchangeRouter,
     depositVault,
     depositHandler,
     depositStoreUtils,
@@ -46,6 +47,7 @@ describe("Exchange.Deposit", () => {
     ({
       reader,
       dataStore,
+      exchangeRouter,
       depositVault,
       depositHandler,
       depositStoreUtils,
@@ -201,10 +203,39 @@ describe("Exchange.Deposit", () => {
     expect(deposit.numbers.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(deposit.numbers.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(deposit.numbers.minMarketTokens).eq(100);
+    expect(deposit.numbers.uiFeeFactor).eq(0);
     expect(deposit.numbers.executionFee).eq("500");
     expect(deposit.numbers.callbackGasLimit).eq("200000");
     expect(deposit.flags.shouldUnwrapNativeToken).eq(true);
     expect(deposit._dataList).deep.eq(dataList);
+  });
+
+  it("snapshots uiFeeFactor for deposit execution", async () => {
+    const lowUiFeeFactor = decimalToFloat(1, 3); // 0.1%
+    const highUiFeeFactor = decimalToFloat(1, 2); // 1%
+    const depositAmount = expandDecimals(10_000, 6);
+
+    await dataStore.setUint(keys.MAX_UI_FEE_FACTOR, highUiFeeFactor);
+    await exchangeRouter.connect(user1).setUiFeeFactor(lowUiFeeFactor);
+
+    await createDeposit(fixture, {
+      receiver: user0,
+      uiFeeReceiver: user1,
+      shortTokenAmount: depositAmount,
+    });
+
+    const depositKeys = await getDepositKeys(dataStore, 0, 1);
+    const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
+    expect(deposit.numbers.uiFeeFactor).eq(lowUiFeeFactor);
+
+    await exchangeRouter.connect(user1).setUiFeeFactor(highUiFeeFactor);
+    await executeDeposit(fixture);
+
+    const claimableUiFeeAmount = await dataStore.getUint(
+      keys.claimableUiFeeAmountKey(ethUsdMarket.marketToken, usdc.address, user1.address)
+    );
+
+    expect(claimableUiFeeAmount).eq(expandDecimals(10, 6));
   });
 
   it("cancelDeposit", async () => {
@@ -232,7 +263,7 @@ describe("Exchange.Deposit", () => {
 
     await expect(depositHandler.connect(user0).cancelDeposit(depositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
+      .withArgs(user0.address, "ORDER_KEEPER|CONTROLLER");
 
     await expect(depositHandler.cancelDeposit(depositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")

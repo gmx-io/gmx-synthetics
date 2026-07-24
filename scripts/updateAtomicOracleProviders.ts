@@ -4,12 +4,18 @@ import { setAtomicOracleProviderPayload, timelockWriteMulticall } from "../utils
 const expectedTimelockMethods = ["signalSetAtomicOracleProvider", "setAtomicOracleProviderAfterSignal"];
 
 async function main() {
-  const timelock = await hre.ethers.getContract("TimelockConfig");
+  const timelockConfigAddresses = {
+    arbitrum: "0x4A1D9e342E2dB5f4a02c9eF5cB29CaF289f31599",
+    avalanche: "0x37e1AeB6118B0106810D2eF7662875C414e39Ca4",
+    botanix: "0x8fB97fEfF5f7CfbE9c63D51F6CbBC914E425d965",
+    megaEth: "0x9d5f3fac443748c28FB5dc964D74F8419F686F6D",
+  };
+  const timelock = await hre.ethers.getContractAt("TimelockConfig", timelockConfigAddresses[hre.network.name]);
 
-  // const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
-  const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
+  const oracleProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
+  // const oracleProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
 
-  const providersToAdd = [chainlinkDataStreamProvider.address];
+  const providersToAdd = [oracleProvider.address];
 
   const multicallWriteParams = [];
 

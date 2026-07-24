@@ -518,8 +518,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         (uint256 wntForChainlink, uint256 wntForTreasury) = _calculateChainlinkAndTreasuryAmounts(
             totalWntBalance,
             feesV1Usd,
-            feesV2Usd,
-            keeperCostsV2
+            feesV2Usd
         );
 
         // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
@@ -548,17 +547,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 wntForReferralRewards
     ) internal returns (uint256) {
         // calculate the remaining WNT for Treasury, validate the calculated amount and adjust if necessary
-        uint256 wntBeforeV1KeeperCostsAndReferralRewards = totalWntBalance -
-            keeperCostsV2 -
-            wntForChainlink -
-            wntForTreasury;
+        uint256 wntBeforeKeeperCostsAndReferralRewards = totalWntBalance - wntForChainlink - wntForTreasury;
 
-        uint256 keeperAndReferralCostsV1 = keeperCostsV1 + wntForReferralRewards;
-        if (keeperAndReferralCostsV1 > wntBeforeV1KeeperCostsAndReferralRewards) {
-            uint256 additionalWntForV1Costs = keeperAndReferralCostsV1 - wntBeforeV1KeeperCostsAndReferralRewards;
-            if (additionalWntForV1Costs > wntForTreasury) {
+        uint256 keeperAndReferralCosts = keeperCostsV1 + keeperCostsV2 + wntForReferralRewards;
+        if (keeperAndReferralCosts > wntBeforeKeeperCostsAndReferralRewards) {
+            uint256 additionalWntForCosts = keeperAndReferralCosts - wntBeforeKeeperCostsAndReferralRewards;
+            if (additionalWntForCosts > wntForTreasury) {
                 uint256 maxWntFromTreasury = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
-                uint256 additionalWntFromTreasury = additionalWntForV1Costs - wntForTreasury;
+                uint256 additionalWntFromTreasury = additionalWntForCosts - wntForTreasury;
                 if (additionalWntFromTreasury > maxWntFromTreasury) {
                     revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
                 }
@@ -569,10 +565,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 );
                 wntForTreasury = 0;
             } else {
-                wntForTreasury -= additionalWntForV1Costs;
+                wntForTreasury -= additionalWntForCosts;
             }
         } else {
-            uint256 remainingWntForTreasury = wntBeforeV1KeeperCostsAndReferralRewards - keeperAndReferralCostsV1;
+            uint256 remainingWntForTreasury = wntBeforeKeeperCostsAndReferralRewards - keeperAndReferralCosts;
             wntForTreasury += remainingWntForTreasury;
         }
         return wntForTreasury;
@@ -606,8 +602,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 feeAmountGmx = _getUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid));
         address distributor = IRewardTracker(extendedGmxTracker).distributor();
         _transferOut(gmx, extendedGmxTracker, feeAmountGmx);
-        IRewardDistributor(distributor).updateLastDistributionTime();
         IRewardDistributor(distributor).setTokensPerInterval(feeAmountGmx / 1 weeks);
+        IRewardDistributor(distributor).updateLastDistributionTime();
     }
 
     function _setUint(bytes32 fullKey, uint256 value) internal {
@@ -639,8 +635,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     function _calculateChainlinkAndTreasuryAmounts(
         uint256 totalWntBalance,
         uint256 feesV1Usd,
-        uint256 feesV2Usd,
-        uint256 keeperCostsV2
+        uint256 feesV2Usd
     ) internal view returns (uint256, uint256) {
         uint256 feesV1UsdInWnt = Precision.applyFactor(feesV1Usd, _getUint(Keys2.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR));
         uint256 feesV2UsdInWnt = Precision.applyFactor(feesV2Usd, _getUint(Keys2.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR));
@@ -653,9 +648,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             chainlinkTreasuryWntAmount,
             _getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
         );
-        uint256 wntForTreasury = chainlinkTreasuryWntAmount - wntForChainlink - keeperCostsV2;
-
-        return (wntForChainlink, wntForTreasury);
+        return (wntForChainlink, chainlinkTreasuryWntAmount - wntForChainlink);
     }
 
     function _calculateWntForReferralRewards(

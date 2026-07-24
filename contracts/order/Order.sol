@@ -115,6 +115,7 @@ library Order {
         uint256 executionFee;
         uint256 callbackGasLimit;
         uint256 minOutputAmount;
+        uint256 uiFeeFactor;
         uint256 updatedAtTime;
         uint256 validFromTime;
         uint256 srcChainId;
@@ -355,6 +356,20 @@ library Order {
     // @param value the value to set to
     function setMinOutputAmount(Props memory props, uint256 value) internal pure {
         props.numbers.minOutputAmount = value;
+    }
+
+    // @dev the UI fee factor snapshotted when the order was created
+    // @param props Props
+    // @return the order uiFeeFactor
+    function uiFeeFactor(Props memory props) internal pure returns (uint256) {
+        return props.numbers.uiFeeFactor;
+    }
+
+    // @dev set the order uiFeeFactor
+    // @param props Props
+    // @param value the value to set to
+    function setUiFeeFactor(Props memory props, uint256 value) internal pure {
+        props.numbers.uiFeeFactor = value;
     }
 
     // @dev the order updatedAtTime

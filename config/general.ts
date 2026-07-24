@@ -79,14 +79,16 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       gelatoRelayFeeBaseAmount: 0,
       relayFeeAddress: ethers.constants.AddressZero,
       maxRelayFeeUsdForSubaccount: 0,
-
+      maxRelayFeeSwapUsd: 0,
       maxDataLength: 18,
+      eip6492Deployer: ethers.constants.AddressZero,
     };
   }
 
   const generalConfig = {
     feeReceiver: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
+    eip6492Deployer: ethers.constants.AddressZero, // Should update after first deployment
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
     maxUiFeeFactor: percentageToFloat("0.1%"),
@@ -157,6 +159,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     gelatoRelayFeeBaseAmount: 50000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
     relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
+    maxRelayFeeSwapUsd: decimalToFloat(100),
 
     maxDataLength: 18,
 
@@ -222,6 +225,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       estimatedGasFeeMultiplierFactor: false,
       executionGasFeeMultiplierFactor: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
+      eip6492Deployer: "0x597A7898B0D31BefEE52488b3F046eAc870F94CF",
 
       increaseOrderGasLimit: 3_000_000,
       decreaseOrderGasLimit: 3_000_000,
@@ -257,6 +261,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       },
     },
     avalanche: {
+      eip6492Deployer: "0xf78C3dd7FEaBfDa87B7B3079538633557ba53cbA",
       multichainProviders: {
         "0x5634c4a5FEd09819E3c46D86A965Dd9447d86e47": true, // StargatePoolUSDC
         "0x12dC9256Acc9895B076f6638D628382881e62CeE": true, // StargatePoolUSDT
@@ -282,9 +287,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
       executionGasFeeMultiplierFactor: expandDecimals(15556, 26), // 1.5556x
       estimatedGasFeeMultiplierFactor: expandDecimals(15556, 26), // 1.5556x
-      maxCallbackGasLimit: 0,
-      nativeTokenTransferGasLimit: 0,
-      refundExecutionFeeGasLimit: 0,
+      maxCallbackGasLimit: 5_200_000,
+      nativeTokenTransferGasLimit: 150_000,
+      refundExecutionFeeGasLimit: 260_000,
+      eip6492Deployer: "0x32784C86a35284316427a4C18e02E68bD7d352be",
     },
   }[network.name];
 

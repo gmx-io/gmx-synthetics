@@ -109,6 +109,7 @@ async function setup() {
   const swapOrderExecutor = await hre.ethers.getContract("SwapOrderExecutor");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
+  const simulationRouter = await hre.ethers.getContract("SimulationRouter");
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
@@ -121,8 +122,8 @@ async function setup() {
   const multichainClaimsRouter = await hre.ethers.getContract("MultichainClaimsRouter");
   const bridgeOutFromControllerUtils = await hre.ethers.getContract("BridgeOutFromControllerUtils");
   const relayUtils = await hre.ethers.getContract("RelayUtils");
+  const signatureUtils = await hre.ethers.getContract("SignatureUtils");
   const oracle = await hre.ethers.getContract("Oracle");
-  const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
   const marketUtils = await hre.ethers.getContract("MarketUtils");
@@ -149,8 +150,10 @@ async function setup() {
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
   const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
+  const staticOracleProvider = await hre.ethers.getContract("StaticOracleProvider");
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const claimVault = await hre.ethers.getContract("ClaimVault");
+  const feeVault = await hre.ethers.getContract("FeeVault");
   const claimUtils = await hre.ethers.getContract("ClaimUtils");
   const multichainReader = await hre.ethers.getContract("MultichainReader");
   const mockEndpointV2 = await hre.ethers.getContract("MockEndpointV2");
@@ -323,6 +326,7 @@ async function setup() {
       swapOrderExecutor,
       router,
       exchangeRouter,
+      simulationRouter,
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
@@ -335,8 +339,8 @@ async function setup() {
       multichainClaimsRouter,
       bridgeOutFromControllerUtils,
       relayUtils,
+      signatureUtils,
       oracle,
-      gmOracleProvider,
       chainlinkPriceFeedProvider,
       chainlinkDataStreamProvider,
       marketUtils,
@@ -398,6 +402,7 @@ async function setup() {
       edgeDataStreamProvider,
       claimHandler,
       claimVault,
+      feeVault,
       claimUtils,
       multichainReader,
       mockEndpointV2,
@@ -406,6 +411,7 @@ async function setup() {
       feeDistributor,
       feeDistributorUtils,
       contributorHandler,
+      staticOracleProvider,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

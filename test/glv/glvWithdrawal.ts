@@ -43,7 +43,7 @@ describe("Glv Withdrawals", () => {
     glvFactory,
     glvVault,
     roleStore,
-    gmOracleProvider,
+    chainlinkDataStreamProvider,
     glvShiftHandler,
     ethUsdSingleTokenMarket2,
     oracle;
@@ -68,7 +68,7 @@ describe("Glv Withdrawals", () => {
       roleStore,
       glvShiftHandler,
       ethUsdSingleTokenMarket2,
-      gmOracleProvider,
+      chainlinkDataStreamProvider,
       oracle,
     } = fixture.contracts);
   });
@@ -512,7 +512,7 @@ describe("Glv Withdrawals", () => {
     await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
     await dataStore.setAddress(
       keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
-      gmOracleProvider.address
+      chainlinkDataStreamProvider.address
     );
 
     await expectBalances({

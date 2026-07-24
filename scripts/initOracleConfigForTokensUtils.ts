@@ -11,6 +11,7 @@ import { getOracleProviderAddress } from "../utils/oracle";
 import { validateTokens } from "./validateTokenUtils";
 
 import IPriceFeed from "../artifacts/contracts/oracle/IPriceFeed.sol/IPriceFeed.json";
+import { writeJsonFile } from "../utils/file";
 
 export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
@@ -203,6 +204,9 @@ export async function initOracleConfigForTokens({ write }) {
     console.log(`tx sent: ${tx.hash}`);
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
+    const txName = `out/init-oracle-config-${hre.network.name}.json`;
+    writeJsonFile(txName, await config.multicall(multicallWriteParams));
+    console.log(`Wrote raw tx to ${txName}`);
   }
 }
 

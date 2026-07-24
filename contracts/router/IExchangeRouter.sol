@@ -36,6 +36,12 @@ interface IExchangeRouter {
         IBaseOrderUtils.CreateOrderParams calldata params
     ) external payable returns (bytes32);
 
+    function createTwapOrder(
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        uint256 twapCount,
+        uint256 interval
+    ) external payable returns (bytes32[] memory orderKeys);
+
     function updateOrder(
         bytes32 key,
         uint256 sizeDeltaUsd,

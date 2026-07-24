@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../../deposit/ExecuteDepositUtils.sol";
 import "../../nonce/NonceUtils.sol";
 import "../../exchange/IDepositHandler.sol";
+import "../../fee/FeeUtils.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
@@ -190,6 +191,22 @@ library ExecuteGlvDepositUtils {
         );
 
         if (glvDeposit.isMarketTokenDeposit()) {
+            if (params.oracle.minTimestamp() < glvDeposit.updatedAtTime()) {
+                revert Errors.OracleTimestampsAreSmallerThanRequired(
+                    params.oracle.minTimestamp(),
+                    glvDeposit.updatedAtTime()
+                );
+            }
+
+            uint256 requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+            if (params.oracle.maxTimestamp() > glvDeposit.updatedAtTime() + requestExpirationTime) {
+                revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                    params.oracle.maxTimestamp(),
+                    glvDeposit.updatedAtTime(),
+                    requestExpirationTime
+                );
+            }
+
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
             return glvDeposit.marketTokenAmount();
@@ -211,6 +228,7 @@ library ExecuteGlvDepositUtils {
                 initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
                 initialShortTokenAmount: glvDeposit.initialShortTokenAmount(),
                 minMarketTokens: 0,
+                uiFeeFactor: glvDeposit.uiFeeFactor(),
                 updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,

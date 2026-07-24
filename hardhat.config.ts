@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import { ethers } from "ethers";
 
-import { HardhatUserConfig, task, types } from "hardhat/config";
+import { HardhatUserConfig, extendEnvironment, task, types } from "hardhat/config";
 import "@nomicfoundation/hardhat-verify";
 import "hardhat-contract-sizer";
 import "solidity-coverage";
@@ -33,6 +33,7 @@ import { checkContractsSizing } from "./scripts/contractSizes";
 import { collectDependents } from "./utils/dependencies";
 import { deleteFile, writeJsonFile } from "./utils/file";
 import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
+import { isGcpSignerEnabled, wrapProviderWithGcpSigner } from "./utils/gcpSigner";
 
 const getNetworkFromCLI = () => {
   if (process.env.HARDHAT_NETWORK) return process.env.HARDHAT_NETWORK;
@@ -80,7 +81,7 @@ export const getExplorerUrl = (network) => {
     // avalanche: "https://api.snowtrace.io/",
     avalanche: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
-    megaEth: "https://megaeth.blockscout.com/api",
+    megaEth: "https://megaeth.blockscout.com/api/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api.etherscan.io/v2/api?chainid=421614",
@@ -141,6 +142,11 @@ const getEtherscanApiKey = () => {
 };
 
 const getEnvAccounts = (chainName?: string) => {
+  // GcpSignerProvider supplies eth_accounts when USE_GCP_SIGNER=true
+  if (isGcpSignerEnabled()) {
+    return [];
+  }
+
   const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY, ARBITRUM_ACCOUNT_KEY } = process.env;
 
   if (chainName === "arbitrumSepolia" && ARBITRUM_SEPOLIA_ACCOUNT_KEY) {
@@ -176,6 +182,14 @@ const getEnvAccounts = (chainName?: string) => {
 
   return [];
 };
+
+extendEnvironment((hre) => {
+  if (!isGcpSignerEnabled() || hre.network.name === "hardhat") {
+    return;
+  }
+
+  hre.network.provider = wrapProviderWithGcpSigner(hre.network.provider);
+});
 
 const config: HardhatUserConfig = {
   solidity: {

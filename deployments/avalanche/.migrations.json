@@ -26,5 +26,13 @@
   "EdgeDataStreamProvider_6": 1755053143,
   "EdgeDataStreamVerifier_6": 1755053143,
   "FeeDistributorVault_1": 1762332292,
-  "FeeDistributor_1": 1762332332
+  "FeeDistributor_1": 1762332332,
+  "StaticOracleProvider_1": 1778117797,
+  "EIP6492Deployer_1": 1778118676,
+  "FeeVault_1": 1778118738,
+  "ChainlinkPriceFeedProvider_7": 1784061331,
+  "Oracle_7": 1784061338,
+  "StaticOracleProvider_2": 1784061344,
+  "ChainlinkDataStreamProvider_7": 1784062314,
+  "EdgeDataStreamProvider_7": 1784062371
 }

@@ -224,31 +224,19 @@ library Errors {
     error EmptyValidatedPrices(); // not used, kept for compatibility
     error InvalidOracleProvider(address provider);
     error InvalidOracleProviderForToken(address provider, address expectedProvider);
-    error GmEmptySigner(uint256 signerIndex);
     error InvalidOracleSetPricesProvidersParam(uint256 tokensLength, uint256 providersLength);
     error InvalidOracleSetPricesDataParam(uint256 tokensLength, uint256 dataLength);
-    error GmInvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
-    error GmInvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
     error EmptyDataStreamFeedId(address token);
     error InvalidDataStreamFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
     error InvalidDataStreamBidAsk(address token, int192 bid, int192 ask);
     error InvalidDataStreamPrices(address token, int192 bid, int192 ask);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp, uint256 currentTimestamp);
     error MaxOracleTimestampRangeExceeded(uint256 range, uint256 maxRange);
-    error GmMinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
-    error GmMaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
-    error BlockNumbersNotSorted(uint256 minOracleBlockNumber, uint256 prevMinOracleBlockNumber);
-    error GmMinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
-    error GmMaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error EmptyChainlinkPriceFeedMultiplier(address token);
     error EmptyDataStreamMultiplier(address token);
     error InvalidDataStreamSpreadReductionFactor(address token, uint256 spreadReductionFactor);
     error InvalidFeedPrice(address token, int256 price);
     error ChainlinkPriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
-    error GmMaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
-    error InvalidGmOraclePrice(address token);
-    error InvalidGmSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
-    error InvalidGmMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
     error InvalidMinMaxForPrice(address token, uint256 min, uint256 max);
     error EmptyChainlinkPriceFeed(address token);
@@ -261,14 +249,14 @@ library Errors {
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
     error NonAtomicOracleProvider(address provider);
+    error InvalidPriceFeed(address feedAddress);
+    error StaticPriceNotSet(address token);
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
     error EndOfOracleSimulation();
 
     // OracleUtils errors
-    error InvalidGmSignature(address recoveredSigner, address expectedSigner);
-
     error EmptyPrimaryPrice(address token);
 
     error OracleTimestampsAreSmallerThanRequired(uint256 minOracleTimestamp, uint256 expectedTimestamp);
@@ -299,6 +287,8 @@ library Errors {
     error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
     error InvalidReceiver(address receiver);
     error UnexpectedValidFromTime(uint256 orderType);
+    error InvalidTwapCount(uint256 twapCount);
+    error InvalidInterval(uint256 interval);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
@@ -479,6 +469,7 @@ library Errors {
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
     error InsufficientFee(uint256 feeProvided, uint256 feeRequired);
+    error InsufficientBridgeOutputAmount(uint256 outputAmount, uint256 minAmountOut);
 
     enum SignatureType {
         Call,
@@ -513,9 +504,11 @@ library Errors {
     error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamExpo(int256 expo);
+    error InvalidEdgeDataStreamDecimals(address token, uint256 decimals);
     error RelayEmptyBatch();
     error RelayCalldataTooLong(uint256 calldataLength);
     error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
+    error MaxRelayFeeSwapExceeded(uint256 feeUsd, uint256 maxFeeUsd);
     error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 
     error RemovalShouldNotBeSkipped(bytes32 listKey, bytes32 entityKey);
@@ -543,3 +536,4 @@ library Errors {
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
     error ZeroTreasuryAddress();
 }
+

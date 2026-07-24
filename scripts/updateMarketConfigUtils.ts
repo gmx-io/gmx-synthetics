@@ -47,6 +47,7 @@ export function getRiskOracleManagedBaseKeys() {
 const KEEPER_MANAGED_BASE_KEYS_ARBITRUM = [
   keys.MAX_FUNDING_FACTOR_PER_SECOND,
   keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+  keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
   keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
 ];
 
@@ -94,6 +95,7 @@ export const processMarkets = async ({
       [
         keys.MAX_FUNDING_FACTOR_PER_SECOND,
         keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+        keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
         keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       ].includes(baseKey) &&
       includeFunding
@@ -521,26 +523,59 @@ export const processMarkets = async ({
 
     addConfigItem(
       "uint",
+      keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minFundingIncreaseRatePerSecond,
+      `minFundingIncreaseRatePerSecond ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
       keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       encodeData(["address"], [marketToken]),
       marketConfig.fundingDecreaseFactorPerSecond,
       `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
     );
 
+    const minFundingFactorForLongs =
+      marketConfig.minFundingFactorPerSecondForLongs ?? marketConfig.minFundingFactorPerSecond;
+    const minFundingFactorForShorts =
+      marketConfig.minFundingFactorPerSecondForShorts ?? marketConfig.minFundingFactorPerSecond;
+    const maxFundingFactorForLongs =
+      marketConfig.maxFundingFactorPerSecondForLongs ?? marketConfig.maxFundingFactorPerSecond;
+    const maxFundingFactorForShorts =
+      marketConfig.maxFundingFactorPerSecondForShorts ?? marketConfig.maxFundingFactorPerSecond;
+
     addConfigItem(
       "uint",
       keys.MAX_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.maxFundingFactorPerSecond,
-      `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      encodeData(["address", "bool"], [marketToken, true]),
+      maxFundingFactorForLongs,
+      `maxFundingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      maxFundingFactorForShorts,
+      `maxFundingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
       "uint",
       keys.MIN_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.minFundingFactorPerSecond,
-      `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      encodeData(["address", "bool"], [marketToken, true]),
+      minFundingFactorForLongs,
+      `minFundingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      minFundingFactorForShorts,
+      `minFundingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(

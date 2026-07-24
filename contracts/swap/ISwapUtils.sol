@@ -25,6 +25,7 @@ interface ISwapUtils {
      * @param minOutputAmount The minimum amount of tokens that should be received as part of the swap.
      * @param receiver The address to which the swapped tokens should be sent.
      * @param uiFeeReceiver The address of the ui fee receiver.
+     * @param uiFeeFactor The UI fee factor to use, or type(uint256).max to read the current configured factor.
      * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
      */
     struct SwapParams {
@@ -39,6 +40,7 @@ interface ISwapUtils {
         uint256 minOutputAmount;
         address receiver;
         address uiFeeReceiver;
+        uint256 uiFeeFactor;
         bool shouldUnwrapNativeToken;
         ISwapPricingUtils.SwapPricingType swapPricingType;
     }

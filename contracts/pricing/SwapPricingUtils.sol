@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import "../market/MarketUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "../utils/Precision.sol";
 import "../utils/Calc.sol";
@@ -268,6 +269,50 @@ library SwapPricingUtils {
         address uiFeeReceiver,
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external view returns (SwapFees memory) {
+        return _getSwapFees(
+            dataStore,
+            marketToken,
+            amount,
+            balanceWasImproved,
+            uiFeeReceiver,
+            FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver),
+            swapPricingType
+        );
+    }
+
+    // @dev get the swap fees using an explicit UI fee factor
+    // @param dataStore DataStore
+    // @param marketToken the address of the market token
+    // @param amount the total swap fee amount
+    function getSwapFees(
+        DataStore dataStore,
+        address marketToken,
+        uint256 amount,
+        bool balanceWasImproved,
+        address uiFeeReceiver,
+        uint256 uiFeeFactor,
+        ISwapPricingUtils.SwapPricingType swapPricingType
+    ) external view returns (SwapFees memory) {
+        return _getSwapFees(
+            dataStore,
+            marketToken,
+            amount,
+            balanceWasImproved,
+            uiFeeReceiver,
+            uiFeeFactor,
+            swapPricingType
+        );
+    }
+
+    function _getSwapFees(
+        DataStore dataStore,
+        address marketToken,
+        uint256 amount,
+        bool balanceWasImproved,
+        address uiFeeReceiver,
+        uint256 uiFeeFactor,
+        ISwapPricingUtils.SwapPricingType swapPricingType
+    ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
         // note that since it is possible to incur both positive and negative price impact values
@@ -299,7 +344,11 @@ library SwapPricingUtils {
         fees.feeAmountForPool = feeAmount - fees.feeReceiverAmount;
 
         fees.uiFeeReceiver = uiFeeReceiver;
-        fees.uiFeeReceiverFactor = MarketUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
+        // a uiFeeFactor of type(uint256).max is used as a sentinel value to read the
+        // currently configured factor, otherwise the snapshotted factor is used
+        fees.uiFeeReceiverFactor = uiFeeFactor == type(uint256).max
+            ? FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver)
+            : uiFeeFactor;
         fees.uiFeeAmount = Precision.applyFactor(amount, fees.uiFeeReceiverFactor);
 
         fees.amountAfterFees = amount - feeAmount - fees.uiFeeAmount;

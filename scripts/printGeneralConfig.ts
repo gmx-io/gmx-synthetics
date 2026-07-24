@@ -11,6 +11,7 @@ async function main() {
     { key: "GELATO_RELAY_FEE_BASE_AMOUNT", method: "getUint" },
     { key: "GELATO_RELAY_FEE_MULTIPLIER_FACTOR", method: "getUint", format: (v) => `${formatAmount(v, 28)}%` },
     { key: "MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT", method: "getUint", format: (v) => `$${formatAmount(v, 30)}` },
+    { key: "MAX_RELAY_FEE_SWAP_USD", method: "getUint", format: (v) => `$${formatAmount(v, 30)}` },
   ];
 
   const response = await Promise.all(

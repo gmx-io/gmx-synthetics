@@ -12,7 +12,6 @@ import {DataStore} from "../data/DataStore.sol";
 import {BasicMulticall} from "../utils/BasicMulticall.sol";
 import {Precision} from "../utils/Precision.sol";
 import {ConfigTimelockController} from "./ConfigTimelockController.sol";
-import {OracleModule} from "../oracle/OracleModule.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {MarketUtils} from "../market/MarketUtils.sol";
 
@@ -434,6 +433,9 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     ) external onlyTimelockAdmin {
         if (edgeDataStreamId == bytes32(0)) {
             revert Errors.EmptyDataStreamFeedId(token);
+        }
+        if (edgeDataStreamTokenDecimals == 0) {
+            revert Errors.InvalidEdgeDataStreamDecimals(token, edgeDataStreamTokenDecimals);
         }
 
         bytes[] memory payloads = new bytes[](2);

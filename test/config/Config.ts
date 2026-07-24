@@ -275,6 +275,15 @@ describe("Config", () => {
     expect(await dataStore.getAddress(key)).eq(wnt.address);
   });
 
+  it("setAddress for EIP6492_DEPLOYER", async () => {
+    await expect(
+      config.connect(user1).setAddress(keys.EIP6492_DEPLOYER, "0x", user1.address)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
+    await config.connect(user0).setAddress(keys.EIP6492_DEPLOYER, "0x", user1.address);
+    expect(await dataStore.getAddress(keys.EIP6492_DEPLOYER)).eq(user1.address);
+  });
+
   it("setBytes32", async () => {
     const key = keys.oracleTypeKey(wnt.address);
 
@@ -577,6 +586,26 @@ describe("Config", () => {
     expect(onchainValue).eq(validValue);
   });
 
+  it("validates min funding increase rate", async () => {
+    const validValue = bigNumberify("100000000000000000000000");
+    await expect(
+      config.setUint(
+        keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+        encodeData(["address"], [ethUsdMarket.marketToken]),
+        validValue.add(100)
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(
+      keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+      encodeData(["address"], [ethUsdMarket.marketToken]),
+      validValue
+    );
+
+    const onchainValue = await dataStore.getUint(keys.minFundingIncreaseRatePerSecondKey(ethUsdMarket.marketToken));
+    expect(onchainValue).eq(validValue);
+  });
+
   it("validates funding decrease factor", async () => {
     const validValue = bigNumberify("100000000000000000000000").div(86400);
     await expect(
@@ -598,15 +627,41 @@ describe("Config", () => {
   });
 
   it("validates max funding fee factor is higher than min funding fee factor", async () => {
-    await config.setUint(keys.MAX_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 10);
-    await config.setUint(keys.MIN_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 5);
+    await config.setUint(
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
+      10
+    );
+    await config.setUint(
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+      10
+    );
+    await config.setUint(
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
+      5
+    );
+    await config.setUint(
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+      5
+    );
 
     await expect(
-      config.setUint(keys.MIN_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 11)
+      config.setUint(
+        keys.MIN_FUNDING_FACTOR_PER_SECOND,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
+        11
+      )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
 
     await expect(
-      config.setUint(keys.MAX_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 4)
+      config.setUint(
+        keys.MAX_FUNDING_FACTOR_PER_SECOND,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
+        4
+      )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
   });
 
@@ -651,6 +706,17 @@ describe("Config", () => {
       },
     };
 
+    // invalid price feed
+    await expect(config.initOracleConfig(oracleConfig)).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidPriceFeed"
+    );
+
+    // valid price feed
+    const mockPriceFeedFactory = await ethers.getContractFactory("MockPriceFeed");
+    const mockedPriceFeed = await mockPriceFeedFactory.deploy();
+    await mockedPriceFeed.deployed();
+    oracleConfig.priceFeed.feedAddress = mockedPriceFeed.address;
     await config.initOracleConfig(oracleConfig);
 
     expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(oracleConfig.priceFeed.feedAddress);

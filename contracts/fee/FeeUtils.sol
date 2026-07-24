@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
+import "../data/DataStoreOps.sol";
 import "../data/Keys.sol";
 
 import "../event/EventEmitter.sol";
@@ -23,6 +24,8 @@ library FeeUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
+
+    using DataStoreOps for DataStore;
 
     // @dev increment the claimable fee amount
     // @param dataStore DataStore
@@ -144,7 +147,7 @@ library FeeUtils {
 
         bytes32 key = Keys.claimableFeeAmountKey(market, token);
 
-        uint256 feeAmount = dataStore.getUint(key);
+        uint256 feeAmount = dataStore.getUintValueFromDataStore(key);
         dataStore.setUint(key, 0);
 
         MarketToken(payable(market)).transferOut(
@@ -163,6 +166,33 @@ library FeeUtils {
         );
 
         return feeAmount;
+    }
+
+    function getUiFeeFactor(DataStore dataStore, address account) internal view returns (uint256) {
+        uint256 maxUiFeeFactor = dataStore.getUintValueFromDataStore(Keys.MAX_UI_FEE_FACTOR);
+        uint256 uiFeeFactor = dataStore.getUintValueFromDataStore(Keys.uiFeeFactorKey(account));
+
+        return uiFeeFactor < maxUiFeeFactor ? uiFeeFactor : maxUiFeeFactor;
+    }
+
+    function setUiFeeFactor(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        uint256 uiFeeFactor
+    ) internal {
+        uint256 maxUiFeeFactor = dataStore.getUintValueFromDataStore(Keys.MAX_UI_FEE_FACTOR);
+
+        if (uiFeeFactor > maxUiFeeFactor) {
+            revert Errors.InvalidUiFeeFactor(uiFeeFactor, maxUiFeeFactor);
+        }
+
+        dataStore.setUint(
+            Keys.uiFeeFactorKey(account),
+            uiFeeFactor
+        );
+
+        MarketEventUtils.emitUiFeeFactorUpdated(eventEmitter, account, uiFeeFactor);
     }
 
     function batchClaimUiFees(
@@ -207,7 +237,7 @@ library FeeUtils {
     ) private returns (uint256) {
         bytes32 key = Keys.claimableUiFeeAmountKey(market, token, uiFeeReceiver);
 
-        uint256 feeAmount = dataStore.getUint(key);
+        uint256 feeAmount = dataStore.getUintValueFromDataStore(key);
         dataStore.setUint(key, 0);
 
         uint256 nextPoolValue = dataStore.decrementUint(

@@ -10,7 +10,7 @@ import { BuybackConfig } from "./buyback";
 import { LayerZeroEndpointConfig } from "./layerZero";
 import { FeeDistributorConfig } from "./feeDistributor";
 
-export type OracleProvider = "gmOracle" | "chainlinkDataStream" | "chainlinkPriceFeed";
+export type OracleProvider = "chainlinkDataStream" | "chainlinkPriceFeed";
 
 // extend hardhat config with custom gmx property
 declare module "hardhat/types/runtime" {
@@ -27,6 +27,7 @@ declare module "hardhat/types/runtime" {
       getBuyback: () => Promise<BuybackConfig>;
       getLayerZeroEndpoint: () => Promise<LayerZeroEndpointConfig>;
       getFeeDistributor: () => Promise<FeeDistributorConfig>;
+      isExistingMainnetDeployment: boolean;
     };
     deployTags: string;
   }

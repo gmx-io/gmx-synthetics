@@ -17,6 +17,9 @@ library Keys {
     bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
     bytes32 public constant RELAY_FEE_ADDRESS = keccak256(abi.encode("RELAY_FEE_ADDRESS"));
 
+    // @dev key for the EIP-6492 deployer contract used for unprivileged factory calls during signature validation
+    bytes32 public constant EIP6492_DEPLOYER = keccak256(abi.encode("EIP6492_DEPLOYER"));
+
     // @dev key for the minimum gas for execution error
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
 
@@ -201,6 +204,8 @@ library Keys {
     bytes32 public constant CHAINLINK_PAYMENT_TOKEN = keccak256(abi.encode("CHAINLINK_PAYMENT_TOKEN"));
     // @dev key for the sequencer grace duration
     bytes32 public constant SEQUENCER_GRACE_DURATION = keccak256(abi.encode("SEQUENCER_GRACE_DURATION"));
+    // @dev key for the token static price
+    bytes32 public constant STATIC_ORACLE_PRICE = keccak256(abi.encode("STATIC_ORACLE_PRICE"));
 
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));
@@ -228,6 +233,7 @@ library Keys {
     // @dev key for the max execution fee multiplier
     bytes32 public constant MAX_EXECUTION_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("MAX_EXECUTION_FEE_MULTIPLIER_FACTOR"));
 
+    bytes32 public constant MAX_RELAY_FEE_SWAP_USD = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD"));
     bytes32 public constant MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT"));
     bytes32 public constant GELATO_RELAY_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("GELATO_RELAY_FEE_MULTIPLIER_FACTOR"));
     bytes32 public constant GELATO_RELAY_FEE_BASE_AMOUNT = keccak256(abi.encode("GELATO_RELAY_FEE_BASE_AMOUNT"));
@@ -376,6 +382,8 @@ library Keys {
     bytes32 public constant SAVED_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("SAVED_FUNDING_FACTOR_PER_SECOND"));
     // @dev key for funding increase factor
     bytes32 public constant FUNDING_INCREASE_FACTOR_PER_SECOND = keccak256(abi.encode("FUNDING_INCREASE_FACTOR_PER_SECOND"));
+    // @dev key for min funding increase factor
+    bytes32 public constant MIN_FUNDING_INCREASE_RATE_PER_SECOND = keccak256(abi.encode("MIN_FUNDING_INCREASE_RATE_PER_SECOND"));
     // @dev key for funding decrease factor
     bytes32 public constant FUNDING_DECREASE_FACTOR_PER_SECOND = keccak256(abi.encode("FUNDING_DECREASE_FACTOR_PER_SECOND"));
     // @dev key for min funding factor
@@ -1030,6 +1038,15 @@ library Keys {
         ));
     }
 
+    // @dev key for the token static price
+    function staticOraclePriceKey(address token, bool isMax) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            STATIC_ORACLE_PRICE,
+            token,
+            isMax
+        ));
+    }
+
     // @dev key for oracle provider update time
     // @param token the token
     // @param provider address
@@ -1598,6 +1615,15 @@ library Keys {
         ));
     }
 
+    // @dev the key for min funding increase factor
+    // @param market the market for the pool
+    function minFundingIncreaseRatePerSecondKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+            market
+        ));
+    }
+
     // @dev the key for funding decrease factor
     // @param market the market for the pool
     function fundingDecreaseFactorPerSecondKey(address market) internal pure returns (bytes32) {
@@ -1609,19 +1635,23 @@ library Keys {
 
     // @dev the key for min funding factor
     // @param market the market for the pool
-    function minFundingFactorPerSecondKey(address market) internal pure returns (bytes32) {
+    // @param isLong whether the min funding factor applies to longs or shorts
+    function minFundingFactorPerSecondKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MIN_FUNDING_FACTOR_PER_SECOND,
-            market
+            market,
+            isLong
         ));
     }
 
     // @dev the key for max funding factor
     // @param market the market for the pool
-    function maxFundingFactorPerSecondKey(address market) internal pure returns (bytes32) {
+    // @param isLong whether the max funding factor applies to longs or shorts
+    function maxFundingFactorPerSecondKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MAX_FUNDING_FACTOR_PER_SECOND,
-            market
+            market,
+            isLong
         ));
     }
 

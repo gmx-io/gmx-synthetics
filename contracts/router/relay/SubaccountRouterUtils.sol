@@ -5,7 +5,9 @@ pragma solidity ^0.8.0;
 import "../../order/IBaseOrderUtils.sol";
 import "../../feature/FeatureUtils.sol";
 import "../../subaccount/SubaccountUtils.sol";
+import "./EIP6492Deployer.sol";
 import "./RelayUtils.sol";
+import "./SignatureUtils.sol";
 
 library SubaccountRouterUtils {
     function handleSubaccountAction(
@@ -23,19 +25,22 @@ library SubaccountRouterUtils {
 
         SubaccountUtils.validateIntegrationId(dataStore, account, subaccount);
 
+        EIP6492Deployer _eip6492Deployer = EIP6492Deployer(dataStore.getAddress(Keys.EIP6492_DEPLOYER));
+
         _handleSubaccountApproval(
             dataStore,
             eventEmitter,
             account,
             srcChainId,
             subaccountApproval,
-            subaccountApprovalNonces
+            subaccountApprovalNonces,
+            _eip6492Deployer
         );
 
         SubaccountUtils.handleSubaccountAction(dataStore, eventEmitter, account, subaccount, actionType, actionsCount);
     }
 
-    function _handleSubaccountApproval(DataStore dataStore, EventEmitter eventEmitter, address account, uint256 srcChainId, SubaccountApproval calldata subaccountApproval, mapping(address => uint256) storage subaccountApprovalNonces) private {
+    function _handleSubaccountApproval(DataStore dataStore, EventEmitter eventEmitter, address account, uint256 srcChainId, SubaccountApproval calldata subaccountApproval, mapping(address => uint256) storage subaccountApprovalNonces, EIP6492Deployer eip6492Deployer) private {
         if (subaccountApproval.signature.length == 0) {
             return;
         }
@@ -63,12 +68,13 @@ library SubaccountRouterUtils {
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        RelayUtils.validateSignature(
+        SignatureUtils.validateSignature(
             domainSeparator,
             digest,
             subaccountApproval.signature,
             account,
-            "subaccount approval"
+            "subaccount approval",
+            eip6492Deployer
         );
 
         SubaccountUtils.handleSubaccountApproval(dataStore, eventEmitter, account, subaccountApproval);
