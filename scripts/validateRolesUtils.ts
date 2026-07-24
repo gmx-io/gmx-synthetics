@@ -371,15 +371,8 @@ async function validateIsReferralStorageHandler() {
       );
     }
 
-    const jitOrderHandlerDeployment = await hre.deployments.get("JitOrderHandler");
-    const isJitOderHandler = await referralStorage.isHandler(jitOrderHandlerDeployment.address);
-    if (!isJitOderHandler) {
-      console.warn(
-        "🟠 JitOrderHandler %s is missing the handler role in ReferralStorage %s",
-        jitOrderHandlerDeployment.address,
-        referralStorageAddress
-      );
-    }
+    // JitOrderHandler does not need the handler role: it only executes existing orders
+    // (via OrderHandler.doExecuteOrder) and never writes to ReferralStorage
 
     const referralStorageTimelock = new hre.ethers.Contract(
       await referralStorage.gov(),
