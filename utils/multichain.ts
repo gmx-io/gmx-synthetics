@@ -721,17 +721,27 @@ export function encodeBridgeOutDataList(
   secondaryProvider?: string,
   secondaryProviderData?: string,
   secondaryMinAmountOut?: BigNumberish,
-  bridgeFee?: { feeToken: string; feeAmount: BigNumberish; feeSwapPath: string[] },
-  secondaryBridgeFee?: { feeToken: string; feeAmount: BigNumberish; feeSwapPath: string[] }
+  bridgeFee?: { feeToken: string; feeAmount: BigNumberish; feeSwapPath: string[]; minOutputAmount: BigNumberish },
+  secondaryBridgeFee?: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+    minOutputAmount: BigNumberish;
+  }
 ): string[] {
-  const defaultBridgeFee = { feeToken: ethers.constants.AddressZero, feeAmount: 0, feeSwapPath: [] };
+  const defaultBridgeFee = {
+    feeToken: ethers.constants.AddressZero,
+    feeAmount: 0,
+    feeSwapPath: [],
+    minOutputAmount: 0,
+  };
   let actionData;
   if (secondaryProviderData) {
     const _bridgeFee = bridgeFee || defaultBridgeFee;
     const _secondaryBridgeFee = secondaryBridgeFee || defaultBridgeFee;
     actionData = ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(uint256 desChainId, uint256 deadline, address provider, bytes providerData, uint256 minAmountOut, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath) bridgeFee, address secondaryProvider, bytes secondaryProviderData, uint256 secondaryMinAmountOut, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath) secondaryBridgeFee)",
+        "tuple(uint256 desChainId, uint256 deadline, address provider, bytes providerData, uint256 minAmountOut, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath, uint256 minOutputAmount) bridgeFee, address secondaryProvider, bytes secondaryProviderData, uint256 secondaryMinAmountOut, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath, uint256 minOutputAmount) secondaryBridgeFee)",
       ],
       [
         [
@@ -740,11 +750,16 @@ export function encodeBridgeOutDataList(
           provider,
           providerData,
           minAmountOut,
-          [_bridgeFee.feeToken, _bridgeFee.feeAmount, _bridgeFee.feeSwapPath],
+          [_bridgeFee.feeToken, _bridgeFee.feeAmount, _bridgeFee.feeSwapPath, _bridgeFee.minOutputAmount],
           secondaryProvider,
           secondaryProviderData,
           secondaryMinAmountOut,
-          [_secondaryBridgeFee.feeToken, _secondaryBridgeFee.feeAmount, _secondaryBridgeFee.feeSwapPath],
+          [
+            _secondaryBridgeFee.feeToken,
+            _secondaryBridgeFee.feeAmount,
+            _secondaryBridgeFee.feeSwapPath,
+            _secondaryBridgeFee.minOutputAmount,
+          ],
         ],
       ]
     );
@@ -757,7 +772,7 @@ export function encodeBridgeOutDataList(
         "address",
         "bytes",
         "uint256",
-        "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
+        "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath, uint256 minOutputAmount)",
       ],
       [
         desChainId,
@@ -765,7 +780,7 @@ export function encodeBridgeOutDataList(
         provider,
         providerData,
         minAmountOut,
-        [_bridgeFee.feeToken, _bridgeFee.feeAmount, _bridgeFee.feeSwapPath],
+        [_bridgeFee.feeToken, _bridgeFee.feeAmount, _bridgeFee.feeSwapPath, _bridgeFee.minOutputAmount],
       ]
     );
   }

@@ -128,6 +128,7 @@ describe("MultichainTransferRouter", () => {
           feeToken: ethers.constants.AddressZero,
           feeAmount: 0,
           feeSwapPath: [],
+          minOutputAmount: 0,
         },
       };
     });
@@ -436,6 +437,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: usdc.address,
             feeAmount: bridgeFeeUsdc,
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
 
@@ -498,6 +500,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: usdc.address,
             feeAmount: bridgeFeeUsdc,
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
         bridgeOutParams.oracleParams = {
@@ -551,6 +554,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: usdc.address,
             feeAmount: 0,
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
 
@@ -579,6 +583,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: wnt.address,
             feeAmount: expandDecimals(1, 15),
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
 
@@ -607,6 +612,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: usdc.address,
             feeAmount: bridgeFeeUsdc, // 10 USDC but user only has bridgeOutAmount
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
         bridgeOutParams.oracleParams = {
@@ -636,6 +642,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: usdc.address,
             feeAmount: bridgeFeeUsdc,
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
         bridgeOutParams.oracleParams = {
@@ -669,8 +676,16 @@ describe("MultichainTransferRouter", () => {
           "InvalidRecoveredSigner"
         );
 
-        // Restore everything — should succeed
+        // Restore feeSwapPath, tamper minOutputAmount (e.g. a relayer stripping the min)
         bridgeOutParams.params.bridgeFee.feeSwapPath = [ethUsdMarket.marketToken];
+        bridgeOutParams.params.bridgeFee.minOutputAmount = 1; // tampered
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InvalidRecoveredSigner"
+        );
+
+        // Restore everything — should succeed
+        bridgeOutParams.params.bridgeFee.minOutputAmount = 0;
         await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
       });
 
@@ -688,6 +703,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: usdc.address,
             feeAmount: bridgeFeeUsdc,
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
 
@@ -722,6 +738,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: usdc.address,
             feeAmount: tinyBridgeFeeUsdc,
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
         bridgeOutParams.oracleParams = {
@@ -736,6 +753,109 @@ describe("MultichainTransferRouter", () => {
           errorsContract,
           "InsufficientMultichainBalance"
         );
+      });
+
+      it("reverts when bridge fee swap output is below the signed minimum", async () => {
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount.add(bridgeFeeUsdc) });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // 10 USDC at $5000/ETH is 0.002 ETH before fees; the 1% atomic swap fee
+        // brings the output below a 0.002 ETH minimum
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: expandDecimals(2, 15),
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InsufficientSwapOutputAmount"
+        );
+      });
+
+      it("reverts on low swap output even when existing WNT balance covers the bridge fee", async () => {
+        const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount.add(bridgeFeeUsdc) });
+        // extra WNT lets the bridge fee be paid from the existing balance,
+        // which would mask a bad swap if there was no minimum check
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount.add(bridgeOutFee) });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: expandDecimals(2, 15),
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InsufficientSwapOutputAmount"
+        );
+      });
+
+      it("succeeds when bridge fee swap output meets the signed minimum", async () => {
+        const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount.add(bridgeFeeUsdc) });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        // swap output (~0.00198 ETH) is above the minimum (0.001 ETH)
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: bridgeOutFee,
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        const tx = await sendBridgeOut(bridgeOutParams);
+
+        // bridge completed
+        expect(await usdc.balanceOf(user1.address)).eq(bridgeOutAmount);
+
+        // swap happened
+        const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+        const logs = parseLogs(fixture, txReceipt);
+        const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+        expect(swapInfoLog).to.not.eq(undefined);
       });
     });
 
@@ -810,6 +930,7 @@ describe("MultichainTransferRouter", () => {
           feeToken: ethers.constants.AddressZero,
           feeAmount: 0,
           feeSwapPath: [],
+          minOutputAmount: 0,
         },
       };
 
@@ -857,6 +978,7 @@ describe("MultichainTransferRouter", () => {
           feeToken: ethers.constants.AddressZero,
           feeAmount: 0,
           feeSwapPath: [],
+          minOutputAmount: 0,
         },
       };
 
@@ -889,6 +1011,7 @@ describe("MultichainTransferRouter", () => {
           feeToken: ethers.constants.AddressZero,
           feeAmount: 0,
           feeSwapPath: [],
+          minOutputAmount: 0,
         },
       };
 
