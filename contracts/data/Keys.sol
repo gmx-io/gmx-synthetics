@@ -177,6 +177,7 @@ library Keys {
     bytes32 public constant SUBACCOUNT_FEATURE_DISABLED = keccak256(abi.encode("SUBACCOUNT_FEATURE_DISABLED"));
     bytes32 public constant GASLESS_FEATURE_DISABLED = keccak256(abi.encode("GASLESS_FEATURE_DISABLED"));
     bytes32 public constant ATOMIC_SWAP_FEATURE_DISABLED = keccak256(abi.encode("ATOMIC_SWAP_FEATURE_DISABLED"));
+    bytes32 public constant BRIDGE_FEE_SWAP_FEATURE_DISABLED = keccak256(abi.encode("BRIDGE_FEE_SWAP_FEATURE_DISABLED"));
     bytes32 public constant GENERAL_CLAIM_FEATURE_DISABLED = keccak256(abi.encode("GENERAL_CLAIM_FEATURE_DISABLED"));
 
     // @dev key for the minimum required oracle signers for an oracle observation
@@ -238,6 +239,8 @@ library Keys {
 
     bytes32 public constant MAX_RELAY_FEE_SWAP_USD = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD"));
     bytes32 public constant MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT"));
+    // @dev multiplier applied to the provider's quoted messaging fee USD when capping bridge fee swaps
+    bytes32 public constant MAX_BRIDGE_FEE_SWAP_FACTOR = keccak256(abi.encode("MAX_BRIDGE_FEE_SWAP_FACTOR"));
     bytes32 public constant GELATO_RELAY_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("GELATO_RELAY_FEE_MULTIPLIER_FACTOR"));
     bytes32 public constant GELATO_RELAY_FEE_BASE_AMOUNT = keccak256(abi.encode("GELATO_RELAY_FEE_BASE_AMOUNT"));
     bytes32 public constant CREATE_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("CREATE_DEPOSIT_GAS_LIMIT"));
@@ -1014,6 +1017,13 @@ library Keys {
     function atomicSwapFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ATOMIC_SWAP_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    function bridgeFeeSwapFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BRIDGE_FEE_SWAP_FEATURE_DISABLED,
             module
         ));
     }

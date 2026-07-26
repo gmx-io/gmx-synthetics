@@ -51,6 +51,7 @@ export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATUR
 export const EXECUTE_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_DEPOSIT_FEATURE_DISABLED");
 export const GASLESS_FEATURE_DISABLED = hashString("GASLESS_FEATURE_DISABLED");
 export const ATOMIC_SWAP_FEATURE_DISABLED = hashString("ATOMIC_SWAP_FEATURE_DISABLED");
+export const BRIDGE_FEE_SWAP_FEATURE_DISABLED = hashString("BRIDGE_FEE_SWAP_FEATURE_DISABLED");
 export const JIT_FEATURE_DISABLED = hashString("JIT_FEATURE_DISABLED");
 
 export const CREATE_ORDER_FEATURE_DISABLED = hashString("CREATE_ORDER_FEATURE_DISABLED");
@@ -122,6 +123,7 @@ export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
 export const MAX_RELAY_FEE_SWAP_USD = hashString("MAX_RELAY_FEE_SWAP_USD");
 export const MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = hashString("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT");
+export const MAX_BRIDGE_FEE_SWAP_FACTOR = hashString("MAX_BRIDGE_FEE_SWAP_FACTOR");
 export const GELATO_RELAY_FEE_BASE_AMOUNT = hashString("GELATO_RELAY_FEE_BASE_AMOUNT");
 export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_MULTIPLIER_FACTOR");
 
@@ -403,6 +405,10 @@ export function gaslessFeatureDisabledKey(module: string) {
 
 export function atomicSwapFeatureDisabledKey(module: string) {
   return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEATURE_DISABLED, module]);
+}
+
+export function bridgeFeeSwapFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [BRIDGE_FEE_SWAP_FEATURE_DISABLED, module]);
 }
 
 export function withdrawalSwapFeatureDisabledKey(module: string) {

@@ -236,6 +236,12 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.MAX_BRIDGE_FEE_SWAP_FACTOR,
+      value: generalConfig.maxBridgeFeeSwapFactor,
+      label: `maxBridgeFeeSwapFactor`,
+    },
+    {
+      type: "uint",
       baseKey: keys.MAX_DATA_LENGTH,
       value: generalConfig.maxDataLength,
       label: `maxDataLength`,

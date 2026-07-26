@@ -172,6 +172,22 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
+    function quoteBridgeOutFee(address account, IRelayUtils.BridgeOutParams memory params) external view returns (uint256) {
+        IStargate stargate = IStargate(params.provider);
+        _validateBridgeOutToken(stargate, params.token);
+
+        uint32 dstEid = abi.decode(params.data, (uint32));
+        (, , MessagingFee memory messagingFee, ) = prepareSend(
+            stargate,
+            params.amount,
+            params.minAmountOut,
+            account,
+            dstEid
+        );
+
+        return messagingFee.nativeFee;
+    }
+
     /**
      * Bridges tokens from the current chain to a source chain using Stargate protocol
      * @dev Processes a cross-chain transfer of tokens from user's multichain balance
@@ -195,20 +211,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      */
     function bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams memory params) external onlyController returns (uint256) {
         IStargate stargate = IStargate(params.provider);
-
         address wnt = dataStore.getAddress(Keys.WNT);
 
-        if (stargate.token() == address(0x0)) {
-            // `stargate` is StargatePoolNative
-            if (params.token != wnt) {
-                revert Errors.InvalidBridgeOutToken(params.token);
-            }
-        } else {
-            // `stargate` is e.g. StargatePoolUSDC
-            if (params.token != stargate.token()) {
-                revert Errors.InvalidBridgeOutToken(params.token);
-            }
-        }
+        _validateBridgeOutToken(stargate, params.token);
 
         BridgeOutCache memory cache;
         cache.dstEid = abi.decode(params.data, (uint32));
@@ -288,6 +293,22 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
 
         return params.amount;
+    }
+
+    function _validateBridgeOutToken(IStargate stargate, address token) private view {
+        address wnt = dataStore.getAddress(Keys.WNT);
+
+        if (stargate.token() == address(0x0)) {
+            // `stargate` is StargatePoolNative
+            if (token != wnt) {
+                revert Errors.InvalidBridgeOutToken(token);
+            }
+        } else {
+            // `stargate` is e.g. StargatePoolUSDC
+            if (token != stargate.token()) {
+                revert Errors.InvalidBridgeOutToken(token);
+            }
+        }
     }
 
     function prepareSend(
