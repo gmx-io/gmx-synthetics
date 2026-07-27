@@ -3387,52 +3387,6 @@ library MarketUtils {
         }
     }
 
-    // @dev validate that the pending pnl is below the allowed amount, unless the swap
-    // strictly improved (decreased) an already-exceeded side's pnlToPoolFactor
-    // a swap that adds liquidity to the profitable side of an already-breached market
-    // lowers that side's pnlToPoolFactor; such swaps are allowed even if the factor is
-    // still above the cap, as long as it strictly decreased, see SwapUtils._swap
-    // @param dataStore DataStore
-    // @param market the market to check
-    // @param prices the prices of the market tokens
-    // @param pnlFactorTypeForLongs the pnl factor type to check for the long side
-    // @param pnlFactorTypeForShorts the pnl factor type to check for the short side
-    // @param prevPnlToPoolFactorForLongs the long pnlToPoolFactor before the swap deltas were applied
-    // @param prevPnlToPoolFactorForShorts the short pnlToPoolFactor before the swap deltas were applied
-    function validateMaxPnlForSwap(
-        DataStore dataStore,
-        Market.Props memory market,
-        MarketPrices memory prices,
-        bytes32 pnlFactorTypeForLongs,
-        bytes32 pnlFactorTypeForShorts,
-        int256 prevPnlToPoolFactorForLongs,
-        int256 prevPnlToPoolFactorForShorts
-    ) internal view {
-        (bool isPnlFactorExceededForLongs, int256 pnlToPoolFactorForLongs, uint256 maxPnlFactorForLongs) = isPnlFactorExceeded(
-            dataStore,
-            market,
-            prices,
-            true,
-            pnlFactorTypeForLongs
-        );
-
-        if (isPnlFactorExceededForLongs && pnlToPoolFactorForLongs >= prevPnlToPoolFactorForLongs) {
-            revert Errors.PnlFactorExceededForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
-        }
-
-        (bool isPnlFactorExceededForShorts, int256 pnlToPoolFactorForShorts, uint256 maxPnlFactorForShorts) = isPnlFactorExceeded(
-            dataStore,
-            market,
-            prices,
-            false,
-            pnlFactorTypeForShorts
-        );
-
-        if (isPnlFactorExceededForShorts && pnlToPoolFactorForShorts >= prevPnlToPoolFactorForShorts) {
-            revert Errors.PnlFactorExceededForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
-        }
-    }
-
     // @dev check if the pending pnl exceeds the allowed amount
     // @param dataStore DataStore
     // @param oracle Oracle

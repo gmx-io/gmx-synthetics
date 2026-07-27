@@ -51,8 +51,6 @@ library SwapUtils {
      * @param amountIn The amount of the token that is being swapped.
      * @param amountOut The amount of the token that is being received as part of the swap.
      * @param poolAmountOut The total amount of the token that is being received by all users in the swap pool.
-     * @param prevPnlToPoolFactorForLongs The long pnlToPoolFactor captured before the pool amounts are updated.
-     * @param prevPnlToPoolFactorForShorts The short pnlToPoolFactor captured before the pool amounts are updated.
      */
     struct SwapCache {
         address tokenOut;
@@ -67,8 +65,6 @@ library SwapUtils {
         bool balanceWasImproved;
         uint256 cappedDiffUsd;
         int256 tokenInPriceImpactAmount;
-        int256 prevPnlToPoolFactorForLongs;
-        int256 prevPnlToPoolFactorForShorts;
     }
 
     event SwapReverted(string reason, bytes reasonBytes);
@@ -349,18 +345,6 @@ library SwapUtils {
             );
         }
 
-        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
-            params.oracle.getPrimaryPrice(_params.market.indexToken),
-            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
-            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
-        );
-
-        // capture the pnlToPoolFactor before the pool amounts are updated so a swap that
-        // strictly improves an already-breached side can still be allowed, see MarketUtils.validateMaxPnlForSwap
-        // maximize must be true to match the value computed in isPnlFactorExceeded
-        cache.prevPnlToPoolFactorForLongs = MarketUtils.getPnlToPoolFactor(params.dataStore, _params.market, prices, true, true);
-        cache.prevPnlToPoolFactorForShorts = MarketUtils.getPnlToPoolFactor(params.dataStore, _params.market, prices, false, true);
-
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
@@ -379,6 +363,12 @@ library SwapUtils {
             -cache.poolAmountOut.toInt256()
         );
 
+        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
+            params.oracle.getPrimaryPrice(_params.market.indexToken),
+            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
+            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
+        );
+
         if (!_shouldSkipMaxPoolAmountValidationForTokenIn(params, _params)) {
             MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
         }
@@ -393,7 +383,12 @@ library SwapUtils {
             cache.tokenOut == _params.market.longToken
         );
 
-        MarketUtils.validateMaxPnlForSwap(
+        // swaps are intentionally frozen while a side is above its max pnl factor, including
+        // swaps that improve the breached side without fully curing it
+        // such a swap grows the pool of a side whose trader pnl is capped, which raises the
+        // amount of pnl those positions can realize, without adding durable capital
+        // ADL is the recovery path for a breached market, not swaps
+        MarketUtils.validateMaxPnl(
             params.dataStore,
             _params.market,
             prices,
@@ -402,9 +397,7 @@ library SwapUtils {
                 : Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             cache.tokenOut == _params.market.shortToken
                 ? Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
-                : Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            cache.prevPnlToPoolFactorForLongs,
-            cache.prevPnlToPoolFactorForShorts
+                : Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
         );
 
         SwapPricingUtils.EmitSwapInfoParams memory emitSwapInfoParams;

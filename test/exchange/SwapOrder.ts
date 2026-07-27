@@ -325,9 +325,9 @@ describe("Exchange.SwapOrder", () => {
   });
 });
 
-describe("Exchange.SwapOrder maxPnl partial cure", () => {
+describe("Exchange.SwapOrder maxPnl", () => {
   let fixture;
-  let user0, user1;
+  let user0, user1, user2;
   let reader, dataStore, ethUsdMarket, wnt, usdc, wethPriceFeed;
 
   // execution prices above the $5,000 entry, so the long position is in profit
@@ -381,7 +381,7 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1 } = fixture.accounts);
+    ({ user0, user1, user2 } = fixture.accounts);
     ({ reader, dataStore, ethUsdMarket, wnt, usdc, wethPriceFeed } = fixture.contracts);
 
     await handleDeposit(fixture, {
@@ -393,7 +393,7 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
     });
   });
 
-  it("allows a swap that strictly improves an already-exceeded side", async () => {
+  it("reverts a swap that improves but does not clear an already-exceeded side", async () => {
     await openLong(400_000, 40);
     await setLongPnlFactorCaps(decimalToFloat(10, 2)); // 10%
     await wethPriceFeed.setAnswer(expandDecimals(10_000, 8));
@@ -404,7 +404,9 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
 
     expect(await usdc.balanceOf(user1.address)).eq(0);
 
-    // WNT -> USDC adds WNT to the long pool, strictly reducing the long pnlToPoolFactor
+    // WNT -> USDC adds WNT to the long pool, reducing the long pnlToPoolFactor
+    // but not below the cap; the larger pool would let capped positions realize
+    // more pnl while the side is still exceeded, so the swap should revert
     await handleOrder(fixture, {
       create: {
         account: user1,
@@ -415,15 +417,42 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
         orderType: OrderType.MarketSwap,
         swapPath: [ethUsdMarket.marketToken],
       },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [wntPriceDouble, prices.usdc] }),
+        expectedCancellationReason: "PnlFactorExceededForLongs",
+      },
+    });
+
+    expect(await usdc.balanceOf(user1.address)).eq(0);
+    expect(await getLongPnlToPoolFactor(10_000)).eq(factorBefore);
+  });
+
+  it("allows a swap that clears an already-exceeded side", async () => {
+    await openLong(300_000, 30);
+    await setLongPnlFactorCaps(decimalToFloat(10, 2)); // 10%
+    await wethPriceFeed.setAnswer(expandDecimals(10_000, 8));
+
+    // at $10,000 the long pnl is ~$300,000 against a ~$2,000,000 long pool => ~15% > 10% cap
+    expect(await getLongPnlToPoolFactor(10_000)).to.gt(decimalToFloat(10, 2));
+
+    expect(await usdc.balanceOf(user1.address)).eq(0);
+
+    // adding 110 WNT takes the long pool to ~$3,100,000, bringing the factor below the 10% cap
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        receiver: user1,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(110, 18),
+        acceptablePrice: 0,
+        orderType: OrderType.MarketSwap,
+        swapPath: [ethUsdMarket.marketToken],
+      },
       execute: getExecuteParams(fixture, { prices: [wntPriceDouble, prices.usdc] }),
     });
 
     expect(await usdc.balanceOf(user1.address)).to.gt(0);
-
-    // the long pnlToPoolFactor decreased but is still above the cap: a partial cure
-    const factorAfter = await getLongPnlToPoolFactor(10_000);
-    expect(factorAfter).to.lt(factorBefore);
-    expect(factorAfter).to.gt(decimalToFloat(10, 2));
+    expect(await getLongPnlToPoolFactor(10_000)).to.lt(decimalToFloat(10, 2));
   });
 
   it("reverts a swap that worsens an already-exceeded side", async () => {
@@ -504,5 +533,65 @@ describe("Exchange.SwapOrder maxPnl partial cure", () => {
         expectedCancellationReason: "PnlFactorExceededForLongs",
       },
     });
+  });
+
+  it("a swap that does not clear an exceeded side cannot increase capped payouts", async () => {
+    await openLong(300_000, 30);
+    await setLongPnlFactorCaps(decimalToFloat(10, 2)); // 10%
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_TRADERS, ethUsdMarket.marketToken, true),
+      decimalToFloat(10, 2)
+    );
+    await wethPriceFeed.setAnswer(expandDecimals(10_000, 8));
+
+    // at $10,000 the long pnl is $300,000 against a $2,000,000 long pool => 15% > 10% cap
+    // traders can realize at most 10% of the pool: $200,000
+    expect(await getLongPnlToPoolFactor(10_000)).to.gt(decimalToFloat(10, 2));
+
+    // an attempt to raise the cap by swapping WNT into the long pool reverts
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        receiver: user1,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        acceptablePrice: 0,
+        orderType: OrderType.MarketSwap,
+        swapPath: [ethUsdMarket.marketToken],
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [wntPriceDouble, prices.usdc] }),
+        expectedCancellationReason: "PnlFactorExceededForLongs",
+      },
+    });
+
+    // the long pool is unchanged, so the payout cap is unchanged
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(200, 18));
+
+    // closing the position pays out the capped pnl: $300,000 * ($200,000 / $300,000) = $200,000, 20 WNT
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        receiver: user2,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: decimalToFloat(300_000),
+        acceptablePrice: expandDecimals(9990, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [wntPriceDouble, prices.usdc] }),
+        afterExecution: ({ logs }) => {
+          const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
+          expect(positionDecreaseEvent.basePnlUsd).eq(decimalToFloat(200_000));
+          expect(positionDecreaseEvent.uncappedBasePnlUsd).eq(decimalToFloat(300_000));
+        },
+      },
+    });
+
+    // 30 WNT collateral + 20 WNT capped pnl
+    expect(await wnt.balanceOf(user2.address)).eq(expandDecimals(50, 18));
   });
 });
