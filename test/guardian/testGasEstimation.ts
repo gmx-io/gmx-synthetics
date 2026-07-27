@@ -13,12 +13,12 @@ import { errorsContract } from "../../utils/error";
 describe("Guardian.GasEstimation", () => {
   let fixture;
   let wallet;
-  let roleStore, dataStore, ethUsdMarket, solUsdMarket, wnt, usdc, config;
+  let roleStore, dataStore, ethUsdMarket, ethUsdSpotOnlyMarket, solUsdMarket, wnt, usdc, config;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ wallet } = fixture.accounts);
-    ({ roleStore, dataStore, ethUsdMarket, solUsdMarket, wnt, usdc, config } = fixture.contracts);
+    ({ roleStore, dataStore, ethUsdMarket, ethUsdSpotOnlyMarket, solUsdMarket, wnt, usdc, config } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -125,8 +125,12 @@ describe("Guardian.GasEstimation", () => {
         market: ethUsdMarket,
         shortTokenAmount: expandDecimals(500_000, 6),
         longTokenAmount: expandDecimals(500_000, 6),
-        longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdMarket.marketToken, ethUsdMarket.marketToken],
-        shortTokenSwapPath: [ethUsdMarket.marketToken],
+        longTokenSwapPath: [
+          ethUsdSpotOnlyMarket.marketToken,
+          ethUsdSpotOnlyMarket.marketToken,
+          ethUsdSpotOnlyMarket.marketToken,
+        ],
+        shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
         executionFee: expandDecimals(69, 13), // 0.00069 ETH
       })
     ).to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee");
@@ -138,8 +142,12 @@ describe("Guardian.GasEstimation", () => {
       market: ethUsdMarket,
       shortTokenAmount: expandDecimals(500_000, 6),
       longTokenAmount: expandDecimals(500_000, 6),
-      longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdMarket.marketToken, ethUsdMarket.marketToken],
-      shortTokenSwapPath: [ethUsdMarket.marketToken],
+      longTokenSwapPath: [
+        ethUsdSpotOnlyMarket.marketToken,
+        ethUsdSpotOnlyMarket.marketToken,
+        ethUsdSpotOnlyMarket.marketToken,
+      ],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
       executionFee: expandDecimals(71, 13), // 0.00071 ETH
     });
 

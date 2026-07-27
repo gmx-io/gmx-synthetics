@@ -3340,6 +3340,14 @@ library MarketUtils {
         }
     }
 
+    function validateDepositMarketInSwapPath(address depositMarket, address[] memory swapPath) internal pure {
+        for (uint256 i; i < swapPath.length; i++) {
+            if (swapPath[i] == depositMarket) {
+                revert Errors.InvalidDepositMarketInSwapPath(depositMarket);
+            }
+        }
+    }
+
     // @dev validate that the pending pnl is below the allowed amount
     // @param dataStore DataStore
     // @param market the market to check

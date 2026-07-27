@@ -39,8 +39,8 @@ describe("Exchange.CancelDeposit", () => {
       shortTokenAmount: expandDecimals(10 * 5000, 6),
       initialLongToken: ethUsdMarket.longToken,
       initialShortToken: ethUsdMarket.shortToken,
-      longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
-      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
+      longTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
       minMarketTokens: 100,
       shouldUnwrapNativeToken: false,
       executionFee: "500",
@@ -57,8 +57,8 @@ describe("Exchange.CancelDeposit", () => {
     expect(deposit.addresses.market).eq(ethUsdMarket.marketToken);
     expect(deposit.addresses.initialLongToken).eq(ethUsdMarket.longToken);
     expect(deposit.addresses.initialShortToken).eq(ethUsdMarket.shortToken);
-    expect(deposit.addresses.longTokenSwapPath).deep.eq([ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken]);
-    expect(deposit.addresses.shortTokenSwapPath).deep.eq([ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken]);
+    expect(deposit.addresses.longTokenSwapPath).deep.eq([ethUsdSpotOnlyMarket.marketToken]);
+    expect(deposit.addresses.shortTokenSwapPath).deep.eq([ethUsdSpotOnlyMarket.marketToken]);
     expect(deposit.numbers.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(deposit.numbers.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(deposit.numbers.minMarketTokens).eq(100);

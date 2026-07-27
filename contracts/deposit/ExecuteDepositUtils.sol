@@ -545,6 +545,8 @@ library ExecuteDepositUtils {
         address uiFeeReceiver,
         uint256 uiFeeFactor
     ) internal returns (uint256) {
+        MarketUtils.validateDepositMarketInSwapPath(market, swapPath);
+
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
             params.dataStore,
             swapPath

@@ -39,6 +39,7 @@ describe("Glv Deposits", () => {
     glvShiftHandler,
     glvDepositHandler,
     ethUsdMarket,
+    ethUsdSpotOnlyMarket,
     btcUsdMarket,
     solUsdMarket,
     ethUsdSingleTokenMarket2,
@@ -61,6 +62,7 @@ describe("Glv Deposits", () => {
       glvShiftHandler,
       glvDepositHandler,
       ethUsdMarket,
+      ethUsdSpotOnlyMarket,
       solUsdMarket,
       btcUsdMarket,
       ethUsdSingleTokenMarket2,
@@ -216,7 +218,7 @@ describe("Glv Deposits", () => {
       initialLongToken: ethUsdMarket.longToken,
       initialShortToken: ethUsdMarket.shortToken,
       longTokenSwapPath: [btcUsdMarket.marketToken],
-      shortTokenSwapPath: [ethUsdMarket.marketToken],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
       minGlvTokens: 100,
       longTokenAmount: expandDecimals(10, 18),
       shortTokenAmount: expandDecimals(10 * 5000, 6),
@@ -496,14 +498,22 @@ describe("Glv Deposits", () => {
       },
     });
 
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdSpotOnlyMarket,
+        longTokenAmount: expandDecimals(100, 18),
+        shortTokenAmount: expandDecimals(500_000, 6),
+      },
+    });
+
     const params = {
       initialLongToken: usdc.address,
       longTokenAmount: expandDecimals(50_000, 6),
-      longTokenSwapPath: [ethUsdMarket.marketToken],
+      longTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
 
       initialShortToken: wnt.address,
       shortTokenAmount: expandDecimals(10, 18),
-      shortTokenSwapPath: [ethUsdMarket.marketToken],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
 
       dataList: [],
     };
@@ -518,6 +528,20 @@ describe("Glv Deposits", () => {
         [ethUsdGlvAddress]: expandDecimals(100_000, 18),
       },
     });
+  });
+
+  it("create glv deposit rejects its destination market in a swap path", async () => {
+    await expect(
+      createGlvDeposit(fixture, {
+        initialLongToken: usdc.address,
+        longTokenAmount: expandDecimals(50_000, 6),
+        longTokenSwapPath: [ethUsdMarket.marketToken],
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "InvalidDepositMarketInSwapPath")
+      .withArgs(ethUsdMarket.marketToken);
+
+    expect(await getGlvDepositCount(dataStore)).eq(0);
   });
 
   it("execute glv deposit, single asset", async () => {
