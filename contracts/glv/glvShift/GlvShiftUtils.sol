@@ -136,6 +136,9 @@ library GlvShiftUtils {
             GlvShiftStoreUtils.remove(params.dataStore, params.key);
         }
 
+        GlvUtils.validateGlvMarket(params.dataStore, glvShift.glv(), glvShift.fromMarket(), false);
+        GlvUtils.validateGlvMarket(params.dataStore, glvShift.glv(), glvShift.toMarket(), true);
+
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
         params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), Chain.currentTimestamp());
 

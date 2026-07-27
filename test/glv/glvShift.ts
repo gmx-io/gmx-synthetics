@@ -806,6 +806,85 @@ describe("Glv Shifts", () => {
         expect(await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME)).to.be.eq(300);
         await executeGlvShift(fixture);
       });
+
+      // fromMarket may be disabled at execute (drain path); toMarket must still be enabled
+      it("allows execute when fromMarket is disabled but still listed", async () => {
+        await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+
+        await handleGlvShift(fixture, {
+          create: {
+            fromMarket: ethUsdMarket,
+            toMarket: solUsdMarket,
+            marketTokenAmount: expandDecimals(1000, 18),
+            minMarketTokens: expandDecimals(1000, 18),
+          },
+        });
+
+        await expectBalances({
+          [ethUsdGlvAddress]: {
+            [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+            [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+          },
+        });
+      });
+
+      it("cancels execute when toMarket is disabled after create", async () => {
+        await createGlvShift(fixture, {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+          minMarketTokens: expandDecimals(1000, 18),
+        });
+
+        await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, solUsdMarket.marketToken), true);
+
+        await executeGlvShift(fixture, {
+          expectedCancellationReason: {
+            name: "GlvDisabledMarket",
+            args: [ethUsdGlvAddress, solUsdMarket.marketToken],
+          },
+        });
+
+        expect(await getGlvShiftCount(dataStore)).eq(0);
+        // GM stays on fromMarket (execute state rolled back before cancel)
+        await expectBalances({
+          [ethUsdGlvAddress]: {
+            [ethUsdMarket.marketToken]: expandDecimals(10000, 18),
+            [solUsdMarket.marketToken]: 0,
+          },
+        });
+      });
+
+      // toMarket removed while shift is pending: execute must cancel, not sync GM outside NAV
+      it("cancels execute when toMarket was removed after create", async () => {
+        await createGlvShift(fixture, {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+          minMarketTokens: expandDecimals(1000, 18),
+        });
+
+        expect(await getGlvShiftCount(dataStore)).eq(1);
+
+        // solUsdMarket has zero GLV balance, so it can be removed after disable
+        await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, solUsdMarket.marketToken), true);
+        await glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, solUsdMarket.marketToken);
+
+        await executeGlvShift(fixture, {
+          expectedCancellationReason: {
+            name: "GlvUnsupportedMarket",
+            args: [ethUsdGlvAddress, solUsdMarket.marketToken],
+          },
+        });
+
+        expect(await getGlvShiftCount(dataStore)).eq(0);
+        await expectBalances({
+          [ethUsdGlvAddress]: {
+            [ethUsdMarket.marketToken]: expandDecimals(10000, 18),
+            [solUsdMarket.marketToken]: 0,
+          },
+        });
+      });
     });
 
     it("GlvShiftMaxLossExceeded", async () => {
