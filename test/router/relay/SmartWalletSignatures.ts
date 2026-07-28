@@ -267,6 +267,27 @@ describe("Smart Wallet Signatures", () => {
   });
 
   describe("EIP-6492 (counterfactual wallets)", () => {
+    it("should reject a stripped EIP-6492 wrapper", async () => {
+      const salt = ethers.utils.formatBytes32String("stripped-wrapper");
+      const walletAddress = await mockFactory.getWalletAddress(user0.address, salt);
+      const types = {
+        PrimaryStruct: [{ name: "account", type: "address" }],
+      };
+      const innerSignature = await user0._signTypedData(domain, types, { account: walletAddress });
+      const factoryCalldata = mockFactory.interface.encodeFunctionData("createWallet", [user0.address, salt]);
+
+      await expect(
+        mockContract.testEIP6492Signature(
+          walletAddress,
+          innerSignature,
+          chainId,
+          wrapperHash(mockFactory.address, factoryCalldata)
+        )
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidEIP6492SignatureWrapper");
+
+      expect(await ethers.provider.getCode(walletAddress)).to.equal("0x");
+    });
+
     it("should validate EIP-6492 wrapped signature for undeployed wallet", async () => {
       // Get counterfactual address WITHOUT deploying
       const salt = ethers.utils.formatBytes32String("counterfactual");

@@ -42,7 +42,7 @@ library SignatureUtils {
      * @param expectedSigner The expected signer address
      * @param signatureType The signature type string for error messages
      * @param expectedWrapperHash the signed wrapper hash keccak256(abi.encode(factory, factoryCalldata));
-     *  only read for EIP-6492 signatures, ignored for EOA / ERC-1271
+     *  must be zero for EOA / ERC-1271 signatures and match the wrapper for EIP-6492 signatures
      */
     function validateSignature(
         bytes32 domainSeparator,
@@ -57,6 +57,10 @@ library SignatureUtils {
         // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
         if (tx.origin == GMX_SIMULATION_ORIGIN) {
             return;
+        }
+
+        if (!_isEIP6492Signature(signature) && expectedWrapperHash != bytes32(0)) {
+            revert Errors.InvalidEIP6492SignatureWrapper();
         }
 
         bytes32 minifiedDigest = ECDSA.toTypedDataHash(
