@@ -242,7 +242,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
                 tokenIn: bridgeFee.feeToken,
                 amountIn: bridgeFee.feeAmount,
                 swapPathMarkets: swapPathMarkets,
-                minOutputAmount: 0,
+                minOutputAmount: bridgeFee.minOutputAmount,
                 receiver: address(multichainVault),
                 uiFeeReceiver: address(0),
                 uiFeeFactor: 0, // uiFeeReceiver is the zero address, so no ui fee is charged

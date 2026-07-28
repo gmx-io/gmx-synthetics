@@ -69,6 +69,7 @@ async function main() {
       feeToken: ethers.constants.AddressZero,
       feeAmount: 0,
       feeSwapPath: [],
+      minOutputAmount: 0,
     },
   };
   const sendBridgeOutParams: Parameters<typeof sendBridgeOut>[0] = {

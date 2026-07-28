@@ -94,6 +94,8 @@ interface IRelayUtils {
         address feeToken;
         uint256 feeAmount;
         address[] feeSwapPath;
+        // min WNT output for the bridge fee swap, ignored if no swap is needed
+        uint256 minOutputAmount;
     }
 
     struct BridgeOutParams {
