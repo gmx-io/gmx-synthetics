@@ -1,7 +1,7 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, percentageToFloat, applyFactor } from "../../utils/math";
+import { expandDecimals, percentageToFloat, applyFactor, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { logGasUsage } from "../../utils/gas";
 import * as keys from "../../utils/keys";
@@ -20,6 +20,7 @@ describe("MultichainTransferRouter", () => {
     multichainVault,
     router,
     multichainTransferRouter,
+    swapHandler,
     wnt,
     usdc,
     mockStargatePoolNative,
@@ -36,6 +37,7 @@ describe("MultichainTransferRouter", () => {
       multichainVault,
       router,
       multichainTransferRouter,
+      swapHandler,
       wnt,
       usdc,
       mockStargatePoolNative,
@@ -400,6 +402,10 @@ describe("MultichainTransferRouter", () => {
         // Set atomic swap fee factor
         await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
 
+        // Cap bridge fee atomic swaps (same USD cap as relay fee swaps + quote-derived bound)
+        await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(100));
+        await dataStore.setUint(keys.MAX_BRIDGE_FEE_SWAP_FACTOR, decimalToFloat(10));
+
         // Enable providers
         await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
         await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
@@ -475,6 +481,149 @@ describe("MultichainTransferRouter", () => {
           tx,
           label: "multichainTransferRouter.bridgeOut with bridge fee swap",
         });
+      });
+
+      it("reverts bridge fee swap when atomic swaps are disabled", async () => {
+        await bridgeInTokens(fixture, {
+          account: user1,
+          token: usdc,
+          amount: bridgeOutAmount.add(bridgeFeeUsdc),
+        });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        const featureKey = keys.atomicSwapFeatureDisabledKey(swapHandler.address);
+        await dataStore.setBool(featureKey, true);
+
+        await expect(sendBridgeOut(bridgeOutParams))
+          .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+          .withArgs(featureKey);
+      });
+
+      it("reverts bridge fee swap when bridge fee swap feature is disabled", async () => {
+        await bridgeInTokens(fixture, {
+          account: user1,
+          token: usdc,
+          amount: bridgeOutAmount.add(bridgeFeeUsdc),
+        });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: bridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        const featureKey = keys.bridgeFeeSwapFeatureDisabledKey(multichainTransferRouter.address);
+        await dataStore.setBool(featureKey, true);
+
+        await expect(sendBridgeOut(bridgeOutParams))
+          .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+          .withArgs(featureKey);
+      });
+
+      it("reverts when bridge fee swap exceeds MAX_RELAY_FEE_SWAP_USD", async () => {
+        // PoC-style oversized bridge fee: $1,000,000 USDC vs $100 cap
+        const largeBridgeFeeUsdc = expandDecimals(1_000_000, 6);
+        await bridgeInTokens(fixture, {
+          account: user1,
+          token: usdc,
+          amount: bridgeOutAmount.add(largeBridgeFeeUsdc),
+        });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        // Raise quote-bound so the USD size cap is the binding constraint
+        await dataStore.setUint(keys.MAX_BRIDGE_FEE_SWAP_FACTOR, decimalToFloat(1_000_000));
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: largeBridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        await expect(sendBridgeOut(bridgeOutParams))
+          .to.be.revertedWithCustomError(errorsContract, "MaxRelayFeeSwapExceeded")
+          .withArgs(decimalToFloat(1_000_000), decimalToFloat(100));
+      });
+
+      it("reverts when bridge fee swap exceeds quote-derived MAX_BRIDGE_FEE_SWAP_FACTOR bound", async () => {
+        // Messaging fee is 0.001 ETH ≈ $5; with factor 10 the max allowed fee USD is ≈ $50.
+        // 100 USDC is under MAX_RELAY_FEE_SWAP_USD ($100) but above the quote-derived bound.
+        const oversizedBridgeFeeUsdc = expandDecimals(100, 6);
+        await bridgeInTokens(fixture, {
+          account: user1,
+          token: usdc,
+          amount: bridgeOutAmount.add(oversizedBridgeFeeUsdc),
+        });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: oversizedBridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "MaxBridgeFeeSwapExceeded"
+        );
       });
 
       it("no swap when feeSwapPath is empty (backward compat)", async () => {

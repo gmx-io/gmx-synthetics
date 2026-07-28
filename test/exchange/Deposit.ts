@@ -365,7 +365,10 @@ describe("Exchange.Deposit", () => {
     });
   });
 
-  it("executeDeposit succeeds when borrowing accrual sees zero pool value", async () => {
+  it("executeDeposit caps borrowing after a one-wei recovery deposit", async () => {
+    const marketUtilsTest = await deployContract("MarketUtilsTest", []);
+    const maxBorrowingFactorPerSecond = bigNumberify("100000000000000000000000");
+
     await dataStore.setUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true), decimalToFloat(5000));
     await dataStore.setUint(
       keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
@@ -376,15 +379,41 @@ describe("Exchange.Deposit", () => {
       keys.openInterestInTokensKey(ethUsdMarket.marketToken, usdc.address, false),
       expandDecimals(1, 18)
     );
+    await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 11));
+    await dataStore.setUint(keys.borrowingExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1));
+    await dataStore.setUint(
+      keys.maxBorrowingFactorPerSecondKey(ethUsdMarket.marketToken, true),
+      maxBorrowingFactorPerSecond
+    );
+
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        true,
+        true
+      )
+    ).eq(0);
 
     await handleDeposit(fixture, {
       create: {
         market: ethUsdMarket,
-        longTokenAmount: expandDecimals(10, 18),
+        longTokenAmount: bigNumberify(1),
       },
     });
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).gt(0);
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(1);
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        true,
+        false
+      )
+    ).eq(maxBorrowingFactorPerSecond);
   });
 
   it("executeDeposit with swap", async () => {

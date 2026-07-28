@@ -53,6 +53,12 @@ interface IMultichainStakingRouter {
         uint256 amount
     ) external;
 
+    function withdrawVesting(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId
+    ) external;
+
     function delegateGovGmx(
         IRelayUtils.RelayParams calldata relayParams,
         address account,

@@ -27,10 +27,13 @@ interface IMultichainProvider {
         DelegateGovGmx,
         SignalStakingTransfer,
         AcceptStakingTransfer,
-        WithdrawFromWallet
+        WithdrawFromWallet,
+        WithdrawVesting
     }
 
     function bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams memory params) external returns (uint256);
+
+    function quoteBridgeOutFee(address account, IRelayUtils.BridgeOutParams memory params) external view returns (uint256);
 
     function withdrawTokens(address token, address receiver, uint256 amount) external;
 }

@@ -44,6 +44,7 @@ describe("GelatoRelayRouter", () => {
     dataStore,
     router,
     gelatoRelayRouter,
+    swapHandler,
     orderVault,
     ethUsdMarket,
     wnt,
@@ -65,6 +66,7 @@ describe("GelatoRelayRouter", () => {
       dataStore,
       router,
       gelatoRelayRouter,
+      swapHandler,
       orderVault,
       ethUsdMarket,
       wnt,
@@ -1175,6 +1177,38 @@ describe("GelatoRelayRouter", () => {
         tx,
         label: "gelatoRelayRouter.createOrder with swap",
       });
+    });
+
+    it("reverts relay fee swap when atomic swaps are disabled", async () => {
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
+
+      await usdc.connect(user0).approve(router.address, expandDecimals(1000, 6));
+
+      const featureKey = keys.atomicSwapFeatureDisabledKey(swapHandler.address);
+      await dataStore.setBool(featureKey, true);
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          feeParams: {
+            feeToken: usdc.address,
+            feeAmount: expandDecimals(10, 6),
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+          oracleParams: {
+            tokens: [usdc.address, wnt.address],
+            providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+            data: ["0x", "0x"],
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+        .withArgs(featureKey);
     });
   });
 

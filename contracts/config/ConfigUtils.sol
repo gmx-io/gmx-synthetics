@@ -47,6 +47,8 @@ library ConfigUtils {
 
     // 0.00001% per second, ~315% per year
     uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
+    // 0.00001% per second, ~315% per year
+    uint256 public constant MAX_ALLOWED_MAX_BORROWING_FACTOR_PER_SECOND = 100000000000000000000000;
     // at this rate max allowed funding rate will be reached in 1 hour at 100% imbalance if max funding rate is 315%
     uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
     // at this rate zero funding rate will be reached in 24 hours if max funding rate is 315%
@@ -299,6 +301,14 @@ library ConfigUtils {
             bytes32 minFundingFactorPerSecondKey = Keys.getFullKey(Keys.MIN_FUNDING_FACTOR_PER_SECOND, data);
             uint256 minFundingFactorPerSecond = dataStore.getUint(minFundingFactorPerSecondKey);
             if (value < minFundingFactorPerSecond) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.MAX_BORROWING_FACTOR_PER_SECOND
+        ) {
+            if (value > MAX_ALLOWED_MAX_BORROWING_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }

@@ -568,6 +568,11 @@ describe("MultichainGmRouter", () => {
       const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
       const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [1]); // providerData
 
+      beforeEach(async () => {
+        await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(100));
+        await dataStore.setUint(keys.MAX_BRIDGE_FEE_SWAP_FACTOR, decimalToFloat(10));
+      });
+
       it("create deposit and bridge out from controller the GM tokens, on the same chain", async () => {
         createDepositParams.params.addresses.receiver = user0.address; // receiver must the be account to enable bridging out from controller
         createDepositParams.params.dataList = encodeBridgeOutDataList(

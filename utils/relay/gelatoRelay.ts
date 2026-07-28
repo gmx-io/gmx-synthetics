@@ -15,6 +15,7 @@ import {
   getHandleStakingRewardsSignature,
   getCompoundStakingRewardsSignature,
   getVestEsGmxSignature,
+  getWithdrawVestingSignature,
   getDelegateGovGmxSignature,
   getSignalStakingTransferSignature,
   getAcceptStakingTransferSignature,
@@ -535,6 +536,20 @@ export async function sendVestEsGmx(p: StakingRelayParams & { amount: BigNumberi
     p.account,
     p.srcChainId,
     p.amount,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendWithdrawVesting(p: StakingRelayParams) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getWithdrawVestingSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("withdrawVesting", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
   ]);
   return sendRelayTransaction({ calldata, ...p });
 }

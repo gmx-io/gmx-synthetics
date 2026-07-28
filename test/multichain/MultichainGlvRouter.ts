@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
-import { expandDecimals, percentageToFloat } from "../../utils/math";
+import { decimalToFloat, expandDecimals, percentageToFloat } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
 import {
@@ -628,6 +628,11 @@ describe("MultichainGlvRouter", () => {
       const actionType = 3; // ActionType.BridgeOut
       const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
       const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [1]); // providerData
+
+      beforeEach(async () => {
+        await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(100));
+        await dataStore.setUint(keys.MAX_BRIDGE_FEE_SWAP_FACTOR, decimalToFloat(10));
+      });
 
       it("create glvDeposit and bridge out from controller the GLV tokens, on the same chain", async () => {
         await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });

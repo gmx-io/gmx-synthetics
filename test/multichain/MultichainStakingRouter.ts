@@ -11,13 +11,18 @@ import {
   sendHandleStakingRewards,
   sendCompoundStakingRewards,
   sendVestEsGmx,
+  sendWithdrawVesting,
   sendDelegateGovGmx,
   sendSignalStakingTransfer,
   sendAcceptStakingTransfer,
   sendWithdrawFromWallet,
 } from "../../utils/relay/gelatoRelay";
+import { getRelayParams } from "../../utils/relay/helpers";
+import { getStakeGmxSignature, getSignalStakingTransferSignature } from "../../utils/relay/signatures";
+import { deployContract } from "../../utils/deploy";
 import { grantRole } from "../../utils/role";
 import { fundMultichainBalance } from "../../utils/multichain";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("MultichainStakingRouter", () => {
@@ -323,6 +328,90 @@ describe("MultichainStakingRouter", () => {
     });
   });
 
+  // withdrawVesting is the exit for vestEsGmx: the wallet calls vester.withdraw and the
+  // claimed GMX and returned esGMX are swept back to the multichain balance
+  describe("withdrawVesting", () => {
+    it("returns esGMX and claimed GMX to multichain balance", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      const walletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+
+      // pretend part of the deposit already vested into claimable GMX
+      const claimableAmount = expandDecimals(40, 18);
+      await gmx.mint(mockGmxVester.address, claimableAmount);
+      await mockGmxVester.setClaimable(walletAddress, claimableAmount);
+
+      await sendWithdrawVesting(getDefaultStakingRelayParams());
+
+      // vester position is closed
+      expect(await mockGmxVester.depositedAmounts(walletAddress)).to.equal(0);
+      expect(await mockGmxVester.claimableAmounts(walletAddress)).to.equal(0);
+
+      // esGMX and GMX are back in the multichain balance, nothing is left in the wallet
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, esGmx.address))).to.equal(stakeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(claimableAmount);
+      expect(await esGmx.balanceOf(walletAddress)).to.equal(0);
+      expect(await gmx.balanceOf(walletAddress)).to.equal(0);
+    });
+
+    it("reverts when nothing is vested", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+      await sendWithdrawVesting(getDefaultStakingRelayParams());
+
+      await expect(sendWithdrawVesting(getDefaultStakingRelayParams())).to.be.revertedWith(
+        "Vester: vested amount is zero"
+      );
+    });
+
+    it("reverts when signed by a different account", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      await expect(sendWithdrawVesting(getDefaultStakingRelayParams({ signer: user1 }))).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+    });
+
+    it("only the signed action can drive the wallet", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      const walletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      const wallet = await hre.ethers.getContractAt("GmxAccountWallet", walletAddress);
+      const withdrawCalldata = new hre.ethers.utils.Interface(["function withdraw()"]).encodeFunctionData("withdraw");
+
+      // the wallet rejects callers without the controller role
+      await expect(wallet.connect(user0)["execute(address,bytes)"](mockGmxVester.address, withdrawCalldata))
+        .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+        .withArgs(user0.address, "CONTROLLER");
+
+      // relay external calls cannot drive the wallet either, ExternalHandler has no controller role
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: 1 });
+      await expect(
+        sendCompoundStakingRewards(
+          getDefaultStakingRelayParams({
+            externalCalls: {
+              sendTokens: [esGmx.address],
+              sendAmounts: [1],
+              externalCallTargets: [walletAddress],
+              externalCallDataList: [
+                wallet.interface.encodeFunctionData("execute(address,bytes)", [
+                  mockGmxVester.address,
+                  withdrawCalldata,
+                ]),
+              ],
+              refundTokens: [],
+              refundReceivers: [],
+            },
+          })
+        )
+      ).to.be.revertedWithCustomError(errorsContract, "ExternalCallFailed");
+    });
+  });
+
   describe("delegateGovGmx", () => {
     it("delegates govGMX voting power", async () => {
       // Stake GMX to get govGMX minted to wallet
@@ -406,6 +495,177 @@ describe("MultichainStakingRouter", () => {
 
       // Wallet should be empty
       expect(await gmx.balanceOf(walletAddress)).to.equal(0);
+    });
+  });
+
+  // The account is part of each staking hash, so two accounts signing the same params
+  // get different digests and both go through. userNonce is pinned so the payloads only
+  // differ by account (the default nonce is random per call).
+  describe("account-bound digests", () => {
+    it("two accounts can submit identical stakeGmx payloads", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await fundMultichainBalance(fixture, { account: user1.address, token: gmx, amount: stakeAmount });
+
+      const sharedNonce = 424242;
+      const sharedDeadline = Math.floor(Date.now() / 1000) + 3600;
+      const user0Params = getDefaultStakingRelayParams({
+        amount: stakeAmount,
+        userNonce: sharedNonce,
+        deadline: sharedDeadline,
+        signer: user0,
+        account: user0.address,
+      });
+
+      // same params, signed by a different account
+      const user1Params = {
+        ...user0Params,
+        signer: user1,
+        account: user1.address,
+      };
+
+      // both go through — the digests differ by account
+      await sendStakeGmx(user0Params);
+      await expect(sendStakeGmx(user1Params)).to.not.be.reverted;
+
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, gmx.address))).to.equal(0);
+    });
+
+    it("two accounts can submit identical compoundStakingRewards payloads", async () => {
+      // compound has no action params, only the account
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await fundMultichainBalance(fixture, { account: user1.address, token: gmx, amount: stakeAmount });
+      // stake so both wallets exist
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount, signer: user1, account: user1.address }));
+
+      const sharedNonce = 515151;
+      const sharedDeadline = Math.floor(Date.now() / 1000) + 3600;
+      const user0Params = getDefaultStakingRelayParams({
+        userNonce: sharedNonce,
+        deadline: sharedDeadline,
+        signer: user0,
+        account: user0.address,
+      });
+      const user1Params = {
+        ...user0Params,
+        signer: user1,
+        account: user1.address,
+      };
+
+      await sendCompoundStakingRewards(user0Params);
+      await sendCompoundStakingRewards(user1Params);
+
+      const user0Wallet = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      const user1Wallet = await gmxAccountWalletFactory.getWalletAddress(user1.address);
+      expect(await mockRewardRouterV2.compoundCalled(user0Wallet)).to.be.true;
+      expect(await mockRewardRouterV2.compoundCalled(user1Wallet)).to.be.true;
+    });
+
+    it("the same signed staking payload cannot be submitted twice", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+
+      const params = getDefaultStakingRelayParams({
+        amount: stakeAmount,
+        userNonce: 626262,
+        deadline: Math.floor(Date.now() / 1000) + 3600,
+      });
+
+      await sendStakeGmx(params);
+      await expect(sendStakeGmx(params)).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
+    });
+  });
+
+  // Sibling ERC-1271 wallets that share an owner accept the same signature for the same raw
+  // digest, so the account inside each staking hash is what stops a relayer from submitting
+  // one sibling's signature with another sibling as the account.
+  describe("sibling ERC-1271 wallets", () => {
+    let walletA, walletB;
+
+    beforeEach(async () => {
+      const walletFactory = await deployContract("MockERC1271WalletFactory", []);
+      const saltA = hre.ethers.utils.formatBytes32String("siblingA");
+      const saltB = hre.ethers.utils.formatBytes32String("siblingB");
+      await walletFactory.createWallet(user0.address, saltA);
+      await walletFactory.createWallet(user0.address, saltB);
+      walletA = await walletFactory.getWalletAddress(user0.address, saltA);
+      walletB = await walletFactory.getWalletAddress(user0.address, saltB);
+    });
+
+    it("siblings sharing an owner accept the same raw digest", async () => {
+      const digest = hre.ethers.utils.hashMessage("sibling wallets");
+      const signature = await user0.signMessage("sibling wallets");
+
+      const siblingA = await hre.ethers.getContractAt("MockERC1271Wallet", walletA);
+      const siblingB = await hre.ethers.getContractAt("MockERC1271Wallet", walletB);
+      expect(await siblingA.isValidSignature(digest, signature)).to.equal("0x1626ba7e");
+      expect(await siblingB.isValidSignature(digest, signature)).to.equal("0x1626ba7e");
+    });
+
+    it("stakes GMX for an ERC-1271 wallet account", async () => {
+      await fundMultichainBalance(fixture, { account: walletA, token: gmx, amount: stakeAmount });
+
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount, account: walletA }));
+
+      expect(await dataStore.getUint(keys.multichainBalanceKey(walletA, gmx.address))).to.equal(0);
+      const accountWallet = await gmxAccountWalletFactory.getWalletAddress(walletA);
+      expect(await mockRewardRouterV2.stakedGmxAmounts(accountWallet)).to.equal(stakeAmount);
+    });
+
+    it("a stakeGmx signature for one sibling cannot be submitted for another", async () => {
+      await fundMultichainBalance(fixture, { account: walletA, token: gmx, amount: stakeAmount });
+      await fundMultichainBalance(fixture, { account: walletB, token: gmx, amount: stakeAmount });
+
+      const params = getDefaultStakingRelayParams({
+        amount: stakeAmount,
+        account: walletA,
+        userNonce: 737373,
+        deadline: Math.floor(Date.now() / 1000) + 3600,
+      });
+      const relayParams = await getRelayParams(params);
+      const signature = await getStakeGmxSignature({
+        ...params,
+        relayParams,
+        verifyingContract: multichainStakingRouter.address,
+      });
+
+      await expect(sendStakeGmx({ ...params, account: walletB, signature })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      // the same signature is valid for the sibling it was signed for
+      await sendStakeGmx({ ...params, signature });
+      expect(await dataStore.getUint(keys.multichainBalanceKey(walletA, gmx.address))).to.equal(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(walletB, gmx.address))).to.equal(stakeAmount);
+    });
+
+    it("a signalStakingTransfer signature for one sibling cannot be submitted for another", async () => {
+      await fundMultichainBalance(fixture, { account: walletA, token: gmx, amount: stakeAmount });
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount, account: walletA }));
+
+      const receiver = await gmxAccountWalletFactory.getWalletAddress(user1.address);
+      const params = getDefaultStakingRelayParams({
+        receiver,
+        account: walletA,
+        userNonce: 747474,
+        deadline: Math.floor(Date.now() / 1000) + 3600,
+      });
+      const relayParams = await getRelayParams(params);
+      const signature = await getSignalStakingTransferSignature({
+        ...params,
+        relayParams,
+        verifyingContract: multichainStakingRouter.address,
+      });
+
+      await expect(sendSignalStakingTransfer({ ...params, account: walletB, signature })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      await sendSignalStakingTransfer({ ...params, signature });
+      const accountWalletA = await gmxAccountWalletFactory.getWalletAddress(walletA);
+      expect(await mockRewardRouterV2.pendingReceivers(accountWalletA)).to.equal(receiver);
     });
   });
 });

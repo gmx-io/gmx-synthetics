@@ -438,6 +438,10 @@ if (usageFactor > optimalUsageFactor) {
 }
 ```
 
+For both models, the final borrowing factor is capped by the per-market, per-side
+`MAX_BORROWING_FACTOR_PER_SECOND` value. This cap must be configured to a nonzero
+value for each side before enabling borrowing accrual.
+
 There is also an option to set a skipBorrowingFeeForSmallerSide flag, this would result in the borrowing fee for the smaller side being set to zero. For example, if there are more longs than shorts and skipBorrowingFeeForSmallerSide is true, then the borrowing fee for shorts would be zero.
 
 ## Price Impact

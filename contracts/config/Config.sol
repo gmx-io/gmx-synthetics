@@ -485,6 +485,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
 
         allowedBaseKeys[Keys.SUBACCOUNT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.GASLESS_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.ATOMIC_SWAP_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.BRIDGE_FEE_SWAP_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
@@ -539,6 +541,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.SIGNAL_STAKING_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.ACCEPT_STAKING_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.WITHDRAW_FROM_WALLET_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.WITHDRAW_VESTING_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 
@@ -598,6 +601,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
         allowedBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_BORROWING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
@@ -645,6 +649,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
+        allowedBaseKeys[Keys.MAX_BRIDGE_FEE_SWAP_FACTOR] = true;
 
         allowedBaseKeys[Keys2.MULTICHAIN_READ_CHANNEL] = true;
         allowedBaseKeys[Keys2.MULTICHAIN_PEERS] = true;
@@ -677,6 +682,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
+        allowedLimitedBaseKeys[Keys.MAX_BORROWING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;

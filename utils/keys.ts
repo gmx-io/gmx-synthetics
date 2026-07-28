@@ -50,6 +50,8 @@ export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATUR
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
 export const EXECUTE_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_DEPOSIT_FEATURE_DISABLED");
 export const GASLESS_FEATURE_DISABLED = hashString("GASLESS_FEATURE_DISABLED");
+export const ATOMIC_SWAP_FEATURE_DISABLED = hashString("ATOMIC_SWAP_FEATURE_DISABLED");
+export const BRIDGE_FEE_SWAP_FEATURE_DISABLED = hashString("BRIDGE_FEE_SWAP_FEATURE_DISABLED");
 export const JIT_FEATURE_DISABLED = hashString("JIT_FEATURE_DISABLED");
 
 export const CREATE_ORDER_FEATURE_DISABLED = hashString("CREATE_ORDER_FEATURE_DISABLED");
@@ -121,6 +123,7 @@ export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
 export const MAX_RELAY_FEE_SWAP_USD = hashString("MAX_RELAY_FEE_SWAP_USD");
 export const MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = hashString("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT");
+export const MAX_BRIDGE_FEE_SWAP_FACTOR = hashString("MAX_BRIDGE_FEE_SWAP_FACTOR");
 export const GELATO_RELAY_FEE_BASE_AMOUNT = hashString("GELATO_RELAY_FEE_BASE_AMOUNT");
 export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_MULTIPLIER_FACTOR");
 
@@ -222,6 +225,7 @@ export const FUNDING_UPDATED_AT = hashString("FUNDING_UPDATED_AT");
 export const OPTIMAL_USAGE_FACTOR = hashString("OPTIMAL_USAGE_FACTOR");
 export const BASE_BORROWING_FACTOR = hashString("BASE_BORROWING_FACTOR");
 export const ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = hashString("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR");
+export const MAX_BORROWING_FACTOR_PER_SECOND = hashString("MAX_BORROWING_FACTOR_PER_SECOND");
 
 export const BORROWING_FACTOR = hashString("BORROWING_FACTOR");
 export const BORROWING_EXPONENT_FACTOR = hashString("BORROWING_EXPONENT_FACTOR");
@@ -397,6 +401,14 @@ export function cancelDepositFeatureDisabledKey(contract) {
 
 export function gaslessFeatureDisabledKey(module: string) {
   return hashData(["bytes32", "address"], [GASLESS_FEATURE_DISABLED, module]);
+}
+
+export function atomicSwapFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEATURE_DISABLED, module]);
+}
+
+export function bridgeFeeSwapFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [BRIDGE_FEE_SWAP_FEATURE_DISABLED, module]);
 }
 
 export function withdrawalSwapFeatureDisabledKey(module: string) {
@@ -819,6 +831,10 @@ export function baseBorrowingFactorKey(market: string, isLong: boolean) {
 
 export function aboveOptimalUsageBorrowingFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR, market, isLong]);
+}
+
+export function maxBorrowingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_BORROWING_FACTOR_PER_SECOND, market, isLong]);
 }
 
 export function borrowingExponentFactorKey(market: string, isLong: boolean) {

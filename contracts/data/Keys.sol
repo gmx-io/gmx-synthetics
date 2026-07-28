@@ -176,6 +176,8 @@ library Keys {
     bytes32 public constant CLAIM_UI_FEES_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_UI_FEES_FEATURE_DISABLED"));
     bytes32 public constant SUBACCOUNT_FEATURE_DISABLED = keccak256(abi.encode("SUBACCOUNT_FEATURE_DISABLED"));
     bytes32 public constant GASLESS_FEATURE_DISABLED = keccak256(abi.encode("GASLESS_FEATURE_DISABLED"));
+    bytes32 public constant ATOMIC_SWAP_FEATURE_DISABLED = keccak256(abi.encode("ATOMIC_SWAP_FEATURE_DISABLED"));
+    bytes32 public constant BRIDGE_FEE_SWAP_FEATURE_DISABLED = keccak256(abi.encode("BRIDGE_FEE_SWAP_FEATURE_DISABLED"));
     bytes32 public constant GENERAL_CLAIM_FEATURE_DISABLED = keccak256(abi.encode("GENERAL_CLAIM_FEATURE_DISABLED"));
 
     // @dev key for the minimum required oracle signers for an oracle observation
@@ -237,6 +239,8 @@ library Keys {
 
     bytes32 public constant MAX_RELAY_FEE_SWAP_USD = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD"));
     bytes32 public constant MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT"));
+    // @dev multiplier applied to the provider's quoted messaging fee USD when capping bridge fee swaps
+    bytes32 public constant MAX_BRIDGE_FEE_SWAP_FACTOR = keccak256(abi.encode("MAX_BRIDGE_FEE_SWAP_FACTOR"));
     bytes32 public constant GELATO_RELAY_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("GELATO_RELAY_FEE_MULTIPLIER_FACTOR"));
     bytes32 public constant GELATO_RELAY_FEE_BASE_AMOUNT = keccak256(abi.encode("GELATO_RELAY_FEE_BASE_AMOUNT"));
     bytes32 public constant CREATE_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("CREATE_DEPOSIT_GAS_LIMIT"));
@@ -268,6 +272,7 @@ library Keys {
     bytes32 public constant SIGNAL_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("SIGNAL_STAKING_TRANSFER_GAS_LIMIT"));
     bytes32 public constant ACCEPT_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("ACCEPT_STAKING_TRANSFER_GAS_LIMIT"));
     bytes32 public constant WITHDRAW_FROM_WALLET_GAS_LIMIT = keccak256(abi.encode("WITHDRAW_FROM_WALLET_GAS_LIMIT"));
+    bytes32 public constant WITHDRAW_VESTING_GAS_LIMIT = keccak256(abi.encode("WITHDRAW_VESTING_GAS_LIMIT"));
 
     bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
     bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
@@ -434,6 +439,7 @@ library Keys {
     bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
     bytes32 public constant BASE_BORROWING_FACTOR = keccak256(abi.encode("BASE_BORROWING_FACTOR"));
     bytes32 public constant ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = keccak256(abi.encode("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR"));
+    bytes32 public constant MAX_BORROWING_FACTOR_PER_SECOND = keccak256(abi.encode("MAX_BORROWING_FACTOR_PER_SECOND"));
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
     bytes32 public constant BORROWING_EXPONENT_FACTOR = keccak256(abi.encode("BORROWING_EXPONENT_FACTOR"));
     bytes32 public constant SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = keccak256(abi.encode("SKIP_BORROWING_FEE_FOR_SMALLER_SIDE"));
@@ -1002,6 +1008,22 @@ library Keys {
     function gaslessFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             GASLESS_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether atomic swaps are disabled
+    // @param the atomic swap module
+    function atomicSwapFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ATOMIC_SWAP_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    function bridgeFeeSwapFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BRIDGE_FEE_SWAP_FEATURE_DISABLED,
             module
         ));
     }
@@ -1892,6 +1914,18 @@ library Keys {
     function aboveOptimalUsageBorrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
+            market,
+            isLong
+        ));
+    }
+
+    // @dev key for max borrowing factor per second
+    // @param market the market to check
+    // @param isLong whether to get the key for the long or short side
+    // @return key for max borrowing factor per second
+    function maxBorrowingFactorPerSecondKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_BORROWING_FACTOR_PER_SECOND,
             market,
             isLong
         ));

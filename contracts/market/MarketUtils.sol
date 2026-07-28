@@ -3075,28 +3075,35 @@ library MarketUtils {
         }
 
         uint256 optimalUsageFactor = getOptimalUsageFactor(dataStore, market.marketToken, isLong);
+        uint256 borrowingFactorPerSecond;
 
         if (optimalUsageFactor != 0) {
-            return (
-                getKinkBorrowingFactor(
-                    dataStore,
-                    market,
-                    isLong,
-                    reservedUsd,
-                    poolUsd,
-                    optimalUsageFactor
-                ),
-                true
+            borrowingFactorPerSecond = getKinkBorrowingFactor(
+                dataStore,
+                market,
+                isLong,
+                reservedUsd,
+                poolUsd,
+                optimalUsageFactor
             );
+        } else {
+            uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
+            uint256 reservedUsdAfterExponent = Precision.applyExponentFactor(reservedUsd, borrowingExponentFactor);
+
+            uint256 reservedUsdToPoolFactor = Precision.toFactor(reservedUsdAfterExponent, poolUsd);
+            uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
+
+            borrowingFactorPerSecond = Precision.applyFactor(reservedUsdToPoolFactor, borrowingFactor);
         }
 
-        uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
-        uint256 reservedUsdAfterExponent = Precision.applyExponentFactor(reservedUsd, borrowingExponentFactor);
+        uint256 maxBorrowingFactorPerSecond = dataStore.getUintValueFromDataStore(
+            Keys.maxBorrowingFactorPerSecondKey(market.marketToken, isLong)
+        );
+        if (borrowingFactorPerSecond > maxBorrowingFactorPerSecond) {
+            return (maxBorrowingFactorPerSecond, true);
+        }
 
-        uint256 reservedUsdToPoolFactor = Precision.toFactor(reservedUsdAfterExponent, poolUsd);
-        uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
-
-        return (Precision.applyFactor(reservedUsdToPoolFactor, borrowingFactor), true);
+        return (borrowingFactorPerSecond, true);
     }
 
     function getKinkBorrowingFactor(

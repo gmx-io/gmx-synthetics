@@ -7,6 +7,8 @@ import {
   encodeStakeGmxMessage,
   encodeUnstakeGmxMessage,
   encodeHandleStakingRewardsMessage,
+  encodeVestEsGmxMessage,
+  encodeWithdrawVestingMessage,
   fundMultichainBalance,
 } from "../../utils/multichain";
 
@@ -17,11 +19,13 @@ describe("LayerZeroProvider staking dispatch", () => {
     wnt,
     usdc,
     gmx,
+    esGmx,
     multichainVault,
     layerZeroProvider,
     multichainStakingRouter,
     gmxAccountWalletFactory,
     mockRewardRouterV2,
+    mockGmxVester,
     mockStargatePoolUsdc,
     mockStargatePoolNative;
   let chainId;
@@ -37,11 +41,13 @@ describe("LayerZeroProvider staking dispatch", () => {
       wnt,
       usdc,
       gmx,
+      esGmx,
       multichainVault,
       layerZeroProvider,
       multichainStakingRouter,
       gmxAccountWalletFactory,
       mockRewardRouterV2,
+      mockGmxVester,
       mockStargatePoolUsdc,
       mockStargatePoolNative,
     } = fixture.contracts);
@@ -170,6 +176,32 @@ describe("LayerZeroProvider staking dispatch", () => {
 
     // WETH should be in multichain balance
     expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.equal(claimAmount);
+  });
+
+  it("dispatches WithdrawVesting via lzCompose", async () => {
+    // Vest esGMX via LZ compose
+    await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+    const vestMessage = await encodeVestEsGmxMessage(getStakingParams({ amount: stakeAmount }), user0.address);
+    await mintUsdcAndApprove(user0, usdcAmount);
+    await mockStargatePoolUsdc.connect(user0).sendToken(layerZeroProvider.address, usdcAmount, vestMessage);
+
+    const walletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+    expect(await mockGmxVester.depositedAmounts(walletAddress)).to.equal(stakeAmount);
+
+    // Pretend part of the deposit vested into claimable GMX
+    const claimableAmount = expandDecimals(40, 18);
+    await gmx.mint(mockGmxVester.address, claimableAmount);
+    await mockGmxVester.setClaimable(walletAddress, claimableAmount);
+
+    // WithdrawVesting via LZ compose
+    const withdrawMessage = await encodeWithdrawVestingMessage(getStakingParams(), user0.address);
+    await mintUsdcAndApprove(user0, usdcAmount);
+    await mockStargatePoolUsdc.connect(user0).sendToken(layerZeroProvider.address, usdcAmount, withdrawMessage);
+
+    // Vester position is closed, esGMX and GMX are back in the multichain balance
+    expect(await mockGmxVester.depositedAmounts(walletAddress)).to.equal(0);
+    expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, esGmx.address))).to.equal(stakeAmount);
+    expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(claimableAmount);
   });
 
   it("emits MultichainBridgeActionFailed on revert", async () => {

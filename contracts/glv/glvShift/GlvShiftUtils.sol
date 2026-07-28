@@ -136,6 +136,9 @@ library GlvShiftUtils {
             GlvShiftStoreUtils.remove(params.dataStore, params.key);
         }
 
+        GlvUtils.validateGlvMarket(params.dataStore, glvShift.glv(), glvShift.fromMarket(), false);
+        GlvUtils.validateGlvMarket(params.dataStore, glvShift.glv(), glvShift.toMarket(), true);
+
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
         params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), Chain.currentTimestamp());
 
@@ -249,7 +252,7 @@ library GlvShiftUtils {
             params.oracle,
             glvShift.glv(),
             true, // maximize
-            false // allowZeroPoolBorrowingFactor
+            true // allowZeroPoolBorrowingFactor
         );
         if (cache.glvValueSuccess) {
             cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
