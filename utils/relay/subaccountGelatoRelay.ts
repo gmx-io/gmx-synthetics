@@ -303,6 +303,7 @@ export async function getSubaccountApproval(p: {
     signature = await getSubaccountApprovalSignature({
       signer: p.signer,
       ...p.subaccountApproval,
+      account: p.account,
       nonce,
       revocationCounter,
       desChainId: p.desChainId,
@@ -402,6 +403,7 @@ async function getSubaccountApprovalSignature(p: {
   signer: any;
   chainId: BigNumberish;
   verifyingContract: string;
+  account: string;
   subaccount: string;
   shouldAdd: boolean;
   expiresAt: BigNumberish;
@@ -423,6 +425,7 @@ async function getSubaccountApprovalSignature(p: {
 
   const types = {
     SubaccountApproval: [
+      { name: "account", type: "address" },
       { name: "subaccount", type: "address" },
       { name: "shouldAdd", type: "bool" },
       { name: "expiresAt", type: "uint256" },
@@ -438,6 +441,7 @@ async function getSubaccountApprovalSignature(p: {
   };
 
   const typedData = {
+    account: p.account,
     subaccount: p.subaccount,
     shouldAdd: p.shouldAdd,
     expiresAt: p.expiresAt,

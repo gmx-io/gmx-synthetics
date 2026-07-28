@@ -79,7 +79,7 @@ library SubaccountRouterUtils {
         subaccountApprovalNonces[account] = storedNonce + 1;
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
-        bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);
+        bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(account, subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         SignatureUtils.validateSignature(
             domainSeparator,
