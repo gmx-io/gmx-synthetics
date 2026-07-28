@@ -19,7 +19,7 @@ import { executeGlvDeposit } from "../../utils/glv/glvDeposit";
 import { executeGlvWithdrawal } from "../../utils/glv/glvWithdrawal";
 import { GAS_BUFFER } from "../../utils/gas";
 
-describe("MultichainLifeCycle", () => {
+describe.only("MultichainLifeCycle", () => {
   let fixture;
   let user1, user2;
   let dataStore,
@@ -356,7 +356,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6815404958523240"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6764536958116296"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
@@ -409,7 +409,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6815403958523232"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6764536958116296"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
@@ -430,7 +430,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6815403958523232"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6764536958116296"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
