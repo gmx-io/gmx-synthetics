@@ -5,12 +5,15 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./MultichainRouter.sol";
-import "../router/relay/MultichainRelayUtils.sol";
+import "./IMultichainProvider.sol";
 import "./IMultichainTransferRouter.sol";
+import "../router/relay/MultichainRelayUtils.sol";
 
+import "../feature/FeatureUtils.sol";
 import "../market/MarketUtils.sol";
 import "../swap/ISwapUtils.sol";
 import "../pricing/ISwapPricingUtils.sol";
+import "../utils/Precision.sol";
 
 contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
     IMultichainProvider public multichainProvider;
@@ -155,7 +158,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
 
             // if bridge fee is specified in a non-WNT token, swap it to WNT first
             // so that LayerZeroProvider can unwrap WNT to pay the native LZ messaging fee
-            _swapBridgeFeeIfNeeded(account, srcChainId, params.bridgeFee);
+            _swapBridgeFeeIfNeeded(account, srcChainId, params);
 
             // transfer funds (amount + bridging fee) from user's multichain balance to multichainProvider
             // and execute the bridge out to srcChain
@@ -186,8 +189,10 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
     function _swapBridgeFeeIfNeeded(
         address account,
         uint256 srcChainId,
-        IRelayUtils.BridgeFeeParams calldata bridgeFee
+        IRelayUtils.BridgeOutParams calldata params
     ) internal {
+        IRelayUtils.BridgeFeeParams calldata bridgeFee = params.bridgeFee;
+
         if (bridgeFee.feeAmount == 0 || bridgeFee.feeSwapPath.length == 0) {
             return;
         }
@@ -196,6 +201,20 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         if (bridgeFee.feeToken == wnt) {
             return;
         }
+
+        FeatureUtils.validateFeature(dataStore, Keys.bridgeFeeSwapFeatureDisabledKey(address(this)));
+
+        // shared USD size cap with relay fee swaps to limit oracle mispricing extraction
+        RelayUtils.validateMaxFeeSwapUsd(
+            dataStore,
+            oracle,
+            bridgeFee.feeToken,
+            bridgeFee.feeAmount,
+            false // isSubaccount
+        );
+
+        // additionally bound the signed feeAmount to a multiple of the provider's live messaging fee quote
+        _validateBridgeFeeAgainstQuote(account, params, wnt);
 
         // transfer fee token from user's multichain balance to OrderVault for swap
         MultichainUtils.transferOut(
@@ -246,5 +265,23 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
             account,
             srcChainId
         );
+    }
+
+    function _validateBridgeFeeAgainstQuote(
+        address account,
+        IRelayUtils.BridgeOutParams calldata params,
+        address wnt
+    ) internal view {
+        uint256 messagingFee = multichainProvider.quoteBridgeOutFee(account, params);
+        uint256 messagingFeeUsd = messagingFee * oracle.getPrimaryPrice(wnt).max;
+        uint256 maxBridgeFeeUsd = Precision.applyFactor(
+            messagingFeeUsd,
+            dataStore.getUint(Keys.MAX_BRIDGE_FEE_SWAP_FACTOR)
+        );
+
+        uint256 feeUsd = params.bridgeFee.feeAmount * oracle.getPrimaryPrice(params.bridgeFee.feeToken).max;
+        if (feeUsd > maxBridgeFeeUsd) {
+            revert Errors.MaxBridgeFeeSwapExceeded(feeUsd, maxBridgeFeeUsd);
+        }
     }
 }

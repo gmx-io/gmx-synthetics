@@ -185,6 +185,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         allowedRiskOracleBaseKeys[Keys.POSITION_IMPACT_FACTOR] = true;
         allowedRiskOracleBaseKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
         allowedRiskOracleBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR] = true;
+        allowedRiskOracleBaseKeys[Keys.POSITION_FEE_FACTOR] = true;
 
         allowedRiskOracleBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedRiskOracleBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
@@ -199,6 +200,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         allowedRiskOracleBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedRiskOracleBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedRiskOracleBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
+        allowedRiskOracleBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
         allowedRiskOracleBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
         allowedRiskOracleBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
 
@@ -257,6 +259,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND ||
             baseKey == Keys.MIN_FUNDING_FACTOR_PER_SECOND ||
             baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
+            baseKey == Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND ||
             baseKey == Keys.THRESHOLD_FOR_STABLE_FUNDING ||
             baseKey == Keys.THRESHOLD_FOR_DECREASE_FUNDING;
     }
@@ -274,10 +277,13 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
             baseKey == Keys.POSITION_IMPACT_FACTOR ||
             baseKey == Keys.POSITION_IMPACT_EXPONENT_FACTOR ||
             baseKey == Keys.MAX_POSITION_IMPACT_FACTOR ||
+            baseKey == Keys.POSITION_FEE_FACTOR ||
             baseKey == Keys.MAX_POOL_AMOUNT ||
             baseKey == Keys.MAX_POOL_USD_FOR_DEPOSIT ||
             baseKey == Keys.MAX_OPEN_INTEREST ||
             baseKey == Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER ||
+            baseKey == Keys.MIN_FUNDING_FACTOR_PER_SECOND ||
+            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.BASE_BORROWING_FACTOR ||
             baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR ||

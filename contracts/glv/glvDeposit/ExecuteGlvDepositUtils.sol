@@ -58,6 +58,9 @@ library ExecuteGlvDepositUtils {
         // should be called before any tokens are minted
         GlvDepositCalc.validateFirstGlvDeposit(params.dataStore, glvDeposit);
 
+        // shouldBeEnabled=false so a disabled-but-still-listed market can finish pending deposits fairly
+        GlvUtils.validateGlvMarket(params.dataStore, glvDeposit.glv(), glvDeposit.market(), false);
+
         ExecuteGlvDepositCache memory cache;
 
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);

@@ -79,6 +79,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       gelatoRelayFeeBaseAmount: 0,
       relayFeeAddress: ethers.constants.AddressZero,
       maxRelayFeeUsdForSubaccount: 0,
+      maxBridgeFeeSwapFactor: 0,
 
       maxDataLength: 32,
       maxRelayFeeSwapUsd: 0,
@@ -161,6 +162,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
     maxRelayFeeSwapUsd: decimalToFloat(100),
+    // allow bridge fee swaps up to 10x the provider's quoted messaging fee USD
+    maxBridgeFeeSwapFactor: decimalToFloat(10),
 
     maxDataLength: 32,
 

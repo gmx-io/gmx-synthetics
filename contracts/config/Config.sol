@@ -486,6 +486,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.SUBACCOUNT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.GASLESS_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.ATOMIC_SWAP_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.BRIDGE_FEE_SWAP_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
@@ -648,6 +649,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
+        allowedBaseKeys[Keys.MAX_BRIDGE_FEE_SWAP_FACTOR] = true;
 
         allowedBaseKeys[Keys2.MULTICHAIN_READ_CHANNEL] = true;
         allowedBaseKeys[Keys2.MULTICHAIN_PEERS] = true;

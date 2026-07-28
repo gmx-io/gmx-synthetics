@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../../data/DataStore.sol";
+import "../../data/Keys.sol";
 import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
 import "../../oracle/IOracle.sol";
@@ -110,6 +111,33 @@ library RelayUtils {
                     address(this)
                 )
             );
+    }
+
+    // @dev general cap on fee swap size to limit oracle mispricing extraction
+    // used for both relay fee swaps and bridge fee swaps
+    function validateMaxFeeSwapUsd(
+        DataStore dataStore,
+        IOracle oracle,
+        address feeToken,
+        uint256 feeAmount,
+        bool isSubaccount
+    ) internal view {
+        uint256 feeUsd = feeAmount * oracle.getPrimaryPrice(feeToken).max;
+
+        uint256 maxRelayFeeSwapUsd = dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD);
+        if (feeUsd > maxRelayFeeSwapUsd) {
+            revert Errors.MaxRelayFeeSwapExceeded(feeUsd, maxRelayFeeSwapUsd);
+        }
+
+        if (isSubaccount) {
+            // a malicious subaccount could create a large swap with a negative price impact
+            // and then execute a personal swap with a positive price impact
+            // to mitigate this, we limit the max relay fee swap size for subaccounts
+            uint256 maxRelayFeeSwapUsdForSubaccount = dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT);
+            if (feeUsd > maxRelayFeeSwapUsdForSubaccount) {
+                revert Errors.MaxRelayFeeSwapForSubaccountExceeded(feeUsd, maxRelayFeeSwapUsdForSubaccount);
+            }
+        }
     }
 
     function swapFeeTokens(

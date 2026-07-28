@@ -820,6 +820,73 @@ describe("Glv Deposits", () => {
         },
       });
     });
+
+    // disable alone must not block execution: NAV still includes the market while it remains listed
+    it("allows execute when market is disabled but still listed", async () => {
+      await createGlvDeposit(fixture, {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      });
+
+      await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+
+      await executeGlvDeposit(fixture);
+
+      await expectBalances({
+        [user0.address]: {
+          [ethUsdGlvAddress]: expandDecimals(10_000, 18),
+        },
+        [ethUsdGlvAddress]: {
+          [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
+        },
+      });
+    });
+
+    // market removed while request is pending: execute must cancel and refund, not mint vs understated NAV
+    it("cancels execute when market was removed after create", async () => {
+      // seed GLV via another market so ethUsdMarket can be removed with a zero balance
+      await handleGlvDeposit(fixture, {
+        create: {
+          market: solUsdMarket,
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+
+      const longTokenAmount = expandDecimals(1, 18);
+      const shortTokenAmount = expandDecimals(5000, 6);
+
+      await createGlvDeposit(fixture, {
+        market: ethUsdMarket,
+        longTokenAmount,
+        shortTokenAmount,
+      });
+
+      expect(await getGlvDepositCount(dataStore)).eq(1);
+
+      await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+      await glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken);
+
+      await executeGlvDeposit(fixture, {
+        expectedCancellationReason: {
+          name: "GlvUnsupportedMarket",
+          args: [ethUsdGlvAddress, ethUsdMarket.marketToken],
+        },
+      });
+
+      expect(await getGlvDepositCount(dataStore)).eq(0);
+
+      // vault assets refunded to the account; no ethUsdMarket GM left on the GLV
+      await expectBalances({
+        [user0.address]: {
+          [wnt.address]: longTokenAmount,
+          [usdc.address]: shortTokenAmount,
+        },
+        [ethUsdGlvAddress]: {
+          [ethUsdMarket.marketToken]: 0,
+        },
+      });
+    });
   });
 
   it("simulate execute glv deposit", async () => {
