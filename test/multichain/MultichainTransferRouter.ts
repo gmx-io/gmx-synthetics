@@ -26,7 +26,8 @@ describe("MultichainTransferRouter", () => {
     mockStargatePoolNative,
     mockStargatePoolUsdc,
     ethUsdMarket,
-    chainlinkPriceFeedProvider;
+    chainlinkPriceFeedProvider,
+    wethPriceFeed;
   let chainId;
 
   beforeEach(async () => {
@@ -44,6 +45,7 @@ describe("MultichainTransferRouter", () => {
       mockStargatePoolUsdc,
       ethUsdMarket,
       chainlinkPriceFeedProvider,
+      wethPriceFeed,
     } = fixture.contracts);
 
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
@@ -596,8 +598,8 @@ describe("MultichainTransferRouter", () => {
       });
 
       it("reverts when bridge fee swap exceeds quote-derived MAX_BRIDGE_FEE_SWAP_FACTOR bound", async () => {
-        // Messaging fee is 0.001 ETH ≈ $5; with factor 10 the max allowed fee USD is ≈ $50.
-        // 100 USDC is under MAX_RELAY_FEE_SWAP_USD ($100) but above the quote-derived bound.
+        // Messaging fee is 0.001 ETH; with factor 10 the max allowed fee is 0.01 ETH in WNT terms.
+        // At $5000/ETH that is ≈ $50. 100 USDC is under MAX_RELAY_FEE_SWAP_USD ($100) but above the quote-derived bound.
         const oversizedBridgeFeeUsdc = expandDecimals(100, 6);
         await bridgeInTokens(fixture, {
           account: user1,
@@ -625,6 +627,51 @@ describe("MultichainTransferRouter", () => {
           providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
           data: ["0x", "0x"],
         };
+
+        await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+          errorsContract,
+          "MaxBridgeFeeSwapExceeded"
+        );
+      });
+
+      it("quote-derived bridge fee cap is invariant to inflated WNT price", async () => {
+        // Cap is factor * messagingFee in WNT terms (same oracle rate as the atomic swap),
+        // so raising the WNT USD price must not admit a larger WNT-equivalent feeAmount.
+        const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE(); // 0.001 ETH
+        // factor 10 → max 0.01 ETH. At $10,000/ETH that is $100 USDC; 101 USDC must revert
+        // on the quote bound (raise MAX_RELAY_FEE_SWAP_USD so it is not the binding constraint).
+        await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(200));
+        await wethPriceFeed.setAnswer(expandDecimals(10_000, 8));
+
+        const oversizedBridgeFeeUsdc = expandDecimals(101, 6);
+        await bridgeInTokens(fixture, {
+          account: user1,
+          token: usdc,
+          amount: bridgeOutAmount.add(oversizedBridgeFeeUsdc),
+        });
+        await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+        const srcChainId = 1;
+        bridgeOutParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
+
+        bridgeOutParams.params = {
+          ...defaultBridgeOutParams,
+          bridgeFee: {
+            feeToken: usdc.address,
+            feeAmount: oversizedBridgeFeeUsdc,
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+        };
+        bridgeOutParams.oracleParams = {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        };
+
+        // Sanity: 101 USDC is more than 10x the native messaging fee at $10,000/ETH
+        expect(bridgeOutFee.mul(10)).eq(expandDecimals(1, 16)); // 0.01 ETH
 
         await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
           errorsContract,

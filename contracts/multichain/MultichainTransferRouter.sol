@@ -267,21 +267,29 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         );
     }
 
+    // Cap signed bridgeFee.feeAmount against the live messaging fee using the same
+    // oracle rate as the atomic swap (feeToken.min / wnt.max). Comparing both sides
+    // in WNT prevents mixed-time WNT vs feeToken reports from inflating a USD ratio
+    // (WNT.max / feeToken.max) while the swap itself still settles at the oracle rate.
     function _validateBridgeFeeAgainstQuote(
         address account,
         IRelayUtils.BridgeOutParams calldata params,
         address wnt
     ) internal view {
         uint256 messagingFee = multichainProvider.quoteBridgeOutFee(account, params);
-        uint256 messagingFeeUsd = messagingFee * oracle.getPrimaryPrice(wnt).max;
-        uint256 maxBridgeFeeUsd = Precision.applyFactor(
-            messagingFeeUsd,
+        uint256 maxBridgeFeeWnt = Precision.applyFactor(
+            messagingFee,
             dataStore.getUint(Keys.MAX_BRIDGE_FEE_SWAP_FACTOR)
         );
 
-        uint256 feeUsd = params.bridgeFee.feeAmount * oracle.getPrimaryPrice(params.bridgeFee.feeToken).max;
-        if (feeUsd > maxBridgeFeeUsd) {
-            revert Errors.MaxBridgeFeeSwapExceeded(feeUsd, maxBridgeFeeUsd);
+        uint256 feeTokenPriceMin = oracle.getPrimaryPrice(params.bridgeFee.feeToken).min;
+        uint256 wntPriceMax = oracle.getPrimaryPrice(wnt).max;
+
+        if (params.bridgeFee.feeAmount * feeTokenPriceMin > maxBridgeFeeWnt * wntPriceMax) {
+            revert Errors.MaxBridgeFeeSwapExceeded(
+                params.bridgeFee.feeAmount * feeTokenPriceMin / wntPriceMax,
+                maxBridgeFeeWnt
+            );
         }
     }
 }
