@@ -30,6 +30,23 @@ describe("Config", () => {
     await grantRole(roleStore, user3.address, "RISK_ORACLE");
   });
 
+  async function setFundingConfig(baseKey: string, data: string, value: any) {
+    const latestBlock = await ethers.provider.getBlock("latest");
+
+    return executeWithOracleParams(fixture, {
+      args: [baseKey, data, value],
+      oracleBlockNumber: latestBlock.number,
+      tokens: [wnt.address, usdc.address],
+      precisions: [8, 18],
+      minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      dataStreamTokens: [],
+      dataStreamData: [],
+      priceFeedTokens: [],
+      execute: config.connect(user0).setFundingUintWithOraclePrices,
+    });
+  }
+
   it("allows required keys", async () => {
     const keys = Keys.abi.map((i) => i.name);
     console.info(`checking ${keys.length} keys`);
@@ -72,6 +89,95 @@ describe("Config", () => {
     )
       .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
       .withArgs(keys.POOL_AMOUNT);
+  });
+
+  it("requires the oracle-priced Config path for all funding keys", async () => {
+    const market = ethUsdMarket.marketToken;
+    const fundingBaseKeys = [
+      keys.FUNDING_FACTOR,
+      keys.FUNDING_EXPONENT_FACTOR,
+      keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+      keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+      keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      keys.THRESHOLD_FOR_STABLE_FUNDING,
+      keys.THRESHOLD_FOR_DECREASE_FUNDING,
+    ];
+
+    for (const baseKey of fundingBaseKeys) {
+      const data =
+        baseKey === keys.MIN_FUNDING_FACTOR_PER_SECOND || baseKey === keys.MAX_FUNDING_FACTOR_PER_SECOND
+          ? encodeData(["address", "bool"], [market, true])
+          : encodeData(["address"], [market]);
+
+      expect(await config.allowedBaseKeys(baseKey)).eq(false);
+      expect(await config.allowedLimitedBaseKeys(baseKey)).eq(false);
+      expect(await riskOracleConfig.allowedRiskOracleBaseKeys(baseKey)).eq(true);
+
+      await expect(config.connect(user0).setUint(baseKey, data, 1))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+        .withArgs(baseKey);
+
+      await expect(config.connect(user2).setUint(baseKey, data, 1))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+        .withArgs(baseKey);
+    }
+  });
+
+  it("rejects raw RISK_ORACLE funding updates", async () => {
+    const market = ethUsdMarket.marketToken;
+
+    await expect(
+      riskOracleConfig
+        .connect(user3)
+        .setUint(keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND, encodeData(["address"], [market]), 1)
+    )
+      .to.be.revertedWithCustomError(errorsContract, "OraclePricesRequiredForConfigUpdate")
+      .withArgs(keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND);
+  });
+
+  it("allows funding configuration before the first funding checkpoint", async () => {
+    const market = ethUsdMarket.marketToken;
+    const value = decimalToFloat(1, 10);
+
+    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(market))).eq(0);
+
+    await setFundingConfig(keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND, encodeData(["address"], [market]), value);
+
+    expect(await dataStore.getUint(keys.minFundingIncreaseRatePerSecondKey(market))).eq(value);
+    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(market))).eq(0);
+  });
+
+  it("applies a new minimum funding increase rate only after its checkpoint", async () => {
+    const market = ethUsdMarket.marketToken;
+    const data = encodeData(["address"], [market]);
+    const newMinFundingIncreaseRate = decimalToFloat(1, 10);
+    const maxFundingFactor = decimalToFloat(1, 6);
+    const latestBlock = await ethers.provider.getBlock("latest");
+
+    await dataStore.setUint(keys.openInterestKey(market, wnt.address, true), expandDecimals(1_000_000, 30));
+    await dataStore.setUint(keys.openInterestKey(market, usdc.address, false), expandDecimals(500_000, 30));
+    await dataStore.setUint(keys.fundingIncreaseFactorPerSecondKey(market), 1);
+    await dataStore.setUint(keys.minFundingIncreaseRatePerSecondKey(market), 0);
+    await dataStore.setInt(keys.savedFundingFactorPerSecondKey(market), 0);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(market, true), maxFundingFactor);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(market, false), maxFundingFactor);
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(market, true), 0);
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(market, false), 0);
+    await dataStore.setUint(keys.fundingUpdatedAtKey(market), latestBlock.timestamp - 100);
+
+    await setFundingConfig(keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND, data, newMinFundingIncreaseRate);
+
+    expect(await dataStore.getUint(keys.minFundingIncreaseRatePerSecondKey(market))).eq(newMinFundingIncreaseRate);
+    expect(await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(market, wnt.address, true))).eq(0);
+
+    const checkpointBlock = await ethers.provider.getBlock("latest");
+    await dataStore.setUint(keys.fundingUpdatedAtKey(market), checkpointBlock.timestamp - 100);
+
+    await setFundingConfig(keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND, data, newMinFundingIncreaseRate);
+
+    expect(await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(market, wnt.address, true))).gt(0);
   });
 
   it("allows LIMITED_CONFIG_KEEPER to set allowedLimitedBaseKeys", async () => {
@@ -657,14 +763,14 @@ describe("Config", () => {
   it("validates funding increase factor", async () => {
     const validValue = bigNumberify("100000000000000000000000").div(3600);
     await expect(
-      config.setUint(
+      setFundingConfig(
         keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
         encodeData(["address"], [ethUsdMarket.marketToken]),
         validValue.add(100)
       )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
 
-    await config.setUint(
+    await setFundingConfig(
       keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
       encodeData(["address"], [ethUsdMarket.marketToken]),
       validValue
@@ -677,14 +783,14 @@ describe("Config", () => {
   it("validates min funding increase rate", async () => {
     const validValue = bigNumberify("100000000000000000000000");
     await expect(
-      config.setUint(
+      setFundingConfig(
         keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
         encodeData(["address"], [ethUsdMarket.marketToken]),
         validValue.add(100)
       )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
 
-    await config.setUint(
+    await setFundingConfig(
       keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
       encodeData(["address"], [ethUsdMarket.marketToken]),
       validValue
@@ -697,14 +803,14 @@ describe("Config", () => {
   it("validates funding decrease factor", async () => {
     const validValue = bigNumberify("100000000000000000000000").div(86400);
     await expect(
-      config.setUint(
+      setFundingConfig(
         keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
         encodeData(["address"], [ethUsdMarket.marketToken]),
         validValue.add(100)
       )
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
 
-    await config.setUint(
+    await setFundingConfig(
       keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       encodeData(["address"], [ethUsdMarket.marketToken]),
       validValue
@@ -715,29 +821,29 @@ describe("Config", () => {
   });
 
   it("validates max funding fee factor is higher than min funding fee factor", async () => {
-    await config.setUint(
+    await setFundingConfig(
       keys.MAX_FUNDING_FACTOR_PER_SECOND,
       encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
       10
     );
-    await config.setUint(
+    await setFundingConfig(
       keys.MAX_FUNDING_FACTOR_PER_SECOND,
       encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
       10
     );
-    await config.setUint(
+    await setFundingConfig(
       keys.MIN_FUNDING_FACTOR_PER_SECOND,
       encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
       5
     );
-    await config.setUint(
+    await setFundingConfig(
       keys.MIN_FUNDING_FACTOR_PER_SECOND,
       encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
       5
     );
 
     await expect(
-      config.setUint(
+      setFundingConfig(
         keys.MIN_FUNDING_FACTOR_PER_SECOND,
         encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
         11
@@ -745,7 +851,7 @@ describe("Config", () => {
     ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
 
     await expect(
-      config.setUint(
+      setFundingConfig(
         keys.MAX_FUNDING_FACTOR_PER_SECOND,
         encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]),
         4

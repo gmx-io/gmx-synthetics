@@ -206,6 +206,48 @@ describe("ConfigSyncer", () => {
     );
   });
 
+  it("rejects funding parameters that require an oracle-priced checkpoint", async () => {
+    const market = ethUsdMarket.marketToken;
+    const fundingParameters = [
+      {
+        parameter: "fundingIncreaseFactorPerSecond",
+        baseKey: keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+        data: encodeData(["address"], [market]),
+      },
+      {
+        parameter: "minFundingIncreaseRatePerSecond",
+        baseKey: keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+        data: encodeData(["address"], [market]),
+      },
+      {
+        parameter: "fundingDecreaseFactorPerSecond",
+        baseKey: keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+        data: encodeData(["address"], [market]),
+      },
+      {
+        parameter: "minFundingFactorPerSecond",
+        baseKey: keys.MIN_FUNDING_FACTOR_PER_SECOND,
+        data: encodeData(["address", "bool"], [market, true]),
+      },
+      {
+        parameter: "maxFundingFactorPerSecond",
+        baseKey: keys.MAX_FUNDING_FACTOR_PER_SECOND,
+        data: encodeData(["address", "bool"], [market, true]),
+      },
+    ];
+
+    for (const fundingParameter of fundingParameters) {
+      const additionalData = encodeData(["bytes32", "bytes"], [fundingParameter.baseKey, fundingParameter.data]);
+      await mockRiskOracle
+        .connect(wallet)
+        .publishRiskParameterUpdate("NotApplicable", "0x01", fundingParameter.parameter, market, additionalData);
+
+      await expect(configSyncer.connect(user1).sync([market], [fundingParameter.parameter]))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+        .withArgs(fundingParameter.baseKey);
+    }
+  });
+
   it("allows LIMITED_CONFIG_KEEPER to sync a single update", async () => {
     const market = ethUsdMarket.marketToken;
     const parameter = parametersList[0].parameterName;

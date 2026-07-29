@@ -1,6 +1,6 @@
 // Reports market config params whose live on-chain value differs from config/markets.ts on the
-// current branch. Excludes the keys actively managed by the risk oracle and the funding keeper
-// (they rewrite these continuously, so config is not their baseline). The `closedState` markets are
+// current branch. Excludes the keys actively managed by the risk oracle (it rewrites these
+// continuously, so config is not their baseline). The `closedState` markets are
 // compared against both their open and off-hours baselines, so a session flip is not a mismatch.
 // The bot is not aware if it's an open or closed session, it compares the on-chain value against both
 // baselines and accepts either (all values for that session type must match, partial match would trigger alert).
@@ -18,21 +18,21 @@ import { bigNumberify } from "../utils/math";
 import { handleInBatches } from "../utils/batch";
 import { MarketHours } from "../config/markets";
 
-// Keys actively managed by the risk oracle / funding keeper: those systems write them on-chain, so
+// Keys actively managed by the risk oracle: that system writes them on-chain, so
 // config/markets.ts is not their source of truth and a difference vs config is expected, not a mismatch.
 // compareMarketConfig drops them from the comparison. The base-key lists are defined in
 // updateMarketConfigUtils.ts (shared with the write path) and reused here via the two getters;
 // this block documents what they hold — keep it in sync with those arrays.
 //
 // Which networks exclude what (from the getters):
-//   arbitrum           risk oracle + funding keeper
+//   arbitrum           risk oracle
 //   avalanche          risk oracle
 //   botanix, megaEth   nothing — every key is compared there
 //
 // How often each excluded key actually moves — write counts over a 30-day window on arbitrum. These
 // are a snapshot: the rate swings with risk-oracle activity, so treat the exact numbers as
 // approximate. A diff vs config on a very frequent key is meaningless; the rest barely move and are
-// excluded only because the risk oracle / keeper manages them.
+// excluded only because the risk oracle manages them.
 //
 //   getRiskOracleManagedBaseKeys() — split by how often the keys move:
 //
@@ -40,9 +40,10 @@ import { MarketHours } from "../config/markets";
 //       POSITION_IMPACT_FACTOR (risk oracle)
 //       POSITION_IMPACT_EXPONENT_FACTOR (risk oracle)
 //       MAX_OPEN_INTEREST (risk oracle)
-//       FUNDING_INCREASE_FACTOR_PER_SECOND (funding keeper)
-//       FUNDING_DECREASE_FACTOR_PER_SECOND (funding keeper)
-//       MAX_FUNDING_FACTOR_PER_SECOND (funding keeper)
+//       FUNDING_INCREASE_FACTOR_PER_SECOND (risk oracle)
+//       MIN_FUNDING_INCREASE_RATE_PER_SECOND (risk oracle)
+//       FUNDING_DECREASE_FACTOR_PER_SECOND (risk oracle)
+//       MAX_FUNDING_FACTOR_PER_SECOND (risk oracle)
 //
 //     low (several per day):
 //       BASE_BORROWING_FACTOR (~13/day)
@@ -66,13 +67,8 @@ import { MarketHours } from "../config/markets";
 //       GLV_MAX_MARKET_TOKEN_BALANCE_USD (1 in 30d; not a per-market key — never appears here)
 //       GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT (1 in 30d; not a per-market key — never appears here)
 //
-//   getKeeperManagedBaseKeys() (arbitrum only) — same three funding-per-second keys, also in the
-//   risk-oracle list above (on arbitrum the Set keeps just one copy of each):
-//
-//     very frequent (thousands/day):
-//       MAX_FUNDING_FACTOR_PER_SECOND
-//       FUNDING_INCREASE_FACTOR_PER_SECOND
-//       FUNDING_DECREASE_FACTOR_PER_SECOND
+//   getKeeperManagedBaseKeys() currently returns no keys because funding updates must use the
+//   oracle-priced settlement path.
 const excluded = new Set([...getRiskOracleManagedBaseKeys(), ...getKeeperManagedBaseKeys()]);
 
 interface MarketConfigDifference {
