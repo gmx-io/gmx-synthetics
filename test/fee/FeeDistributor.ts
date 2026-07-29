@@ -420,14 +420,8 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setWithdrawableAmount(
-      gmxA.address,
-      expandDecimals(40_000, 18)
-    );
-    await mockLzReadResponseChainC.setWithdrawableAmount(
-      gmxC.address,
-      expandDecimals(20_000, 18)
-    );
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(40_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
     await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
 
@@ -517,14 +511,8 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setWithdrawableAmount(
-      gmxA.address,
-      expandDecimals(10_000, 18)
-    );
-    await mockLzReadResponseChainC.setWithdrawableAmount(
-      gmxC.address,
-      expandDecimals(20_000, 18)
-    );
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
@@ -629,14 +617,8 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setWithdrawableAmount(
-      gmxA.address,
-      expandDecimals(40_000, 18)
-    );
-    await mockLzReadResponseChainC.setWithdrawableAmount(
-      gmxC.address,
-      expandDecimals(20_000, 18)
-    );
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(40_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
     await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
 
@@ -818,14 +800,8 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setWithdrawableAmount(
-      gmxA.address,
-      expandDecimals(10_000, 18)
-    );
-    await mockLzReadResponseChainC.setWithdrawableAmount(
-      gmxC.address,
-      expandDecimals(20_000, 18)
-    );
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
@@ -982,14 +958,8 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setWithdrawableAmount(
-      gmxA.address,
-      expandDecimals(10_000, 18)
-    );
-    await mockLzReadResponseChainC.setWithdrawableAmount(
-      gmxC.address,
-      expandDecimals(20_000, 18)
-    );
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
@@ -1371,14 +1341,8 @@ describe("FeeDistributor", function () {
     await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
-    await mockLzReadResponseChainA.setWithdrawableAmount(
-      gmxA.address,
-      expandDecimals(10_000, 18)
-    );
-    await mockLzReadResponseChainC.setWithdrawableAmount(
-      gmxC.address,
-      expandDecimals(20_000, 18)
-    );
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
@@ -1481,16 +1445,11 @@ describe("FeeDistributor", function () {
     const dataStoreD = await deployContract("DataStore", [roleStore.address]);
     const configD = await deployContract(
       "Config",
-      [
-        roleStore.address,
-        dataStoreD.address,
-        eventEmitter.address,
-        oracle.address,
-        staticOracleProvider.address,
-      ],
+      [roleStore.address, dataStoreD.address, eventEmitter.address, oracle.address, staticOracleProvider.address],
       {
         libraries: {
           "contracts/market/MarketStoreUtils.sol:MarketStoreUtils": marketStoreUtils.address,
+          "contracts/market/MarketUtils.sol:MarketUtils": marketUtils.address,
           "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
         },
       }
@@ -1824,14 +1783,8 @@ describe("FeeDistributor", function () {
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
     await mockRewardTrackerD.setTotalSupply(expandDecimals(6_000_000, 18));
 
-    await mockLzReadResponseChainA.setWithdrawableAmount(
-      gmxA.address,
-      expandDecimals(10_000, 18)
-    );
-    await mockLzReadResponseChainC.setWithdrawableAmount(
-      gmxC.address,
-      expandDecimals(20_000, 18)
-    );
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
     await dataStoreD.setUint(keys.withdrawableBuybackTokenAmountKey(gmxD.address), expandDecimals(50_000, 18));
