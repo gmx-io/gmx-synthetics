@@ -35,6 +35,8 @@ describe("EIP6492Deployer", () => {
   });
 
   it("calls the factory for a caller with the CONTROLLER role", async () => {
+    expect(await ethers.provider.getCode(walletAddress)).eq("0x");
+
     await grantRole(roleStore, user1.address, "CONTROLLER");
     await eip6492Deployer.connect(user1).deploy(walletFactory.address, createWalletCalldata);
 
