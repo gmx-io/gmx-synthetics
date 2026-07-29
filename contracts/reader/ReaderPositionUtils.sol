@@ -248,7 +248,7 @@ library ReaderPositionUtils {
             positionInfo.position
         );
 
-        (positionInfo.basePnlUsd, positionInfo.uncappedBasePnlUsd, /* sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+        (positionInfo.basePnlUsd, positionInfo.uncappedBasePnlUsd, /* sizeDeltaInTokens */, /* pnlWasCapped */) = PositionUtils.getPositionPnlUsd(
             dataStore,
             cache.market,
             prices,

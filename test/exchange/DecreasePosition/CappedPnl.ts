@@ -400,8 +400,8 @@ describe("Exchange.DecreasePosition", () => {
     });
 
     const positionKey = getPositionKey(user0.address, ethUsdSingleTokenMarket.marketToken, usdc.address, true);
-    expect(await dataStore.getInt(getRealizedUncappedPnlUsdKey(positionKey))).eq(decimalToFloat(-25_000));
-    expect(await dataStore.getInt(getRealizedPnlUsdKey(positionKey))).eq(decimalToFloat(-25_000));
+    expect(await dataStore.getInt(getRealizedUncappedPnlUsdKey(positionKey))).eq(0);
+    expect(await dataStore.getInt(getRealizedPnlUsdKey(positionKey))).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -418,7 +418,74 @@ describe("Exchange.DecreasePosition", () => {
       execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased.byFiftyPercent] }) },
     });
 
-    expect(await usdc.balanceOf(user2.address)).eq("223625000000"); // 223,625
+    expect(await usdc.balanceOf(user2.address)).eq("206500000000"); // 206,500
+  });
+
+  it("capped pnl - profit taken below the cap does not affect later capped decreases", async () => {
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_TRADERS, ethUsdSingleTokenMarket.marketToken, true),
+      decimalToFloat(7, 2)
+    ); // 7%
+
+    for (const account of [user0, user1]) {
+      await handleOrder(fixture, {
+        create: {
+          account,
+          market: ethUsdSingleTokenMarket,
+          initialCollateralToken: usdc,
+          initialCollateralDeltaAmount: expandDecimals(100_000, 6),
+          sizeDeltaUsd: decimalToFloat(250 * 1000),
+          acceptablePrice: expandDecimals(5050, 12),
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+        },
+      });
+    }
+
+    const wntSlightlyIncreased = {
+      contractName: "wnt",
+      precision: 8,
+      min: expandDecimals(5500, 4),
+      max: expandDecimals(5500, 4),
+    };
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        receiver: user2,
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: decimalToFloat(50 * 1000),
+        acceptablePrice: expandDecimals(5450, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+      execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, wntSlightlyIncreased] }) },
+    });
+
+    expect(await usdc.balanceOf(user2.address)).eq("5000000000"); // 5,000
+
+    const positionKey = getPositionKey(user0.address, ethUsdSingleTokenMarket.marketToken, usdc.address, true);
+    expect(await dataStore.getInt(getRealizedUncappedPnlUsdKey(positionKey))).eq(0);
+    expect(await dataStore.getInt(getRealizedPnlUsdKey(positionKey))).eq(0);
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        receiver: user2,
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(4950, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+      execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased.byFiftyPercent] }) },
+    });
+
+    expect(await usdc.balanceOf(user2.address)).eq("136033333333"); // 5,000 + 31,033.33 + 100,000
   });
 
   it("capped pnl - partitioned short close matches one-shot close", async () => {

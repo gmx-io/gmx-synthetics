@@ -82,6 +82,7 @@ library PositionUtils {
         uint256 remainingCollateralAmount;
         int256 basePnlUsd;
         int256 uncappedBasePnlUsd;
+        bool pnlWasCapped;
         uint256 sizeDeltaInTokens;
         int256 priceImpactUsd;
         int256 proportionalPendingImpactAmount;
@@ -180,14 +181,14 @@ library PositionUtils {
     // @param sizeDeltaUsd the change in position size
     // @param indexTokenPrice the price of the index token
     //
-    // @return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens)
+    // @return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens, pnlWasCapped)
     function getPositionPnlUsd(
         DataStore dataStore,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         Position.Props memory position,
         uint256 sizeDeltaUsd
-    ) public view returns (int256, int256, uint256) {
+    ) public view returns (int256, int256, uint256, bool) {
         GetPositionPnlUsdCache memory cache;
 
         uint256 executionPrice = prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false);
@@ -262,7 +263,7 @@ library PositionUtils {
             if (cache.positionPnlUsd > cache.uncappedPositionPnlUsd) { cache.positionPnlUsd = cache.uncappedPositionPnlUsd; }
         }
 
-        return (cache.positionPnlUsd, cache.uncappedPositionPnlUsd, cache.sizeDeltaInTokens);
+        return (cache.positionPnlUsd, cache.uncappedPositionPnlUsd, cache.sizeDeltaInTokens, cache.pnlWasCapped);
     }
 
     // @dev validate that a position is not empty
@@ -354,7 +355,7 @@ library PositionUtils {
         IsPositionLiquidatableCache memory cache;
         IsPositionLiquidatableInfo memory info;
 
-        (cache.positionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */) = getPositionPnlUsd(
+        (cache.positionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */, /* bool pnlWasCapped */) = getPositionPnlUsd(
             dataStore,
             market,
             prices,
