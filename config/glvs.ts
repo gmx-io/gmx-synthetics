@@ -135,7 +135,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("FIL", arbitrum_btcUsdcDefaultCap, 1.12),
           createGlvMarketConfig("INJ", arbitrum_btcUsdcDefaultCap, 1.19),
           createGlvMarketConfig("DYDX", arbitrum_btcUsdcDefaultCap, 1.1),
-          createGlvMarketConfig("AI16Z", arbitrum_btcUsdcDefaultCap, 1.26),
+          createGlvMarketConfig("AI16Z", arbitrum_btcUsdcDefaultCap, 1.26, true),
           createGlvMarketConfig("VIRTUAL", arbitrum_btcUsdcDefaultCap, 1.1),
           createGlvMarketConfig("PENGU", arbitrum_btcUsdcDefaultCap, 1.04),
           createGlvMarketConfig("S", arbitrum_btcUsdcDefaultCap, 1.27),
