@@ -476,6 +476,7 @@ describe("MultichainLifeCycle", () => {
         feeToken: ethers.constants.AddressZero,
         feeAmount: 0,
         feeSwapPath: [],
+        minOutputAmount: 0,
       },
     };
 

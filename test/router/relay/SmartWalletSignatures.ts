@@ -5,6 +5,7 @@ import { _TypedDataEncoder } from "ethers/lib/utils";
 import { deployContract } from "../../../utils/deploy";
 import { deployFixture } from "../../../utils/fixture";
 import { errorsContract } from "../../../utils/error";
+import { grantRole } from "../../../utils/role";
 import { EIP6492_DEPLOYER } from "../../../utils/keys";
 
 const EIP6492_MAGIC_BYTES = "0x6492649264926492649264926492649264926492649264926492649264926492";
@@ -88,6 +89,9 @@ describe("Smart Wallet Signatures", () => {
         },
       }
     );
+
+    // the relay routers hold CONTROLLER, and EIP6492Deployer only accepts factory calls from them
+    await grantRole(roleStore, mockContract.address, "CONTROLLER");
 
     mockFactory = await deployContract("MockERC1271WalletFactory", []);
 

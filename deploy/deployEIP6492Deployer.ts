@@ -1,11 +1,14 @@
 import { createDeployFunction } from "../utils/deploy";
 import { EIP6492_DEPLOYER } from "../utils/keys";
-import { grantRoleIfNotGranted } from "../utils/role";
-import { isExistingMainnetDeployment } from "../config/chains";
+
+const constructorContracts = ["RoleStore"];
 
 const func = createDeployFunction({
   contractName: "EIP6492Deployer",
-  dependencyNames: ["Config", "DataStore"],
+  dependencyNames: ["Config", "DataStore", ...constructorContracts],
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  },
   afterDeploy: async ({ deployedContract, deployments }) => {
     const { get } = deployments;
     const dataStoreDeployment = await get("DataStore");
@@ -24,7 +27,7 @@ const func = createDeployFunction({
       }
     }
   },
-  id: "EIP6492Deployer_1",
+  id: "EIP6492Deployer_2",
 });
 
 export default func;
