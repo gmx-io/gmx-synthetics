@@ -3053,6 +3053,10 @@ library MarketUtils {
             reservedUsd,
             poolUsd
         );
+        // cap usage at 100% so the kink model never evaluates a higher usageFactor
+        if (usageFactor > Precision.FLOAT_PRECISION) {
+            usageFactor = Precision.FLOAT_PRECISION;
+        }
 
         uint256 baseBorrowingFactor = dataStore.getUintValueFromDataStore(Keys.baseBorrowingFactorKey(market.marketToken, isLong));
 

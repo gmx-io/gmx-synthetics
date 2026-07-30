@@ -144,6 +144,60 @@ describe("MarketUtils", () => {
     ).gt(0);
   });
 
+  it("getBorrowingFactorPerSecond caps kink usage at 100%", async () => {
+    const marketUtilsTest = await deployContract("MarketUtilsTest", []);
+    const aboveOptimalUsageBorrowingFactor = decimalToFloat(4, 8);
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(100, 18));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(100, 18)
+    );
+    await dataStore.setUint(keys.optimalUsageFactorKey(ethUsdMarket.marketToken, true), percentageToFloat("80%"));
+    await dataStore.setUint(
+      keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, true),
+      percentageToFloat("50%")
+    );
+    await dataStore.setUint(keys.baseBorrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(
+      keys.aboveOptimalUsageBorrowingFactorKey(ethUsdMarket.marketToken, true),
+      aboveOptimalUsageBorrowingFactor
+    );
+    await dataStore.setUint(keys.maxBorrowingFactorPerSecondKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 7));
+
+    const poolUsd = await marketUtilsTest.getPoolUsdWithoutPnl(
+      dataStore.address,
+      ethUsdMarket,
+      prices.ethUsdMarket,
+      true,
+      false
+    );
+    const reservedUsd = await marketUtilsTest.getReservedUsd(
+      dataStore.address,
+      ethUsdMarket,
+      prices.ethUsdMarket,
+      true
+    );
+    const usageFactor = await marketUtilsTest.getUsageFactor(
+      dataStore.address,
+      ethUsdMarket,
+      true,
+      reservedUsd,
+      poolUsd
+    );
+
+    expect(usageFactor).eq(percentageToFloat("200%"));
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        true,
+        false
+      )
+    ).eq(aboveOptimalUsageBorrowingFactor);
+  });
+
   it("getBorrowingFactorPerSecond caps the kink model rate", async () => {
     const marketUtilsTest = await deployContract("MarketUtilsTest", []);
     const maxBorrowingFactorPerSecond = decimalToFloat(7, 8);
