@@ -3,24 +3,27 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { usingResult } from "../../utils/use";
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, decimalToFloat } from "../../utils/math";
+import { applyFactor, expandDecimals, decimalToFloat, percentageToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
-import { getPositionCount, getAccountPositionCount, getPositionKeys } from "../../utils/position";
+import { getPositionCount, getAccountPositionCount, getPositionKey, getPositionKeys } from "../../utils/position";
 import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 import { prices } from "../../utils/prices";
 import * as keys from "../../utils/keys";
+import { getExecuteParams } from "../../utils/exchange";
+import { deployContract } from "../../utils/deploy";
 
 describe("Exchange.BorrowingFees", () => {
   const { provider } = ethers;
   let fixture;
   let user0, user1;
-  let reader, dataStore, referralStorage, ethUsdMarket, ethUsdSingleTokenMarket, wnt, usdc;
+  let reader, dataStore, referralStorage, ethUsdMarket, ethUsdSingleTokenMarket, solUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, referralStorage, ethUsdMarket, ethUsdSingleTokenMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, referralStorage, ethUsdMarket, ethUsdSingleTokenMarket, solUsdMarket, wnt, usdc } =
+      fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -279,6 +282,161 @@ describe("Exchange.BorrowingFees", () => {
 
   it("borrowing fees, SKIP_BORROWING_FEE_FOR_SMALLER_SIDE as true", async () => {
     await testBorrowingFees(true);
+  });
+
+  it("caps borrowing accrual at the kink maximum after a profitable decrease pushes usage above 100%", async () => {
+    const marketUtilsTest = await deployContract("MarketUtilsTest", []);
+    const positionSizeUsd = decimalToFloat(125_000);
+    const aboveOptimalUsageBorrowingFactor = decimalToFloat(4, 8);
+    const elapsedSeconds = 3600;
+    const increasedSolPrice = {
+      ...prices.sol,
+      min: expandDecimals(200, 5),
+      max: expandDecimals(200, 5),
+    };
+    const increasedMarketPrices = {
+      indexTokenPrice: {
+        min: expandDecimals(200, 21),
+        max: expandDecimals(200, 21),
+      },
+      longTokenPrice: prices.ethUsdMarket.longTokenPrice,
+      shortTokenPrice: prices.ethUsdMarket.shortTokenPrice,
+    };
+
+    await handleDeposit(fixture, {
+      create: {
+        market: solUsdMarket,
+        longTokenAmount: expandDecimals(100, 18),
+        shortTokenAmount: expandDecimals(1_000_000, 6),
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [prices.sol, prices.wnt, prices.usdc] }),
+      },
+    });
+
+    await dataStore.setUint(
+      keys.openInterestReserveFactorKey(solUsdMarket.marketToken, true),
+      percentageToFloat("200%")
+    );
+    await dataStore.setUint(keys.positionImpactFactorKey(solUsdMarket.marketToken, true), 0);
+    await dataStore.setUint(keys.positionImpactFactorKey(solUsdMarket.marketToken, false), 0);
+    await dataStore.setUint(keys.positionFeeFactorKey(solUsdMarket.marketToken, true), 0);
+    await dataStore.setUint(keys.positionFeeFactorKey(solUsdMarket.marketToken, false), 0);
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_TRADERS, solUsdMarket.marketToken, true),
+      percentageToFloat("200%")
+    );
+    await dataStore.setUint(keys.optimalUsageFactorKey(solUsdMarket.marketToken, true), percentageToFloat("80%"));
+    await dataStore.setUint(keys.baseBorrowingFactorKey(solUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(
+      keys.aboveOptimalUsageBorrowingFactorKey(solUsdMarket.marketToken, true),
+      aboveOptimalUsageBorrowingFactor
+    );
+    await dataStore.setUint(keys.maxBorrowingFactorPerSecondKey(solUsdMarket.marketToken, true), decimalToFloat(1, 7));
+
+    for (const account of [user0, user1]) {
+      await handleOrder(fixture, {
+        create: {
+          account,
+          market: solUsdMarket,
+          initialCollateralToken: wnt,
+          initialCollateralDeltaAmount: expandDecimals(30, 18),
+          swapPath: [],
+          sizeDeltaUsd: positionSizeUsd,
+          acceptablePrice: expandDecimals(60, 21),
+          executionFee: expandDecimals(1, 15),
+          minOutputAmount: 0,
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+          shouldUnwrapNativeToken: false,
+        },
+        execute: {
+          ...getExecuteParams(fixture, { prices: [prices.sol, prices.wnt, prices.usdc] }),
+        },
+      });
+    }
+
+    const getUsageFactor = async () => {
+      const poolUsd = await marketUtilsTest.getPoolUsdWithoutPnl(
+        dataStore.address,
+        solUsdMarket,
+        increasedMarketPrices,
+        true,
+        false
+      );
+      const reservedUsd = await marketUtilsTest.getReservedUsd(
+        dataStore.address,
+        solUsdMarket,
+        increasedMarketPrices,
+        true
+      );
+
+      return marketUtilsTest.getUsageFactor(dataStore.address, solUsdMarket, true, reservedUsd, poolUsd);
+    };
+
+    expect(await getUsageFactor()).eq(percentageToFloat("100%"));
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: solUsdMarket,
+        initialCollateralToken: wnt,
+        swapPath: [],
+        sizeDeltaUsd: positionSizeUsd,
+        acceptablePrice: expandDecimals(190, 21),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [increasedSolPrice, prices.wnt, prices.usdc] }),
+      },
+    });
+
+    expect(await getUsageFactor()).gt(percentageToFloat("100%"));
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        solUsdMarket,
+        increasedMarketPrices,
+        true,
+        false
+      )
+    ).eq(aboveOptimalUsageBorrowingFactor);
+
+    const remainingPositionKey = getPositionKey(user1.address, solUsdMarket.marketToken, wnt.address, true);
+    const positionBeforeTimeIncrease = await reader.getPositionInfo(
+      dataStore.address,
+      referralStorage.address,
+      remainingPositionKey,
+      increasedMarketPrices,
+      0,
+      ethers.constants.AddressZero,
+      true
+    );
+
+    await time.increase(elapsedSeconds);
+
+    const positionAfterTimeIncrease = await reader.getPositionInfo(
+      dataStore.address,
+      referralStorage.address,
+      remainingPositionKey,
+      increasedMarketPrices,
+      0,
+      ethers.constants.AddressZero,
+      true
+    );
+    const borrowingFeeDelta = positionAfterTimeIncrease.fees.borrowing.borrowingFeeUsd.sub(
+      positionBeforeTimeIncrease.fees.borrowing.borrowingFeeUsd
+    );
+    const expectedBorrowingFeeDelta = applyFactor(
+      positionAfterTimeIncrease.position.numbers.sizeInUsd,
+      aboveOptimalUsageBorrowingFactor.mul(elapsedSeconds)
+    );
+
+    expect(borrowingFeeDelta).eq(expectedBorrowingFeeDelta);
   });
 
   it("borrowing fees vary with time", async () => {
