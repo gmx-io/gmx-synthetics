@@ -730,6 +730,7 @@ describe("MultichainGlvRouter", () => {
           feeToken: usdc.address,
           feeAmount: bridgeFeeUsdc,
           feeSwapPath: [ethUsdMarket.marketToken],
+          minOutputAmount: 0,
         };
 
         createGlvDepositParams.params.dataList = encodeBridgeOutDataList(
@@ -806,8 +807,14 @@ describe("MultichainGlvRouter", () => {
           feeToken: usdc.address,
           feeAmount: bridgeFeeUsdc,
           feeSwapPath: [ethUsdMarket.marketToken],
+          minOutputAmount: 0,
         };
-        const defaultBridgeFee = { feeToken: ethers.constants.AddressZero, feeAmount: 0, feeSwapPath: [] };
+        const defaultBridgeFee = {
+          feeToken: ethers.constants.AddressZero,
+          feeAmount: 0,
+          feeSwapPath: [],
+          minOutputAmount: 0,
+        };
 
         createGlvWithdrawalParams.params.dataList = encodeBridgeOutDataList(
           actionType,
@@ -884,6 +891,7 @@ describe("MultichainGlvRouter", () => {
           feeToken: usdc.address,
           feeAmount: bridgeFeeUsdc,
           feeSwapPath: [ethUsdMarket.marketToken],
+          minOutputAmount: 0,
         };
 
         createGlvWithdrawalParams.params.dataList = encodeBridgeOutDataList(

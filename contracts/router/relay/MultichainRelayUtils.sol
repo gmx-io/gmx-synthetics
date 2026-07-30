@@ -78,7 +78,7 @@ library MultichainRelayUtils {
         keccak256(bytes("TransferRequests(address[] tokens,address[] receivers,uint256[] amounts)"));
 
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
-        keccak256(bytes("BridgeOut(address account,address token,uint256 amount,uint256 minAmountOut,address provider,bytes data,address bridgeFeeToken,uint256 bridgeFeeAmount,address[] bridgeFeeSwapPath,bytes32 relayParams)"));
+        keccak256(bytes("BridgeOut(address account,address token,uint256 amount,uint256 minAmountOut,address provider,bytes data,address bridgeFeeToken,uint256 bridgeFeeAmount,address[] bridgeFeeSwapPath,uint256 bridgeFeeMinOutputAmount,bytes32 relayParams)"));
 
     bytes32 public constant CLAIM_FUNDING_FEES_TYPEHASH =
         keccak256(bytes("ClaimFundingFees(address account,address[] markets,address[] tokens,address receiver,bytes32 relayParams)"));
@@ -322,6 +322,7 @@ library MultichainRelayUtils {
                     params.bridgeFee.feeToken,
                     params.bridgeFee.feeAmount,
                     keccak256(abi.encodePacked(params.bridgeFee.feeSwapPath)),
+                    params.bridgeFee.minOutputAmount,
                     _getRelayParamsHash(relayParams)
                 )
             );
