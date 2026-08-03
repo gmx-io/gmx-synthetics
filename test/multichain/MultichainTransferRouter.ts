@@ -662,6 +662,7 @@ describe("MultichainTransferRouter", () => {
             feeToken: usdc.address,
             feeAmount: oversizedBridgeFeeUsdc,
             feeSwapPath: [ethUsdMarket.marketToken],
+            minOutputAmount: 0,
           },
         };
         bridgeOutParams.oracleParams = {
