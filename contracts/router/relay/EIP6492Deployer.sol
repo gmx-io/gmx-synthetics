@@ -6,13 +6,14 @@ import "../../error/Errors.sol";
 import "../../role/RoleModule.sol";
 
 // @title EIP6492Forwarder
-// @dev Makes the factory call for one EIP-6492 wrapper and nothing else.
+// @dev Makes one factory call and nothing else.
 //
-// EIP6492Deployer creates one forwarder per wrapper with CREATE2, using
-// keccak256(abi.encode(factory, factoryCalldata)) as the salt, so the forwarder's address
-// is derived from the call it makes. Only EIP6492Deployer can call execute, and it only
-// ever passes the wrapper the address was derived from, so a given forwarder address can
-// only ever make that one call.
+// A forwarder's address comes from the call it is allowed to make: EIP6492Deployer creates
+// it with CREATE2, using the hash of the factory and the factory calldata as the salt.
+//
+// Only EIP6492Deployer can call execute, and the deployer always sends the call the address
+// was built from. So each address belongs to a single factory call, and to get a call from
+// that address you have to make exactly that call.
 //
 // This contract must NEVER be granted any roles (CONTROLLER, ROUTER_PLUGIN, etc).
 contract EIP6492Forwarder {
@@ -32,19 +33,19 @@ contract EIP6492Forwarder {
 }
 
 // @title EIP6492Deployer
-// @dev Unprivileged helper that executes factory calls for EIP-6492 signature
-// validation. By isolating factory.call() in a contract with no roles,
-// attacker-controlled calldata cannot access privileged protocol functions.
+// @dev Runs the factory call that deploys a smart contract wallet during EIP-6492 signature
+// validation. It holds no roles, so calldata chosen by an attacker cannot reach any
+// privileged function.
 // This contract must NEVER be granted any roles (CONTROLLER, ROUTER_PLUGIN, etc).
 //
-// The factory is not called by this contract directly, it is called by a forwarder
-// deployed at an address derived from the wrapper. Some wallet factories put the caller
-// into the wallet address they produce; if every user's factory call came from this one
-// contract, all users would share a single address namespace at such a factory and anyone
-// able to reach this contract could take another user's not-yet-deployed wallet address.
-// Deriving the caller from the wrapper gives each wrapper its own namespace instead, so
-// reaching a wallet address requires the exact wrapper that address was derived from,
-// which deploys that user's own wallet.
+// It does not call the factory itself. It creates one forwarder per factory call and lets
+// that forwarder make the call, so each factory call has its own caller address.
+//
+// This matters because some wallet factories put the caller into the wallet address they
+// create. With one shared caller, all users would get their wallet addresses from the same
+// place, and anyone could take an address another user had not deployed yet. With one
+// caller per factory call, reaching a wallet address needs the exact call that address came
+// from, and that call deploys that user's own wallet.
 contract EIP6492Deployer is RoleModule {
     bytes32 public immutable forwarderInitCodeHash;
 
@@ -52,16 +53,18 @@ contract EIP6492Deployer is RoleModule {
         forwarderInitCodeHash = keccak256(type(EIP6492Forwarder).creationCode);
     }
 
-    // @dev the address the factory call is made from, for a given wrapper
-    // this is the address wallet factories that use msg.sender see, so it is what the
-    // counterfactual wallet address must be derived from off-chain
+    // @dev the address a given factory call is made from
+    // a factory that puts the caller into the wallet address it creates sees this address,
+    // so a client predicting that wallet address off-chain must use it as the caller
+    // most wallet factories ignore the caller, and their addresses do not change
     function getForwarderAddress(address factory, bytes calldata data) external view returns (address) {
-        return getForwarderAddressForWrapperHash(keccak256(abi.encode(factory, data)));
+        return getForwarderAddressForWrapperHash(_getWrapperHash(factory, data));
     }
 
-    // @dev same, for a wrapper hash that was already computed
-    // the hash is keccak256(abi.encode(factory, factoryCalldata)), the same value that is
-    // signed as eip6492SignatureWrapperHash
+    // @dev computes where the forwarder for a factory call is deployed
+    // it is a CREATE2 address, so it is known before the forwarder exists. the hash is
+    // keccak256(abi.encode(factory, factoryCalldata)), the value the user signs as
+    // eip6492SignatureWrapperHash
     function getForwarderAddressForWrapperHash(bytes32 wrapperHash) public view returns (address) {
         return
             address(
@@ -74,15 +77,23 @@ contract EIP6492Deployer is RoleModule {
     }
 
     function deploy(address factory, bytes calldata data) external onlyController returns (bool) {
-        bytes32 wrapperHash = keccak256(abi.encode(factory, data));
+        bytes32 wrapperHash = _getWrapperHash(factory, data);
         address forwarder = getForwarderAddressForWrapperHash(wrapperHash);
 
-        // the forwarder is reused if this wrapper was run before, e.g. by the EIP-6492
-        // preparation call, which runs the factory call again after the wallet exists
+        // the same factory call can run more than once: EIP-6492 allows the factory calldata
+        // to be run again on a wallet that already exists, to prepare it for validation, and
+        // that run has to come from the same address. so create the forwarder only the first
+        // time - creating it again would revert
         if (forwarder.code.length == 0) {
             new EIP6492Forwarder{salt: wrapperHash}();
         }
 
         return EIP6492Forwarder(forwarder).execute(factory, data);
+    }
+
+    // @dev the value the user signs as eip6492SignatureWrapperHash
+    // it's also the CREATE2 salt the forwarder is created with, so each factory call gets its own forwarder address
+    function _getWrapperHash(address factory, bytes calldata data) private pure returns (bytes32) {
+        return keccak256(abi.encode(factory, data));
     }
 }

@@ -163,9 +163,10 @@ describe("EIP6492 wallet squatting", () => {
     expect(await wallet.owner()).eq(victim.address);
   });
 
-  it("the attacker cannot run the victim's wrapper through the relay", async () => {
-    // the wrapper only runs as part of validating a signature, and the wallet it deploys is what
-    // checks that signature, so an attacker cannot make the transaction succeed and nothing persists
+  it("running the victim's wrapper gives a wallet the attacker cannot sign for", async () => {
+    // this factory takes the owner from the calldata, so the victim's wrapper always produces the
+    // victim's wallet. that wallet is what checks the signature, so the attacker's own signature
+    // does not validate and nothing persists.
     await expect(validateThroughRelay(attacker, victimWallet, victimCalldata)).to.be.revertedWithCustomError(
       errorsContract,
       "InvalidSignature"
