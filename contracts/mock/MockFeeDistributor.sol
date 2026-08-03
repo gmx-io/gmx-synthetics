@@ -509,9 +509,16 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         address rewardTracker = _getAddressInfoForChain(mockChainId, REWARD_TRACKER);
         address distributor = IRewardTracker(rewardTracker).distributor();
         if (dataStore.getBool(Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES)) {
-            // transfer gmx fees for the week and update the last distribution time and tokens per interval
-            _transferOut(gmx, rewardTracker, feeAmountGmx);
-            if (IRewardDistributor(distributor).lastDistributionTime() == 0) {
+            address rewardToken = IRewardDistributor(distributor).rewardToken();
+            if (rewardToken != gmx) {
+                revert Errors.InvalidDistributorRewardToken(rewardToken, gmx);
+            }
+            // transfer gmx fees for the week to the distributor and update the last distribution time and tokens per interval
+            _transferOut(gmx, distributor, feeAmountGmx);
+            if (
+                IRewardDistributor(distributor).lastDistributionTime() == 0 ||
+                IRewardDistributor(distributor).tokensPerInterval() == 0
+            ) {
                 IRewardDistributor(distributor).updateLastDistributionTime();
             }
             IRewardDistributor(distributor).setTokensPerInterval(feeAmountGmx / 1 weeks);
