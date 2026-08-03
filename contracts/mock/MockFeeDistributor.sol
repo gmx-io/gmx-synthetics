@@ -513,15 +513,23 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
             if (rewardToken != gmx) {
                 revert Errors.InvalidDistributorRewardToken(rewardToken, gmx);
             }
-            // transfer gmx fees for the week to the distributor and update the last distribution time and tokens per interval
-            _transferOut(gmx, distributor, feeAmountGmx);
             if (
                 IRewardDistributor(distributor).lastDistributionTime() == 0 ||
                 IRewardDistributor(distributor).tokensPerInterval() == 0
             ) {
+                // no rewards are currently streaming; re-base the last distribution time so the new
+                // rate does not accrue retroactively over the idle period
                 IRewardDistributor(distributor).updateLastDistributionTime();
+            } else {
+                // flush rewards accrued at the previous rate, capped at the previous funding, before
+                // the new tranche is transferred
+                IRewardTracker(rewardTracker).updateRewards();
             }
-            IRewardDistributor(distributor).setTokensPerInterval(feeAmountGmx / 1 weeks);
+            // transfer gmx fees for the week to the distributor and base the new tokens per interval on
+            // the distributor balance so any funded but unaccrued remainder from the previous schedule
+            // is carried into the new week instead of being stranded
+            _transferOut(gmx, distributor, feeAmountGmx);
+            IRewardDistributor(distributor).setTokensPerInterval(IERC20(gmx).balanceOf(distributor) / 1 weeks);
         } else {
             // if gmx fees are not being distributed, transfer gmx fees and ensure tokens per interval = 0
             _transferOut(gmx, treasuryAddress, feeAmountGmx);
