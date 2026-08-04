@@ -123,8 +123,8 @@ describe("Guardian.Swap", () => {
           longTokenAmount: expandDecimals(9 * 5000, 6),
           initialShortToken: wbtc.address,
           shortTokenAmount: expandDecimals(10, 18),
-          longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdMarket.marketToken],
-          shortTokenSwapPath: [ethUsdMarket.marketToken, ethUsdMarket.marketToken],
+          longTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
+          shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
         },
         execute: {
           ...getExecuteParams(fixture, { tokens: [wnt, usdc, wbtc] }),
@@ -142,8 +142,8 @@ describe("Guardian.Swap", () => {
           longTokenAmount: expandDecimals(2, 7), // 0.2 BTC - $10000
           initialShortToken: usdt.address,
           shortTokenAmount: expandDecimals(10000, 6),
-          longTokenSwapPath: [btcUsdMarket.marketToken, ethUsdMarket.marketToken],
-          shortTokenSwapPath: [ethUsdtMarket.marketToken, ethUsdMarket.marketToken],
+          longTokenSwapPath: [btcUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
+          shortTokenSwapPath: [ethUsdtMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
         },
         execute: {
           ...getExecuteParams(fixture, { tokens: [wnt, usdc, usdt, wbtc] }),
@@ -190,10 +190,10 @@ describe("Guardian.Swap", () => {
       await handleDeposit(fixture, {
         create: {
           receiver: user1,
-          initialLongToken: usdt.address,
-          longTokenAmount: expandDecimals(5000, 6),
+          longTokenAmount: expandDecimals(1, 18),
+          initialShortToken: usdt.address,
           shortTokenAmount: expandDecimals(5000, 6),
-          longTokenSwapPath: [ethUsdtMarket.marketToken, ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
+          shortTokenSwapPath: [ethUsdtMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
         },
         execute: {
           ...getExecuteParams(fixture, { tokens: [wnt, usdc, usdt] }),
@@ -209,15 +209,14 @@ describe("Guardian.Swap", () => {
       expect(await usdt.balanceOf(depositVault.address)).eq(0);
 
       // verify that no unexpected tokens were sent during swap
-      // last swap ended in the same pool, so the WNT was sent to it, receiving USDC collateral
-      expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq(expandDecimals(10, 18));
-      expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq(expandDecimals(12 * 5000, 6));
+      expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq(expandDecimals(11, 18));
+      expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq(expandDecimals(11 * 5000, 6));
       expect(await wbtc.balanceOf(ethUsdMarket.marketToken)).eq(0);
       expect(await usdt.balanceOf(ethUsdMarket.marketToken)).eq(0);
 
       // verify all pools changed by expected amount
-      expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(10, 18));
-      expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(12 * 5000, 6));
+      expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(11, 18));
+      expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(11 * 5000, 6));
 
       expect(await getPoolAmount(dataStore, ethUsdSpotOnlyMarket.marketToken, wnt.address)).eq(expandDecimals(11, 18));
       expect(await getPoolAmount(dataStore, ethUsdSpotOnlyMarket.marketToken, usdc.address)).eq(

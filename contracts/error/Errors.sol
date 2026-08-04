@@ -121,6 +121,7 @@ library Errors {
     error EmptyDepositAmountsAfterSwap();
     error InvalidPoolValueForDeposit(int256 poolValue);
     error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);
+    error InvalidDepositMarketInSwapPath(address market);
     error InvalidReceiverForFirstDeposit(address receiver, address expectedReceiver);
     error InvalidMinMarketTokensForFirstDeposit(uint256 minMarketTokens, uint256 expectedMinMarketTokens);
 

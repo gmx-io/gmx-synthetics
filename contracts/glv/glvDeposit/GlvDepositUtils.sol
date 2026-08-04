@@ -78,6 +78,8 @@ library GlvDepositUtils {
         } else {
             MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
             MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
+            MarketUtils.validateDepositMarketInSwapPath(params.addresses.market, params.addresses.longTokenSwapPath);
+            MarketUtils.validateDepositMarketInSwapPath(params.addresses.market, params.addresses.shortTokenSwapPath);
 
             if (params.addresses.initialLongToken == address(0)) {
                 revert Errors.InvalidGlvDepositInitialLongToken(params.addresses.initialLongToken);
