@@ -44,20 +44,22 @@ contract MockRewardRouterV2 {
     // compound tracking
     mapping(address => bool) public compoundCalled;
 
+    // fee tracker allowances, this contract also acts as the fee tracker
+    mapping(address => mapping(address => uint256)) public trackerAllowances;
+
     constructor(
         address _gmx,
         address _esGmx,
         address _weth,
-        address _feeGmxTracker,
         address _gmxVester,
         address _govToken
     ) {
         override_gmx = _gmx;
         override_esGmx = _esGmx;
         override_weth = _weth;
-        // stakedGmxTracker is this contract itself (simplifies mock)
+        // stakedGmxTracker and feeGmxTracker are this contract itself (simplifies mock)
         override_stakedGmxTracker = address(this);
-        override_feeGmxTracker = _feeGmxTracker;
+        override_feeGmxTracker = address(this);
         override_gmxVester = _gmxVester;
         override_govToken = _govToken;
     }
@@ -95,6 +97,20 @@ contract MockRewardRouterV2 {
 
     function setFeeGmxTracker(address _feeGmxTracker) external {
         override_feeGmxTracker = _feeGmxTracker;
+    }
+
+    // IRewardTracker and IERC20 surface for the fee tracker role
+    function stakedAmounts(address _account) external view returns (uint256) {
+        return stakedGmxAmounts[_account] + stakedEsGmxAmounts[_account];
+    }
+
+    function approve(address _spender, uint256 _amount) external returns (bool) {
+        trackerAllowances[msg.sender][_spender] = _amount;
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) external view returns (uint256) {
+        return trackerAllowances[_owner][_spender];
     }
 
     // Staking functions — tokens are held by this contract
@@ -146,11 +162,12 @@ contract MockRewardRouterV2 {
         if (_shouldClaimGmx && claimableGmx[msg.sender] > 0) {
             uint256 amount = claimableGmx[msg.sender];
             claimableGmx[msg.sender] = 0;
+            IERC20(override_gmx).safeTransfer(msg.sender, amount);
             if (_shouldStakeGmx) {
-                // Restake — tokens stay in this contract, just update accounting
+                // restake pulls the claimed GMX back with transferFrom like the
+                // real tracker, so the caller needs a GMX allowance for it
+                IERC20(override_gmx).safeTransferFrom(msg.sender, address(this), amount);
                 stakedGmxAmounts[msg.sender] += amount;
-            } else {
-                IERC20(override_gmx).safeTransfer(msg.sender, amount);
             }
         }
 
@@ -169,6 +186,7 @@ contract MockRewardRouterV2 {
 
     function compound() external {
         compoundCalled[msg.sender] = true;
+        _compoundAccount(msg.sender);
     }
 
     function claim() external {}
@@ -176,11 +194,48 @@ contract MockRewardRouterV2 {
     function claimFees() external {}
 
     function signalTransfer(address _receiver) external {
+        if (override_inStrictTransferMode) {
+            uint256 balance = stakedGmxAmounts[msg.sender] + stakedEsGmxAmounts[msg.sender];
+            require(trackerAllowances[msg.sender][_receiver] >= balance, "MockRewardRouterV2: insufficient allowance");
+        }
         pendingReceivers[msg.sender] = _receiver;
     }
 
+    // matches RewardRouterV2: the sender is compounded first, then the sender's
+    // staked GMX is unstaked to the sender and restaked for the receiver with
+    // transferFrom, so the sender needs a GMX allowance for the tracker (this contract)
     function acceptTransfer(address _sender) external {
         require(pendingReceivers[_sender] == msg.sender, "MockRewardRouterV2: transfer not signalled");
         pendingReceivers[_sender] = address(0);
+
+        _compoundAccount(_sender);
+
+        uint256 stakedGmx = stakedGmxAmounts[_sender];
+        if (stakedGmx > 0) {
+            stakedGmxAmounts[_sender] = 0;
+            IERC20(override_gmx).safeTransfer(_sender, stakedGmx);
+            IERC20(override_gmx).safeTransferFrom(_sender, address(this), stakedGmx);
+            stakedGmxAmounts[msg.sender] += stakedGmx;
+        }
+
+        // esGMX moves via handler calls on the real router, no allowance needed
+        uint256 stakedEsGmx = stakedEsGmxAmounts[_sender];
+        if (stakedEsGmx > 0) {
+            stakedEsGmxAmounts[_sender] = 0;
+            stakedEsGmxAmounts[msg.sender] += stakedEsGmx;
+        }
+    }
+
+    // matches RewardRouterV2._compound: claimed GMX is restaked by pulling it
+    // back with transferFrom, which needs the account's GMX allowance for the
+    // tracker (this contract)
+    function _compoundAccount(address _account) private {
+        uint256 amount = claimableGmx[_account];
+        if (amount > 0) {
+            claimableGmx[_account] = 0;
+            IERC20(override_gmx).safeTransfer(_account, amount);
+            IERC20(override_gmx).safeTransferFrom(_account, address(this), amount);
+            stakedGmxAmounts[_account] += amount;
+        }
     }
 }

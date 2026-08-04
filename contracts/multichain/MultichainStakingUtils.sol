@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./MultichainUtils.sol";
 import "./MultichainVault.sol";
 import "../data/DataStore.sol";
+import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
 import "../staking/GmxAccountWalletFactory.sol";
 import "../staking/IGmxAccountWallet.sol";
@@ -108,6 +109,13 @@ library MultichainStakingUtils {
         cache.gmxBefore = IERC20(contracts.rewardRouter.gmx()).balanceOf(cache.wallet);
         cache.esGmxBefore = IERC20(contracts.rewardRouter.esGmx()).balanceOf(cache.wallet);
 
+        // restaking claimed GMX pulls it from the wallet with transferFrom, so the
+        // wallet needs a temporary GMX allowance for stakedGmxTracker
+        bool shouldApproveGmx = params.shouldClaimGmx && params.shouldStakeGmx;
+        if (shouldApproveGmx) {
+            _setGmxStakingAllowance(contracts, cache.wallet, type(uint256).max);
+        }
+
         IGmxAccountWallet(cache.wallet).execute(
             address(contracts.rewardRouter),
             abi.encodeCall(IRewardRouterV2.handleRewards, (
@@ -121,6 +129,10 @@ library MultichainStakingUtils {
             ))
         );
 
+        if (shouldApproveGmx) {
+            _setGmxStakingAllowance(contracts, cache.wallet, 0);
+        }
+
         _sweepTokenIncrease(contracts, cache.wallet, account, srcChainId, contracts.rewardRouter.weth(), cache.wethBefore);
         _sweepTokenIncrease(contracts, cache.wallet, account, srcChainId, contracts.rewardRouter.gmx(), cache.gmxBefore);
         _sweepTokenIncrease(contracts, cache.wallet, account, srcChainId, contracts.rewardRouter.esGmx(), cache.esGmxBefore);
@@ -131,7 +143,11 @@ library MultichainStakingUtils {
         address account
     ) external {
         address wallet = contracts.walletFactory.getWalletAddress(account);
+
+        // compound restakes claimed GMX rewards with transferFrom, see handleStakingRewards
+        _setGmxStakingAllowance(contracts, wallet, type(uint256).max);
         IGmxAccountWallet(wallet).execute(address(contracts.rewardRouter), abi.encodeCall(IRewardRouterV2.compound, ()));
+        _setGmxStakingAllowance(contracts, wallet, 0);
     }
 
     function vestEsGmx(
@@ -188,6 +204,9 @@ library MultichainStakingUtils {
         address wallet = contracts.walletFactory.getWalletAddress(account);
 
         if (contracts.rewardRouter.inStrictTransferMode()) {
+            // signalTransfer checks this allowance in the same transaction and does not
+            // read it again afterwards, so the exact amount cannot go stale; it is
+            // removed in acceptStakingTransfer once the transfer completes
             address feeGmxTracker = contracts.rewardRouter.feeGmxTracker();
             uint256 balance = IRewardTracker(feeGmxTracker).stakedAmounts(wallet);
             IGmxAccountWallet(wallet).execute(
@@ -205,7 +224,29 @@ library MultichainStakingUtils {
         address sender
     ) external {
         address wallet = contracts.walletFactory.getOrCreateWallet(account);
+
+        // acceptTransfer compounds the sender and then restakes the sender's staked
+        // GMX for the receiver; both pull GMX from the sender with transferFrom, so a
+        // sender account wallet needs a temporary GMX allowance for stakedGmxTracker
+        // (allowances given in stakeGmx are exact and already consumed); external
+        // senders manage their own allowances
+        bool isSenderWallet = contracts.dataStore.getBool(Keys.isDeployedWalletKey(sender));
+
+        if (isSenderWallet) {
+            _setGmxStakingAllowance(contracts, sender, type(uint256).max);
+        }
+
         IGmxAccountWallet(wallet).execute(address(contracts.rewardRouter), abi.encodeCall(IRewardRouterV2.acceptTransfer, (sender)));
+
+        if (isSenderWallet) {
+            _setGmxStakingAllowance(contracts, sender, 0);
+
+            // remove the transfer approval given in signalStakingTransfer
+            IGmxAccountWallet(sender).execute(
+                contracts.rewardRouter.feeGmxTracker(),
+                abi.encodeCall(IERC20.approve, (wallet, 0))
+            );
+        }
     }
 
     function withdrawFromWallet(
@@ -219,6 +260,17 @@ library MultichainStakingUtils {
 
         IGmxAccountWallet(wallet).execute(token, abi.encodeCall(IERC20.transfer, (address(contracts.multichainVault), amount)));
         MultichainUtils.recordTransferIn(contracts.dataStore, contracts.eventEmitter, contracts.multichainVault, token, account, srcChainId);
+    }
+
+    function _setGmxStakingAllowance(
+        StakingContracts memory contracts,
+        address wallet,
+        uint256 amount
+    ) private {
+        IGmxAccountWallet(wallet).execute(
+            contracts.rewardRouter.gmx(),
+            abi.encodeCall(IERC20.approve, (contracts.rewardRouter.stakedGmxTracker(), amount))
+        );
     }
 
     function _sweepTokenIncrease(

@@ -9,7 +9,6 @@ const func = createDeployFunction({
       dependencyContracts.GMX.address,
       dependencyContracts.ESGMX.address,
       dependencyContracts.WETH.address,
-      dependencyContracts.GMX.address, // feeGmxTracker placeholder
       dependencyContracts.MockGmxVester.address,
       dependencyContracts.MockGovToken.address,
     ];
