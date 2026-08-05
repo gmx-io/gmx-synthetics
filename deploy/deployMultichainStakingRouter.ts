@@ -67,14 +67,12 @@ const func = createDeployFunction({
 // (that would throw on mainnet). Keep it in the dependency graph for hardhat.
 func.dependencies = func.dependencies.concat(["MockRewardRouterV2"]);
 
-func.skip = async ({ network, gmx }: HardhatRuntimeEnvironment) => {
-  if (network.name === "hardhat") {
-    return false;
-  }
-  // deploy only where a real V1 RewardRouterV2 is configured (arbitrum / avalanche);
-  // skip testnets and any network without one
-  const vaultV1Config = await gmx.getVaultV1();
-  return !vaultV1Config?.rewardRouterV2;
+// multichain staking should exist on arbitrum only, same gate as GmxAccountWalletFactory
+// the rewardRouterV2 config entries are a registry of the live V1 routers (avalanche has
+// one too) and are deliberately not used as the deploy condition
+func.skip = async ({ network }: HardhatRuntimeEnvironment) => {
+  const shouldDeployForNetwork = ["hardhat", "arbitrum"];
+  return !shouldDeployForNetwork.includes(network.name);
 };
 
 export default func;
