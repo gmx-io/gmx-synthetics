@@ -21,6 +21,14 @@ export function getPendingImpactAmountKey(positionKey: string) {
   return hashData(["bytes32", "bytes32"], [positionKey, keys.PENDING_IMPACT_AMOUNT]);
 }
 
+export function getRealizedUncappedPnlUsdKey(positionKey: string) {
+  return hashData(["bytes32", "bytes32"], [positionKey, keys.REALIZED_UNCAPPED_PNL_USD]);
+}
+
+export function getRealizedPnlUsdKey(positionKey: string) {
+  return hashData(["bytes32", "bytes32"], [positionKey, keys.REALIZED_PNL_USD]);
+}
+
 export function getPositionKey(account, market, collateralToken, isLong) {
   return hashData(["address", "address", "address", "bool"], [account, market, collateralToken, isLong]);
 }

@@ -121,12 +121,14 @@ library PositionEventUtils {
         eventData.uintItems.setItem(16, "orderType", uint256(orderType));
         eventData.uintItems.setItem(17, "decreasedAtTime", position.decreasedAtTime());
 
-        eventData.intItems.initItems(5);
+        eventData.intItems.initItems(7);
         eventData.intItems.setItem(0, "priceImpactUsd", values.priceImpactUsd);
         eventData.intItems.setItem(1, "basePnlUsd", values.basePnlUsd);
         eventData.intItems.setItem(2, "uncappedBasePnlUsd", values.uncappedBasePnlUsd);
         eventData.intItems.setItem(3, "proportionalPendingImpactUsd", values.proportionalPendingImpactUsd);
         eventData.intItems.setItem(4, "totalImpactUsd", values.totalImpactUsd);
+        eventData.intItems.setItem(5, "realizedUncappedPnlUsd", position.realizedUncappedPnlUsd());
+        eventData.intItems.setItem(6, "realizedPnlUsd", position.realizedPnlUsd());
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", position.isLong());

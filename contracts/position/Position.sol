@@ -54,6 +54,8 @@ library Position {
     // @param sizeInTokens the position's size in tokens
     // @param collateralAmount the amount of collateralToken for collateral
     // @param pendingImpactAmount the amount of pending impact for the position
+    // @param realizedUncappedPnlUsd the cumulative realized pnl of the position before capping
+    // @param realizedPnlUsd the cumulative realized pnl of the position after capping
     // @param borrowingFactor the position's borrowing factor
     // @param fundingFeeAmountPerSize the position's funding fee per size
     // @param longTokenClaimableFundingAmountPerSize the position's claimable funding amount per size
@@ -67,6 +69,8 @@ library Position {
         uint256 sizeInTokens;
         uint256 collateralAmount;
         int256 pendingImpactAmount;
+        int256 realizedUncappedPnlUsd;
+        int256 realizedPnlUsd;
         uint256 borrowingFactor;
         uint256 fundingFeeAmountPerSize;
         uint256 longTokenClaimableFundingAmountPerSize;
@@ -134,6 +138,22 @@ library Position {
 
     function setPendingImpactAmount(Props memory props, int256 value) internal pure {
         props.numbers.pendingImpactAmount = value;
+    }
+
+    function realizedUncappedPnlUsd(Props memory props) internal pure returns (int256) {
+        return props.numbers.realizedUncappedPnlUsd;
+    }
+
+    function setRealizedUncappedPnlUsd(Props memory props, int256 value) internal pure {
+        props.numbers.realizedUncappedPnlUsd = value;
+    }
+
+    function realizedPnlUsd(Props memory props) internal pure returns (int256) {
+        return props.numbers.realizedPnlUsd;
+    }
+
+    function setRealizedPnlUsd(Props memory props, int256 value) internal pure {
+        props.numbers.realizedPnlUsd = value;
     }
 
     function borrowingFactor(Props memory props) internal pure returns (uint256) {

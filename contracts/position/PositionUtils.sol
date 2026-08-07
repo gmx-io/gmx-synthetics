@@ -82,6 +82,7 @@ library PositionUtils {
         uint256 remainingCollateralAmount;
         int256 basePnlUsd;
         int256 uncappedBasePnlUsd;
+        bool pnlWasCapped;
         uint256 sizeDeltaInTokens;
         int256 priceImpactUsd;
         int256 proportionalPendingImpactAmount;
@@ -125,6 +126,10 @@ library PositionUtils {
         uint256 poolTokenUsd;
         int256 poolPnl;
         int256 cappedPoolPnl;
+        bool pnlWasCapped;
+        int256 forgonePnlUsd;
+        int256 paidPnlUsd;
+        int256 allowedCumulativePnlUsd;
         uint256 sizeDeltaInTokens;
         int256 positionPnlUsd;
         int256 uncappedPositionPnlUsd;
@@ -176,14 +181,14 @@ library PositionUtils {
     // @param sizeDeltaUsd the change in position size
     // @param indexTokenPrice the price of the index token
     //
-    // @return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens)
+    // @return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens, pnlWasCapped)
     function getPositionPnlUsd(
         DataStore dataStore,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         Position.Props memory position,
         uint256 sizeDeltaUsd
-    ) public view returns (int256, int256, uint256) {
+    ) public view returns (int256, int256, uint256, bool) {
         GetPositionPnlUsdCache memory cache;
 
         uint256 executionPrice = prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false);
@@ -197,14 +202,23 @@ library PositionUtils {
             cache.pnlToken = position.isLong() ? market.longToken : market.shortToken;
             cache.poolTokenAmount = MarketUtils.getPoolAmount(dataStore, market, cache.pnlToken);
             cache.poolTokenPrice = position.isLong() ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
-            cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice;
+            // the pool state is reconstructed to include the position's own previously
+            // realized pnl, so that splitting a close into multiple decreases cannot
+            // refresh the pnl cap
+            cache.forgonePnlUsd = position.realizedUncappedPnlUsd() - position.realizedPnlUsd();
+            if (cache.forgonePnlUsd < 0) { cache.forgonePnlUsd = 0; }
+            cache.paidPnlUsd = position.realizedPnlUsd() > 0 ? position.realizedPnlUsd() : int256(0);
+
+            // the paid pnl was deducted from the pool amount, which is divided by the pool
+            // divisor for single token markets
+            cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice + cache.paidPnlUsd.toUint256() / MarketUtils.getPoolDivisor(market.longToken, market.shortToken);
             cache.poolPnl = MarketUtils.getPositivePnl(
                 dataStore,
                 market,
                 prices.indexTokenPrice,
                 position.isLong(),
                 true
-            ).toInt256();
+            ).toInt256() + cache.forgonePnlUsd + cache.paidPnlUsd;
 
             cache.cappedPoolPnl = MarketUtils.getCappedPnl(
                 dataStore,
@@ -216,6 +230,7 @@ library PositionUtils {
             );
 
             if (cache.cappedPoolPnl != cache.poolPnl && cache.cappedPoolPnl > 0 && cache.poolPnl > 0) {
+                cache.pnlWasCapped = true;
                 cache.totalPositionPnl = Precision.mulDiv(cache.totalPositionPnl.toUint256(), cache.cappedPoolPnl, cache.poolPnl.toUint256());
             }
         }
@@ -233,7 +248,22 @@ library PositionUtils {
         cache.positionPnlUsd = Precision.mulDiv(cache.totalPositionPnl, cache.sizeDeltaInTokens, position.sizeInTokens());
         cache.uncappedPositionPnlUsd = Precision.mulDiv(cache.uncappedTotalPositionPnl, cache.sizeDeltaInTokens, position.sizeInTokens());
 
-        return (cache.positionPnlUsd, cache.uncappedPositionPnlUsd, cache.sizeDeltaInTokens);
+        if (cache.pnlWasCapped) {
+            // pay out only the unused portion of the position's cumulative capped pnl
+            // the pnl for a decrease cannot exceed its proportional uncapped pnl, so
+            // pnl forgone to the cap in previous decreases is not recovered
+            cache.allowedCumulativePnlUsd = Precision.mulDiv(
+                position.realizedUncappedPnlUsd(),
+                cache.cappedPoolPnl.toUint256(),
+                cache.poolPnl.toUint256()
+            ) + cache.positionPnlUsd;
+
+            cache.positionPnlUsd = cache.allowedCumulativePnlUsd - position.realizedPnlUsd();
+            if (cache.positionPnlUsd < 0) { cache.positionPnlUsd = 0; }
+            if (cache.positionPnlUsd > cache.uncappedPositionPnlUsd) { cache.positionPnlUsd = cache.uncappedPositionPnlUsd; }
+        }
+
+        return (cache.positionPnlUsd, cache.uncappedPositionPnlUsd, cache.sizeDeltaInTokens, cache.pnlWasCapped);
     }
 
     // @dev validate that a position is not empty
@@ -325,7 +355,7 @@ library PositionUtils {
         IsPositionLiquidatableCache memory cache;
         IsPositionLiquidatableInfo memory info;
 
-        (cache.positionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */) = getPositionPnlUsd(
+        (cache.positionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */, /* bool pnlWasCapped */) = getPositionPnlUsd(
             dataStore,
             market,
             prices,
