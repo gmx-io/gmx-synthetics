@@ -3053,6 +3053,16 @@ library MarketUtils {
             reservedUsd,
             poolUsd
         );
+        // A profitable decrease pays PnL from the pool and may reduce poolUsd enough that reserved
+        // open interest exceeds poolUsd * reserveFactor, pushing usage above 100%. Decreases are
+        // intentionally not reserve-validated so traders can always realize PnL and reduce risk, so
+        // the reserve domain is not preserved at the source (PnL payments are not constrained or
+        // deferred). Clamping usage to 100% here instead bounds the rate at the configured
+        // aboveOptimalUsageBorrowingFactor, so an over-reserved side cannot charge unrelated
+        // positions above that maximum; there is therefore no need to prevent usage exceeding 100%.
+        if (usageFactor > Precision.FLOAT_PRECISION) {
+            usageFactor = Precision.FLOAT_PRECISION;
+        }
 
         uint256 baseBorrowingFactor = dataStore.getUintValueFromDataStore(Keys.baseBorrowingFactorKey(market.marketToken, isLong));
 
