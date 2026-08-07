@@ -2558,4 +2558,133 @@ describe("SubaccountGelatoRelayRouter", () => {
       });
     });
   });
+
+  //#region subaccount approval account binding
+  // The subaccount approval nonce, revocation counter and action count are all keyed by the main
+  // account, so a second account starts from a clean slate and would accept a replayed approval.
+  // The account inside the approval hash is what prevents that, which matters for sibling ERC-1271
+  // wallets sharing an owner: they validate the same raw digest with the same signature bytes.
+  describe("subaccount approval account binding", () => {
+    let walletA, walletB;
+
+    const approvalPayload = () => ({
+      subaccount: user0.address,
+      shouldAdd: true,
+      expiresAt: 9999999999,
+      maxAllowedCount: 10,
+      actionType: keys.SUBACCOUNT_ORDER_ACTION,
+      deadline: 9999999999,
+      integrationId,
+      nonce: 0,
+    });
+
+    const signApprovalFor = (account: string) =>
+      getSubaccountApproval({
+        account,
+        signer: user1,
+        subaccountApproval: approvalPayload(),
+        relayRouter: subaccountGelatoRelayRouter,
+        desChainId: chainId,
+        chainId,
+      });
+
+    const orderParamsFor = (account: string) => ({
+      ...createOrderParams,
+      account,
+      tokenPermits: [],
+      params: {
+        ...defaultCreateOrderParams,
+        addresses: {
+          ...defaultCreateOrderParams.addresses,
+          receiver: account,
+          cancellationReceiver: account,
+        },
+      },
+    });
+
+    const fundContractWallet = async (wallet: string) => {
+      await wnt.connect(user1).transfer(wallet, expandDecimals(10, 18));
+      await impersonateAccount(wallet);
+      await setBalance(wallet, expandDecimals(10, 18));
+      const walletSigner = await hre.ethers.getSigner(wallet);
+      await wnt.connect(walletSigner).approve(router.address, expandDecimals(100, 18));
+      await stopImpersonatingAccount(wallet);
+    };
+
+    beforeEach(async () => {
+      const walletFactory = await deployContract("MockERC1271WalletFactory", []);
+      const saltA = hre.ethers.utils.formatBytes32String("siblingA");
+      const saltB = hre.ethers.utils.formatBytes32String("siblingB");
+      await walletFactory.createWallet(user1.address, saltA);
+      await walletFactory.createWallet(user1.address, saltB);
+      walletA = await walletFactory.getWalletAddress(user1.address, saltA);
+      walletB = await walletFactory.getWalletAddress(user1.address, saltB);
+
+      await fundContractWallet(walletA);
+      await fundContractWallet(walletB);
+
+      await wnt.connect(user1).approve(router.address, expandDecimals(100, 18));
+    });
+
+    it("siblings sharing an owner accept the same raw digest", async () => {
+      const digest = hre.ethers.utils.hashMessage("sibling wallets");
+      const signature = await user1.signMessage("sibling wallets");
+
+      const siblingA = await hre.ethers.getContractAt("MockERC1271Wallet", walletA);
+      const siblingB = await hre.ethers.getContractAt("MockERC1271Wallet", walletB);
+      expect(await siblingA.isValidSignature(digest, signature)).eq("0x1626ba7e");
+      expect(await siblingB.isValidSignature(digest, signature)).eq("0x1626ba7e");
+    });
+
+    it("an approval signed for one sibling wallet cannot be replayed on another", async () => {
+      const subaccountApproval = await signApprovalFor(walletA);
+
+      await expect(
+        sendCreateOrder({ ...orderParamsFor(walletB), subaccountApproval })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(walletB))).eq(0);
+      expect(await subaccountGelatoRelayRouter.subaccountApprovalNonces(walletB)).eq(0);
+
+      await sendCreateOrder({ ...orderParamsFor(walletA), subaccountApproval });
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(walletA), 0, 1)).to.deep.eq([user0.address]);
+    });
+
+    it("an approval signed for one EOA cannot be submitted for another", async () => {
+      await wnt.connect(user1).transfer(user2.address, expandDecimals(10, 18));
+      await wnt.connect(user2).approve(router.address, expandDecimals(100, 18));
+
+      const subaccountApproval = await signApprovalFor(user1.address);
+
+      await expect(
+        sendCreateOrder({ ...orderParamsFor(user2.address), subaccountApproval })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user2.address))).eq(0);
+
+      await sendCreateOrder({ ...orderParamsFor(user1.address), subaccountApproval });
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(user1.address), 0, 1)).to.deep.eq([
+        user0.address,
+      ]);
+    });
+
+    it("different accounts can approve the same subaccount with identical payloads", async () => {
+      await wnt.connect(user1).transfer(user2.address, expandDecimals(10, 18));
+      await wnt.connect(user2).approve(router.address, expandDecimals(100, 18));
+
+      await sendCreateOrder({ ...orderParamsFor(user1.address), subaccountApproval: approvalPayload() });
+      await sendCreateOrder({
+        ...orderParamsFor(user2.address),
+        subaccountApprovalSigner: user2,
+        subaccountApproval: approvalPayload(),
+      });
+
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(user1.address), 0, 1)).to.deep.eq([
+        user0.address,
+      ]);
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(user2.address), 0, 1)).to.deep.eq([
+        user0.address,
+      ]);
+    });
+  });
 });

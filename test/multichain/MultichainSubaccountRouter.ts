@@ -1394,4 +1394,71 @@ describe("MultichainSubaccountRouter", () => {
       });
     });
   });
+
+  //#region subaccount approval account binding
+  // this router shares SubaccountRouterUtils with SubaccountGelatoRelayRouter, so the account inside
+  // the approval hash must stop a cross-account replay here as well. An EOA account is bound by its
+  // own address recovering from the signature, so the replay only has to be blocked explicitly for
+  // ERC-1271 wallets, where signing authority is decoupled from the account address
+  describe("subaccount approval account binding", () => {
+    it("an approval signed for one sibling wallet cannot be replayed on another", async () => {
+      const walletFactory = await deployContract("MockERC1271WalletFactory", []);
+      const saltA = hre.ethers.utils.formatBytes32String("siblingA");
+      const saltB = hre.ethers.utils.formatBytes32String("siblingB");
+      await walletFactory.createWallet(user1.address, saltA);
+      await walletFactory.createWallet(user1.address, saltB);
+      const walletA = await walletFactory.getWalletAddress(user1.address, saltA);
+      const walletB = await walletFactory.getWalletAddress(user1.address, saltB);
+
+      for (const wallet of [walletA, walletB]) {
+        await impersonateAccount(wallet);
+        await setBalance(wallet, expandDecimals(2000, 18));
+        const walletSigner = await hre.ethers.getSigner(wallet);
+        await bridgeInTokens(fixture, { account: walletSigner, amount: wntAmountBridged });
+        await stopImpersonatingAccount(wallet);
+      }
+
+      const subaccountApproval = await getSubaccountApproval({
+        account: walletA,
+        signer: user1, // owner of both sibling wallets
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId,
+          nonce: 0,
+        },
+        relayRouter: multichainSubaccountRouter,
+        desChainId: chainId,
+        chainId,
+      });
+
+      // subaccount orders must pay out to the main account, so the order addresses follow it
+      const orderParamsFor = (account: string) => ({
+        ...createOrderParams,
+        account,
+        params: {
+          ...defaultCreateOrderParams,
+          addresses: {
+            ...defaultCreateOrderParams.addresses,
+            receiver: account,
+            cancellationReceiver: account,
+          },
+        },
+      });
+
+      await expect(
+        sendCreateOrder({ ...orderParamsFor(walletB), subaccountApproval })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(walletB))).eq(0);
+
+      // the same approval is still valid for the account it was signed for
+      await sendCreateOrder({ ...orderParamsFor(walletA), subaccountApproval });
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(walletA), 0, 1)).to.deep.eq([user0.address]);
+    });
+  });
 });

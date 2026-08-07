@@ -74,7 +74,7 @@ library RelayUtils {
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,uint256 revocationCounter,bytes32 eip6492SignatureWrapperHash)"
+                "SubaccountApproval(address account,address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,uint256 revocationCounter,bytes32 eip6492SignatureWrapperHash)"
             )
         );
 
@@ -200,12 +200,14 @@ library RelayUtils {
     }
 
     function getSubaccountApprovalStructHash(
+        address account,
         SubaccountApproval calldata subaccountApproval
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     SUBACCOUNT_APPROVAL_TYPEHASH,
+                    account,
                     subaccountApproval.subaccount,
                     subaccountApproval.shouldAdd,
                     subaccountApproval.expiresAt,

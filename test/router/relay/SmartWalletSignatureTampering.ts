@@ -343,6 +343,7 @@ describe("EIP-6492 subaccount approval wrapper binding", () => {
     };
     const approvalTypes = {
       SubaccountApproval: [
+        { name: "account", type: "address" },
         { name: "subaccount", type: "address" },
         { name: "shouldAdd", type: "bool" },
         { name: "expiresAt", type: "uint256" },
@@ -356,7 +357,10 @@ describe("EIP-6492 subaccount approval wrapper binding", () => {
         { name: "eip6492SignatureWrapperHash", type: "bytes32" },
       ],
     };
-    const ownerInnerSignature = await user1._signTypedData(approvalDomain, approvalTypes, approvalValues);
+    const ownerInnerSignature = await user1._signTypedData(approvalDomain, approvalTypes, {
+      account: mainWallet,
+      ...approvalValues,
+    });
 
     // relayer points the approval wrapper at a factory call it controls -> wrapper hash mismatch
     const tamperedApproval = {
