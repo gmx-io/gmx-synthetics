@@ -1,20 +1,35 @@
 import hre from "hardhat";
+import { BigNumber } from "ethers";
 
-import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
-import { encodeData, hashData } from "../utils/hash";
+import { ConfigChangeItem } from "./updateConfigUtils";
+import { getSignedFundingOracleParams } from "./updateFundingConfigUtils";
+import { encodeData, hashData, hashString } from "../utils/hash";
 import * as keys from "../utils/keys";
+
+type MarketMigration = {
+  market: any;
+  configItems: ConfigChangeItem[];
+};
 
 // Usage:
 // MARKET=0x... WRITE=false yarn hardhat run scripts/migrateFundingFactorPerSecond.ts --network <network>
 // WRITE=true yarn hardhat run scripts/migrateFundingFactorPerSecond.ts --network <network>
 // MARKET is optional; when omitted, all perp markets are processed.
 async function main() {
+  const write = process.env.WRITE === "true";
+  const [signer] = await hre.ethers.getSigners();
+  const config = await hre.ethers.getContract("Config");
   const dataStore = await hre.ethers.getContract("DataStore");
   const reader = await hre.ethers.getContract("Reader");
+  const roleStore = await hre.ethers.getContract("RoleStore");
   const markets = await reader.getMarkets(dataStore.address, 0, 1000);
   const includeMarket = process.env.MARKET?.toLowerCase();
 
-  const configItems: ConfigChangeItem[] = [];
+  if (!(await roleStore.hasRole(signer.address, hashString("CONFIG_KEEPER")))) {
+    throw new Error(`Signer ${signer.address} does not have the CONFIG_KEEPER role`);
+  }
+
+  const migrations: MarketMigration[] = [];
 
   for (const market of markets) {
     if (market.indexToken === hre.ethers.constants.AddressZero) {
@@ -54,14 +69,16 @@ async function main() {
       throw new Error(`invalid funding bounds for ${market.marketToken}: min > max`);
     }
 
+    const configItems: ConfigChangeItem[] = [];
+
     const addSideUpdates = ({
       isLong,
       currentMin,
       currentMax,
     }: {
       isLong: boolean;
-      currentMin: any;
-      currentMax: any;
+      currentMin: BigNumber;
+      currentMax: BigNumber;
     }) => {
       const sideLabel = isLong ? "long" : "short";
       const minItem: ConfigChangeItem = {
@@ -79,31 +96,62 @@ async function main() {
         label: `migrate maxFundingFactorPerSecond ${sideLabel} ${market.marketToken}`,
       };
 
-      if (sourceMin.gt(currentMax)) {
-        // raise max first so min is not greater than the current max
-        configItems.push(maxItem, minItem);
-        return;
-      }
+      const orderedItems = sourceMin.gt(currentMax) ? [maxItem, minItem] : [minItem, maxItem];
 
-      if (sourceMax.lt(currentMin)) {
-        // lower min first so max is not less than the current min
-        configItems.push(minItem, maxItem);
-        return;
+      for (const item of orderedItems) {
+        const currentValue = item === minItem ? currentMin : currentMax;
+        if (!currentValue.eq(item.value)) {
+          configItems.push(item);
+        }
       }
-
-      configItems.push(maxItem, minItem);
     };
 
     addSideUpdates({ isLong: true, currentMin: minLong, currentMax: maxLong });
     addSideUpdates({ isLong: false, currentMin: minShort, currentMax: maxShort });
+
+    if (configItems.length > 0) {
+      migrations.push({ market, configItems });
+    }
   }
 
-  if (configItems.length === 0) {
+  if (migrations.length === 0) {
     console.log("no markets to migrate");
     return;
   }
 
-  await handleConfigChanges(configItems, process.env.WRITE === "true");
+  for (const { market, configItems } of migrations) {
+    const oracleParams = await getSignedFundingOracleParams(market);
+    const calls = configItems.map((item) =>
+      config.interface.encodeFunctionData("setFundingUintWithOraclePrices", [
+        item.baseKey,
+        item.keyData,
+        item.value,
+        oracleParams,
+      ])
+    );
+
+    console.log(`Funding factor migration for ${market.marketToken}:`);
+    configItems.forEach((item, index) => {
+      console.log(`${index + 1}. ${item.label}: ${item.value.toString()}`);
+    });
+
+    await config.connect(signer).callStatic.multicall(calls);
+
+    if (!write) {
+      console.log(`Simulation succeeded for ${market.marketToken}.`);
+      continue;
+    }
+
+    const tx = await config.connect(signer).multicall(calls);
+    console.log(`Transaction submitted for ${market.marketToken}: ${tx.hash}`);
+    await tx.wait();
+  }
+
+  if (!write) {
+    console.log("All simulations succeeded. Set WRITE=true to submit the transactions.");
+  } else {
+    console.log("Funding factor migration completed.");
+  }
 }
 
 main()

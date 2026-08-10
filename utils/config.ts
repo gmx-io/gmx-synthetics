@@ -1,4 +1,17 @@
 import { BigNumber } from "ethers";
+import * as keys from "./keys";
+
+export const FUNDING_CONFIG_BASE_KEYS = new Set([
+  keys.FUNDING_FACTOR,
+  keys.FUNDING_EXPONENT_FACTOR,
+  keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+  keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+  keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+  keys.MIN_FUNDING_FACTOR_PER_SECOND,
+  keys.MAX_FUNDING_FACTOR_PER_SECOND,
+  keys.THRESHOLD_FOR_STABLE_FUNDING,
+  keys.THRESHOLD_FOR_DECREASE_FUNDING,
+]);
 
 export const EXCLUDED_CONFIG_KEYS = {
   ACCOUNT_DEPOSIT_LIST: true,
@@ -127,6 +140,15 @@ export const EXCLUDED_CONFIG_KEYS = {
   FEE_DISTRIBUTOR_STAKED_GMX: true,
   FEE_DISTRIBUTOR_TOTAL_STAKED_GMX: true,
   FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP: true,
+  FUNDING_FACTOR: true,
+  FUNDING_EXPONENT_FACTOR: true,
+  FUNDING_INCREASE_FACTOR_PER_SECOND: true,
+  MIN_FUNDING_INCREASE_RATE_PER_SECOND: true,
+  FUNDING_DECREASE_FACTOR_PER_SECOND: true,
+  MIN_FUNDING_FACTOR_PER_SECOND: true,
+  MAX_FUNDING_FACTOR_PER_SECOND: true,
+  THRESHOLD_FOR_STABLE_FUNDING: true,
+  THRESHOLD_FOR_DECREASE_FUNDING: true,
 };
 
 export async function appendUintConfigIfDifferent(
@@ -213,7 +235,8 @@ async function appendConfigIfDifferent(
   const key = getFullKey(baseKey, keyData);
   keyData = keyData || "0x";
 
-  const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
+  const isFundingConfig = type === "uint" && FUNDING_CONFIG_BASE_KEYS.has(baseKey);
+  const setMethod = isFundingConfig ? "setFundingUintWithOraclePrices" : `set${type[0].toUpperCase()}${type.slice(1)}`;
 
   const currentValue: string = dataCache[key];
 
@@ -236,7 +259,10 @@ async function appendConfigIfDifferent(
       changeStr,
       key
     );
-    list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
+    const args = isFundingConfig
+      ? [baseKey, keyData, value, { tokens: [], providers: [], data: [] }]
+      : [baseKey, keyData, value];
+    list.push(config.interface.encodeFunctionData(setMethod, args));
   } else {
     // console.info("skipping config %s %s (%s) as it is already set to %s", type, label, key, value.toString());
   }

@@ -16,6 +16,7 @@ import "../oracle/OracleModule.sol";
 import "../oracle/OracleUtils.sol";
 
 import "./ConfigUtils.sol";
+import "./FundingConfigUtils.sol";
 
 // @title RiskOracleConfig
 // @dev limited capability config only for risk-oracle keys
@@ -76,6 +77,10 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
     // @param data the additional data to be combined with the base key
     // @param value the uint256 value
     function setUint(bytes32 baseKey, bytes memory data, uint256 value) external onlyRiskOracle nonReentrant {
+        if (FundingConfigUtils.isFundingConfigKey(baseKey)) {
+            revert Errors.OraclePricesRequiredForConfigUpdate(baseKey);
+        }
+
         _setUint(baseKey, data, value);
     }
 
@@ -147,7 +152,7 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
     }
 
     function _settleFundingIfRequired(Market.Props memory marketProps, bytes32 baseKey) internal {
-        if (!_isRiskOracleFundingBaseKey(baseKey)) {
+        if (!FundingConfigUtils.isFundingConfigKey(baseKey)) {
             return;
         }
 
@@ -194,15 +199,10 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         allowedRiskOracleBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
         allowedRiskOracleBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT] = true;
 
-        allowedRiskOracleBaseKeys[Keys.FUNDING_FACTOR] = true;
-        allowedRiskOracleBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
-        allowedRiskOracleBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
-        allowedRiskOracleBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
-        allowedRiskOracleBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
-        allowedRiskOracleBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
-        allowedRiskOracleBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
-        allowedRiskOracleBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
-        allowedRiskOracleBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
+        bytes32[9] memory fundingConfigKeys = FundingConfigUtils.getFundingConfigKeys();
+        for (uint256 i; i < fundingConfigKeys.length; i++) {
+            allowedRiskOracleBaseKeys[fundingConfigKeys[i]] = true;
+        }
 
         allowedRiskOracleBaseKeys[Keys.MIN_COLLATERAL_FACTOR] = true;
         allowedRiskOracleBaseKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER] = true;
@@ -249,19 +249,6 @@ contract RiskOracleConfig is ReentrancyGuard, RoleModule, OracleModule, BasicMul
         return
             baseKey == Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD ||
             baseKey == Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT;
-    }
-
-    function _isRiskOracleFundingBaseKey(bytes32 baseKey) internal pure returns (bool) {
-        return
-            baseKey == Keys.FUNDING_FACTOR ||
-            baseKey == Keys.FUNDING_EXPONENT_FACTOR ||
-            baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND ||
-            baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND ||
-            baseKey == Keys.MIN_FUNDING_FACTOR_PER_SECOND ||
-            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
-            baseKey == Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND ||
-            baseKey == Keys.THRESHOLD_FOR_STABLE_FUNDING ||
-            baseKey == Keys.THRESHOLD_FOR_DECREASE_FUNDING;
     }
 
     function _isRiskOracleBorrowingBaseKey(bytes32 baseKey) internal pure returns (bool) {

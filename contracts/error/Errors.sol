@@ -28,6 +28,7 @@ library Errors {
 
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
+    error OraclePricesRequiredForConfigUpdate(bytes32 baseKey);
     error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
     error InvalidClaimableReductionFactor(uint256 value);
@@ -546,4 +547,3 @@ library Errors {
     error InvalidCreReceiverTarget(address target);
     error CreReceiverCallFailed(bytes data);
 }
-

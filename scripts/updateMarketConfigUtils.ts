@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
+import { FUNDING_CONFIG_BASE_KEYS } from "../utils/config";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
@@ -14,14 +15,7 @@ const RISK_ORACLE_MANAGED_BASE_KEYS = [
   keys.MAX_OPEN_INTEREST,
   keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD,
   keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT,
-  keys.FUNDING_FACTOR,
-  keys.FUNDING_EXPONENT_FACTOR,
-  keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
-  keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
-  keys.MIN_FUNDING_FACTOR_PER_SECOND,
-  keys.MAX_FUNDING_FACTOR_PER_SECOND,
-  keys.THRESHOLD_FOR_STABLE_FUNDING,
-  keys.THRESHOLD_FOR_DECREASE_FUNDING,
+  ...FUNDING_CONFIG_BASE_KEYS,
   keys.MIN_COLLATERAL_FACTOR,
   keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
   keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
@@ -44,18 +38,7 @@ export function getRiskOracleManagedBaseKeys() {
   return [];
 }
 
-const KEEPER_MANAGED_BASE_KEYS_ARBITRUM = [
-  keys.MAX_FUNDING_FACTOR_PER_SECOND,
-  keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
-  keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
-  keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
-];
-
 export function getKeeperManagedBaseKeys() {
-  if (hre.network.name === "arbitrum") {
-    return KEEPER_MANAGED_BASE_KEYS_ARBITRUM;
-  }
-
   return [];
 }
 
@@ -824,6 +807,32 @@ export async function updateMarketConfig({
     includeFunding,
   });
 
+  const fundingUpdatedAtByMarket = new Map<string, boolean>();
+  const skippedLiveFundingParams: string[] = [];
+  const filteredConfigItems: ConfigChangeItem[] = [];
+
+  for (const item of configItems) {
+    if (!FUNDING_CONFIG_BASE_KEYS.has(item.baseKey)) {
+      filteredConfigItems.push(item);
+      continue;
+    }
+
+    const marketAddress = ethers.utils.defaultAbiCoder.decode(["address"], item.keyData)[0];
+    const marketKey = marketAddress.toLowerCase();
+    let hasFundingCheckpoint = fundingUpdatedAtByMarket.get(marketKey);
+
+    if (hasFundingCheckpoint === undefined) {
+      hasFundingCheckpoint = !(await dataStore.getUint(keys.fundingUpdatedAtKey(marketAddress))).isZero();
+      fundingUpdatedAtByMarket.set(marketKey, hasFundingCheckpoint);
+    }
+
+    if (hasFundingCheckpoint) {
+      skippedLiveFundingParams.push(item.label);
+    } else {
+      filteredConfigItems.push(item);
+    }
+  }
+
   if (ignoredRiskOracleParams.length > 0) {
     const ignoredParameterNames = getIgnoredParameterNames(ignoredRiskOracleParams);
 
@@ -841,7 +850,16 @@ export async function updateMarketConfig({
     console.info("Add INCLUDE_KEEPER_BASE_KEYS=true to include them\n");
   }
 
-  await handleConfigChanges(configItems, write, 100);
+  if (skippedLiveFundingParams.length > 0) {
+    console.info("\n=================\n");
+    console.info("Skipped live funding config updates that require an oracle-priced checkpoint:");
+    console.info(getIgnoredParameterNames(skippedLiveFundingParams).join(","));
+    console.info(
+      "Use MARKET=<market-token-address> WRITE=<true|false> npx hardhat run scripts/updateFundingConfig.ts --network <network>\n"
+    );
+  }
+
+  await handleConfigChanges(filteredConfigItems, write, 100);
 }
 
 function getIgnoredParameterNames(ignoredParams) {

@@ -11,6 +11,7 @@ import {EventEmitter} from "../event/EventEmitter.sol";
 import {EventUtils} from "../event/EventUtils.sol";
 import {Market} from "../market/Market.sol";
 import {MarketStoreUtils} from "../market/MarketStoreUtils.sol";
+import {MarketUtils} from "../market/MarketUtils.sol";
 import {IOracle} from "../oracle/IOracle.sol";
 import {OracleModule} from "../oracle/OracleModule.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
@@ -20,6 +21,7 @@ import {RoleModule} from "../role/RoleModule.sol";
 import {RoleStore} from "../role/RoleStore.sol";
 import {BasicMulticall} from "../utils/BasicMulticall.sol";
 import {ConfigUtils} from "./ConfigUtils.sol";
+import {FundingConfigUtils} from "./FundingConfigUtils.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // @title Config
@@ -362,6 +364,39 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
     function setUint(bytes32 baseKey, bytes memory data, uint256 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
+        _setUint(baseKey, data, value);
+    }
+
+    // @dev set a funding uint256 value after settling accrued funding with
+    // oracle prices under the previous configuration
+    function setFundingUintWithOraclePrices(
+        bytes32 baseKey,
+        bytes memory data,
+        uint256 value,
+        OracleUtils.SetPricesParams memory pricesParams
+    ) external onlyConfigKeeper nonReentrant withOraclePrices(pricesParams) {
+        if (!FundingConfigUtils.isFundingConfigKey(baseKey)) {
+            revert Errors.InvalidBaseKey(baseKey);
+        }
+
+        address marketAddress = abi.decode(data, (address));
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+        if (market.marketToken == address(0)) {
+            revert Errors.EmptyMarket();
+        }
+
+        // There is no interval to settle before the first funding checkpoint.
+        // Runtime updates require oracle prices and settle before the new value
+        // is stored.
+        if (dataStore.getUint(Keys.fundingUpdatedAtKey(market.marketToken)) != 0) {
+            MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, market);
+            MarketUtils.updateFundingState(dataStore, eventEmitter, market, prices);
+        }
+
+        _setUint(baseKey, data, value);
+    }
+
+    function _setUint(bytes32 baseKey, bytes memory data, uint256 value) internal {
         bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
         ConfigUtils.validateRange(
@@ -588,16 +623,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS] = true;
         allowedBaseKeys[Keys.MAX_LENDABLE_IMPACT_USD] = true;
 
-        allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
-        allowedBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
-        allowedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
-        allowedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
-        allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
-        allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
-        allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
-        allowedBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
-        allowedBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
-
         allowedBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
         allowedBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
@@ -681,12 +706,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
-        allowedLimitedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.MAX_BORROWING_FACTOR_PER_SECOND] = true;
-        allowedLimitedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
-        allowedLimitedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
-        allowedLimitedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
-        allowedLimitedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
