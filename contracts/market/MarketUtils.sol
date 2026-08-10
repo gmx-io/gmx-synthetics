@@ -1353,9 +1353,11 @@ library MarketUtils {
             "Invalid state: negative collateralSum"
         );
 
-        uint256 maxValue = dataStore.getUintValueFromDataStore(Keys.maxCollateralSumKey(market, collateralToken, isLong));
-        if (nextValue > maxValue) {
-            revert Errors.MaxCollateralSumExceeded(nextValue, maxValue);
+        if (delta > 0) {
+            uint256 maxValue = dataStore.getUintValueFromDataStore(Keys.maxCollateralSumKey(market, collateralToken, isLong));
+            if (nextValue > maxValue) {
+                revert Errors.MaxCollateralSumExceeded(nextValue, maxValue);
+            }
         }
 
         MarketEventUtils.emitCollateralSumUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
