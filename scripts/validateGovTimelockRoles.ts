@@ -33,22 +33,15 @@ async function getRoleLogs(address: string, fromBlock: number, toBlock: number) 
       nextBlock = chunkEnd + 1;
       chunkSize = Math.min(chunkSize * 2, maxChunkSize);
     } catch (error: any) {
-      const message = error.message ?? error.body ?? "";
-      const normalizedMessage = message.toLowerCase();
-      if (
-        normalizedMessage.includes("log response size exceeded") ||
-        normalizedMessage.includes("query timeout exceeded") ||
-        normalizedMessage.includes("block range") ||
-        normalizedMessage.includes("range is too large") ||
-        normalizedMessage.includes("limited to a")
-      ) {
-        chunkSize = Math.floor(chunkSize / 2);
-        if (chunkSize < 1_000) {
-          throw new Error(`Unable to query role events: ${message}`);
-        }
-        continue;
+      const attemptedChunkSize = chunkEnd - nextBlock + 1;
+      const nextChunkSize = Math.floor(attemptedChunkSize / 2);
+
+      if (nextChunkSize < 1_000) {
+        throw error;
       }
-      throw error;
+
+      chunkSize = nextChunkSize;
+      continue;
     }
   }
 
