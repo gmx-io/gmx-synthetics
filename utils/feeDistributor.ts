@@ -38,3 +38,13 @@ export async function moveToNextDistributionDay(distributionDay: number) {
   await hre.ethers.provider.send("evm_setNextBlockTimestamp", [nextTimestamp]);
   await hre.ethers.provider.send("evm_mine");
 }
+
+// moves to a timestamp shortly before the next distribution-day midnight, i.e. near the end of
+// the currently open distribution week
+export async function moveToEndOfCurrentDistributionWeek(distributionDay: number, secondsBeforeBoundary = 90) {
+  const block = await hre.ethers.provider.getBlock("latest");
+  const boundary = getNextDistributionTimestampFixed(block.timestamp, distributionDay) - TARGET_OFFSET_SECONDS;
+
+  await hre.ethers.provider.send("evm_setNextBlockTimestamp", [boundary - secondsBeforeBoundary]);
+  await hre.ethers.provider.send("evm_mine");
+}

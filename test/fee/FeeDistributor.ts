@@ -1060,10 +1060,13 @@ describe("FeeDistributor", function () {
     const distributeTimestamp2 = (await hre.ethers.provider.getBlock(distributeReceipt2.blockNumber)).timestamp;
 
     const tranche2 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
-    const rate2 = tranche2.div(secondsPerWeek);
+
+    const accruedWeek1 = rate1.mul(distributeTimestamp2 - claimTimestamp1);
+    const flushed = accruedWeek1.gt(distributorBalancePreWeek2) ? distributorBalancePreWeek2 : accruedWeek1;
+    const rate2 = distributorBalancePreWeek2.sub(flushed).add(tranche2).div(secondsPerWeek);
 
     expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(
-      distributorBalancePreWeek2.add(tranche2).sub(rate1.mul(distributeTimestamp2 - claimTimestamp1))
+      distributorBalancePreWeek2.sub(flushed).add(tranche2)
     );
     expect(await mockRewardDistributor.tokensPerInterval()).to.eq(rate2);
     expect(await mockRewardDistributor.lastDistributionTime()).to.eq(distributeTimestamp2);
@@ -1076,8 +1079,7 @@ describe("FeeDistributor", function () {
     const claimTimestamp2 = (await hre.ethers.provider.getBlock(claimReceipt2.blockNumber)).timestamp;
     const received2 = (await gmx.balanceOf(user7.address)).sub(received1);
 
-    const expected2 = rate1
-      .mul(distributeTimestamp2 - claimTimestamp1)
+    const expected2 = flushed
       .add(rate2.mul(claimTimestamp2 - distributeTimestamp2))
       .mul(stakeAmount)
       .div(totalStaked);
@@ -1087,6 +1089,184 @@ describe("FeeDistributor", function () {
     const totalStreamed = tranche1.add(tranche2).sub(distributorBalanceEnd);
     expect(totalStreamed).to.be.gt(tranche1);
     expect(await gmx.balanceOf(mockRewardTracker.address)).to.eq(totalStreamed.sub(received1).sub(received2));
+  });
+
+  it("adjacent distributions across a week boundary carry the unaccrued remainder into the new rate", async function () {
+    const secondsPerWeek = 7 * 24 * 60 * 60;
+
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, 0);
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, 0);
+
+    await gmx.mint(wallet.address, expandDecimals(120_000, 18));
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    await feeDistributorConfig.moveToEndOfCurrentDistributionWeek(distributionDay);
+
+    await feeDistributor.initiateDistribute();
+    const distributeTx1 = await feeDistributor.distribute();
+    const distributeReceipt1 = await distributeTx1.wait();
+    const distributeTimestamp1 = (await hre.ethers.provider.getBlock(distributeReceipt1.blockNumber)).timestamp;
+
+    const tranche1 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
+    const rate1 = tranche1.div(secondsPerWeek);
+
+    expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(tranche1);
+    expect(await mockRewardDistributor.tokensPerInterval()).to.eq(rate1);
+
+    const stakeAmount = expandDecimals(2_000_000, 18);
+    const stakeTx = await mockRewardTracker.connect(user7).stake(stakeAmount);
+    const stakeReceipt = await stakeTx.wait();
+    const stakeTimestamp = (await hre.ethers.provider.getBlock(stakeReceipt.blockNumber)).timestamp;
+    const totalStaked = expandDecimals(8_000_000, 18);
+
+    await gmxA.connect(user0).transfer(user5.address, await gmxA.balanceOf(user0.address));
+    await gmxC.connect(user1).transfer(user5.address, await gmxC.balanceOf(user1.address));
+
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await gmx.mint(wallet.address, expandDecimals(120_000, 18));
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    const distributorBalancePreWeek2 = await gmx.balanceOf(mockRewardDistributor.address);
+    const lastDistributionTimePreWeek2 = await mockRewardDistributor.lastDistributionTime();
+
+    await feeDistributor.initiateDistribute();
+    const distributeTx2 = await feeDistributor.distribute();
+    const distributeReceipt2 = await distributeTx2.wait();
+    const distributeTimestamp2 = (await hre.ethers.provider.getBlock(distributeReceipt2.blockNumber)).timestamp;
+
+    const tranche2 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
+
+    expect(distributeTimestamp2 - distributeTimestamp1).to.be.lt(600);
+
+    const accruedWeek1 = rate1.mul(distributeTimestamp2 - lastDistributionTimePreWeek2.toNumber());
+    const flushed = accruedWeek1.gt(distributorBalancePreWeek2) ? distributorBalancePreWeek2 : accruedWeek1;
+    const remainder = distributorBalancePreWeek2.sub(flushed);
+    const rate2 = remainder.add(tranche2).div(secondsPerWeek);
+
+    expect(remainder).to.be.gt(tranche1.mul(99).div(100));
+    expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(remainder.add(tranche2));
+    expect(await mockRewardDistributor.tokensPerInterval()).to.eq(rate2);
+    expect(rate2).to.be.gt(tranche2.div(secondsPerWeek));
+    expect(await mockRewardDistributor.lastDistributionTime()).to.eq(distributeTimestamp2);
+
+    await hre.ethers.provider.send("evm_increaseTime", [8 * 24 * 60 * 60]);
+    await hre.ethers.provider.send("evm_mine", []);
+    await mockRewardTracker.updateRewards();
+
+    expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(0);
+
+    await mockRewardTracker.connect(user7).claim(user7.address);
+    const received = await gmx.balanceOf(user7.address);
+
+    const preStakeEmissions = rate1.mul(stakeTimestamp - distributeTimestamp1);
+    const expected = tranche1
+      .add(tranche2)
+      .sub(preStakeEmissions)
+      .mul(stakeAmount)
+      .div(totalStaked);
+    expect(received).to.be.closeTo(expected, expandDecimals(1, 15));
+    expect(await gmx.balanceOf(mockRewardTracker.address)).to.eq(tranche1.add(tranche2).sub(received));
+  });
+
+  it("late distribution after a missed week caps the flush at the old funding without raiding the new tranche", async function () {
+    const secondsPerWeek = 7 * 24 * 60 * 60;
+
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, 0);
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, 0);
+
+    await gmx.mint(wallet.address, expandDecimals(120_000, 18));
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    await feeDistributor.initiateDistribute();
+    const distributeTx1 = await feeDistributor.distribute();
+    const distributeReceipt1 = await distributeTx1.wait();
+    const distributeTimestamp1 = (await hre.ethers.provider.getBlock(distributeReceipt1.blockNumber)).timestamp;
+
+    const tranche1 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
+    const rate1 = tranche1.div(secondsPerWeek);
+
+    expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(tranche1);
+    expect(await mockRewardDistributor.tokensPerInterval()).to.eq(rate1);
+
+    await gmxA.connect(user0).transfer(user5.address, await gmxA.balanceOf(user0.address));
+    await gmxC.connect(user1).transfer(user5.address, await gmxC.balanceOf(user1.address));
+
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await gmx.mint(wallet.address, expandDecimals(120_000, 18));
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    const trackerBalancePreWeek3 = await gmx.balanceOf(mockRewardTracker.address);
+
+    await feeDistributor.initiateDistribute();
+    const distributeTx2 = await feeDistributor.distribute();
+    const distributeReceipt2 = await distributeTx2.wait();
+    const distributeTimestamp2 = (await hre.ethers.provider.getBlock(distributeReceipt2.blockNumber)).timestamp;
+
+    const tranche2 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
+
+    expect(rate1.mul(distributeTimestamp2 - distributeTimestamp1)).to.be.gt(tranche1);
+    expect(await gmx.balanceOf(mockRewardTracker.address)).to.eq(trackerBalancePreWeek3.add(tranche1));
+    expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(tranche2);
+    expect(await mockRewardDistributor.tokensPerInterval()).to.eq(tranche2.div(secondsPerWeek));
+    expect(await mockRewardDistributor.lastDistributionTime()).to.eq(distributeTimestamp2);
+  });
+
+  it("the first distribution folds a pre-existing distributor balance and schedule into the new rate", async function () {
+    const secondsPerWeek = 7 * 24 * 60 * 60;
+
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    const legacyBalance = expandDecimals(50_000, 18);
+    const legacyRate = expandDecimals(1, 16);
+    await gmx.mint(mockRewardDistributor.address, legacyBalance);
+    await mockRewardDistributor.updateLastDistributionTime();
+    await mockRewardDistributor.setTokensPerInterval(legacyRate);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, 0);
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, 0);
+
+    await gmx.mint(wallet.address, expandDecimals(120_000, 18));
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    const lastDistributionTimePreDistribute = await mockRewardDistributor.lastDistributionTime();
+    const trackerBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
+
+    await feeDistributor.initiateDistribute();
+    const distributeTx = await feeDistributor.distribute();
+    const distributeReceipt = await distributeTx.wait();
+    const distributeTimestamp = (await hre.ethers.provider.getBlock(distributeReceipt.blockNumber)).timestamp;
+
+    const tranche1 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
+
+    const flushed = legacyRate.mul(distributeTimestamp - lastDistributionTimePreDistribute.toNumber());
+    const folded = legacyBalance.sub(flushed);
+
+    expect(flushed).to.be.lt(legacyBalance);
+    expect(await gmx.balanceOf(mockRewardTracker.address)).to.eq(trackerBalancePreDistribute.add(flushed));
+    expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(folded.add(tranche1));
+    expect(await mockRewardDistributor.tokensPerInterval()).to.eq(folded.add(tranche1).div(secondsPerWeek));
+    expect(await mockRewardDistributor.lastDistributionTime()).to.eq(distributeTimestamp);
   });
 
   it("re-enabling gmx fee distribution re-bases the last distribution time", async function () {
@@ -1131,10 +1311,11 @@ describe("FeeDistributor", function () {
 
     const tranche2 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
 
+    const accruedWeek1 = rate1.mul(distributeTimestamp2 - distributeTimestamp1);
+    const flushed = accruedWeek1.gt(tranche1) ? tranche1 : accruedWeek1;
+
     expect((await gmx.balanceOf(user6.address)).sub(treasuryBalancePreWeek2)).to.eq(tranche2);
-    expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(
-      tranche1.sub(rate1.mul(distributeTimestamp2 - distributeTimestamp1))
-    );
+    expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(tranche1.sub(flushed));
     expect(await mockRewardDistributor.tokensPerInterval()).to.eq(0);
     expect(await mockRewardDistributor.lastDistributionTime()).to.eq(distributeTimestamp2);
 
@@ -1155,7 +1336,9 @@ describe("FeeDistributor", function () {
     const tranche3 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
 
     expect(await mockRewardDistributor.lastDistributionTime()).to.eq(distributeTimestamp3);
-    expect(await mockRewardDistributor.tokensPerInterval()).to.eq(tranche3.div(secondsPerWeek));
+    expect(await mockRewardDistributor.tokensPerInterval()).to.eq(
+      distributorBalancePreWeek3.add(tranche3).div(secondsPerWeek)
+    );
     expect(await gmx.balanceOf(mockRewardDistributor.address)).to.eq(distributorBalancePreWeek3.add(tranche3));
   });
 
