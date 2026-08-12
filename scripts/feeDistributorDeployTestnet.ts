@@ -393,7 +393,7 @@ async function deployContracts(): Promise<DeploymentResult> {
     await delay(txDelay);
 
     const MockRewardDistributorV1: ContractFactory = await getFactory(deployer, "MockRewardDistributorV1");
-    const mockRewardDistributor: Contract = await MockRewardDistributorV1.deploy();
+    const mockRewardDistributor: Contract = await MockRewardDistributorV1.deploy(contracts.gmx);
     await mockRewardDistributor.deployed();
     console.log("MockRewardDistributorV1 deployed to:", mockRewardDistributor.address);
     contracts.mockRewardDistributor = mockRewardDistributor.address;
@@ -404,6 +404,10 @@ async function deployContracts(): Promise<DeploymentResult> {
     await mockExtendedGmxTracker.deployed();
     console.log("MockRewardTrackerV1 deployed to:", mockExtendedGmxTracker.address);
     contracts.mockExtendedGmxTracker = mockExtendedGmxTracker.address;
+    await delay(txDelay);
+
+    await (await mockRewardDistributor.setRewardTracker(mockExtendedGmxTracker.address)).wait();
+    console.log("MockRewardDistributorV1 reward tracker set to:", mockExtendedGmxTracker.address);
     await delay(txDelay);
 
     saveCheckpoint(5, contracts);

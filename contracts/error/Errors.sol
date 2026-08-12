@@ -540,6 +540,7 @@ library Errors {
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
     error ZeroTreasuryAddress();
     error InvalidWithdrawTarget(address withdrawTarget, address expected);
+    error InvalidDistributorRewardToken(address rewardToken, address gmx);
 
     // CreReceiver errors
     error UnauthorizedWorkflowOwner(address workflowOwner);
