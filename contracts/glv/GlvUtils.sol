@@ -215,7 +215,8 @@ library GlvUtils {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         address glv,
-        bool maximize
+        bool maximize,
+        bool allowZeroPoolBorrowingFactor
     ) internal view returns (uint256, uint256, uint256) {
         uint256 value = getGlvValue(
             dataStore,
@@ -225,7 +226,7 @@ library GlvUtils {
             shortTokenPrice,
             glv,
             maximize,
-            false // allowZeroPoolBorrowingFactor
+            allowZeroPoolBorrowingFactor
         );
         uint256 supply = ERC20(glv).totalSupply();
 

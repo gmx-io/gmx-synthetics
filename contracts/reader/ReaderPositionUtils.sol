@@ -178,7 +178,13 @@ library ReaderPositionUtils {
 
         // borrowing and funding fees need to be overwritten with pending values otherwise they
         // would be using storage values that have not yet been updated
-        cache.pendingBorrowingFeeUsd = MarketUtils.getNextBorrowingFees(dataStore, positionInfo.position, cache.market, prices);
+        cache.pendingBorrowingFeeUsd = MarketUtils.getNextBorrowingFees(
+            dataStore,
+            positionInfo.position,
+            cache.market,
+            prices,
+            sizeDeltaUsd > 0 // allowZeroPoolBorrowingFactor
+        );
 
         positionInfo.fees.borrowing = PositionPricingUtils.getBorrowingFees(
             dataStore,

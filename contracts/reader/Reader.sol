@@ -213,6 +213,27 @@ contract Reader {
             );
     }
 
+    function getMarketTokenPriceForDeposit(
+        DataStore dataStore,
+        Market.Props memory market,
+        Price.Props memory indexTokenPrice,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        bytes32 pnlFactorType,
+        bool maximize
+    ) external view returns (int256, MarketPoolValueInfo.Props memory) {
+        return
+            MarketUtils.getMarketTokenPriceForDeposit(
+                dataStore,
+                market,
+                indexTokenPrice,
+                longTokenPrice,
+                shortTokenPrice,
+                pnlFactorType,
+                maximize
+            );
+    }
+
     function getPendingPositionImpactPoolDistributionAmount(
         DataStore dataStore,
         address market

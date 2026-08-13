@@ -130,7 +130,7 @@ library ReaderDepositUtils {
             params.prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             true, // maximize
-            false // allowZeroPoolBorrowingFactor
+            true // allowZeroPoolBorrowingFactor
         );
 
         if (poolValueInfo.poolValue < 0) {

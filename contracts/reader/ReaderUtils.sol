@@ -42,6 +42,8 @@ library ReaderUtils {
         Market.Props market;
         uint256 borrowingFactorPerSecondForLongs;
         uint256 borrowingFactorPerSecondForShorts;
+        bool borrowingFactorForLongsAvailable;
+        bool borrowingFactorForShortsAvailable;
         BaseFundingValues baseFunding;
         MarketUtils.GetNextFundingAmountPerSizeResult nextFunding;
         VirtualInventory virtualInventory;
@@ -174,20 +176,24 @@ library ReaderUtils {
     ) public view returns (MarketInfo memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
 
-        uint256 borrowingFactorPerSecondForLongs = MarketUtils.getBorrowingFactorPerSecond(
+        (
+            uint256 borrowingFactorPerSecondForLongs,
+            bool borrowingFactorForLongsAvailable
+        ) = MarketUtils.getBorrowingFactorPerSecondWithAvailability(
             dataStore,
             market,
             prices,
-            true, // isLong
-            false // allowZeroPoolBorrowingFactor
+            true // isLong
         );
 
-        uint256 borrowingFactorPerSecondForShorts = MarketUtils.getBorrowingFactorPerSecond(
+        (
+            uint256 borrowingFactorPerSecondForShorts,
+            bool borrowingFactorForShortsAvailable
+        ) = MarketUtils.getBorrowingFactorPerSecondWithAvailability(
             dataStore,
             market,
             prices,
-            false, // isLong
-            false // allowZeroPoolBorrowingFactor
+            false // isLong
         );
 
         BaseFundingValues memory baseFunding = getBaseFundingValues(dataStore, market);
@@ -207,6 +213,8 @@ library ReaderUtils {
                 market,
                 borrowingFactorPerSecondForLongs,
                 borrowingFactorPerSecondForShorts,
+                borrowingFactorForLongsAvailable,
+                borrowingFactorForShortsAvailable,
                 baseFunding,
                 nextFunding,
                 virtualInventory,
