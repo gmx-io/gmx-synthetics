@@ -50,15 +50,63 @@ async function getRoleLogs(address: string, fromBlock: number, toBlock: number) 
   );
 }
 
-async function main() {
-  const timelockDeployment = await hre.deployments.get("GovTimelockController");
-  const timelock = await hre.ethers.getContractAt("GovTimelockController", timelockDeployment.address);
-  const governor = await hre.ethers.getContract("ProtocolGovernor");
-  const deploymentBlock = Number(timelockDeployment.receipt && timelockDeployment.receipt.blockNumber);
+async function getTimelockDeploymentBlock(address: string, toBlock: number) {
+  // ProtocolGovernor exposes the active timelock address, but not its creation block.
+  // Find the constructor's self-admin grant so the role replay includes every bootstrap grant and revocation.
+  const roleGrantedTopic = hre.ethers.utils.id("RoleGranted(bytes32,address,address)");
+  const timelockAccountTopic = hre.ethers.utils.hexZeroPad(address, 32);
+  const maxChunkSize = Number(process.env.BLOCK_CHUNK_SIZE ?? 50_000_000);
+  let chunkSize = Math.min(maxChunkSize, toBlock + 1);
+  let nextBlock = toBlock;
 
-  if (!Number.isSafeInteger(deploymentBlock)) {
-    throw new Error("Could not determine the timelock deployment block");
+  while (nextBlock >= 0) {
+    const chunkStart = Math.max(nextBlock - chunkSize + 1, 0);
+    try {
+      const logs = await hre.ethers.provider.getLogs({
+        address,
+        topics: [roleGrantedTopic, TIMELOCK_ADMIN_ROLE, timelockAccountTopic],
+        fromBlock: chunkStart,
+        toBlock: nextBlock,
+      });
+
+      for (const log of logs) {
+        const receipt = await hre.ethers.provider.getTransactionReceipt(log.transactionHash);
+        if (receipt.contractAddress?.toLowerCase() === address.toLowerCase()) {
+          return log.blockNumber;
+        }
+      }
+
+      nextBlock = chunkStart - 1;
+      chunkSize = Math.min(chunkSize * 2, maxChunkSize);
+    } catch (error: any) {
+      const attemptedChunkSize = nextBlock - chunkStart + 1;
+      const nextChunkSize = Math.floor(attemptedChunkSize / 2);
+
+      if (nextChunkSize < 1_000) {
+        throw error;
+      }
+
+      chunkSize = nextChunkSize;
+    }
   }
+
+  throw new Error(`Could not determine deployment block for GovTimelockController ${address}`);
+}
+
+async function main() {
+  const governorDeployment = await hre.deployments.get("ProtocolGovernor");
+  const governor = await hre.ethers.getContractAt("ProtocolGovernor", governorDeployment.address);
+  const timelockAddress = await governor.timelock();
+  const timelock = await hre.ethers.getContractAt("GovTimelockController", timelockAddress);
+  const governorDeploymentBlock = Number(governorDeployment.receipt && governorDeployment.receipt.blockNumber);
+
+  if (!Number.isSafeInteger(governorDeploymentBlock)) {
+    throw new Error("Could not determine the ProtocolGovernor deployment block");
+  }
+
+  const deploymentBlock = await getTimelockDeploymentBlock(timelock.address, governorDeploymentBlock);
+  console.log(`ProtocolGovernor: ${governor.address}`);
+  console.log(`GovTimelockController: ${timelock.address}`);
 
   const logs = await getRoleLogs(timelock.address, deploymentBlock, await hre.ethers.provider.getBlockNumber());
   const membersByRole = new Map<string, Set<string>>();
