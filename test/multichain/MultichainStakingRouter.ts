@@ -27,7 +27,7 @@ import * as keys from "../../utils/keys";
 
 describe("MultichainStakingRouter", () => {
   let fixture;
-  let user0, user1;
+  let user0, user1, user2;
   let dataStore,
     roleStore,
     multichainVault,
@@ -47,7 +47,7 @@ describe("MultichainStakingRouter", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1 } = fixture.accounts);
+    ({ user0, user1, user2 } = fixture.accounts);
     ({
       dataStore,
       roleStore,
@@ -256,6 +256,9 @@ describe("MultichainStakingRouter", () => {
 
       // Wallet's GMX balance should be 0 (restaked in mock)
       expect(await gmx.balanceOf(walletAddress)).to.equal(0);
+
+      // the temporary GMX allowance was cleared
+      expect(await gmx.allowance(walletAddress, mockRewardRouterV2.address)).to.equal(0);
     });
 
     it("claims and sweeps multiple tokens", async () => {
@@ -307,6 +310,23 @@ describe("MultichainStakingRouter", () => {
 
       const walletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
       expect(await mockRewardRouterV2.compoundCalled(walletAddress)).to.be.true;
+    });
+
+    it("compounds accrued GMX rewards into the staked balance", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      const walletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      const claimAmount = expandDecimals(10, 18);
+      await gmx.mint(mockRewardRouterV2.address, claimAmount);
+      await mockRewardRouterV2.setClaimableGmx(walletAddress, claimAmount);
+
+      await sendCompoundStakingRewards(getDefaultStakingRelayParams());
+
+      expect(await mockRewardRouterV2.stakedGmxAmounts(walletAddress)).to.equal(stakeAmount.add(claimAmount));
+
+      // the temporary GMX allowance was cleared
+      expect(await gmx.allowance(walletAddress, mockRewardRouterV2.address)).to.equal(0);
     });
   });
 
@@ -443,20 +463,40 @@ describe("MultichainStakingRouter", () => {
 
       expect(await mockRewardRouterV2.pendingReceivers(walletAddress)).to.equal(receiverWalletAddress);
     });
-  });
 
-  describe("acceptStakingTransfer", () => {
-    it("accepts transfer from sender", async () => {
-      // User0 stakes and signals transfer to user1
+    it("in strict transfer mode, approves the receiver for the staked balance before signalling", async () => {
       await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
       await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
 
-      const senderWalletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      await mockRewardRouterV2.setStrictTransferMode(true);
+
+      const walletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
       const receiverWalletAddress = await gmxAccountWalletFactory.getWalletAddress(user1.address);
 
       await sendSignalStakingTransfer(getDefaultStakingRelayParams({ receiver: receiverWalletAddress }));
 
-      // User1 accepts
+      // the fee tracker allowance covered the staked balance, so the strict check passed
+      expect(await mockRewardRouterV2.allowance(walletAddress, receiverWalletAddress)).to.equal(stakeAmount);
+      expect(await mockRewardRouterV2.pendingReceivers(walletAddress)).to.equal(receiverWalletAddress);
+    });
+  });
+
+  describe("acceptStakingTransfer", () => {
+    let senderWalletAddress, receiverWalletAddress;
+
+    beforeEach(async () => {
+      // user0 stakes and signals a strict mode transfer to user1
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      senderWalletAddress = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      receiverWalletAddress = await gmxAccountWalletFactory.getWalletAddress(user1.address);
+
+      await mockRewardRouterV2.setStrictTransferMode(true);
+      await sendSignalStakingTransfer(getDefaultStakingRelayParams({ receiver: receiverWalletAddress }));
+    });
+
+    it("accepts transfer from sender", async () => {
       await sendAcceptStakingTransfer(
         getDefaultStakingRelayParams({
           signer: user1,
@@ -465,8 +505,89 @@ describe("MultichainStakingRouter", () => {
         })
       );
 
-      // Pending receiver should be cleared
+      // the staked balance moved to the receiver wallet
+      expect(await mockRewardRouterV2.stakedGmxAmounts(senderWalletAddress)).to.equal(0);
+      expect(await mockRewardRouterV2.stakedGmxAmounts(receiverWalletAddress)).to.equal(stakeAmount);
+
+      // pending receiver should be cleared
       expect(await mockRewardRouterV2.pendingReceivers(senderWalletAddress)).to.equal(hre.ethers.constants.AddressZero);
+    });
+
+    it("accepts transfer after rewards accrued between signal and accept", async () => {
+      // rewards accrued after the approval was given, acceptTransfer compounds them first
+      const claimAmount = expandDecimals(10, 18);
+      await gmx.mint(mockRewardRouterV2.address, claimAmount);
+      await mockRewardRouterV2.setClaimableGmx(senderWalletAddress, claimAmount);
+
+      await sendAcceptStakingTransfer(
+        getDefaultStakingRelayParams({
+          signer: user1,
+          account: user1.address,
+          stakingSender: senderWalletAddress,
+        })
+      );
+
+      // the compounded rewards moved together with the staked balance
+      expect(await mockRewardRouterV2.stakedGmxAmounts(senderWalletAddress)).to.equal(0);
+      expect(await mockRewardRouterV2.stakedGmxAmounts(receiverWalletAddress)).to.equal(stakeAmount.add(claimAmount));
+
+      // no allowances are left on the sender wallet
+      expect(await gmx.allowance(senderWalletAddress, mockRewardRouterV2.address)).to.equal(0);
+      expect(await mockRewardRouterV2.allowance(senderWalletAddress, receiverWalletAddress)).to.equal(0);
+    });
+
+    it("reverts for an account the transfer was not signalled to and leaves the pending transfer untouched", async () => {
+      await expect(
+        sendAcceptStakingTransfer(
+          getDefaultStakingRelayParams({
+            signer: user2,
+            account: user2.address,
+            stakingSender: senderWalletAddress,
+          })
+        )
+      ).to.be.revertedWith("MockRewardRouterV2: transfer not signalled");
+
+      // nothing changed: stake, signal and approvals are exactly as after signalling
+      expect(await mockRewardRouterV2.stakedGmxAmounts(senderWalletAddress)).to.equal(stakeAmount);
+      expect(await mockRewardRouterV2.pendingReceivers(senderWalletAddress)).to.equal(receiverWalletAddress);
+      expect(await mockRewardRouterV2.allowance(senderWalletAddress, receiverWalletAddress)).to.equal(stakeAmount);
+      expect(await gmx.allowance(senderWalletAddress, mockRewardRouterV2.address)).to.equal(0);
+
+      // the signalled receiver can still complete the transfer
+      await sendAcceptStakingTransfer(
+        getDefaultStakingRelayParams({
+          signer: user1,
+          account: user1.address,
+          stakingSender: senderWalletAddress,
+        })
+      );
+      expect(await mockRewardRouterV2.stakedGmxAmounts(receiverWalletAddress)).to.equal(stakeAmount);
+    });
+
+    it("accepts transfer from an external V1 sender without touching its approvals", async () => {
+      // user2 stakes directly on V1 and signals to user1's wallet, handling its own approvals
+      const externalAmount = expandDecimals(50, 18);
+      await gmx.mint(user2.address, externalAmount);
+      await gmx.connect(user2).approve(mockRewardRouterV2.address, externalAmount.mul(3));
+      await mockRewardRouterV2.connect(user2).stakeGmx(externalAmount);
+      await mockRewardRouterV2.connect(user2).approve(receiverWalletAddress, externalAmount);
+      await mockRewardRouterV2.connect(user2).signalTransfer(receiverWalletAddress);
+
+      await sendAcceptStakingTransfer(
+        getDefaultStakingRelayParams({
+          signer: user1,
+          account: user1.address,
+          stakingSender: user2.address,
+        })
+      );
+
+      // the stake moved to the receiver wallet
+      expect(await mockRewardRouterV2.stakedGmxAmounts(user2.address)).to.equal(0);
+      expect(await mockRewardRouterV2.stakedGmxAmounts(receiverWalletAddress)).to.equal(externalAmount);
+
+      // the sender's own approvals were spent by staking and accepting, but not reset by the router
+      expect(await gmx.allowance(user2.address, mockRewardRouterV2.address)).to.equal(externalAmount);
+      expect(await mockRewardRouterV2.allowance(user2.address, receiverWalletAddress)).to.equal(externalAmount);
     });
   });
 
