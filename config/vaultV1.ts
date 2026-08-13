@@ -2,6 +2,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export type VaultV1Config = {
   vaultV1?: string;
+  gmx?: string;
+  rewardRouterV2?: string;
 };
 
 export default async function (hre: HardhatRuntimeEnvironment): Promise<VaultV1Config> {
@@ -10,10 +12,12 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<VaultV1C
     arbitrum: {
       vaultV1: "0x489ee077994B6658eAfA855C308275EAd8097C4A",
       gmx: "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
+      rewardRouterV2: "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1",
     },
     avalanche: {
       vaultV1: "0x9ab2De34A33fB459b538c43f251eB825645e8595",
       gmx: "0x62edc0692BD897D2295872a9FFCac5425011c661",
+      rewardRouterV2: "0x091eD806490Cc58Fd514441499e58984cCce0630",
     },
     avalancheFuji: {
       vaultV1: "To be added",
