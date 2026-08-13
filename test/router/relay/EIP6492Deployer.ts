@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
 
 import { deployContract } from "../../../utils/deploy";
 import { deployFixture } from "../../../utils/fixture";
@@ -51,5 +51,34 @@ describe("EIP6492Deployer", () => {
     for (const role of roles) {
       expect(await roleStore.hasRole(eip6492Deployer.address, role), `role ${role}`).eq(false);
     }
+  });
+
+  describe("forwarder address", () => {
+    it("is derivable off-chain from the artifact", async () => {
+      // what the UI and SDK need: the wallet address is derived with this address as the caller
+      const forwarderArtifact = await hre.artifacts.readArtifact("EIP6492Forwarder");
+      const initCodeHash = ethers.utils.keccak256(forwarderArtifact.bytecode);
+      expect(await eip6492Deployer.forwarderInitCodeHash()).eq(initCodeHash);
+
+      const wrapperHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [walletFactory.address, createWalletCalldata])
+      );
+      const derived = ethers.utils.getCreate2Address(eip6492Deployer.address, wrapperHash, initCodeHash);
+
+      expect(await eip6492Deployer.getForwarderAddress(walletFactory.address, createWalletCalldata)).eq(derived);
+      expect(await eip6492Deployer.getForwarderAddressForWrapperHash(wrapperHash)).eq(derived);
+    });
+
+    it("is where the forwarder is deployed", async () => {
+      const forwarder = await eip6492Deployer.getForwarderAddress(walletFactory.address, createWalletCalldata);
+      expect(await ethers.provider.getCode(forwarder)).eq("0x");
+
+      await grantRole(roleStore, user1.address, "CONTROLLER");
+      await eip6492Deployer.connect(user1).deploy(walletFactory.address, createWalletCalldata);
+
+      expect(await ethers.provider.getCode(forwarder)).to.not.equal("0x");
+      const deployed = await ethers.getContractAt("EIP6492Forwarder", forwarder);
+      expect(await deployed.eip6492Deployer()).eq(eip6492Deployer.address);
+    });
   });
 });
