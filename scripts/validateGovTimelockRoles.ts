@@ -52,7 +52,10 @@ async function getRoleLogs(address: string, fromBlock: number, toBlock: number) 
 
 async function getTimelockDeploymentBlock(address: string, toBlock: number) {
   // ProtocolGovernor exposes the active timelock address, but not its creation block.
-  // Find the constructor's self-admin grant so the role replay includes every bootstrap grant and revocation.
+  // Find the constructor's self-admin grant so the role replay includes every
+  // bootstrap grant and revocation. Do not rely on the deployment transaction
+  // receipt here: MegaETH's public RPC may return null for old transaction receipts
+  // even though the corresponding logs remain queryable.
   const roleGrantedTopic = hre.ethers.utils.id("RoleGranted(bytes32,address,address)");
   const timelockAccountTopic = hre.ethers.utils.hexZeroPad(address, 32);
   const maxChunkSize = Number(process.env.BLOCK_CHUNK_SIZE ?? 50_000_000);
@@ -69,11 +72,8 @@ async function getTimelockDeploymentBlock(address: string, toBlock: number) {
         toBlock: nextBlock,
       });
 
-      for (const log of logs) {
-        const receipt = await hre.ethers.provider.getTransactionReceipt(log.transactionHash);
-        if (receipt.contractAddress?.toLowerCase() === address.toLowerCase()) {
-          return log.blockNumber;
-        }
+      if (logs.length > 0) {
+        return Math.min(...logs.map((log) => log.blockNumber));
       }
 
       nextBlock = chunkStart - 1;
