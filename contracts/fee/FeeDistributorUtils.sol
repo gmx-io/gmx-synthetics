@@ -11,7 +11,9 @@ enum DistributionState {
     None,
     Initiated,
     ReadDataReceived,
-    BridgingCompleted
+    BridgingCompleted,
+    // Committed logically precedes Initiated but is appended so persisted numeric values are unchanged
+    Committed
 }
 
 struct Transfer {

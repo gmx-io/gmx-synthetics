@@ -46,6 +46,10 @@ contract MultichainReader is RoleModule {
         endpoint.setDelegate(_delegate);
     }
 
+    function nextReadGuid() external view returns (bytes32) {
+        return _nextReadGuid();
+    }
+
     function sendReadRequests(
         MultichainReaderUtils.ReadRequestInputs[] calldata readRequestInputs,
         MultichainReaderUtils.ExtraOptionsInputs calldata extraOptionsInputs
@@ -56,11 +60,8 @@ contract MultichainReader is RoleModule {
             revert Errors.Unauthorized(originator, "Only Originator");
         }
 
-        address self = address(this);
         uint32 readChannel = uint32(dataStore.getUint(Keys2.MULTICHAIN_READ_CHANNEL));
-        bytes32 selfBytes32 = AddressCast.toBytes32(self);
-        uint64 nonce = endpoint.outboundNonce(self, readChannel, selfBytes32) + 1;
-        bytes32 guid = GUID.generate(nonce, currentChainEid, self, readChannel, selfBytes32);
+        bytes32 guid = _nextReadGuid();
         dataStore.setAddress(Keys2.multichainGuidToOriginatorKey(guid), originator);
 
         bytes memory cmd = _getCmd(readRequestInputs);
@@ -238,6 +239,16 @@ contract MultichainReader is RoleModule {
         bytes32 peer = dataStore.getBytes32(Keys2.multichainPeersKey(_eid));
         if (peer == bytes32(0)) revert Errors.EmptyPeer(_eid);
         return peer;
+    }
+
+    function _nextReadGuid() internal view returns (bytes32) {
+        address self = address(this);
+        uint32 readChannel = uint32(dataStore.getUint(Keys2.MULTICHAIN_READ_CHANNEL));
+        // the nonce and guid are derived from the configured read channel peer, matching the
+        // values the endpoint uses when the request is sent
+        bytes32 receiver = _getPeerOrRevert(readChannel);
+        uint64 nonce = endpoint.outboundNonce(self, readChannel, receiver) + 1;
+        return GUID.generate(nonce, currentChainEid, self, readChannel, receiver);
     }
 
     function _quote(

@@ -54,6 +54,23 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY"));
     // @dev key for whether or not weekly fees should be distributed
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTE_FEES = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTE_FEES"));
+    // @dev key for the FeeDistributor snapshot epoch for a given chain
+    bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_EPOCH = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_EPOCH"));
+    // @dev key for the FeeDistributor committed snapshot GMX fee amount for a given chain
+    bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX"));
+    // @dev key for the FeeDistributor committed snapshot staked GMX for a given chain
+    bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX"));
+    // @dev key for the expected LZRead response guid for the in-progress distribution
+    bytes32 public constant FEE_DISTRIBUTOR_EXPECTED_READ_GUID = keccak256(abi.encode("FEE_DISTRIBUTOR_EXPECTED_READ_GUID"));
+    // @dev key for the expected hash of the chain id list for the in-progress read
+    bytes32 public constant FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH = keccak256(abi.encode("FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH"));
+    // @dev key for the timestamp of the last distribution state transition
+    bytes32 public constant FEE_DISTRIBUTOR_STATE_UPDATED_AT = keccak256(abi.encode("FEE_DISTRIBUTOR_STATE_UPDATED_AT"));
+    // @dev key for the period after the read response after which a bridged GMX shortfall is tolerated,
+    // must be configured below FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY for the tolerance to be reachable
+    bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD"));
+    // @dev key for the minimum factor of the required GMX amount below which a shortfall is not tolerated
+    bytes32 public constant FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR"));
 
     // @dev key for CreReceiver authorized workflow IDs
     bytes32 public constant CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS = keccak256(abi.encode("CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS"));
@@ -98,6 +115,27 @@ library Keys2 {
     // @return key for FeeDistributor staked gmx
     function feeDistributorStakedGmxKey(uint256 chainId) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_STAKED_GMX, chainId));
+    }
+
+    // @dev key for the FeeDistributor snapshot epoch
+    // @param chainId the chainId for which to retrieve the snapshot epoch
+    // @return key for FeeDistributor snapshot epoch
+    function feeDistributorSnapshotEpochKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_SNAPSHOT_EPOCH, chainId));
+    }
+
+    // @dev key for the FeeDistributor committed snapshot gmx fee amount
+    // @param chainId the chainId for which to retrieve the snapshot fee amount
+    // @return key for FeeDistributor snapshot gmx fee amount
+    function feeDistributorSnapshotFeeAmountGmxKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX, chainId));
+    }
+
+    // @dev key for the FeeDistributor committed snapshot staked gmx
+    // @param chainId the chainId for which to retrieve the snapshot staked gmx
+    // @return key for FeeDistributor snapshot staked gmx
+    function feeDistributorSnapshotStakedGmxKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX, chainId));
     }
 
     // @dev key for the FeeDistributor bridging slippage factor

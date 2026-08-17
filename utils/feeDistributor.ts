@@ -1,4 +1,5 @@
 import { hashString } from "./hash";
+import * as keys from "./keys";
 
 export const gmxKey = hashString("GMX");
 export const rewardTrackerKey = hashString("REWARD_TRACKER");
@@ -47,4 +48,46 @@ export async function moveToEndOfCurrentDistributionWeek(distributionDay: number
 
   await hre.ethers.provider.send("evm_setNextBlockTimestamp", [boundary - secondsBeforeBoundary]);
   await hre.ethers.provider.send("evm_mine");
+}
+
+// mirrors FeeDistributor._getEpochId: the timestamp of the start of the current distribution week
+export function getEpochId(timestamp: number, distributionDay: number): number {
+  const dayOfWeek = (Math.floor(timestamp / SECONDS_IN_DAY) + 4) % 7;
+  const daysSinceDistributionDay = (((dayOfWeek + 7 - distributionDay) % 7) + 7) % 7;
+  const midnightToday = timestamp - (timestamp % SECONDS_IN_DAY);
+  return midnightToday - daysSinceDistributionDay * SECONDS_IN_DAY;
+}
+
+export async function getCurrentEpochId(distributionDay: number): Promise<number> {
+  const block = await hre.ethers.provider.getBlock("latest");
+  return getEpochId(block.timestamp, distributionDay);
+}
+
+// writes the committed snapshot tuple for a simulated remote chain to its stand-in DataStore,
+// deriving the same values the remote chain's commitSnapshot would commit
+export async function commitRemoteSnapshot({
+  mock,
+  gmxToken,
+  vaultAddress,
+  chainId,
+  distributionDay,
+  epochId,
+}: {
+  mock: any;
+  gmxToken: any;
+  vaultAddress: string;
+  chainId: number;
+  distributionDay: number;
+  epochId?: number;
+}) {
+  if (epochId === undefined) {
+    epochId = await getCurrentEpochId(distributionDay);
+  }
+  const withdrawable = await mock.withdrawableAmount(gmxToken.address);
+  const vaultBalance = await gmxToken.balanceOf(vaultAddress);
+  const staked = await mock.totalSupply();
+
+  await mock.setUint(keys.feeDistributorSnapshotEpochKey(chainId), epochId);
+  await mock.setUint(keys.feeDistributorSnapshotFeeAmountGmxKey(chainId), withdrawable.add(vaultBalance));
+  await mock.setUint(keys.feeDistributorSnapshotStakedGmxKey(chainId), staked);
 }
