@@ -216,6 +216,18 @@ library SwapUtils {
         cache.tokenInPrice = params.oracle.getPrimaryPrice(_params.tokenIn);
         cache.tokenOutPrice = params.oracle.getPrimaryPrice(cache.tokenOut);
 
+        // the same max pnl validation runs before and after the pool amounts change, so a swap
+        // cannot change whether a side is above its max pnl factor
+        //
+        // a swap that grows the pool of a side whose trader pnl is capped raises the amount of
+        // pnl those positions can realize, without adding any capital: the market token is
+        // repriced in the same transaction as the previously capped pnl is recognized, and the
+        // extra payout comes out of the remaining liquidity
+        //
+        // this applies whether the swap only reduces the breach or clears it entirely, so both
+        // are blocked; ADL is the recovery path for a breached market, not swaps
+        _validateMaxPnl(params, _params, cache, _getMarketPrices(params, _params, cache));
+
         // note that this may not be entirely accurate since the effect of the
         // swap fees are not accounted for
         (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
@@ -363,11 +375,7 @@ library SwapUtils {
             -cache.poolAmountOut.toInt256()
         );
 
-        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
-            params.oracle.getPrimaryPrice(_params.market.indexToken),
-            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
-            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
-        );
+        MarketUtils.MarketPrices memory prices = _getMarketPrices(params, _params, cache);
 
         if (!_shouldSkipMaxPoolAmountValidationForTokenIn(params, _params)) {
             MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
@@ -383,22 +391,8 @@ library SwapUtils {
             cache.tokenOut == _params.market.longToken
         );
 
-        // swaps are intentionally frozen while a side is above its max pnl factor, including
-        // swaps that improve the breached side without fully curing it
-        // such a swap grows the pool of a side whose trader pnl is capped, which raises the
-        // amount of pnl those positions can realize, without adding durable capital
-        // ADL is the recovery path for a breached market, not swaps
-        MarketUtils.validateMaxPnl(
-            params.dataStore,
-            _params.market,
-            prices,
-            _params.tokenIn == _params.market.longToken
-                ? Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
-                : Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            cache.tokenOut == _params.market.shortToken
-                ? Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
-                : Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
-        );
+        // see the matching validation before the pool amounts were updated
+        _validateMaxPnl(params, _params, cache, prices);
 
         SwapPricingUtils.EmitSwapInfoParams memory emitSwapInfoParams;
 
@@ -429,6 +423,40 @@ library SwapUtils {
         );
 
         return (cache.tokenOut, cache.amountOut);
+    }
+
+    function _getMarketPrices(
+        ISwapUtils.SwapParams memory params,
+        _SwapParams memory _params,
+        SwapCache memory cache
+    ) internal view returns (MarketUtils.MarketPrices memory) {
+        return MarketUtils.MarketPrices(
+            params.oracle.getPrimaryPrice(_params.market.indexToken),
+            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
+            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
+        );
+    }
+
+    // the side whose pool grows is checked against the max pnl factor for deposits and the side
+    // whose pool shrinks against the max pnl factor for withdrawals, matching how a deposit and a
+    // withdrawal of the same tokens would be checked
+    function _validateMaxPnl(
+        ISwapUtils.SwapParams memory params,
+        _SwapParams memory _params,
+        SwapCache memory cache,
+        MarketUtils.MarketPrices memory prices
+    ) internal view {
+        MarketUtils.validateMaxPnl(
+            params.dataStore,
+            _params.market,
+            prices,
+            _params.tokenIn == _params.market.longToken
+                ? Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
+                : Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+            cache.tokenOut == _params.market.shortToken
+                ? Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
+                : Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
+        );
     }
 
     function _shouldSkipMaxPoolAmountValidationForTokenIn(
