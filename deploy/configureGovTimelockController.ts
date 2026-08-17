@@ -3,8 +3,9 @@ import { TIMELOCK_ADMIN_ROLE, PROPOSER_ROLE, EXECUTOR_ROLE, CANCELLER_ROLE } fro
 const func = async ({ getNamedAccounts }) => {
   const { deployer } = await getNamedAccounts();
 
-  const govTimelockController = await ethers.getContract("GovTimelockController");
   const protocolGovernor = await ethers.getContract("ProtocolGovernor");
+  const govTimelockControllerAddress = await protocolGovernor.timelock();
+  const govTimelockController = await ethers.getContractAt("GovTimelockController", govTimelockControllerAddress);
 
   const grantRoleIfMissing = async (role: string, account: string) => {
     if (!(await govTimelockController.hasRole(role, account))) {
