@@ -60,6 +60,10 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX"));
     // @dev key for the FeeDistributor committed snapshot staked GMX for a given chain
     bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX"));
+    // @dev key for FeeDistributor withdrawable GMX amount at the time of the snapshot
+    bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_WITHDRAWABLE_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_WITHDRAWABLE_GMX"));
+    // @dev key for FeeDistributor GMX that became withdrawable after the GMX fee amount was snapshotted
+    bytes32 public constant FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX"));
     // @dev key for the expected LZRead response guid for the in-progress distribution
     bytes32 public constant FEE_DISTRIBUTOR_EXPECTED_READ_GUID = keccak256(abi.encode("FEE_DISTRIBUTOR_EXPECTED_READ_GUID"));
     // @dev key for the expected hash of the chain id list for the in-progress read
