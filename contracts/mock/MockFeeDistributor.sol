@@ -112,7 +112,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         }
 
         address rewardTracker = _getAddressInfoForChain(mockChainId, REWARD_TRACKER);
-        uint256 feeAmountGmx = feeWithdrawer.withdrawableAmount(gmx) + _getFeeDistributorVaultBalance(gmx);
+        uint256 withdrawableGmx = feeWithdrawer.withdrawableAmount(gmx);
+        uint256 feeAmountGmx = withdrawableGmx + _getFeeDistributorVaultBalance(gmx);
         uint256 stakedGmx = IERC20(rewardTracker).totalSupply();
 
         // the snapshot keys are read by remote chains and are not mutated during processing; the
@@ -120,6 +121,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         _setUint(Keys2.feeDistributorSnapshotFeeAmountGmxKey(mockChainId), feeAmountGmx);
         _setUint(Keys2.feeDistributorSnapshotStakedGmxKey(mockChainId), stakedGmx);
         _setUint(Keys2.feeDistributorSnapshotEpochKey(mockChainId), epochId);
+        _setUint(Keys2.FEE_DISTRIBUTOR_SNAPSHOT_WITHDRAWABLE_GMX, withdrawableGmx);
         _setUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId), feeAmountGmx);
         _setUint(Keys2.feeDistributorStakedGmxKey(mockChainId), stakedGmx);
 
@@ -274,6 +276,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
             return;
         }
 
+        // record the GMX that became withdrawable after the snapshot before it is swept below
+        _recordPostSnapshotFeeAmountGmx();
+
         // withdraw any remaining GMX fees via the feeWithdrawer
         feeWithdrawer.withdrawFees(gmx);
 
@@ -375,9 +380,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
             _validateBridgeShortfallTolerated(minRequiredGmxAmount, feeAmountGmx, readResponseTimestamp);
         }
 
-        // infer the bridged GMX received - note that it is technically possible for this value to not match the actual
-        // bridged GMX received if for example, GMX is sent to the FeeDistributorVault from another source or GMX fees
-        // are withdrawn via the feeWithdrawer after processLzReceive() is executed but before this function is executed
+        // infer the bridged GMX received - GMX that became withdrawable after the snapshot is excluded in
+        // getGmxAmounts(), but GMX sent to the FeeDistributorVault from another source is still counted
+        // as received, up to this chain's calculated GMX amount
         uint256 gmxReceived = feeAmountGmx > origFeeAmountGmx ? feeAmountGmx - origFeeAmountGmx : 0;
 
         // now that the GMX available to distribute has been validated, update in dataStore and update DistributionState
@@ -472,10 +477,31 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         uint256 minGmxReceived = Precision.applyFactor(grossGmxReceived, slippageFactor);
         // the minimum allowed GMX amount after bridging, taking into account slippage
         uint256 minRequiredGmxAmount = origFeeAmountGmx + minGmxReceived;
-        // retrieve the current GMX available to distribute now that bridging has been completed
-        uint256 feeAmountGmx = _getFeeDistributorVaultBalance(gmx);
+        // retrieve the current GMX available to distribute now that bridging has been completed, excluding the
+        // GMX that became withdrawable after the fee amount was snapshotted and capping the amount at this chain's
+        // calculated GMX amount, so that any excess is distributed in the next fee distribution period
+        uint256 postSnapshotFeeAmountGmx = _getUint(Keys2.FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX);
+        uint256 gmxBalance = _getFeeDistributorVaultBalance(gmx);
+        uint256 feeAmountGmx = gmxBalance > postSnapshotFeeAmountGmx ? gmxBalance - postSnapshotFeeAmountGmx : 0;
+        if (feeAmountGmx > requiredGmxAmount) {
+            feeAmountGmx = requiredGmxAmount;
+        }
 
         return (origFeeAmountGmx, minRequiredGmxAmount, feeAmountGmx);
+    }
+
+    // @dev record the GMX that became withdrawable after the commitSnapshot snapshot, e.g. buyback
+    // proceeds or GMX fees claimed before the LZRead response, it is not part of this fee distribution
+    // period so it is excluded from the current period and included in the next snapshot; the amount is
+    // measured via the withdrawable amount rather than the FeeDistributorVault balance so that bridged
+    // GMX already received in the vault is not misclassified as post-snapshot proceeds
+    function _recordPostSnapshotFeeAmountGmx() internal {
+        uint256 withdrawableGmx = feeWithdrawer.withdrawableAmount(gmx);
+        uint256 snapshotWithdrawableGmx = _getUint(Keys2.FEE_DISTRIBUTOR_SNAPSHOT_WITHDRAWABLE_GMX);
+        uint256 postSnapshotFeeAmountGmx = withdrawableGmx > snapshotWithdrawableGmx
+            ? withdrawableGmx - snapshotWithdrawableGmx
+            : 0;
+        _setUint(Keys2.FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX, postSnapshotFeeAmountGmx);
     }
 
     function _calculateAndBridgeGmx(

@@ -3,7 +3,7 @@ import { addressToBytes32 } from "@layerzerolabs/lz-v2-utilities";
 
 import { expect } from "chai";
 import { grantRole } from "../../utils/role";
-import { FLOAT_PRECISION, expandDecimals } from "../../utils/math";
+import { FLOAT_PRECISION, expandDecimals, percentageToFloat } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { encodeData } from "../../utils/hash";
 import { deployContract } from "../../utils/deploy";
@@ -21,12 +21,14 @@ describe("FeeDistributor", function () {
     dataStore,
     config,
     wnt,
+    usdc,
     gmxA,
     gmx,
     gmxC,
     roleStore,
     feeHandler,
     feeVault,
+    chainlinkPriceFeedProvider,
     mockRewardDistributor,
     mockLzReadResponseChainA,
     mockRewardTracker,
@@ -95,10 +97,12 @@ describe("FeeDistributor", function () {
       dataStore,
       config,
       wnt,
+      usdc,
       gmx,
       roleStore,
       feeHandler,
       feeVault,
+      chainlinkPriceFeedProvider,
       oracle,
       staticOracleProvider,
       eventEmitter,
@@ -843,6 +847,232 @@ describe("FeeDistributor", function () {
     expect(gmxFeesDistributed).to.eq(feeAmountGmx);
     expect(await gmx.balanceOf(mockRewardTracker.address)).to.eq(0);
     expect(await mockRewardDistributor.tokensPerInterval()).to.eq(feeAmountGmx.div(7 * 24 * 60 * 60));
+  });
+
+  // bridges gmx with the given adapter, the sender pays the messaging fee and receives any refund
+  async function bridgeGmx(adapter, account, dstEid, to, amount) {
+    const sendParam = {
+      dstEid: dstEid,
+      to: addressToBytes32(to),
+      amountLD: amount,
+      minAmountLD: amount,
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    const feeQuote = await adapter.quoteSend(sendParam, false);
+    await adapter.connect(account).send(sendParam, { nativeFee: feeQuote.nativeFee, lzTokenFee: 0 }, account.address, {
+      value: feeQuote.nativeFee,
+    });
+  }
+
+  // sets up a distribution in which this chain has a 10,000 gmx deficit: 50,000 gmx of fees
+  // (10,000 withdrawable and 40,000 in the FeeDistributorVault) against a calculated amount of 60,000 gmx,
+  // chain A has the surplus to cover it
+  async function setUpFeeDeficit() {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(40_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(20_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
+
+    await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));
+    await bridgeGmx(mockGmxAdapterB, wallet, eidA, user0.address, expandDecimals(120_000, 18));
+
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(40_000, 18));
+
+    await bridgeGmx(mockGmxAdapterB, wallet, eidC, user1.address, expandDecimals(10_000, 18));
+
+    await wallet.sendTransaction({
+      to: feeDistributor.address,
+      value: expandDecimals(1, 18),
+    });
+  }
+
+  // configures the FeeHandler so that user8 can buy back usdc fees with batchAmount of gmx
+  async function enableGmxBuyback(batchAmount, availableFeeAmount) {
+    await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), batchAmount);
+    await config.setUint(keys.BUYBACK_MAX_PRICE_AGE, "0x", 300);
+    await config.setUint(
+      keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR,
+      encodeData(["address"], [gmx.address]),
+      percentageToFloat("0.3%")
+    );
+    await config.setUint(
+      keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR,
+      encodeData(["address"], [usdc.address]),
+      percentageToFloat("0.1%")
+    );
+
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, gmx.address),
+      chainlinkPriceFeedProvider.address
+    );
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, usdc.address),
+      chainlinkPriceFeedProvider.address
+    );
+
+    await usdc.mint(feeVault.address, availableFeeAmount);
+    await dataStore.setUint(keys.buybackAvailableFeeAmountKey(usdc.address, gmx.address), availableFeeAmount);
+
+    await gmx.mint(user8.address, batchAmount);
+    await gmx.connect(user8).approve(feeHandler.address, batchAmount);
+  }
+
+  async function buybackWithGmx() {
+    await feeHandler.connect(user8).buyback(usdc.address, gmx.address, 0, {
+      tokens: [usdc.address, gmx.address],
+      providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+      data: ["0x", "0x"],
+    });
+  }
+
+  it("a buyback while the LZRead request is pending is not distributed in the current period", async function () {
+    // hold the LZRead response so that it is delivered in a later transaction and the buyback can be
+    // executed while the request is pending
+    const deferredEndpoint = await deployContract("MockDeferredEndpointV2", []);
+    await mockEndpointV2.setDestLzEndpoint(multichainReader.address, deferredEndpoint.address);
+
+    await setUpFeeDeficit();
+    await enableGmxBuyback(expandDecimals(2_000, 18), expandDecimals(100_000, 6));
+
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(1);
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB))).to.eq(expandDecimals(50_000, 18));
+
+    await buybackWithGmx();
+
+    expect(await dataStore.getUint(keys.withdrawableBuybackTokenAmountKey(gmx.address))).to.eq(
+      expandDecimals(12_000, 18)
+    );
+
+    await deferredEndpoint.deliverPayload(mockEndpointV2.address);
+
+    // the buyback proceeds are withdrawn to the FeeDistributorVault along with the snapshotted fees
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(2);
+    expect(await gmx.balanceOf(feeDistributorVault.address)).to.eq(expandDecimals(52_000, 18));
+
+    await bridgeGmx(mockGmxAdapterA, user0, eidB, feeDistributorVault.address, expandDecimals(10_000, 18));
+    expect(await gmx.balanceOf(feeDistributorVault.address)).to.eq(expandDecimals(62_000, 18));
+
+    const bridgedGmxReceivedTx = await feeDistributor.bridgedGmxReceived();
+    const bridgedGmxReceivedEventData = parseLogs(fixture, await bridgedGmxReceivedTx.wait())[0].parsedEventData;
+
+    expect(bridgedGmxReceivedEventData.gmxReceived).to.eq(expandDecimals(10_000, 18));
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB))).to.eq(expandDecimals(60_000, 18));
+
+    const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardDistributor.address);
+    await feeDistributor.distribute();
+    const gmxFeesDistributed = (await gmx.balanceOf(mockRewardDistributor.address)).sub(gmxBalancePreDistribute);
+
+    expect(gmxFeesDistributed).to.eq(expandDecimals(60_000, 18));
+    expect(await gmx.balanceOf(feeDistributorVault.address)).to.eq(expandDecimals(2_000, 18));
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX)).to.eq(expandDecimals(2_000, 18));
+
+    // the buyback proceeds are included in the next period's fee amount
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+    await wallet.sendTransaction({
+      to: feeDistributor.address,
+      value: expandDecimals(1, 18),
+    });
+
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB))).to.eq(expandDecimals(2_000, 18));
+  });
+
+  it("gmx received after the LZRead response is not distributed in the current period", async function () {
+    await setUpFeeDeficit();
+
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(2);
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX)).to.eq(0);
+
+    await bridgeGmx(mockGmxAdapterA, user0, eidB, feeDistributorVault.address, expandDecimals(10_000, 18));
+
+    await gmx.mint(user8.address, expandDecimals(5_000, 18));
+    await gmx.connect(user8).transfer(feeDistributorVault.address, expandDecimals(5_000, 18));
+    expect(await gmx.balanceOf(feeDistributorVault.address)).to.eq(expandDecimals(65_000, 18));
+
+    await feeDistributor.bridgedGmxReceived();
+
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB))).to.eq(expandDecimals(60_000, 18));
+
+    const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardDistributor.address);
+    await feeDistributor.distribute();
+    const gmxFeesDistributed = (await gmx.balanceOf(mockRewardDistributor.address)).sub(gmxBalancePreDistribute);
+
+    expect(gmxFeesDistributed).to.eq(expandDecimals(60_000, 18));
+    expect(await gmx.balanceOf(feeDistributorVault.address)).to.eq(expandDecimals(5_000, 18));
+  });
+
+  it("a buyback while the LZRead request is pending does not cover a gmx deficit", async function () {
+    const deferredEndpoint = await deployContract("MockDeferredEndpointV2", []);
+    await mockEndpointV2.setDestLzEndpoint(multichainReader.address, deferredEndpoint.address);
+
+    await setUpFeeDeficit();
+    await enableGmxBuyback(expandDecimals(10_000, 18), expandDecimals(250_000, 6));
+
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+
+    await buybackWithGmx();
+
+    await deferredEndpoint.deliverPayload(mockEndpointV2.address);
+
+    // the buyback covers the 10,000 gmx deficit in the FeeDistributorVault, but no gmx has been bridged
+    expect(await gmx.balanceOf(feeDistributorVault.address)).to.eq(expandDecimals(60_000, 18));
+
+    await expect(feeDistributor.bridgedGmxReceived())
+      .to.be.revertedWithCustomError(errorsContract, "BridgedAmountNotSufficient")
+      .withArgs(expandDecimals(59_900, 18), expandDecimals(50_000, 18));
+  });
+
+  it("bridged gmx received before the LZRead response is counted while a buyback is still excluded", async function () {
+    const deferredEndpoint = await deployContract("MockDeferredEndpointV2", []);
+    await mockEndpointV2.setDestLzEndpoint(multichainReader.address, deferredEndpoint.address);
+
+    await setUpFeeDeficit();
+    await enableGmxBuyback(expandDecimals(2_000, 18), expandDecimals(100_000, 6));
+
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+
+    await buybackWithGmx();
+
+    // the bridged gmx arrives before the LZRead response is delivered
+    await bridgeGmx(mockGmxAdapterA, user0, eidB, feeDistributorVault.address, expandDecimals(10_000, 18));
+
+    await deferredEndpoint.deliverPayload(mockEndpointV2.address);
+
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(2);
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX)).to.eq(expandDecimals(2_000, 18));
+    expect(await gmx.balanceOf(feeDistributorVault.address)).to.eq(expandDecimals(62_000, 18));
+
+    const bridgedGmxReceivedTx = await feeDistributor.bridgedGmxReceived();
+    const bridgedGmxReceivedEventData = parseLogs(fixture, await bridgedGmxReceivedTx.wait())[0].parsedEventData;
+
+    expect(bridgedGmxReceivedEventData.gmxReceived).to.eq(expandDecimals(10_000, 18));
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB))).to.eq(expandDecimals(60_000, 18));
+
+    const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardDistributor.address);
+    await feeDistributor.distribute();
+    const gmxFeesDistributed = (await gmx.balanceOf(mockRewardDistributor.address)).sub(gmxBalancePreDistribute);
+
+    expect(gmxFeesDistributed).to.eq(expandDecimals(60_000, 18));
+    expect(await gmx.balanceOf(feeDistributorVault.address)).to.eq(expandDecimals(2_000, 18));
   });
 
   it("distribute() for fee surplus", async function () {
