@@ -693,6 +693,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR] = true;
 
         allowedBaseKeys[Keys2.CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS] = true;
     }

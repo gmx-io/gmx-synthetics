@@ -346,6 +346,14 @@ export const FEE_DISTRIBUTOR_KEEPER_COSTS = hashString("FEE_DISTRIBUTOR_KEEPER_C
 export const FEE_DISTRIBUTOR_CHAINLINK_FACTOR = hashString("FEE_DISTRIBUTOR_CHAINLINK_FACTOR");
 export const FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY = hashString("FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY");
 export const FEE_DISTRIBUTOR_DISTRIBUTE_FEES = hashString("FEE_DISTRIBUTOR_DISTRIBUTE_FEES");
+export const FEE_DISTRIBUTOR_SNAPSHOT_EPOCH = hashString("FEE_DISTRIBUTOR_SNAPSHOT_EPOCH");
+export const FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX = hashString("FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX");
+export const FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX = hashString("FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX");
+export const FEE_DISTRIBUTOR_EXPECTED_READ_GUID = hashString("FEE_DISTRIBUTOR_EXPECTED_READ_GUID");
+export const FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH = hashString("FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH");
+export const FEE_DISTRIBUTOR_STATE_UPDATED_AT = hashString("FEE_DISTRIBUTOR_STATE_UPDATED_AT");
+export const FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD = hashString("FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD");
+export const FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR = hashString("FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR");
 
 export const CONTRIBUTOR_LAST_PAYMENT_AT = hashString("CONTRIBUTOR_LAST_PAYMENT_AT");
 export const CONTRIBUTOR_ACCOUNT_LIST = hashString("CONTRIBUTOR_ACCOUNT_LIST");
@@ -1090,6 +1098,18 @@ export function feeDistributorFeeAmountGmxKey(chainId: number) {
 
 export function feeDistributorStakedGmxKey(chainId: number) {
   return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_STAKED_GMX, chainId]);
+}
+
+export function feeDistributorSnapshotEpochKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_SNAPSHOT_EPOCH, chainId]);
+}
+
+export function feeDistributorSnapshotFeeAmountGmxKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX, chainId]);
+}
+
+export function feeDistributorSnapshotStakedGmxKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX, chainId]);
 }
 
 export function feeDistributorBridgeSlippageFactorKey(chainId: number) {

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../data/Keys2.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
 import "../utils/Precision.sol";
@@ -458,7 +459,8 @@ library ConfigUtils {
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.PRO_DISCOUNT_FACTOR ||
             baseKey == Keys.BUYBACK_PRIMARY_TOKEN_FACTOR ||
-            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR
+            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR ||
+            baseKey == Keys2.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {

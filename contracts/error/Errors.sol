@@ -541,6 +541,12 @@ library Errors {
     error ZeroTreasuryAddress();
     error InvalidWithdrawTarget(address withdrawTarget, address expected);
     error InvalidDistributorRewardToken(address rewardToken, address gmx);
+    error UnexpectedReadResponseGuid(bytes32 guid, bytes32 expectedGuid);
+    error DistributionResetNotAllowed(uint256 distributionStateUint, uint256 stateUpdatedAt);
+    error SnapshotAlreadyCommitted(uint256 epochId);
+    error StaleSnapshotEpoch(uint256 committedEpoch);
+    error EmptyDataStoreForChain(uint256 chainId);
+    error InvalidReadDataLength(uint256 length, uint256 expectedLength);
 
     // CreReceiver errors
     error UnauthorizedWorkflowOwner(address workflowOwner);

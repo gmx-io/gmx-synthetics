@@ -353,6 +353,29 @@ describe("FeeDistributor", function () {
     await wnt.connect(user6).approve(feeDistributor.address, expandDecimals(1, 18));
   });
 
+  // commits the local snapshot and the equivalent snapshot tuples for the simulated remote
+  // chains, using the locally committed epoch so the tuples match even near a week boundary
+  async function commitSnapshots() {
+    await feeDistributor.commitSnapshot();
+    const epochId = (await dataStore.getUint(keys.feeDistributorSnapshotEpochKey(chainIdB))).toNumber();
+    await feeDistributorConfig.commitRemoteSnapshot({
+      mock: mockLzReadResponseChainA,
+      gmxToken: gmxA,
+      vaultAddress: user0.address,
+      chainId: chainIdA,
+      distributionDay,
+      epochId,
+    });
+    await feeDistributorConfig.commitRemoteSnapshot({
+      mock: mockLzReadResponseChainC,
+      gmxToken: gmxC,
+      vaultAddress: user1.address,
+      chainId: chainIdC,
+      distributionDay,
+      epochId,
+    });
+  }
+
   it("initiateDistribute() can only be executed by FEE_DISTRIBUTION_KEEPER", async function () {
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     expect(distributionState).to.eq(0);
@@ -365,11 +388,23 @@ describe("FeeDistributor", function () {
     );
   });
 
-  it("initiateDistribute() cannot be executed if current week distribution is already completed", async function () {
+  it("commitSnapshot() can only be executed by FEE_DISTRIBUTION_KEEPER", async function () {
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     expect(distributionState).to.eq(0);
 
-    await expect(feeDistributor.initiateDistribute()).to.be.revertedWithCustomError(
+    await expect(feeDistributor.connect(user0).commitSnapshot()).to.be.revertedWithCustomError(
+      errorsContract,
+      "Unauthorized",
+      // @ts-expect-error: types don't reflect 3rd argument support
+      "FEE_DISTRIBUTION_KEEPER"
+    );
+  });
+
+  it("commitSnapshot() cannot be executed if current week distribution is already completed", async function () {
+    distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
+    expect(distributionState).to.eq(0);
+
+    await expect(feeDistributor.commitSnapshot()).to.be.revertedWithCustomError(
       errorsContract,
       "FeeDistributionAlreadyCompleted",
       // @ts-expect-error: types don't reflect 3rd and 4th argument support
@@ -408,6 +443,20 @@ describe("FeeDistributor", function () {
       // @ts-expect-error: types don't reflect 3rd and 4th argument support
       user0.address,
       feeDistributorVault.address
+    );
+  });
+
+  it("initiateDistribute() cannot be executed without a committed snapshot", async function () {
+    distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
+    expect(distributionState).to.eq(0);
+
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await expect(feeDistributor.initiateDistribute()).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidDistributionState",
+      // @ts-expect-error: types don't reflect 3rd argument support
+      0
     );
   });
 
@@ -465,6 +514,7 @@ describe("FeeDistributor", function () {
       value: expandDecimals(1, 18),
     });
 
+    await commitSnapshots();
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
     const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
@@ -560,6 +610,7 @@ describe("FeeDistributor", function () {
     const feeReceiverAmountBeforeBridgingB = await gmx.balanceOf(feeDistributorVault.address);
     const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
 
+    await commitSnapshots();
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
     const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
@@ -662,6 +713,7 @@ describe("FeeDistributor", function () {
       value: expandDecimals(1, 18),
     });
 
+    await commitSnapshots();
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
     const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
@@ -851,6 +903,7 @@ describe("FeeDistributor", function () {
     const feeReceiverAmountBeforeBridgingB = await gmx.balanceOf(feeDistributorVault.address);
     const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
 
+    await commitSnapshots();
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
     const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
@@ -999,6 +1052,7 @@ describe("FeeDistributor", function () {
 
     await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx1 = await feeDistributor.distribute();
     const distributeReceipt1 = await distributeTx1.wait();
@@ -1054,6 +1108,7 @@ describe("FeeDistributor", function () {
 
     const distributorBalancePreWeek2 = await gmx.balanceOf(mockRewardDistributor.address);
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx2 = await feeDistributor.distribute();
     const distributeReceipt2 = await distributeTx2.wait();
@@ -1108,6 +1163,7 @@ describe("FeeDistributor", function () {
 
     await feeDistributorConfig.moveToEndOfCurrentDistributionWeek(distributionDay);
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx1 = await feeDistributor.distribute();
     const distributeReceipt1 = await distributeTx1.wait();
@@ -1137,6 +1193,7 @@ describe("FeeDistributor", function () {
     const distributorBalancePreWeek2 = await gmx.balanceOf(mockRewardDistributor.address);
     const lastDistributionTimePreWeek2 = await mockRewardDistributor.lastDistributionTime();
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx2 = await feeDistributor.distribute();
     const distributeReceipt2 = await distributeTx2.wait();
@@ -1191,6 +1248,7 @@ describe("FeeDistributor", function () {
     await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
     await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx1 = await feeDistributor.distribute();
     const distributeReceipt1 = await distributeTx1.wait();
@@ -1214,6 +1272,7 @@ describe("FeeDistributor", function () {
 
     const trackerBalancePreWeek3 = await gmx.balanceOf(mockRewardTracker.address);
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx2 = await feeDistributor.distribute();
     const distributeReceipt2 = await distributeTx2.wait();
@@ -1252,6 +1311,7 @@ describe("FeeDistributor", function () {
     const lastDistributionTimePreDistribute = await mockRewardDistributor.lastDistributionTime();
     const trackerBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx = await feeDistributor.distribute();
     const distributeReceipt = await distributeTx.wait();
@@ -1284,6 +1344,7 @@ describe("FeeDistributor", function () {
     await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
     await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx1 = await feeDistributor.distribute();
     const distributeReceipt1 = await distributeTx1.wait();
@@ -1304,6 +1365,7 @@ describe("FeeDistributor", function () {
 
     const treasuryBalancePreWeek2 = await gmx.balanceOf(user6.address);
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx2 = await feeDistributor.distribute();
     const distributeReceipt2 = await distributeTx2.wait();
@@ -1328,6 +1390,7 @@ describe("FeeDistributor", function () {
 
     const distributorBalancePreWeek3 = await gmx.balanceOf(mockRewardDistributor.address);
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     const distributeTx3 = await feeDistributor.distribute();
     const distributeReceipt3 = await distributeTx3.wait();
@@ -1364,6 +1427,7 @@ describe("FeeDistributor", function () {
     await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
     await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
     await expect(feeDistributor.distribute())
       .to.be.revertedWithCustomError(errorsContract, "InvalidDistributorRewardToken")
@@ -1430,6 +1494,7 @@ describe("FeeDistributor", function () {
     const feeReceiverAmountBeforeBridgingB = await gmx.balanceOf(feeDistributorVault.address);
     const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
 
+    await commitSnapshots();
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
     const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
@@ -1662,6 +1727,7 @@ describe("FeeDistributor", function () {
     const feeReceiverAmountBeforeBridgingB = await gmx.balanceOf(feeDistributorVault.address);
     const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
 
+    await commitSnapshots();
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
     const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
@@ -1788,6 +1854,7 @@ describe("FeeDistributor", function () {
       expandDecimals(4, 15),
     ]);
 
+    await commitSnapshots();
     await feeDistributor.initiateDistribute();
 
     const keeperCosts = await dataStore.getUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
@@ -1858,7 +1925,9 @@ describe("FeeDistributor", function () {
   it("initiateDistribute() and processLzReceive() with 2 surplus and 2 deficit chains", async () => {
     const chainIdD = 40000;
 
-    chainIds = [chainIdA, chainIdB, chainIdC, chainIdD];
+    // a local list is used so the describe-scope chainIds, which the beforeEach writes to the
+    // DataStore for every test, is not left mutated for tests that run after this one
+    const fourChainIds = [chainIdA, chainIdB, chainIdC, chainIdD];
     const chainIdsD = [chainIdA, chainIdC, chainIdD, chainIdB];
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
@@ -1977,7 +2046,7 @@ describe("FeeDistributor", function () {
     await mockGmxAdapterC.setEnforcedOptions([{ eid: eidD, msgType: 1, options: options }]);
 
     await config.setUint(keys.MULTICHAIN_CONFIRMATIONS, encodeData(["uint256"], [eidD]), numberOfConfirmations);
-    await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_CHAIN_ID, chainIds);
+    await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_CHAIN_ID, fourChainIds);
     await config.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainIdD]), eidD);
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -2293,6 +2362,10 @@ describe("FeeDistributor", function () {
     const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
     const feeReceiverAmountBeforeBridgingD = await gmxD.balanceOf(feeDistributorVaultD.address);
 
+    await commitSnapshots();
+    // chain D's snapshot is committed to dataStoreD and read from there by chain B
+    await mockFeeDistributor.commitSnapshot();
+
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
     const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
@@ -2364,5 +2437,313 @@ describe("FeeDistributor", function () {
     expect(feeReceiverAmountAfterBridgingB).to.equal(expandDecimals(120_000, 18));
     expect(feeReceiverAmountAfterBridgingC).to.equal(expandDecimals(40_000, 18));
     expect(feeReceiverAmountAfterBridgingD).to.equal(expandDecimals(120_000, 18));
+  });
+
+  it("processLzReceive() discards received data and steps back to Committed on a snapshot epoch mismatch", async function () {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    await commitSnapshots();
+    // simulate chain C not yet having committed a snapshot for this epoch
+    await mockLzReadResponseChainC.setUint(keys.feeDistributorSnapshotEpochKey(chainIdC), 0);
+
+    await feeDistributor.initiateDistribute();
+
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(4);
+    expect(await dataStore.getBytes32(keys.FEE_DISTRIBUTOR_EXPECTED_READ_GUID)).to.eq(ethers.constants.HashZero);
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX)).to.eq(0);
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX)).to.eq(0);
+
+    await expect(feeDistributor.commitSnapshot()).to.be.revertedWithCustomError(
+      errorsContract,
+      "SnapshotAlreadyCommitted"
+    );
+
+    await feeDistributorConfig.commitRemoteSnapshot({
+      mock: mockLzReadResponseChainC,
+      gmxToken: gmxC,
+      vaultAddress: user1.address,
+      chainId: chainIdC,
+      distributionDay,
+    });
+
+    await feeDistributor.initiateDistribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(3);
+
+    await feeDistributor.distribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(0);
+  });
+
+  it("distribution uses committed snapshot values even if stake and fees move after the commits", async function () {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(10_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    await commitSnapshots();
+
+    // simulate stake and fees moving between chains after the commits but before the read
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(9_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(1_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(999_999, 18));
+
+    await feeDistributor.initiateDistribute();
+
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA))).to.eq(expandDecimals(10_000, 18));
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB))).to.eq(expandDecimals(10_000, 18));
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdC))).to.eq(expandDecimals(10_000, 18));
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX)).to.eq(expandDecimals(30_000, 18));
+
+    expect(await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainIdA))).to.eq(expandDecimals(3_000_000, 18));
+    expect(await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainIdB))).to.eq(expandDecimals(3_000_000, 18));
+    expect(await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainIdC))).to.eq(expandDecimals(3_000_000, 18));
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX)).to.eq(expandDecimals(9_000_000, 18));
+
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(3);
+    await feeDistributor.distribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(0);
+  });
+
+  it("a distribution committed at the end of a week can complete just after the week boundary", async function () {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(10_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    // commit near the end of the current distribution week, then cross the boundary before the
+    // read executes; the epoch validation compares against the stored committed epoch
+    await feeDistributorConfig.moveToEndOfCurrentDistributionWeek(distributionDay);
+    await commitSnapshots();
+
+    await hre.ethers.provider.send("evm_increaseTime", [300]);
+    await hre.ethers.provider.send("evm_mine", []);
+
+    await feeDistributor.initiateDistribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(3);
+
+    await feeDistributor.distribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(0);
+  });
+
+  it("processLzReceive() rejects a response with an unexpected guid", async function () {
+    await grantRole(roleStore, wallet.address, "MULTICHAIN_READER");
+
+    await dataStore.setUint(keys.FEE_DISTRIBUTOR_STATE, 1);
+
+    const block = await hre.ethers.provider.getBlock("latest");
+    await expect(
+      feeDistributor.processLzReceive(ethers.utils.formatBytes32String("bogus"), {
+        timestamp: block.timestamp,
+        readData: "0x",
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "UnexpectedReadResponseGuid");
+  });
+
+  it("processLzReceive() discards a response for a changed chain id list and rejects one of unexpected length", async function () {
+    await grantRole(roleStore, wallet.address, "MULTICHAIN_READER");
+
+    const guid = ethers.utils.formatBytes32String("guid");
+    await dataStore.setUint(keys.FEE_DISTRIBUTOR_STATE, 1);
+    await dataStore.setBytes32(keys.FEE_DISTRIBUTOR_EXPECTED_READ_GUID, guid);
+
+    // a changed chain id list steps back gracefully regardless of the response size
+    await dataStore.setBytes32(keys.FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH, ethers.utils.formatBytes32String("x"));
+    let block = await hre.ethers.provider.getBlock("latest");
+    await feeDistributor.processLzReceive(guid, { timestamp: block.timestamp, readData: "0x" });
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(4);
+    expect(await dataStore.getBytes32(keys.FEE_DISTRIBUTOR_EXPECTED_READ_GUID)).to.eq(ethers.constants.HashZero);
+
+    // with an unchanged list, a response of the wrong size reverts rather than decoding misaligned
+    const chainIdsHash = ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(["uint256[]"], [[chainIdA, chainIdC, chainIdB].sort((a, b) => a - b)])
+    );
+    await dataStore.setUint(keys.FEE_DISTRIBUTOR_STATE, 1);
+    await dataStore.setBytes32(keys.FEE_DISTRIBUTOR_EXPECTED_READ_GUID, guid);
+    await dataStore.setBytes32(keys.FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH, chainIdsHash);
+    block = await hre.ethers.provider.getBlock("latest");
+    await expect(
+      feeDistributor.processLzReceive(guid, { timestamp: block.timestamp, readData: "0x" })
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidReadDataLength");
+  });
+
+  it("initiateDistribute() rejects a snapshot committed too long before", async function () {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(10_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(10_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    await commitSnapshots();
+
+    await hre.ethers.provider.send("evm_increaseTime", [11 * 24 * 60 * 60]);
+    await hre.ethers.provider.send("evm_mine", []);
+
+    await expect(feeDistributor.initiateDistribute()).to.be.revertedWithCustomError(
+      errorsContract,
+      "StaleSnapshotEpoch"
+    );
+
+    // a fresh commit for the current epoch recovers
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(3);
+
+    await feeDistributor.distribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(0);
+  });
+
+  it("bridgedGmxReceived() handles the vault balance dropping below the committed amount", async function () {
+    await grantRole(roleStore, wallet.address, "TIMELOCK_ADMIN");
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(160_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(30_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(50_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(50_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(2);
+
+    await config.setUint(keys.FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD, "0x", 3600);
+    await config.setUint(keys.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR, "0x", expandDecimals(3, 29)); // 30%
+
+    await hre.ethers.provider.send("evm_increaseTime", [3700]);
+    await hre.ethers.provider.send("evm_mine", []);
+
+    await feeDistributorVault.withdrawToken(gmx.address, user8.address, expandDecimals(30_000, 18));
+
+    await feeDistributor.bridgedGmxReceived();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(3);
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB))).to.eq(expandDecimals(20_000, 18));
+
+    await feeDistributor.distribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(0);
+  });
+
+  it("bridgedGmxReceived() tolerates a bridged shortfall only after the grace period and above the floor", async function () {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(160_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(30_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(50_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(50_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(2);
+
+    await expect(feeDistributor.bridgedGmxReceived()).to.be.revertedWithCustomError(
+      errorsContract,
+      "BridgedAmountNotSufficient"
+    );
+
+    await config.setUint(keys.FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD, "0x", 3600);
+    await config.setUint(keys.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR, "0x", expandDecimals(5, 29)); // 50%
+
+    await expect(feeDistributor.bridgedGmxReceived()).to.be.revertedWithCustomError(
+      errorsContract,
+      "BridgedAmountNotSufficient"
+    );
+
+    await hre.ethers.provider.send("evm_increaseTime", [3700]);
+    await hre.ethers.provider.send("evm_mine", []);
+
+    await config.setUint(keys.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR, "0x", expandDecimals(999, 27)); // 99.9%
+    await expect(feeDistributor.bridgedGmxReceived()).to.be.revertedWithCustomError(
+      errorsContract,
+      "BridgedAmountNotSufficient"
+    );
+
+    await config.setUint(keys.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR, "0x", expandDecimals(5, 29));
+    await feeDistributor.bridgedGmxReceived();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(3);
+    expect(await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB))).to.eq(expandDecimals(50_000, 18));
+
+    await feeDistributor.distribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(0);
+  });
+
+  it("resetDistribution() abandons a stuck distribution and blocks re-initiation until the next week", async function () {
+    await grantRole(roleStore, wallet.address, "TIMELOCK_ADMIN");
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockLzReadResponseChainA.setWithdrawableAmount(gmxA.address, expandDecimals(160_000, 18));
+    await mockLzReadResponseChainC.setWithdrawableAmount(gmxC.address, expandDecimals(30_000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(50_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(50_000, 18));
+    await wallet.sendTransaction({ to: feeDistributor.address, value: expandDecimals(1, 18) });
+
+    await commitSnapshots();
+    await feeDistributor.initiateDistribute();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(2);
+
+    await expect(feeDistributor.connect(user0).resetDistribution()).to.be.revertedWithCustomError(
+      errorsContract,
+      "Unauthorized",
+      // @ts-expect-error: types don't reflect 3rd argument support
+      "TIMELOCK_ADMIN"
+    );
+
+    await expect(feeDistributor.resetDistribution()).to.be.revertedWithCustomError(
+      errorsContract,
+      "DistributionResetNotAllowed"
+    );
+
+    await hre.ethers.provider.send("evm_increaseTime", [259200 + 60]);
+    await hre.ethers.provider.send("evm_mine", []);
+
+    await feeDistributor.resetDistribution();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(0);
+    expect(await dataStore.getUint(keys.feeDistributorSnapshotEpochKey(chainIdB))).to.eq(0);
+
+    await expect(feeDistributor.resetDistribution()).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidDistributionState"
+    );
+
+    await expect(feeDistributor.commitSnapshot()).to.be.revertedWithCustomError(
+      errorsContract,
+      "FeeDistributionAlreadyCompleted"
+    );
+
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+    await feeDistributor.commitSnapshot();
+    expect(await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE)).to.eq(4);
   });
 });
