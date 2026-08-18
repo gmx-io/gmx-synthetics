@@ -19,7 +19,7 @@ import { executeGlvDeposit } from "../../utils/glv/glvDeposit";
 import { executeGlvWithdrawal } from "../../utils/glv/glvWithdrawal";
 import { GAS_BUFFER } from "../../utils/gas";
 
-describe.only("MultichainLifeCycle", () => {
+describe("MultichainLifeCycle", () => {
   let fixture;
   let user1, user2;
   let dataStore,
