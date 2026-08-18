@@ -2,6 +2,9 @@ import { expect } from "chai";
 
 import * as keys from "../../utils/keys";
 import { deployFixture } from "../../utils/fixture";
+import { deployContract } from "../../utils/deploy";
+import { grantRole } from "../../utils/role";
+import { parseLogs, getEventData } from "../../utils/event";
 import { expandDecimals } from "../../utils/math";
 import {
   encodeStakeGmxMessage,
@@ -16,6 +19,7 @@ describe("LayerZeroProvider staking dispatch", () => {
   let fixture;
   let user0;
   let dataStore,
+    roleStore,
     wnt,
     usdc,
     gmx,
@@ -38,6 +42,7 @@ describe("LayerZeroProvider staking dispatch", () => {
     ({ user0 } = fixture.accounts);
     ({
       dataStore,
+      roleStore,
       wnt,
       usdc,
       gmx,
@@ -202,6 +207,110 @@ describe("LayerZeroProvider staking dispatch", () => {
     expect(await mockGmxVester.depositedAmounts(walletAddress)).to.equal(0);
     expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, esGmx.address))).to.equal(stakeAmount);
     expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(claimableAmount);
+  });
+
+  it("resolves the original wallet through a replacement factory, router and provider set", async () => {
+    // user0 stakes through the original set
+    await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+    const stakeMessage = await encodeStakeGmxMessage(getStakingParams({ amount: stakeAmount }), user0.address);
+    await mintUsdcAndApprove(user0, usdcAmount);
+    await mockStargatePoolUsdc.connect(user0).sendToken(layerZeroProvider.address, usdcAmount, stakeMessage);
+
+    const wallet = await gmxAccountWalletFactory.getWallet(user0.address);
+    expect(await mockRewardRouterV2.stakedGmxAmounts(wallet)).to.equal(stakeAmount);
+
+    // the factory is replaced; a new staking router and LayerZero provider are wired against it
+    const eventEmitter = await hre.ethers.getContract("EventEmitter");
+    const factory2 = await deployContract("GmxAccountWalletFactory", [
+      roleStore.address,
+      dataStore.address,
+      eventEmitter.address,
+    ]);
+    await grantRole(roleStore, factory2.address, "CONTROLLER");
+
+    const routerLibraries = {};
+    for (const name of [
+      "GasUtils",
+      "MultichainUtils",
+      "RelayUtils",
+      "StakingUtils",
+      "MultichainStakingUtils",
+      "SignatureUtils",
+    ]) {
+      routerLibraries[name] = (await hre.ethers.getContract(name)).address;
+    }
+    const baseParams = {
+      router: (await hre.ethers.getContract("Router")).address,
+      roleStore: roleStore.address,
+      dataStore: dataStore.address,
+      eventEmitter: eventEmitter.address,
+      oracle: (await hre.ethers.getContract("Oracle")).address,
+      orderVault: (await hre.ethers.getContract("OrderVault")).address,
+      orderHandler: (await hre.ethers.getContract("OrderHandler")).address,
+      swapHandler: (await hre.ethers.getContract("SwapHandler")).address,
+      externalHandler: (await hre.ethers.getContract("ExternalHandler")).address,
+      multichainVault: multichainVault.address,
+    };
+    const router2 = await deployContract(
+      "MultichainStakingRouter",
+      [baseParams, factory2.address, mockRewardRouterV2.address],
+      { libraries: routerLibraries }
+    );
+    await grantRole(roleStore, router2.address, "CONTROLLER");
+    await grantRole(roleStore, router2.address, "ROUTER_PLUGIN");
+
+    const providerLibraries = {};
+    for (const name of ["MultichainUtils", "LayerZeroProviderUtils"]) {
+      providerLibraries[name] = (await hre.ethers.getContract(name)).address;
+    }
+    const provider2 = await deployContract(
+      "LayerZeroProvider",
+      [
+        dataStore.address,
+        roleStore.address,
+        eventEmitter.address,
+        multichainVault.address,
+        (await hre.ethers.getContract("MultichainGmRouter")).address,
+        (await hre.ethers.getContract("MultichainGlvRouter")).address,
+        (await hre.ethers.getContract("MultichainOrderRouter")).address,
+        router2.address,
+      ],
+      { libraries: providerLibraries }
+    );
+    await grantRole(roleStore, provider2.address, "CONTROLLER");
+    await dataStore.setBool(keys.isRelayFeeExcludedKey(provider2.address), true);
+
+    // an exit dispatched through the replacement set reaches the original wallet
+    const unstakeAmount = expandDecimals(40, 18);
+    const unstakeMessage = await encodeUnstakeGmxMessage(
+      getStakingParams({ amount: unstakeAmount, relayRouter: router2 }),
+      user0.address
+    );
+    await mintUsdcAndApprove(user0, usdcAmount);
+    const tx = await mockStargatePoolUsdc.connect(user0).sendToken(provider2.address, usdcAmount, unstakeMessage);
+
+    // outcomes, not just absence of reverts: the action executed, nothing was swallowed
+    const parsedLogs = parseLogs(fixture, await tx.wait());
+    expect(getEventData(parsedLogs, "MultichainBridgeActionFailed")).to.be.undefined;
+    expect(await mockRewardRouterV2.stakedGmxAmounts(wallet)).to.equal(stakeAmount.sub(unstakeAmount));
+    expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(unstakeAmount);
+  });
+
+  it("swallows a walletless exit into a failure event and preserves the bridged tokens", async () => {
+    // user0 has no wallet; an unstake arrives over the bridge
+    const message = await encodeUnstakeGmxMessage(getStakingParams({ amount: stakeAmount }), user0.address);
+    await mintUsdcAndApprove(user0, usdcAmount);
+
+    const tx = await mockStargatePoolUsdc.connect(user0).sendToken(layerZeroProvider.address, usdcAmount, message);
+
+    // the failure is swallowed into an event, the outer transaction succeeds
+    const parsedLogs = parseLogs(fixture, await tx.wait());
+    expect(getEventData(parsedLogs, "MultichainBridgeActionFailed")).to.not.be.undefined;
+
+    // bridged tokens are credited, nothing else changes and no wallet is created
+    expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).to.equal(usdcAmount);
+    expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(0);
+    expect(await gmxAccountWalletFactory.getWallet(user0.address)).to.equal(hre.ethers.constants.AddressZero);
   });
 
   it("emits MultichainBridgeActionFailed on revert", async () => {

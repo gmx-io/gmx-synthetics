@@ -1,18 +1,21 @@
 import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
+import { deployContract } from "../../utils/deploy";
 import { grantRole } from "../../utils/role";
 import { expandDecimals } from "../../utils/math";
+import { errorsContract } from "../../utils/error";
+import { parseLogs, getEventData, getEventDataArray } from "../../utils/event";
 import * as keys from "../../utils/keys";
 
 describe("GmxAccountWallet", () => {
   let fixture;
   let user0, user1, user2;
-  let roleStore, dataStore, gmxAccountWalletFactory, gmx;
+  let roleStore, dataStore, eventEmitter, gmxAccountWalletFactory, gmx;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ roleStore, dataStore, gmxAccountWalletFactory, gmx } = fixture.contracts);
+    ({ roleStore, dataStore, eventEmitter, gmxAccountWalletFactory, gmx } = fixture.contracts);
   });
 
   describe("GmxAccountWalletFactory", () => {
@@ -34,11 +37,18 @@ describe("GmxAccountWallet", () => {
       const tx = await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
       const receipt = await tx.wait();
 
-      // Should emit WalletCreated event
-      const event = receipt.events.find((e) => e.event === "WalletCreated");
-      expect(event).to.not.be.undefined;
-      expect(event.args.account).to.equal(user0.address);
-      expect(event.args.wallet).to.equal(predictedAddr);
+      // Should emit exactly one GmxAccountWalletCreated and one GmxAccountWalletMapped event
+      const parsedLogs = parseLogs(fixture, receipt);
+
+      const createdEvents = getEventDataArray(parsedLogs, "GmxAccountWalletCreated");
+      expect(createdEvents.length).to.equal(1);
+      expect(createdEvents[0].account).to.equal(user0.address);
+      expect(createdEvents[0].wallet).to.equal(predictedAddr);
+
+      const mappedEvents = getEventDataArray(parsedLogs, "GmxAccountWalletMapped");
+      expect(mappedEvents.length).to.equal(1);
+      expect(mappedEvents[0].account).to.equal(user0.address);
+      expect(mappedEvents[0].wallet).to.equal(predictedAddr);
     });
 
     it("returns existing wallet on subsequent calls without creating new one", async () => {
@@ -58,6 +68,134 @@ describe("GmxAccountWallet", () => {
       await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
       const predicted = await gmxAccountWalletFactory.getWalletAddress(user0.address);
       expect(await dataStore.getBool(keys.isDeployedWalletKey(predicted))).to.be.true;
+    });
+
+    it("exposes the wallet init code hash used in the address derivation", async () => {
+      const walletArtifact = await hre.artifacts.readArtifact("GmxAccountWallet");
+      const initCode =
+        walletArtifact.bytecode + hre.ethers.utils.defaultAbiCoder.encode(["address"], [roleStore.address]).slice(2);
+      const initCodeHash = hre.ethers.utils.keccak256(initCode);
+
+      expect(await gmxAccountWalletFactory.walletInitCodeHash()).to.equal(initCodeHash);
+
+      // the same recipe integrators use off-chain
+      const salt = hre.ethers.utils.keccak256(
+        hre.ethers.utils.defaultAbiCoder.encode(["string", "address"], ["GMX_ACCOUNT_WALLET", user0.address])
+      );
+      const derived = hre.ethers.utils.getCreate2Address(gmxAccountWalletFactory.address, salt, initCodeHash);
+      expect(await gmxAccountWalletFactory.getWalletAddress(user0.address)).to.equal(derived);
+    });
+  });
+
+  describe("wallet registry", () => {
+    it("getWallet returns zero before creation", async () => {
+      expect(await gmxAccountWalletFactory.getWallet(user0.address)).to.equal(hre.ethers.constants.AddressZero);
+    });
+
+    it("records the account wallet on creation", async () => {
+      const wallet = await gmxAccountWalletFactory.callStatic.getOrCreateWallet(user0.address);
+      await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+
+      expect(await gmxAccountWalletFactory.getWallet(user0.address)).to.equal(wallet);
+      expect(await dataStore.getAddress(keys.accountWalletKey(user0.address))).to.equal(wallet);
+
+      // within one factory deployment the record always equals the derived address;
+      // they only diverge after a factory replacement
+      expect(await gmxAccountWalletFactory.getWallet(user0.address)).to.equal(
+        await gmxAccountWalletFactory.getWalletAddress(user0.address)
+      );
+    });
+
+    it("emits no events when the wallet already exists", async () => {
+      await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+
+      const tx = await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+      const receipt = await tx.wait();
+      const parsedLogs = parseLogs(fixture, receipt);
+
+      expect(getEventData(parsedLogs, "GmxAccountWalletCreated")).to.be.undefined;
+      expect(getEventData(parsedLogs, "GmxAccountWalletMapped")).to.be.undefined;
+    });
+
+    it("reverts if the recorded wallet is not marked as deployed", async () => {
+      const wallet = await gmxAccountWalletFactory.callStatic.getOrCreateWallet(user0.address);
+      await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+
+      await grantRole(roleStore, user1.address, "CONTROLLER");
+      await dataStore.connect(user1).setBool(keys.isDeployedWalletKey(wallet), false);
+
+      await expect(gmxAccountWalletFactory.getOrCreateWallet(user0.address))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidWallet")
+        .withArgs(wallet);
+    });
+
+    it("restores the record if it was removed while the wallet exists", async () => {
+      const wallet = await gmxAccountWalletFactory.callStatic.getOrCreateWallet(user0.address);
+      await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+
+      // only a direct DataStore write can remove the record, e.g. buggy migration tooling
+      await grantRole(roleStore, user1.address, "CONTROLLER");
+      await dataStore.connect(user1).setAddress(keys.accountWalletKey(user0.address), hre.ethers.constants.AddressZero);
+      expect(await gmxAccountWalletFactory.getWallet(user0.address)).to.equal(hre.ethers.constants.AddressZero);
+
+      expect(await gmxAccountWalletFactory.callStatic.getOrCreateWallet(user0.address)).to.equal(wallet);
+
+      const tx = await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+      const receipt = await tx.wait();
+      const parsedLogs = parseLogs(fixture, receipt);
+
+      // the wallet is not re-created, only the record is written again
+      expect(getEventData(parsedLogs, "GmxAccountWalletCreated")).to.be.undefined;
+      const mappedEvent = getEventData(parsedLogs, "GmxAccountWalletMapped");
+      expect(mappedEvent.account).to.equal(user0.address);
+      expect(mappedEvent.wallet).to.equal(wallet);
+
+      expect(await gmxAccountWalletFactory.getWallet(user0.address)).to.equal(wallet);
+    });
+
+    it("reverts if the derived wallet exists but is not marked as deployed", async () => {
+      const wallet = await gmxAccountWalletFactory.callStatic.getOrCreateWallet(user0.address);
+      await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+
+      await grantRole(roleStore, user1.address, "CONTROLLER");
+      await dataStore.connect(user1).setAddress(keys.accountWalletKey(user0.address), hre.ethers.constants.AddressZero);
+      await dataStore.connect(user1).setBool(keys.isDeployedWalletKey(wallet), false);
+
+      await expect(gmxAccountWalletFactory.getOrCreateWallet(user0.address))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidWallet")
+        .withArgs(wallet);
+    });
+
+    it("a replacement factory returns the recorded wallet instead of creating a second one", async () => {
+      const wallet1 = await gmxAccountWalletFactory.callStatic.getOrCreateWallet(user0.address);
+      await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+
+      const factory2 = await deployContract("GmxAccountWalletFactory", [
+        roleStore.address,
+        dataStore.address,
+        eventEmitter.address,
+      ]);
+      await grantRole(roleStore, factory2.address, "CONTROLLER");
+
+      // the replacement factory derives a different address for the same account
+      const predicted2 = await factory2.getWalletAddress(user0.address);
+      expect(predicted2).to.not.equal(wallet1);
+
+      // but resolves the account to the recorded wallet and creates nothing
+      expect(await factory2.callStatic.getOrCreateWallet(user0.address)).to.equal(wallet1);
+
+      const tx = await factory2.getOrCreateWallet(user0.address);
+      const receipt = await tx.wait();
+      const parsedLogs = parseLogs(fixture, receipt);
+      expect(getEventData(parsedLogs, "GmxAccountWalletCreated")).to.be.undefined;
+      expect(await hre.ethers.provider.getCode(predicted2)).to.equal("0x");
+
+      // accounts without a wallet are unaffected: they get one from the new factory
+      const wallet2 = await factory2.callStatic.getOrCreateWallet(user1.address);
+      await factory2.getOrCreateWallet(user1.address);
+      expect(wallet2).to.not.equal(wallet1);
+      expect(await factory2.getWallet(user1.address)).to.equal(wallet2);
+      expect(await hre.ethers.provider.getCode(wallet2)).to.not.equal("0x");
     });
   });
 
