@@ -308,6 +308,7 @@ export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMP
 export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
 export const IS_DEPLOYED_WALLET = hashString("IS_DEPLOYED_WALLET");
+export const ACCOUNT_WALLET = hashString("ACCOUNT_WALLET");
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
@@ -1140,4 +1141,8 @@ export function creReceiverAuthorizedWorkflowIdsKey(workflowId: string) {
 
 export function isDeployedWalletKey(wallet: string) {
   return hashData(["bytes32", "address"], [IS_DEPLOYED_WALLET, wallet]);
+}
+
+export function accountWalletKey(account: string) {
+  return hashData(["bytes32", "address"], [ACCOUNT_WALLET, account]);
 }

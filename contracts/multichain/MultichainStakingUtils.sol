@@ -8,6 +8,7 @@ import "./MultichainUtils.sol";
 import "./MultichainVault.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../error/Errors.sol";
 import "../event/EventEmitter.sol";
 import "../staking/GmxAccountWalletFactory.sol";
 import "../staking/IGmxAccountWallet.sol";
@@ -57,7 +58,7 @@ library MultichainStakingUtils {
         uint256 srcChainId,
         uint256 amount
     ) external {
-        address wallet = contracts.walletFactory.getWalletAddress(account);
+        address wallet = _getWallet(contracts, account);
         address gmx = contracts.rewardRouter.gmx();
 
         IGmxAccountWallet(wallet).execute(address(contracts.rewardRouter), abi.encodeCall(IRewardRouterV2.unstakeGmx, (amount)));
@@ -87,7 +88,7 @@ library MultichainStakingUtils {
         uint256 srcChainId,
         uint256 amount
     ) external {
-        address wallet = contracts.walletFactory.getWalletAddress(account);
+        address wallet = _getWallet(contracts, account);
         address esGmx = contracts.rewardRouter.esGmx();
 
         IGmxAccountWallet(wallet).execute(address(contracts.rewardRouter), abi.encodeCall(IRewardRouterV2.unstakeEsGmx, (amount)));
@@ -103,7 +104,7 @@ library MultichainStakingUtils {
         IRelayUtils.HandleStakingRewardsParams calldata params
     ) external {
         HandleRewardsCache memory cache;
-        cache.wallet = contracts.walletFactory.getWalletAddress(account);
+        cache.wallet = _getWallet(contracts, account);
 
         cache.wethBefore = IERC20(contracts.rewardRouter.weth()).balanceOf(cache.wallet);
         cache.gmxBefore = IERC20(contracts.rewardRouter.gmx()).balanceOf(cache.wallet);
@@ -142,7 +143,7 @@ library MultichainStakingUtils {
         StakingContracts memory contracts,
         address account
     ) external {
-        address wallet = contracts.walletFactory.getWalletAddress(account);
+        address wallet = _getWallet(contracts, account);
 
         // compound restakes claimed GMX rewards with transferFrom, see handleStakingRewards
         _setGmxStakingAllowance(contracts, wallet, type(uint256).max);
@@ -174,7 +175,7 @@ library MultichainStakingUtils {
         address account,
         uint256 srcChainId
     ) external {
-        address wallet = contracts.walletFactory.getWalletAddress(account);
+        address wallet = _getWallet(contracts, account);
         address gmx = contracts.rewardRouter.gmx();
         address esGmx = contracts.rewardRouter.esGmx();
 
@@ -192,7 +193,9 @@ library MultichainStakingUtils {
         address account,
         address delegatee
     ) external {
-        address wallet = contracts.walletFactory.getWalletAddress(account);
+        // on V1 an account can delegate before it ever stakes, so create the wallet
+        // if needed; the delegation applies once govGMX is minted on a later stake
+        address wallet = contracts.walletFactory.getOrCreateWallet(account);
         IGmxAccountWallet(wallet).execute(contracts.rewardRouter.govToken(), abi.encodeCall(IERC20Votes.delegate, (delegatee)));
     }
 
@@ -201,7 +204,7 @@ library MultichainStakingUtils {
         address account,
         address receiver
     ) external {
-        address wallet = contracts.walletFactory.getWalletAddress(account);
+        address wallet = _getWallet(contracts, account);
 
         if (contracts.rewardRouter.inStrictTransferMode()) {
             // signalTransfer checks this allowance in the same transaction and does not
@@ -256,10 +259,25 @@ library MultichainStakingUtils {
         address token,
         uint256 amount
     ) external {
-        address wallet = contracts.walletFactory.getWalletAddress(account);
+        // tokens can be sent to the wallet address before the wallet exists, so
+        // create it if needed to make them recoverable in one action
+        address wallet = contracts.walletFactory.getOrCreateWallet(account);
 
         IGmxAccountWallet(wallet).execute(token, abi.encodeCall(IERC20.transfer, (address(contracts.multichainVault), amount)));
         MultichainUtils.recordTransferIn(contracts.dataStore, contracts.eventEmitter, contracts.multichainVault, token, account, srcChainId);
+    }
+
+    // operations on an existing wallet resolve it from the registry: the record keeps
+    // pointing at the wallet even if the factory is ever replaced, while the derived
+    // address would move with the new factory
+    // accounts without a wallet have nothing to operate on, so this reverts instead
+    // of deriving an address that has no contract behind it
+    function _getWallet(StakingContracts memory contracts, address account) private view returns (address) {
+        address wallet = contracts.walletFactory.getWallet(account);
+        if (wallet == address(0)) {
+            revert Errors.EmptyGmxAccountWallet(account);
+        }
+        return wallet;
     }
 
     function _setGmxStakingAllowance(

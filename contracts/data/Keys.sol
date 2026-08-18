@@ -520,6 +520,9 @@ library Keys {
     // @dev key for whether a wallet was deployed by the protocol
     bytes32 public constant IS_DEPLOYED_WALLET = keccak256(abi.encode("IS_DEPLOYED_WALLET"));
 
+    // @dev key for the wallet created for an account
+    bytes32 public constant ACCOUNT_WALLET = keccak256(abi.encode("ACCOUNT_WALLET"));
+
     // @dev key for user's multichain balance
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
     // @dev key for the flag if a multichain provider is enabled
@@ -2533,6 +2536,15 @@ library Keys {
         return keccak256(abi.encode(
             IS_DEPLOYED_WALLET,
             wallet
+        ));
+    }
+
+    // @param account the account the wallet belongs to
+    // @return key for the wallet created for the account
+    function accountWalletKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ACCOUNT_WALLET,
+            account
         ));
     }
 }

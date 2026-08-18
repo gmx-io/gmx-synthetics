@@ -458,6 +458,7 @@ library Errors {
 
     // GmxAccountWalletFactory errors
     error InvalidWallet(address wallet);
+    error EmptyGmxAccountWallet(address account);
 
     // Multichain errors
     error InvalidTransferRequestsLength();

@@ -23,6 +23,7 @@ import { deployContract } from "../../utils/deploy";
 import { grantRole } from "../../utils/role";
 import { fundMultichainBalance } from "../../utils/multichain";
 import { errorsContract } from "../../utils/error";
+import { parseLogs, getEventDataArray } from "../../utils/event";
 import * as keys from "../../utils/keys";
 
 describe("MultichainStakingRouter", () => {
@@ -125,19 +126,17 @@ describe("MultichainStakingRouter", () => {
     it("creates wallet on first stake, reuses on second", async () => {
       await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount.mul(2) });
 
-      // First stake creates wallet
+      // First stake creates exactly one wallet
       const tx1 = await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
       const receipt1 = await tx1.wait();
-      // Check for WalletCreated event in the logs
-      const walletCreatedTopic = gmxAccountWalletFactory.interface.getEventTopic("WalletCreated");
-      const walletCreatedLogs1 = receipt1.logs.filter((l) => l.topics[0] === walletCreatedTopic);
-      expect(walletCreatedLogs1.length).to.equal(1);
+      const createdEvents1 = getEventDataArray(parseLogs(fixture, receipt1), "GmxAccountWalletCreated");
+      expect(createdEvents1.length).to.equal(1);
+      expect(createdEvents1[0].account).to.equal(user0.address);
 
       // Second stake reuses wallet
       const tx2 = await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
       const receipt2 = await tx2.wait();
-      const walletCreatedLogs2 = receipt2.logs.filter((l) => l.topics[0] === walletCreatedTopic);
-      expect(walletCreatedLogs2.length).to.equal(0);
+      expect(getEventDataArray(parseLogs(fixture, receipt2), "GmxAccountWalletCreated").length).to.equal(0);
     });
   });
 
@@ -616,6 +615,186 @@ describe("MultichainStakingRouter", () => {
 
       // Wallet should be empty
       expect(await gmx.balanceOf(walletAddress)).to.equal(0);
+    });
+  });
+
+  // operations on an existing wallet resolve it from the account --> wallet record,
+  // not by deriving the address from the current factory
+  describe("wallet resolution", () => {
+    it("reverts for an account without a wallet", async () => {
+      await expect(sendUnstakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount })))
+        .to.be.revertedWithCustomError(errorsContract, "EmptyGmxAccountWallet")
+        .withArgs(user0.address);
+
+      await expect(sendCompoundStakingRewards(getDefaultStakingRelayParams()))
+        .to.be.revertedWithCustomError(errorsContract, "EmptyGmxAccountWallet")
+        .withArgs(user0.address);
+    });
+
+    // delegation and wallet withdrawals work without a prior stake on V1, so these
+    // two create the wallet instead of reverting
+    it("delegateGovGmx creates the wallet and the delegation applies to later stakes", async () => {
+      expect(await gmxAccountWalletFactory.getWallet(user0.address)).to.equal(hre.ethers.constants.AddressZero);
+
+      await sendDelegateGovGmx(getDefaultStakingRelayParams({ delegatee: user1.address }));
+
+      const wallet = await gmxAccountWalletFactory.getWallet(user0.address);
+      expect(wallet).to.not.equal(hre.ethers.constants.AddressZero);
+      expect(await mockGovToken.delegates(wallet)).to.equal(user1.address);
+
+      // govGMX minted by a later stake is already delegated
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+      expect(await mockGovToken.balanceOf(wallet)).to.equal(stakeAmount);
+      expect(await mockGovToken.delegates(wallet)).to.equal(user1.address);
+    });
+
+    it("withdrawFromWallet creates the wallet and recovers tokens sent to it in advance", async () => {
+      const predicted = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      expect(await hre.ethers.provider.getCode(predicted)).to.equal("0x");
+
+      // tokens sent to the wallet address before the wallet exists
+      const amount = expandDecimals(25, 18);
+      await gmx.mint(predicted, amount);
+
+      await sendWithdrawFromWallet(getDefaultStakingRelayParams({ token: gmx.address, amount }));
+
+      expect(await gmxAccountWalletFactory.getWallet(user0.address)).to.equal(predicted);
+      expect(await hre.ethers.provider.getCode(predicted)).to.not.equal("0x");
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(amount);
+      expect(await gmx.balanceOf(predicted)).to.equal(0);
+    });
+
+    it("follows the wallet record, not the derived address", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      const wallet = await gmxAccountWalletFactory.getWallet(user0.address);
+      expect(wallet).to.not.equal(hre.ethers.constants.AddressZero);
+
+      // remove the record; the derived address still has the funded wallet behind it,
+      // but resolution must not fall back to derivation
+      await grantRole(roleStore, user1.address, "CONTROLLER");
+      await dataStore.connect(user1).setAddress(keys.accountWalletKey(user0.address), hre.ethers.constants.AddressZero);
+
+      await expect(sendUnstakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount })))
+        .to.be.revertedWithCustomError(errorsContract, "EmptyGmxAccountWallet")
+        .withArgs(user0.address);
+
+      // restore the record; unstaking works again
+      await dataStore.connect(user1).setAddress(keys.accountWalletKey(user0.address), wallet);
+      await sendUnstakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(stakeAmount);
+    });
+
+    it("a replacement factory and router set keeps every operation on the original wallet", async () => {
+      // user0 builds a position through the original set
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: stakeAmount });
+      await sendStakeGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      const wallet = await gmxAccountWalletFactory.getWallet(user0.address);
+
+      // the factory is replaced and a new staking router is wired against it
+      const eventEmitter = await hre.ethers.getContract("EventEmitter");
+      const factory2 = await deployContract("GmxAccountWalletFactory", [
+        roleStore.address,
+        dataStore.address,
+        eventEmitter.address,
+      ]);
+      await grantRole(roleStore, factory2.address, "CONTROLLER");
+
+      const libraries = {};
+      for (const name of [
+        "GasUtils",
+        "MultichainUtils",
+        "RelayUtils",
+        "StakingUtils",
+        "MultichainStakingUtils",
+        "SignatureUtils",
+      ]) {
+        libraries[name] = (await hre.ethers.getContract(name)).address;
+      }
+      const baseParams = {
+        router: (await hre.ethers.getContract("Router")).address,
+        roleStore: roleStore.address,
+        dataStore: dataStore.address,
+        eventEmitter: eventEmitter.address,
+        oracle: (await hre.ethers.getContract("Oracle")).address,
+        orderVault: (await hre.ethers.getContract("OrderVault")).address,
+        orderHandler: (await hre.ethers.getContract("OrderHandler")).address,
+        swapHandler: (await hre.ethers.getContract("SwapHandler")).address,
+        externalHandler: (await hre.ethers.getContract("ExternalHandler")).address,
+        multichainVault: multichainVault.address,
+      };
+      const router2 = await deployContract(
+        "MultichainStakingRouter",
+        [baseParams, factory2.address, mockRewardRouterV2.address],
+        { libraries }
+      );
+      await grantRole(roleStore, router2.address, "CONTROLLER");
+      await grantRole(roleStore, router2.address, "ROUTER_PLUGIN");
+
+      const viaRouter2 = (overrides = {}) => getDefaultStakingRelayParams({ relayRouter: router2, ...overrides });
+
+      // the new factory derives a different address for user0 but resolves the original wallet
+      expect(await factory2.getWalletAddress(user0.address)).to.not.equal(wallet);
+      expect(await factory2.getWallet(user0.address)).to.equal(wallet);
+
+      // staking through the new set reaches the original wallet and creates no sibling
+      const extraStake = expandDecimals(50, 18);
+      await fundMultichainBalance(fixture, { account: user0.address, token: gmx, amount: extraStake });
+      const stakeTx = await sendStakeGmx(viaRouter2({ amount: extraStake }));
+      expect(await mockRewardRouterV2.stakedGmxAmounts(wallet)).to.equal(stakeAmount.add(extraStake));
+      expect(getEventDataArray(parseLogs(fixture, await stakeTx.wait()), "GmxAccountWalletCreated").length).to.equal(0);
+      expect(await hre.ethers.provider.getCode(await factory2.getWalletAddress(user0.address))).to.equal("0x");
+
+      // vesting deposit through the new set reaches the original wallet
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendVestEsGmx(viaRouter2({ amount: stakeAmount }));
+      expect(await mockGmxVester.depositedAmounts(wallet)).to.equal(stakeAmount);
+
+      // partial unstake comes out of the original wallet
+      await sendUnstakeGmx(viaRouter2({ amount: expandDecimals(40, 18) }));
+      expect(await mockRewardRouterV2.stakedGmxAmounts(wallet)).to.equal(expandDecimals(110, 18));
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(
+        expandDecimals(40, 18)
+      );
+
+      // compound claims and restakes rewards accrued by the original wallet
+      const claimAmount = expandDecimals(10, 18);
+      await gmx.mint(mockRewardRouterV2.address, claimAmount);
+      await mockRewardRouterV2.setClaimableGmx(wallet, claimAmount);
+      await sendCompoundStakingRewards(viaRouter2());
+      expect(await mockRewardRouterV2.stakedGmxAmounts(wallet)).to.equal(expandDecimals(120, 18));
+
+      // delegation applies to the original wallet's govGMX
+      await sendDelegateGovGmx(viaRouter2({ delegatee: user2.address }));
+      expect(await mockGovToken.delegates(wallet)).to.equal(user2.address);
+
+      // vesting withdrawal returns the original wallet's deposit
+      await sendWithdrawVesting(viaRouter2());
+      expect(await mockGmxVester.depositedAmounts(wallet)).to.equal(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, esGmx.address))).to.equal(stakeAmount);
+
+      // withdrawFromWallet sweeps from the original wallet
+      const looseAmount = expandDecimals(5, 18);
+      await gmx.mint(wallet, looseAmount);
+      await sendWithdrawFromWallet(viaRouter2({ token: gmx.address, amount: looseAmount }));
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, gmx.address))).to.equal(
+        expandDecimals(45, 18)
+      );
+
+      // staking transfer: signalled from the original wallet, accepted into a wallet
+      // the new factory creates for the fresh receiver account
+      const receiverWallet = await factory2.getWalletAddress(user1.address);
+      await sendSignalStakingTransfer(viaRouter2({ receiver: receiverWallet }));
+      expect(await mockRewardRouterV2.pendingReceivers(wallet)).to.equal(receiverWallet);
+
+      await sendAcceptStakingTransfer(viaRouter2({ signer: user1, account: user1.address, stakingSender: wallet }));
+      expect(await factory2.getWallet(user1.address)).to.equal(receiverWallet);
+      expect(await mockRewardRouterV2.stakedGmxAmounts(wallet)).to.equal(0);
+      expect(await mockRewardRouterV2.stakedGmxAmounts(receiverWallet)).to.equal(expandDecimals(120, 18));
     });
   });
 
