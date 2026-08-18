@@ -343,6 +343,13 @@ describe("Exchange.SwapOrder maxPnl", () => {
     min: expandDecimals(25_000, 4),
     max: expandDecimals(25_000, 4),
   };
+  // execution price below the $5,000 entry, so the short position is in profit
+  const wntPriceHalf = {
+    contractName: "wnt",
+    precision: 8,
+    min: expandDecimals(2_500, 4),
+    max: expandDecimals(2_500, 4),
+  };
 
   const marketPricesAt = (wntUsd) => ({
     indexTokenPrice: { min: expandDecimals(wntUsd, 12), max: expandDecimals(wntUsd, 12) },
@@ -352,6 +359,24 @@ describe("Exchange.SwapOrder maxPnl", () => {
 
   const getLongPnlToPoolFactor = (wntUsd) =>
     reader.getPnlToPoolFactor(dataStore.address, ethUsdMarket.marketToken, marketPricesAt(wntUsd), true, true);
+
+  const getShortPnlToPoolFactor = (wntUsd) =>
+    reader.getPnlToPoolFactor(dataStore.address, ethUsdMarket.marketToken, marketPricesAt(wntUsd), false, true);
+
+  const getMarketTokenPriceAt = async (wntUsd) => {
+    const marketPrices = marketPricesAt(wntUsd);
+    const [marketTokenPrice, poolValueInfo] = await reader.getMarketTokenPrice(
+      dataStore.address,
+      ethUsdMarket,
+      marketPrices.indexTokenPrice,
+      marketPrices.longTokenPrice,
+      marketPrices.shortTokenPrice,
+      keys.MAX_PNL_FACTOR_FOR_TRADERS,
+      true // maximize
+    );
+
+    return { marketTokenPrice, poolValue: poolValueInfo.poolValue, longPnl: poolValueInfo.longPnl };
+  };
 
   const openLong = async (sizeUsd, collateralWnt) => {
     await handleOrder(fixture, {
@@ -368,6 +393,21 @@ describe("Exchange.SwapOrder maxPnl", () => {
     });
   };
 
+  const openShort = async (sizeUsd, collateralUsdc) => {
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(collateralUsdc, 6),
+        sizeDeltaUsd: decimalToFloat(sizeUsd),
+        acceptablePrice: expandDecimals(4995, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+      },
+    });
+  };
+
   const setLongPnlFactorCaps = async (factor) => {
     await dataStore.setUint(
       keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_DEPOSITS, ethUsdMarket.marketToken, true),
@@ -375,6 +415,17 @@ describe("Exchange.SwapOrder maxPnl", () => {
     );
     await dataStore.setUint(
       keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, ethUsdMarket.marketToken, true),
+      factor
+    );
+  };
+
+  const setShortPnlFactorCaps = async (factor) => {
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_DEPOSITS, ethUsdMarket.marketToken, false),
+      factor
+    );
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, ethUsdMarket.marketToken, false),
       factor
     );
   };
@@ -427,17 +478,18 @@ describe("Exchange.SwapOrder maxPnl", () => {
     expect(await getLongPnlToPoolFactor(10_000)).eq(factorBefore);
   });
 
-  it("allows a swap that clears an already-exceeded side", async () => {
+  it("reverts a swap that clears an already-exceeded side", async () => {
     await openLong(300_000, 30);
     await setLongPnlFactorCaps(decimalToFloat(10, 2)); // 10%
     await wethPriceFeed.setAnswer(expandDecimals(10_000, 8));
 
-    // at $10,000 the long pnl is ~$300,000 against a ~$2,000,000 long pool => ~15% > 10% cap
-    expect(await getLongPnlToPoolFactor(10_000)).to.gt(decimalToFloat(10, 2));
+    // at $10,000 the long pnl is $300,000 against a $2,000,000 long pool => 15% > 10% cap
+    expect(await getLongPnlToPoolFactor(10_000)).eq(decimalToFloat(15, 2));
 
     expect(await usdc.balanceOf(user1.address)).eq(0);
 
-    // adding 110 WNT takes the long pool to ~$3,100,000, bringing the factor below the 10% cap
+    // adding 110 WNT would take the long pool to $3,100,000, bringing the factor below the
+    // 10% cap and releasing the pnl that was capped, so the swap should revert
     await handleOrder(fixture, {
       create: {
         account: user1,
@@ -448,11 +500,113 @@ describe("Exchange.SwapOrder maxPnl", () => {
         orderType: OrderType.MarketSwap,
         swapPath: [ethUsdMarket.marketToken],
       },
-      execute: getExecuteParams(fixture, { prices: [wntPriceDouble, prices.usdc] }),
+      execute: {
+        ...getExecuteParams(fixture, { prices: [wntPriceDouble, prices.usdc] }),
+        expectedCancellationReason: "PnlFactorExceededForLongs",
+      },
     });
 
-    expect(await usdc.balanceOf(user1.address)).to.gt(0);
-    expect(await getLongPnlToPoolFactor(10_000)).to.lt(decimalToFloat(10, 2));
+    expect(await usdc.balanceOf(user1.address)).eq(0);
+    expect(await getLongPnlToPoolFactor(10_000)).eq(decimalToFloat(15, 2));
+  });
+
+  it("reverts a swap that clears an already-exceeded short side", async () => {
+    await openShort(400_000, 100_000);
+    await setShortPnlFactorCaps(decimalToFloat(95, 3)); // 9.5%
+    await wethPriceFeed.setAnswer(expandDecimals(2_500, 8));
+
+    // at $2,500 the short pnl is $200,000 against a $2,000,000 short pool => 10% > 9.5% cap
+    const factorBefore = await getShortPnlToPoolFactor(2_500);
+    expect(factorBefore).eq(decimalToFloat(10, 2));
+
+    expect(await wnt.balanceOf(user1.address)).eq(0);
+
+    // adding 110,000 USDC would take the short pool to $2,110,000 and the factor to ~9.48%
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        receiver: user1,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(110_000, 6),
+        acceptablePrice: 0,
+        orderType: OrderType.MarketSwap,
+        swapPath: [ethUsdMarket.marketToken],
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [wntPriceHalf, prices.usdc] }),
+        expectedCancellationReason: "PnlFactorExceededForShorts",
+      },
+    });
+
+    expect(await wnt.balanceOf(user1.address)).eq(0);
+    expect(await getShortPnlToPoolFactor(2_500)).eq(factorBefore);
+  });
+
+  it("a swap that clears an exceeded side cannot reprice the market token", async () => {
+    await openLong(300_000, 30);
+    await setLongPnlFactorCaps(decimalToFloat(10, 2)); // 10%
+    await dataStore.setUint(
+      keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_TRADERS, ethUsdMarket.marketToken, true),
+      decimalToFloat(10, 2)
+    );
+    await wethPriceFeed.setAnswer(expandDecimals(10_000, 8));
+
+    // $4,000,000 of tokens in the pool, of which $200,000 is recognized as long pnl:
+    // the capped 10% of the $2,000,000 long pool, out of $300,000 of actual long pnl
+    const before = await getMarketTokenPriceAt(10_000);
+    expect(before.poolValue).eq(decimalToFloat(3_800_000));
+    expect(before.longPnl).eq(decimalToFloat(200_000));
+
+    // swapping 110 WNT in is value-neutral for the pool: $1,100,000 of USDC leaves with the
+    // swapper. it only moves backing from the short side to the long side, which raises the
+    // capped long pnl to the full $300,000 and drops the pool value to $3,700,000
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        receiver: user1,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(110, 18),
+        acceptablePrice: 0,
+        orderType: OrderType.MarketSwap,
+        swapPath: [ethUsdMarket.marketToken],
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [wntPriceDouble, prices.usdc] }),
+        expectedCancellationReason: "PnlFactorExceededForLongs",
+      },
+    });
+
+    const after = await getMarketTokenPriceAt(10_000);
+    expect(after.marketTokenPrice).eq(before.marketTokenPrice);
+    expect(after.poolValue).eq(before.poolValue);
+    expect(after.longPnl).eq(before.longPnl);
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(200, 18));
+
+    // and the position still closes at the capped pnl of $200,000, not $300,000
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        receiver: user2,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: decimalToFloat(300_000),
+        acceptablePrice: expandDecimals(9990, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [wntPriceDouble, prices.usdc] }),
+        afterExecution: ({ logs }) => {
+          const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
+          expect(positionDecreaseEvent.basePnlUsd).eq(decimalToFloat(200_000));
+          expect(positionDecreaseEvent.uncappedBasePnlUsd).eq(decimalToFloat(300_000));
+        },
+      },
+    });
+
+    // 30 WNT collateral + 20 WNT capped pnl, instead of 30 WNT + 30 WNT
+    expect(await wnt.balanceOf(user2.address)).eq(expandDecimals(50, 18));
   });
 
   it("reverts a swap that worsens an already-exceeded side", async () => {
