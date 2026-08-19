@@ -9,10 +9,12 @@ import "../../order/OrderVault.sol";
 import "../../oracle/IOracle.sol";
 import "../../oracle/OracleUtils.sol";
 import "../../market/MarketUtils.sol";
+import "../../multichain/IMultichainProvider.sol";
 import "../../swap/ISwapUtils.sol";
 import { SubaccountApproval } from "../../subaccount/SubaccountUtils.sol";
 
 import "../../swap/ISwapHandler.sol";
+import "../../utils/Precision.sol";
 
 import "./IRelayUtils.sol";
 
@@ -137,6 +139,35 @@ library RelayUtils {
             if (feeUsd > maxRelayFeeSwapUsdForSubaccount) {
                 revert Errors.MaxRelayFeeSwapForSubaccountExceeded(feeUsd, maxRelayFeeSwapUsdForSubaccount);
             }
+        }
+    }
+
+    // Cap signed bridgeFee.feeAmount against the live messaging fee using the same
+    // oracle rate as the atomic swap (feeToken.min / wnt.max). Comparing both sides
+    // in WNT prevents mixed-time WNT vs feeToken reports from inflating a USD ratio
+    // (WNT.max / feeToken.max) while the swap itself still settles at the oracle rate.
+    function validateBridgeFeeAgainstQuote(
+        DataStore dataStore,
+        IOracle oracle,
+        IMultichainProvider multichainProvider,
+        address account,
+        IRelayUtils.BridgeOutParams calldata params,
+        address wnt
+    ) external view {
+        uint256 messagingFee = multichainProvider.quoteBridgeOutFee(account, params);
+        uint256 maxBridgeFeeWnt = Precision.applyFactor(
+            messagingFee,
+            dataStore.getUint(Keys.MAX_BRIDGE_FEE_SWAP_FACTOR)
+        );
+
+        uint256 feeTokenPriceMin = oracle.getPrimaryPrice(params.bridgeFee.feeToken).min;
+        uint256 wntPriceMax = oracle.getPrimaryPrice(wnt).max;
+
+        if (params.bridgeFee.feeAmount * feeTokenPriceMin > maxBridgeFeeWnt * wntPriceMax) {
+            revert Errors.MaxBridgeFeeSwapExceeded(
+                params.bridgeFee.feeAmount * feeTokenPriceMin / wntPriceMax,
+                maxBridgeFeeWnt
+            );
         }
     }
 
