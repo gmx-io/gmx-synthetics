@@ -10,15 +10,24 @@ const constructorContracts = [
   "MultichainGmRouter",
   "MultichainGlvRouter",
   "MultichainOrderRouter",
-  "MultichainStakingRouter",
 ];
 
 const func = createDeployFunction({
   contractName: "LayerZeroProvider",
   libraryNames: ["GasUtils", "GlvUtils", "MultichainUtils", "LayerZeroProviderUtils"],
   dependencyNames: constructorContracts,
-  getDeployArgs: async ({ dependencyContracts }) => {
-    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  getDeployArgs: async ({ dependencyContracts, network, get }) => {
+    // the staking router deploys on arbitrum only, same gate as deployMultichainStakingRouter;
+    // the provider takes the zero address on networks without it
+    const stakingRouterNetworks = ["hardhat", "arbitrum"];
+    const stakingRouterAddress = stakingRouterNetworks.includes(network.name)
+      ? (await get("MultichainStakingRouter")).address
+      : ethers.constants.AddressZero;
+
+    return [
+      ...constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address),
+      stakingRouterAddress,
+    ];
   },
   afterDeploy: async ({ deployedContract, deployments }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
@@ -35,5 +44,10 @@ const func = createDeployFunction({
     }
   },
 });
+
+// the staking router can't be a dependencyName (its eager resolution would throw on
+// every network it doesn't deploy on); keep it in the dependency graph so it deploys
+// before the provider where it does exist
+func.dependencies = func.dependencies.concat(["MultichainStakingRouter"]);
 
 export default func;
