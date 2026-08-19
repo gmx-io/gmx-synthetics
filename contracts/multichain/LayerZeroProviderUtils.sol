@@ -260,7 +260,7 @@ library LayerZeroProviderUtils {
 
     function _handleStakeGmx(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.STAKE_GMX_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.STAKE_GMX_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.stakeGmx(relayParams, account, srcChainId, amount) {
         } catch Error(string memory reason) {
@@ -273,7 +273,7 @@ library LayerZeroProviderUtils {
 
     function _handleUnstakeGmx(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.UNSTAKE_GMX_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.UNSTAKE_GMX_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.unstakeGmx(relayParams, account, srcChainId, amount) {
         } catch Error(string memory reason) {
@@ -286,7 +286,7 @@ library LayerZeroProviderUtils {
 
     function _handleStakeEsGmx(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.STAKE_ES_GMX_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.STAKE_ES_GMX_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.stakeEsGmx(relayParams, account, srcChainId, amount) {
         } catch Error(string memory reason) {
@@ -299,7 +299,7 @@ library LayerZeroProviderUtils {
 
     function _handleUnstakeEsGmx(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.UNSTAKE_ES_GMX_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.UNSTAKE_ES_GMX_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.unstakeEsGmx(relayParams, account, srcChainId, amount) {
         } catch Error(string memory reason) {
@@ -312,7 +312,7 @@ library LayerZeroProviderUtils {
 
     function _handleHandleStakingRewards(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, IRelayUtils.HandleStakingRewardsParams memory params) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.HandleStakingRewardsParams));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.HANDLE_STAKING_REWARDS_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.HANDLE_STAKING_REWARDS_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.handleStakingRewards(relayParams, account, srcChainId, params) {
         } catch Error(string memory reason) {
@@ -325,7 +325,7 @@ library LayerZeroProviderUtils {
 
     function _handleCompoundStakingRewards(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         IRelayUtils.RelayParams memory relayParams = abi.decode(actionData, (IRelayUtils.RelayParams));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.COMPOUND_STAKING_REWARDS_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.COMPOUND_STAKING_REWARDS_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.compoundStakingRewards(relayParams, account, srcChainId) {
         } catch Error(string memory reason) {
@@ -338,7 +338,7 @@ library LayerZeroProviderUtils {
 
     function _handleVestEsGmx(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.VEST_ES_GMX_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.VEST_ES_GMX_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.vestEsGmx(relayParams, account, srcChainId, amount) {
         } catch Error(string memory reason) {
@@ -351,7 +351,7 @@ library LayerZeroProviderUtils {
 
     function _handleDelegateGovGmx(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, address delegatee) = abi.decode(actionData, (IRelayUtils.RelayParams, address));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.DELEGATE_GOV_GMX_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.DELEGATE_GOV_GMX_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.delegateGovGmx(relayParams, account, srcChainId, delegatee) {
         } catch Error(string memory reason) {
@@ -364,7 +364,7 @@ library LayerZeroProviderUtils {
 
     function _handleSignalStakingTransfer(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, address receiver) = abi.decode(actionData, (IRelayUtils.RelayParams, address));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.SIGNAL_STAKING_TRANSFER_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.SIGNAL_STAKING_TRANSFER_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.signalStakingTransfer(relayParams, account, srcChainId, receiver) {
         } catch Error(string memory reason) {
@@ -377,7 +377,7 @@ library LayerZeroProviderUtils {
 
     function _handleAcceptStakingTransfer(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, address sender) = abi.decode(actionData, (IRelayUtils.RelayParams, address));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.ACCEPT_STAKING_TRANSFER_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.ACCEPT_STAKING_TRANSFER_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.acceptStakingTransfer(relayParams, account, srcChainId, sender) {
         } catch Error(string memory reason) {
@@ -390,7 +390,7 @@ library LayerZeroProviderUtils {
 
     function _handleWithdrawFromWallet(DispatchContracts memory contracts, address account, uint256 srcChainId, IMultichainProvider.ActionType actionType, bytes memory actionData) private {
         (IRelayUtils.RelayParams memory relayParams, address token, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, address, uint256));
-        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys.WITHDRAW_FROM_WALLET_GAS_LIMIT);
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(contracts.dataStore, Keys2.WITHDRAW_FROM_WALLET_GAS_LIMIT);
         _validateGasLeft(estimatedGasLimit);
         try contracts.multichainStakingRouter.withdrawFromWallet(relayParams, account, srcChainId, token, amount) {
         } catch Error(string memory reason) {

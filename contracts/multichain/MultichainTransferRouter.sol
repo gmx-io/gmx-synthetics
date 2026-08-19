@@ -13,7 +13,6 @@ import "../feature/FeatureUtils.sol";
 import "../market/MarketUtils.sol";
 import "../swap/ISwapUtils.sol";
 import "../pricing/ISwapPricingUtils.sol";
-import "../utils/Precision.sol";
 
 contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
     IMultichainProvider public multichainProvider;
@@ -214,7 +213,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         );
 
         // additionally bound the signed feeAmount to a multiple of the provider's live messaging fee quote
-        _validateBridgeFeeAgainstQuote(account, params, wnt);
+        RelayUtils.validateBridgeFeeAgainstQuote(dataStore, oracle, multichainProvider, account, params, wnt);
 
         // transfer fee token from user's multichain balance to OrderVault for swap
         MultichainUtils.transferOut(
@@ -265,31 +264,5 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
             account,
             srcChainId
         );
-    }
-
-    // Cap signed bridgeFee.feeAmount against the live messaging fee using the same
-    // oracle rate as the atomic swap (feeToken.min / wnt.max). Comparing both sides
-    // in WNT prevents mixed-time WNT vs feeToken reports from inflating a USD ratio
-    // (WNT.max / feeToken.max) while the swap itself still settles at the oracle rate.
-    function _validateBridgeFeeAgainstQuote(
-        address account,
-        IRelayUtils.BridgeOutParams calldata params,
-        address wnt
-    ) internal view {
-        uint256 messagingFee = multichainProvider.quoteBridgeOutFee(account, params);
-        uint256 maxBridgeFeeWnt = Precision.applyFactor(
-            messagingFee,
-            dataStore.getUint(Keys.MAX_BRIDGE_FEE_SWAP_FACTOR)
-        );
-
-        uint256 feeTokenPriceMin = oracle.getPrimaryPrice(params.bridgeFee.feeToken).min;
-        uint256 wntPriceMax = oracle.getPrimaryPrice(wnt).max;
-
-        if (params.bridgeFee.feeAmount * feeTokenPriceMin > maxBridgeFeeWnt * wntPriceMax) {
-            revert Errors.MaxBridgeFeeSwapExceeded(
-                params.bridgeFee.feeAmount * feeTokenPriceMin / wntPriceMax,
-                maxBridgeFeeWnt
-            );
-        }
     }
 }

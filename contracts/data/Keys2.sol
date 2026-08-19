@@ -5,6 +5,19 @@ pragma solidity ^0.8.0;
 // @title Keys2
 // @dev Additional keys for values in the DataStore
 library Keys2 {
+    // @dev keys added after Keys approached the deployable bytecode limit
+    bytes32 public constant STAKE_GMX_GAS_LIMIT = keccak256(abi.encode("STAKE_GMX_GAS_LIMIT"));
+    bytes32 public constant UNSTAKE_GMX_GAS_LIMIT = keccak256(abi.encode("UNSTAKE_GMX_GAS_LIMIT"));
+    bytes32 public constant STAKE_ES_GMX_GAS_LIMIT = keccak256(abi.encode("STAKE_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant UNSTAKE_ES_GMX_GAS_LIMIT = keccak256(abi.encode("UNSTAKE_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant HANDLE_STAKING_REWARDS_GAS_LIMIT = keccak256(abi.encode("HANDLE_STAKING_REWARDS_GAS_LIMIT"));
+    bytes32 public constant COMPOUND_STAKING_REWARDS_GAS_LIMIT = keccak256(abi.encode("COMPOUND_STAKING_REWARDS_GAS_LIMIT"));
+    bytes32 public constant VEST_ES_GMX_GAS_LIMIT = keccak256(abi.encode("VEST_ES_GMX_GAS_LIMIT"));
+    bytes32 public constant DELEGATE_GOV_GMX_GAS_LIMIT = keccak256(abi.encode("DELEGATE_GOV_GMX_GAS_LIMIT"));
+    bytes32 public constant SIGNAL_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("SIGNAL_STAKING_TRANSFER_GAS_LIMIT"));
+    bytes32 public constant ACCEPT_STAKING_TRANSFER_GAS_LIMIT = keccak256(abi.encode("ACCEPT_STAKING_TRANSFER_GAS_LIMIT"));
+    bytes32 public constant WITHDRAW_FROM_WALLET_GAS_LIMIT = keccak256(abi.encode("WITHDRAW_FROM_WALLET_GAS_LIMIT"));
+
     // @dev key for MultichainReader read channel
     bytes32 public constant MULTICHAIN_READ_CHANNEL = keccak256(abi.encode("MULTICHAIN_READ_CHANNEL"));
     // @dev key for MultichainReader read channel to peer mapping

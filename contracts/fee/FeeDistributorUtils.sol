@@ -6,6 +6,7 @@ import "../data/DataStore.sol";
 import "../data/Keys2.sol";
 import "../error/Errors.sol";
 import "../token/TokenUtils.sol";
+import "../utils/Precision.sol";
 
 enum DistributionState {
     None,
@@ -24,6 +25,53 @@ struct Transfer {
 
 // @title FeeDistributorUtils
 library FeeDistributorUtils {
+    function calculateFeeAmounts(
+        DataStore dataStore,
+        address feeDistributorVault,
+        address secondaryFeeToken
+    ) external returns (uint256 feesForKeepers, uint256 feesForChainlink, uint256 feesForTreasury) {
+        // calculate the amount of secondaryFeeToken that needs to be sent to each keeper
+        address[] memory keepers = dataStore.getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        uint256[] memory keepersTargetBalance = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        if (keepers.length != keepersTargetBalance.length) {
+            revert Errors.KeeperArrayLengthMismatch(keepers.length, keepersTargetBalance.length);
+        }
+
+        for (uint256 i; i < keepers.length; i++) {
+            uint256 keeperTargetBalance = keepersTargetBalance[i];
+            uint256 keeperBalance = keepers[i].balance;
+            if (keeperTargetBalance > keeperBalance) {
+                feesForKeepers += (keeperTargetBalance - keeperBalance);
+            }
+        }
+
+        // calculate secondaryFeeToken fee amounts and transfer to appropriate addresses
+        uint256 totalSecondaryFeeTokenBalance = IERC20(secondaryFeeToken).balanceOf(feeDistributorVault);
+
+        // calculate the amount of secondaryFeeToken for chainlink costs and to be sent to the treasury
+        feesForChainlink = Precision.applyFactor(
+            totalSecondaryFeeTokenBalance,
+            dataStore.getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
+        );
+        feesForTreasury = totalSecondaryFeeTokenBalance - feesForChainlink;
+
+        if (feesForKeepers > feesForTreasury) {
+            uint256 maxFeesFromTreasury = dataStore.getUint(Keys2.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY);
+            uint256 additionalFeesFromTreasury = feesForKeepers - feesForTreasury;
+            if (additionalFeesFromTreasury > maxFeesFromTreasury) {
+                revert Errors.MaxFeesFromTreasuryExceeded(maxFeesFromTreasury, additionalFeesFromTreasury);
+            }
+            IERC20(secondaryFeeToken).transferFrom(
+                dataStore.getAddress(Keys2.feeDistributorAddressInfoKey(keccak256(abi.encode("TREASURY")))),
+                feeDistributorVault,
+                additionalFeesFromTreasury
+            );
+            feesForTreasury = 0;
+        } else {
+            feesForTreasury -= feesForKeepers;
+        }
+    }
+
     function withdrawNativeToken(DataStore dataStore, address receiver, uint256 amount) external {
         TokenUtils.sendNativeToken(dataStore, receiver, amount);
     }
