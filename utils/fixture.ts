@@ -63,6 +63,7 @@ async function setup() {
   const config = await hre.ethers.getContract("Config");
   const riskOracleConfig = await hre.ethers.getContract("RiskOracleConfig");
   const configUtils = await hre.ethers.getContract("ConfigUtils");
+  const configKeys = await hre.ethers.getContract("ConfigKeys");
   const configSyncer = await hre.ethers.getContract("ConfigSyncer");
   const mockRiskOracle = await hre.ethers.getContract("MockRiskOracle");
   const timelockConfig = await hre.ethers.getContract("TimelockConfig");
@@ -299,6 +300,7 @@ async function setup() {
       config,
       riskOracleConfig,
       configUtils,
+      configKeys,
       configSyncer,
       mockRiskOracle,
       timelockConfig,

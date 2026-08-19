@@ -44,6 +44,7 @@ describe("FeeDistributor", function () {
     staticOracleProvider,
     eventEmitter,
     configUtils,
+    configKeys,
     marketUtils,
     marketStoreUtils,
     feeDistributorUtils,
@@ -107,6 +108,7 @@ describe("FeeDistributor", function () {
       staticOracleProvider,
       eventEmitter,
       configUtils,
+      configKeys,
       marketUtils,
       marketStoreUtils,
       feeDistributorUtils,
@@ -2173,6 +2175,7 @@ describe("FeeDistributor", function () {
         libraries: {
           "contracts/market/MarketStoreUtils.sol:MarketStoreUtils": marketStoreUtils.address,
           "contracts/market/MarketUtils.sol:MarketUtils": marketUtils.address,
+          "contracts/config/ConfigKeys.sol:ConfigKeys": configKeys.address,
           "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
         },
       }

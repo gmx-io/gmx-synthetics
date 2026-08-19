@@ -287,10 +287,19 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.staticOracleProvider = staticOracleProvider.address;
     await delay(txDelay);
 
+    const ConfigKeys: ContractFactory = await getFactory(deployer, "ConfigKeys");
+    const configKeys: Contract = await ConfigKeys.deploy();
+    await configKeys.deployed();
+    console.log("ConfigKeys deployed to:", configKeys.address);
+    contracts.configKeys = configKeys.address;
+    await delay(txDelay);
+
     // Config
     const Config: ContractFactory = await getFactory(deployer, "Config", {
       libraries: {
         MarketStoreUtils: contracts.marketStoreUtils,
+        MarketUtils: contracts.marketUtils,
+        ConfigKeys: contracts.configKeys,
         ConfigUtils: contracts.configUtils,
       },
     });
