@@ -91,6 +91,26 @@ export async function bridgeInTokens(
     .sendToken(layerZeroProvider.address, amount, encodedMessageEth, { value: msgValue });
 }
 
+// esGMX runs in private transfer mode on V1; enable it on the mock and grant the
+// handler set the mainnet rollout needs: the vault and the staking router (the two
+// gov actions), plus the mock reward router and vester standing in for the V1
+// trackers and vesters, which are handlers on mainnet already
+export async function setupEsGmxPrivateTransferMode(fixture) {
+  const { multichainVault, multichainStakingRouter, mockRewardRouterV2, mockGmxVester, esGmx } = fixture.contracts;
+
+  const esGmxV1 = await hre.ethers.getContractAt("MockEsGmxV1", esGmx.address);
+  await esGmxV1.setInPrivateTransferMode(true);
+  for (const handler of [
+    multichainVault.address,
+    multichainStakingRouter.address,
+    mockRewardRouterV2.address,
+    mockGmxVester.address,
+  ]) {
+    await esGmxV1.setHandler(handler, true);
+  }
+  return esGmxV1;
+}
+
 export async function fundMultichainBalance(
   fixture,
   overrides: {
