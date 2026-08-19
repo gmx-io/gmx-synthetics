@@ -580,48 +580,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
     }
 
     function _calculateFeeAmounts() internal returns (uint256, uint256, uint256) {
-        // calculate the amount of secondaryFeeToken that needs to be sent to each keeper
-        address[] memory keepers = dataStore.getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
-        uint256[] memory keepersTargetBalance = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
-        if (keepers.length != keepersTargetBalance.length) {
-            revert Errors.KeeperArrayLengthMismatch(keepers.length, keepersTargetBalance.length);
-        }
-
-        uint256 feesForKeepers;
-        for (uint256 i; i < keepers.length; i++) {
-            uint256 keeperTargetBalance = keepersTargetBalance[i];
-            uint256 keeperBalance = keepers[i].balance;
-            if (keeperTargetBalance > keeperBalance) {
-                feesForKeepers += (keeperTargetBalance - keeperBalance);
-            }
-        }
-
-        // calculate secondaryFeeToken fee amounts and transfer to appropriate addresses
-        uint256 totalSecondaryFeeTokenBalance = _getFeeDistributorVaultBalance(secondaryFeeToken);
-
-        // calculate the amount of secondaryFeeToken for chainlink costs and to be sent to the treasury
-        uint256 feesForChainlink = Precision.applyFactor(
-            totalSecondaryFeeTokenBalance,
-            _getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
-        );
-        uint256 feesForTreasury = totalSecondaryFeeTokenBalance - feesForChainlink;
-
-        if (feesForKeepers > feesForTreasury) {
-            uint256 maxFeesFromTreasury = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY);
-            uint256 additionalFeesFromTreasury = feesForKeepers - feesForTreasury;
-            if (additionalFeesFromTreasury > maxFeesFromTreasury) {
-                revert Errors.MaxFeesFromTreasuryExceeded(maxFeesFromTreasury, additionalFeesFromTreasury);
-            }
-            IERC20(secondaryFeeToken).transferFrom(
-                _getAddressInfo(TREASURY),
-                address(feeDistributorVault),
-                additionalFeesFromTreasury
-            );
-            feesForTreasury = 0;
-        } else {
-            feesForTreasury -= feesForKeepers;
-        }
-        return (feesForKeepers, feesForChainlink, feesForTreasury);
+        return FeeDistributorUtils.calculateFeeAmounts(dataStore, address(feeDistributorVault), secondaryFeeToken);
     }
 
     function _distributeFees(
