@@ -15,6 +15,7 @@ if (DEPLOYMENT_TAG !== "chainA" && DEPLOYMENT_TAG !== "chainB") {
 
 type NetworkConfig = {
   chainId: number;
+  creForwarder: string;
   eid: number;
   counterEid: number;
   channelId: number;
@@ -77,6 +78,7 @@ async function delay(ms: number) {
 const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   localhost: {
     chainId: 31337,
+    creForwarder: "0x76c9cf548b4179F8901cda1f8623568b58215E62", // Placeholder
     eid: DEPLOYMENT_TAG === "chainA" ? 1000 : 2000,
     counterEid: DEPLOYMENT_TAG === "chainA" ? 2000 : 1000,
     channelId: 1001,
@@ -84,6 +86,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
   arbitrumSepolia: {
     chainId: 421614,
+    creForwarder: "0x76c9cf548b4179F8901cda1f8623568b58215E62",
     eid: 40231,
     counterEid: 40245,
     channelId: 4294967295,
@@ -91,6 +94,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
   baseSepolia: {
     chainId: 84532,
+    creForwarder: "0xF8344CFd5c43616a4366C34E3EEE75af79a74482",
     eid: 40245,
     counterEid: 40231,
     channelId: 4294967295,
@@ -98,6 +102,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
   arbitrum: {
     chainId: 42161,
+    creForwarder: "0xF8344CFd5c43616a4366C34E3EEE75af79a74482",
     eid: 30110,
     counterEid: 30106,
     channelId: 4294967295,
@@ -105,6 +110,7 @@ const NETWORK_CONFIG: { [key: string]: NetworkConfig } = {
   },
   avalanche: {
     chainId: 43114,
+    creForwarder: "0x76c9cf548b4179F8901cda1f8623568b58215E62",
     eid: 30106,
     counterEid: 30110,
     channelId: 4294967295,
@@ -175,6 +181,22 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.eventEmitter = eventEmitter.address;
     await delay(txDelay);
 
+    // EventHandler
+    const EventHandler: ContractFactory = await getFactory(deployer, "EventHandler");
+    const eventHandler: Contract = await EventHandler.deploy(roleStore.address, eventEmitter.address);
+    await eventHandler.deployed();
+    console.log("EventHandler deployed to:", eventHandler.address);
+    contracts.eventHandler = eventHandler.address;
+    await delay(txDelay);
+
+    // CreReceiver
+    const CreReceiver: ContractFactory = await getFactory(deployer, "CreReceiver");
+    const creReceiver: Contract = await CreReceiver.deploy(roleStore.address, dataStore.address, eventHandler.address);
+    await creReceiver.deployed();
+    console.log("CreReceiver deployed to:", creReceiver.address);
+    contracts.creReceiver = creReceiver.address;
+    await delay(txDelay);
+
     // Grant roles early for configuration
     await (await roleStore.grantRole(deployerAddress, hashString("CONTROLLER"))).wait();
     await delay(txDelay);
@@ -183,6 +205,16 @@ async function deployContracts(): Promise<DeploymentResult> {
     await (await roleStore.grantRole(deployerAddress, hashString("FEE_DISTRIBUTION_KEEPER"))).wait();
     await delay(txDelay);
     await (await roleStore.grantRole(deployerAddress, hashString("CONFIG_KEEPER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(deployerAddress, hashString("CRE_KEEPER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(config.creForwarder, hashString("CRE_FORWARDER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(creReceiver.address, hashString("FEE_DISTRIBUTION_KEEPER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(creReceiver.address, hashString("EVENT_CONTROLLER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(eventHandler.address, hashString("CONTROLLER"))).wait();
     await delay(txDelay);
 
     saveCheckpoint(1, contracts);
