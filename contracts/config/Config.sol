@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import {Chain} from "../chain/Chain.sol";
 import {DataStore} from "../data/DataStore.sol";
 import {Keys} from "../data/Keys.sol";
-import {Keys2} from "../data/Keys2.sol";
 import {Errors} from "../error/Errors.sol";
 import {EventEmitter} from "../event/EventEmitter.sol";
 import {EventUtils} from "../event/EventUtils.sol";
@@ -20,6 +19,7 @@ import {Role} from "../role/Role.sol";
 import {RoleModule} from "../role/RoleModule.sol";
 import {RoleStore} from "../role/RoleStore.sol";
 import {BasicMulticall} from "../utils/BasicMulticall.sol";
+import {ConfigKeys} from "./ConfigKeys.sol";
 import {ConfigUtils} from "./ConfigUtils.sol";
 import {FundingConfigUtils} from "./FundingConfigUtils.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -457,268 +457,17 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
 
     // @dev initialize the allowed base keys
     function _initAllowedBaseKeys() internal {
-        allowedBaseKeys[Keys.MIN_HANDLE_EXECUTION_ERROR_GAS] = true;
-        allowedBaseKeys[Keys.MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD] = true;
-        allowedBaseKeys[Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION] = true;
-
-        allowedBaseKeys[Keys.IS_MARKET_DISABLED] = true;
-
-        allowedBaseKeys[Keys.MAX_SWAP_PATH_LENGTH] = true;
-        allowedBaseKeys[Keys.MAX_CALLBACK_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.REFUND_EXECUTION_FEE_GAS_LIMIT] = true;
-
-        allowedBaseKeys[Keys.MIN_POSITION_SIZE_USD] = true;
-        allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS] = true;
-
-        allowedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
-        allowedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
-        allowedBaseKeys[Keys.MAX_COLLATERAL_SUM] = true;
-        allowedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
-
-        allowedBaseKeys[Keys.MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT] = true;
-
-        allowedBaseKeys[Keys.CREATE_DEPOSIT_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.WITHDRAWAL_SWAP_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.CREATE_SHIFT_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CANCEL_SHIFT_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_SHIFT_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.CREATE_ORDER_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_ORDER_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_ADL_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.UPDATE_ORDER_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CANCEL_ORDER_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.CREATE_GLV_SHIFT_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.EXECUTE_GLV_SHIFT_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CLAIM_COLLATERAL_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.CLAIM_UI_FEES_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.GENERAL_CLAIM_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.JIT_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.MIN_AFFILIATE_REWARD_FACTOR] = true;
-
-        allowedBaseKeys[Keys.SUBACCOUNT_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.GASLESS_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.ATOMIC_SWAP_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.BRIDGE_FEE_SWAP_FEATURE_DISABLED] = true;
-
-        allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
-        allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
-        allowedBaseKeys[Keys.MAX_ATOMIC_ORACLE_PRICE_AGE] = true;
-        allowedBaseKeys[Keys.MAX_ORACLE_TIMESTAMP_RANGE] = true;
-        allowedBaseKeys[Keys.ORACLE_TIMESTAMP_ADJUSTMENT] = true;
-        allowedBaseKeys[Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY] = true;
-        allowedBaseKeys[Keys.CHAINLINK_PAYMENT_TOKEN] = true;
-        allowedBaseKeys[Keys.SEQUENCER_GRACE_DURATION] = true;
-        allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
-
-        allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
-        allowedBaseKeys[Keys.LIQUIDATION_FEE_RECEIVER_FACTOR] = true;
-        allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
-        allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
-
-        allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1] = true;
-        allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE] = true;
-        allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
-
-        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
-        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
-        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
-
-        allowedBaseKeys[Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR] = true;
-
-        allowedBaseKeys[Keys.CREATE_DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.CREATE_WITHDRAWAL_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.CREATE_GLV_DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.CREATE_GLV_WITHDRAWAL_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.GLV_WITHDRAWAL_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.GLV_SHIFT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.GLV_PER_MARKET_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.SHIFT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.SINGLE_SWAP_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.INCREASE_ORDER_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.DECREASE_ORDER_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.SWAP_ORDER_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.REGISTER_CODE_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.STAKE_GMX_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.UNSTAKE_GMX_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.STAKE_ES_GMX_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.UNSTAKE_ES_GMX_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.HANDLE_STAKING_REWARDS_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.COMPOUND_STAKING_REWARDS_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.VEST_ES_GMX_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.DELEGATE_GOV_GMX_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.SIGNAL_STAKING_TRANSFER_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.ACCEPT_STAKING_TRANSFER_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.WITHDRAW_FROM_WALLET_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.WITHDRAW_VESTING_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
-
-        allowedBaseKeys[Keys.REQUEST_EXPIRATION_TIME] = true;
-        allowedBaseKeys[Keys.MIN_COLLATERAL_FACTOR] = true;
-        allowedBaseKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER] = true;
-        allowedBaseKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION] = true;
-        allowedBaseKeys[Keys.MIN_COLLATERAL_USD] = true;
-
-        allowedBaseKeys[Keys.VIRTUAL_TOKEN_ID] = true;
-        allowedBaseKeys[Keys.VIRTUAL_MARKET_ID] = true;
-        allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_SWAPS] = true;
-        allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_POSITIONS] = true;
-        allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS] = true;
-
-        allowedBaseKeys[Keys.POSITION_IMPACT_FACTOR] = true;
-        allowedBaseKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
-        allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR] = true;
-        allowedBaseKeys[Keys.POSITION_FEE_FACTOR] = true;
-        allowedBaseKeys[Keys.PRO_DISCOUNT_FACTOR] = true;
-        allowedBaseKeys[Keys.PRO_TRADER_TIER] = true;
-        allowedBaseKeys[Keys.LIQUIDATION_FEE_FACTOR] = true;
-
-        allowedBaseKeys[Keys.SWAP_IMPACT_FACTOR] = true;
-        allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
-        allowedBaseKeys[Keys.SWAP_FEE_FACTOR] = true;
-        allowedBaseKeys[Keys.DEPOSIT_FEE_FACTOR] = true;
-        allowedBaseKeys[Keys.WITHDRAWAL_FEE_FACTOR] = true;
-        allowedBaseKeys[Keys.ATOMIC_SWAP_FEE_FACTOR] = true;
-        allowedBaseKeys[Keys.ATOMIC_WITHDRAWAL_FEE_FACTOR] = true;
-
-        allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
-        allowedBaseKeys[Keys.MAX_AUTO_CANCEL_ORDERS] = true;
-        allowedBaseKeys[Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS] = true;
-
-        allowedBaseKeys[Keys.ORACLE_TYPE] = true;
-
-        allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
-        allowedBaseKeys[Keys.OPEN_INTEREST_RESERVE_FACTOR] = true;
-
-        allowedBaseKeys[Keys.MAX_PNL_FACTOR] = true;
-        allowedBaseKeys[Keys.MIN_PNL_FACTOR_AFTER_ADL] = true;
-        allowedBaseKeys[Keys.MAX_LENDABLE_IMPACT_FACTOR] = true;
-        allowedBaseKeys[Keys.MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS] = true;
-        allowedBaseKeys[Keys.MAX_LENDABLE_IMPACT_USD] = true;
-
-        allowedBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
-        allowedBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
-        allowedBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
-        allowedBaseKeys[Keys.MAX_BORROWING_FACTOR_PER_SECOND] = true;
-        allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
-        allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
-        allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
-
-        allowedBaseKeys[Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE] = true;
-
-        allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
-
-        allowedBaseKeys[Keys.IS_GLV_MARKET_DISABLED] = true;
-        allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
-        allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT] = true;
-        allowedBaseKeys[Keys.GLV_SHIFT_MAX_LOSS_FACTOR] = true;
-        allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
-        allowedBaseKeys[Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT] = true;
-        allowedBaseKeys[Keys.GLV_MAX_MARKET_COUNT] = true;
-        allowedBaseKeys[Keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD] = true;
-
-        allowedBaseKeys[Keys.SYNC_CONFIG_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;
-        allowedBaseKeys[Keys.SYNC_CONFIG_PARAMETER_DISABLED] = true;
-        allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
-
-        allowedBaseKeys[Keys.BUYBACK_BATCH_AMOUNT] = true;
-        allowedBaseKeys[Keys.BUYBACK_PRIMARY_TOKEN_FACTOR] = true;
-        allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR] = true;
-        allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_AGE] = true;
-
-        allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
-        allowedBaseKeys[Keys.DATA_STREAM_MAX_INTERVAL] = true;
-
-        allowedBaseKeys[Keys.IS_MULTICHAIN_PROVIDER_ENABLED] = true;
-        allowedBaseKeys[Keys.IS_MULTICHAIN_ENDPOINT_ENABLED] = true;
-        allowedBaseKeys[Keys.IS_RELAY_FEE_EXCLUDED] = true;
-        allowedBaseKeys[Keys.IS_SRC_CHAIN_ID_ENABLED] = true;
-        allowedBaseKeys[Keys.EID_TO_SRC_CHAIN_ID] = true;
-
-        allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
-
-        allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
-
-        allowedBaseKeys[Keys.SUBACCOUNT_INTEGRATION_DISABLED] = true;
-        allowedBaseKeys[Keys.RELAY_FEE_ADDRESS] = true;
-        allowedBaseKeys[Keys.EIP6492_DEPLOYER] = true;
-        allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
-        allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
-        allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD] = true;
-        allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
-        allowedBaseKeys[Keys.MAX_BRIDGE_FEE_SWAP_FACTOR] = true;
-
-        allowedBaseKeys[Keys2.MULTICHAIN_READ_CHANNEL] = true;
-        allowedBaseKeys[Keys2.MULTICHAIN_PEERS] = true;
-        allowedBaseKeys[Keys2.MULTICHAIN_CONFIRMATIONS] = true;
-        allowedBaseKeys[Keys2.MULTICHAIN_AUTHORIZED_ORIGINATORS] = true;
-
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAIN_ID] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR] = true;
-
-        allowedBaseKeys[Keys2.CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS] = true;
+        bytes32[196] memory keys = ConfigKeys.allowedBaseKeyList();
+        for (uint256 i; i < keys.length; i++) {
+            allowedBaseKeys[keys[i]] = true;
+        }
     }
 
     function _initAllowedLimitedBaseKeys() internal {
-        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1] = true;
-        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE] = true;
-        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
-
-        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
-        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
-        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
-
-        allowedLimitedBaseKeys[Keys.MAX_BORROWING_FACTOR_PER_SECOND] = true;
-
-        allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
-        allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
-        allowedLimitedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
-
-        allowedLimitedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
-        allowedLimitedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT] = true;
-
-        allowedLimitedBaseKeys[Keys.PRO_TRADER_TIER] = true;
-        allowedLimitedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
+        bytes32[14] memory keys = ConfigKeys.allowedLimitedBaseKeyList();
+        for (uint256 i; i < keys.length; i++) {
+            allowedLimitedBaseKeys[keys[i]] = true;
+        }
     }
 
     // @dev validate that the baseKey is allowed to be used
