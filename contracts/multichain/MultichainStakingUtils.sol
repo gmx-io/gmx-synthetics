@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./MultichainUtils.sol";
 import "./MultichainVault.sol";
@@ -22,6 +23,8 @@ interface IERC20Votes {
 }
 
 library MultichainStakingUtils {
+    using SafeERC20 for IERC20;
+
     struct StakingContracts {
         GmxAccountWalletFactory walletFactory;
         IRewardRouterV2 rewardRouter;
@@ -93,7 +96,7 @@ library MultichainStakingUtils {
 
         IGmxAccountWallet(wallet).execute(address(contracts.rewardRouter), abi.encodeCall(IRewardRouterV2.unstakeEsGmx, (amount)));
 
-        IGmxAccountWallet(wallet).execute(esGmx, abi.encodeCall(IERC20.transfer, (address(contracts.multichainVault), amount)));
+        _transferToVault(contracts, wallet, esGmx, amount);
         MultichainUtils.recordTransferIn(contracts.dataStore, contracts.eventEmitter, contracts.multichainVault, esGmx, account, srcChainId);
     }
 
@@ -263,7 +266,7 @@ library MultichainStakingUtils {
         // create it if needed to make them recoverable in one action
         address wallet = contracts.walletFactory.getOrCreateWallet(account);
 
-        IGmxAccountWallet(wallet).execute(token, abi.encodeCall(IERC20.transfer, (address(contracts.multichainVault), amount)));
+        _transferToVault(contracts, wallet, token, amount);
         MultichainUtils.recordTransferIn(contracts.dataStore, contracts.eventEmitter, contracts.multichainVault, token, account, srcChainId);
     }
 
@@ -302,8 +305,25 @@ library MultichainStakingUtils {
         uint256 balanceAfter = IERC20(token).balanceOf(wallet);
         if (balanceAfter > balanceBefore) {
             uint256 delta = balanceAfter - balanceBefore;
-            IGmxAccountWallet(wallet).execute(token, abi.encodeCall(IERC20.transfer, (address(contracts.multichainVault), delta)));
+            _transferToVault(contracts, wallet, token, delta);
             MultichainUtils.recordTransferIn(contracts.dataStore, contracts.eventEmitter, contracts.multichainVault, token, account, srcChainId);
+        }
+    }
+
+    // esGMX is in private transfer mode on V1, so a wallet cannot transfer it out
+    // itself; the router is an esGMX handler and pulls it instead, and a handler
+    // transferFrom needs no allowance. the vault -> wallet direction is unaffected:
+    // there the vault is the token caller and holds its own handler status
+    function _transferToVault(
+        StakingContracts memory contracts,
+        address wallet,
+        address token,
+        uint256 amount
+    ) private {
+        if (token == contracts.rewardRouter.esGmx()) {
+            IERC20(token).safeTransferFrom(wallet, address(contracts.multichainVault), amount);
+        } else {
+            IGmxAccountWallet(wallet).execute(token, abi.encodeCall(IERC20.transfer, (address(contracts.multichainVault), amount)));
         }
     }
 }

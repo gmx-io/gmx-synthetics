@@ -75,6 +75,8 @@ export type TestTokenConfig = BaseTokenConfig & {
   deploy: true;
   wrappedNative?: boolean;
   synthetic?: never;
+  // mock contract to deploy instead of the default MintableToken
+  contractName?: string;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -2099,6 +2101,8 @@ const config: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
       deploy: true,
+      // esGMX is in private transfer mode on V1, tests must run against those rules
+      contractName: "MockEsGmxV1",
     },
     WBTC: {
       decimals: 8,

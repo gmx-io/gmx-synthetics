@@ -13,6 +13,7 @@ import {
   encodeVestEsGmxMessage,
   encodeWithdrawVestingMessage,
   fundMultichainBalance,
+  setupEsGmxPrivateTransferMode,
 } from "../../utils/multichain";
 
 describe("LayerZeroProvider staking dispatch", () => {
@@ -58,6 +59,8 @@ describe("LayerZeroProvider staking dispatch", () => {
     } = fixture.contracts);
 
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+
+    await setupEsGmxPrivateTransferMode(fixture);
 
     // Enable source chain
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);

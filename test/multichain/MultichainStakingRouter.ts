@@ -21,7 +21,7 @@ import { getRelayParams } from "../../utils/relay/helpers";
 import { getStakeGmxSignature, getSignalStakingTransferSignature } from "../../utils/relay/signatures";
 import { deployContract } from "../../utils/deploy";
 import { grantRole } from "../../utils/role";
-import { fundMultichainBalance } from "../../utils/multichain";
+import { fundMultichainBalance, setupEsGmxPrivateTransferMode } from "../../utils/multichain";
 import { errorsContract } from "../../utils/error";
 import { parseLogs, getEventDataArray } from "../../utils/event";
 import * as keys from "../../utils/keys";
@@ -40,6 +40,7 @@ describe("MultichainStakingRouter", () => {
     gmx,
     esGmx,
     wnt;
+  let esGmxV1;
   let relaySigner;
   let chainId;
 
@@ -71,6 +72,8 @@ describe("MultichainStakingRouter", () => {
 
     // Enable source chain
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
+
+    esGmxV1 = await setupEsGmxPrivateTransferMode(fixture);
   });
 
   function getDefaultStakingRelayParams(overrides: any = {}) {
@@ -188,6 +191,37 @@ describe("MultichainStakingRouter", () => {
       // Multichain esGMX balance should be restored
       const balanceAfter = await dataStore.getUint(keys.multichainBalanceKey(user0.address, esGmx.address));
       expect(balanceAfter).to.equal(stakeAmount);
+    });
+  });
+
+  // the esGMX flows depend on two mainnet gov actions: esGmx.setHandler for the
+  // vault (vault -> wallet legs) and for the staking router (wallet -> vault legs)
+  describe("esGMX private transfer mode", () => {
+    it("stakeEsGmx reverts without the vault handler grant", async () => {
+      await esGmxV1.setHandler(multichainVault.address, false);
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+
+      // the holding-address rescue transfer fails on the same whitelist check as
+      // the transfer to the wallet, so the leg reverts cleanly and no funds move
+      await dataStore.setAddress(keys.HOLDING_ADDRESS, user2.address);
+
+      await expect(sendStakeEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }))).to.be.revertedWithCustomError(
+        errorsContract,
+        "TokenTransferError"
+      );
+    });
+
+    it("unstakeEsGmx reverts without the router handler grant", async () => {
+      await fundMultichainBalance(fixture, { account: user0.address, token: esGmx, amount: stakeAmount });
+      await sendStakeEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }));
+
+      await esGmxV1.setHandler(multichainStakingRouter.address, false);
+
+      // without handler status the transferFrom falls to the allowance path, which
+      // fails first — same ordering as V1 BaseToken
+      await expect(sendUnstakeEsGmx(getDefaultStakingRelayParams({ amount: stakeAmount }))).to.be.revertedWith(
+        "ERC20: insufficient allowance"
+      );
     });
   });
 
@@ -734,6 +768,8 @@ describe("MultichainStakingRouter", () => {
       );
       await grantRole(roleStore, router2.address, "CONTROLLER");
       await grantRole(roleStore, router2.address, "ROUTER_PLUGIN");
+      // a replacement router needs its own esGMX handler grant, same as the original
+      await esGmxV1.setHandler(router2.address, true);
 
       const viaRouter2 = (overrides = {}) => getDefaultStakingRelayParams({ relayRouter: router2, ...overrides });
 
