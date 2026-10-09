@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./MultichainRouter.sol";
 import "./IMultichainTransferRouter.sol";
+import "../token/IWNT.sol";
 
 contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
     IMultichainProvider public multichainProvider;
@@ -33,6 +34,40 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
      * @dev payable is necessary because, when bridging in WNT the user sends ETH along with the transaction (via multicall)
      */
     function bridgeIn(address account, address token) external payable nonReentrant {
+        // If native tokens were attached directly to this call instead of being
+        // wrapped via sendWnt in a multicall, wrap them into WNT and credit the
+        // depositor's WNT multichain balance. Without this the ETH would sit in
+        // the router, credited to nobody, where anyone could sweep it through
+        // the permissionless sendNativeToken.
+        //
+        // min(msg.value, address(this).balance) keeps the legitimate
+        // multicall([sendWnt, bridgeIn], {value}) flow untouched: sendWnt has
+        // already wrapped the ETH by the time bridgeIn runs (delegatecall
+        // preserves msg.value, but the router balance is back to zero), so
+        // nothing is wrapped or credited twice.
+        uint256 strandedAmount = msg.value < address(this).balance ? msg.value : address(this).balance;
+        if (strandedAmount > 0) {
+            address wnt = TokenUtils.wnt(dataStore);
+            IWNT(wnt).deposit{value: strandedAmount}();
+            TokenUtils.transfer(dataStore, wnt, address(multichainVault), strandedAmount);
+            uint256 wntAmount = MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                wnt,
+                account,
+                0 // srcChainId is the current block.chainId
+            );
+            MultichainEventUtils.emitMultichainBridgeIn(
+                eventEmitter,
+                address(0),
+                wnt,
+                account,
+                wntAmount,
+                0 // srcChainId is the current block.chainId
+            );
+        }
+
         uint256 amount = MultichainUtils.recordTransferIn(
             dataStore,
             eventEmitter,
