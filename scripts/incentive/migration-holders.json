@@ -1,0 +1,8 @@
+{
+  "comment": "Role holders for the migration's RoleStore grants (implementation plan, roles table). Fill before generating the step-3 bundle; generateGovActions marks the bundle incomplete while any address is empty.",
+  "holders": {
+    "INCENTIVE_ADMIN": "",
+    "INCENTIVE_GUARDIAN": "",
+    "INCENTIVE_DISTRIBUTOR": ""
+  }
+}

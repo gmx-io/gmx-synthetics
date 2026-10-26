@@ -81,6 +81,7 @@ export async function sendCreateWithdrawal(p: SendCreate) {
     signature = await getCreateWithdrawalSignature({
       signer: p.signer,
       relayParams,
+      account: p.account,
       transferRequests: p.transferRequests,
       verifyingContract: p.relayRouter.address,
       params: p.params,
@@ -111,6 +112,7 @@ export async function sendCreateShift(p: SendCreate) {
     signature = await getCreateShiftSignature({
       signer: p.signer,
       relayParams,
+      account: p.account,
       transferRequests: p.transferRequests,
       verifyingContract: p.relayRouter.address,
       params: p.params,
@@ -417,6 +419,7 @@ export async function sendUpdateOrder(p: {
     triggerPrice: BigNumberish;
     minOutputAmount: BigNumberish;
     validFromTime: BigNumberish;
+    decreasePositionSwapType: BigNumberish;
     autoCancel: boolean;
     executionFeeIncrease: BigNumberish;
   };
@@ -570,12 +573,14 @@ export async function getBridgeOutSignature({
   signer,
   relayParams,
   verifyingContract,
+  account,
   params,
   srcChainId,
 }: {
   signer: ethers.Signer;
   relayParams: any;
   verifyingContract: string;
+  account: string;
   params: any;
   srcChainId: BigNumberish;
 }) {
@@ -584,20 +589,30 @@ export async function getBridgeOutSignature({
   }
   const types = {
     BridgeOut: [
+      { name: "account", type: "address" },
       { name: "token", type: "address" },
       { name: "amount", type: "uint256" },
       { name: "minAmountOut", type: "uint256" },
       { name: "provider", type: "address" },
       { name: "data", type: "bytes" },
+      { name: "bridgeFeeToken", type: "address" },
+      { name: "bridgeFeeAmount", type: "uint256" },
+      { name: "bridgeFeeSwapPath", type: "address[]" },
+      { name: "bridgeFeeMinOutputAmount", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const typedData = {
+    account,
     token: params.token,
     amount: params.amount,
     minAmountOut: params.minAmountOut,
     provider: params.provider,
     data: params.data,
+    bridgeFeeToken: params.bridgeFee.feeToken,
+    bridgeFeeAmount: params.bridgeFee.feeAmount,
+    bridgeFeeSwapPath: params.bridgeFee.feeSwapPath,
+    bridgeFeeMinOutputAmount: params.bridgeFee.minOutputAmount,
     relayParams: hashRelayParams(relayParams),
   };
   const domain = getDomain(srcChainId, verifyingContract);
@@ -608,6 +623,7 @@ export async function getBridgeOutSignature({
 export async function getCreateDepositSignature({
   signer,
   relayParams,
+  account,
   transferRequests,
   verifyingContract,
   params,
@@ -615,6 +631,7 @@ export async function getCreateDepositSignature({
 }: {
   signer: ethers.Signer;
   relayParams: any;
+  account: string;
   transferRequests: { tokens: string[]; receivers: string[]; amounts: BigNumberish[] };
   verifyingContract: string;
   params: any;
@@ -625,9 +642,8 @@ export async function getCreateDepositSignature({
   }
   const types = {
     CreateDeposit: [
-      { name: "transferTokens", type: "address[]" },
-      { name: "transferReceivers", type: "address[]" },
-      { name: "transferAmounts", type: "uint256[]" },
+      { name: "account", type: "address" },
+      { name: "transferRequests", type: "TransferRequests" },
       { name: "addresses", type: "CreateDepositAddresses" },
       { name: "minMarketTokens", type: "uint256" },
       { name: "shouldUnwrapNativeToken", type: "bool" },
@@ -646,11 +662,19 @@ export async function getCreateDepositSignature({
       { name: "longTokenSwapPath", type: "address[]" },
       { name: "shortTokenSwapPath", type: "address[]" },
     ],
+    TransferRequests: [
+      { name: "tokens", type: "address[]" },
+      { name: "receivers", type: "address[]" },
+      { name: "amounts", type: "uint256[]" },
+    ],
   };
   const typedData = {
-    transferTokens: transferRequests.tokens,
-    transferReceivers: transferRequests.receivers,
-    transferAmounts: transferRequests.amounts,
+    account,
+    transferRequests: {
+      tokens: transferRequests.tokens,
+      receivers: transferRequests.receivers,
+      amounts: transferRequests.amounts,
+    },
     addresses: params.addresses,
     minMarketTokens: params.minMarketTokens,
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
@@ -667,6 +691,7 @@ export async function getCreateDepositSignature({
 export async function getCreateWithdrawalSignature({
   signer,
   relayParams,
+  account,
   transferRequests,
   verifyingContract,
   params,
@@ -674,6 +699,7 @@ export async function getCreateWithdrawalSignature({
 }: {
   signer: ethers.Signer;
   relayParams: any;
+  account: string;
   transferRequests: { tokens: string[]; receivers: string[]; amounts: BigNumberish[] };
   verifyingContract: string;
   params: any;
@@ -684,9 +710,8 @@ export async function getCreateWithdrawalSignature({
   }
   const types = {
     CreateWithdrawal: [
-      { name: "transferTokens", type: "address[]" },
-      { name: "transferReceivers", type: "address[]" },
-      { name: "transferAmounts", type: "uint256[]" },
+      { name: "account", type: "address" },
+      { name: "transferRequests", type: "TransferRequests" },
       { name: "addresses", type: "CreateWithdrawalAddresses" },
       { name: "minLongTokenAmount", type: "uint256" },
       { name: "minShortTokenAmount", type: "uint256" },
@@ -704,11 +729,19 @@ export async function getCreateWithdrawalSignature({
       { name: "longTokenSwapPath", type: "address[]" },
       { name: "shortTokenSwapPath", type: "address[]" },
     ],
+    TransferRequests: [
+      { name: "tokens", type: "address[]" },
+      { name: "receivers", type: "address[]" },
+      { name: "amounts", type: "uint256[]" },
+    ],
   };
   const typedData = {
-    transferTokens: transferRequests.tokens,
-    transferReceivers: transferRequests.receivers,
-    transferAmounts: transferRequests.amounts,
+    account,
+    transferRequests: {
+      tokens: transferRequests.tokens,
+      receivers: transferRequests.receivers,
+      amounts: transferRequests.amounts,
+    },
     addresses: params.addresses,
     minLongTokenAmount: params.minLongTokenAmount,
     minShortTokenAmount: params.minShortTokenAmount,
@@ -725,6 +758,7 @@ export async function getCreateWithdrawalSignature({
 export async function getCreateShiftSignature({
   signer,
   relayParams,
+  account,
   transferRequests,
   verifyingContract,
   params,
@@ -732,6 +766,7 @@ export async function getCreateShiftSignature({
 }: {
   signer: ethers.Signer;
   relayParams: any;
+  account: string;
   transferRequests: { tokens: string[]; receivers: string[]; amounts: BigNumberish[] };
   verifyingContract: string;
   params: {
@@ -755,9 +790,8 @@ export async function getCreateShiftSignature({
 
   const types = {
     CreateShift: [
-      { name: "transferTokens", type: "address[]" },
-      { name: "transferReceivers", type: "address[]" },
-      { name: "transferAmounts", type: "uint256[]" },
+      { name: "account", type: "address" },
+      { name: "transferRequests", type: "TransferRequests" },
       { name: "addresses", type: "CreateShiftAddresses" },
       { name: "minMarketTokens", type: "uint256" },
       { name: "executionFee", type: "uint256" },
@@ -772,12 +806,20 @@ export async function getCreateShiftSignature({
       { name: "fromMarket", type: "address" },
       { name: "toMarket", type: "address" },
     ],
+    TransferRequests: [
+      { name: "tokens", type: "address[]" },
+      { name: "receivers", type: "address[]" },
+      { name: "amounts", type: "uint256[]" },
+    ],
   };
 
   const typedData = {
-    transferTokens: transferRequests.tokens,
-    transferReceivers: transferRequests.receivers,
-    transferAmounts: transferRequests.amounts,
+    account,
+    transferRequests: {
+      tokens: transferRequests.tokens,
+      receivers: transferRequests.receivers,
+      amounts: transferRequests.amounts,
+    },
     addresses: params.addresses,
     minMarketTokens: params.minMarketTokens,
     executionFee: params.executionFee,
@@ -793,6 +835,7 @@ export async function getCreateShiftSignature({
 export async function getCreateGlvDepositSignature({
   signer,
   relayParams,
+  account,
   transferRequests,
   verifyingContract,
   params,
@@ -800,6 +843,7 @@ export async function getCreateGlvDepositSignature({
 }: {
   signer: ethers.Signer;
   relayParams: any;
+  account: string;
   transferRequests: { tokens: string[]; receivers: string[]; amounts: BigNumberish[] };
   verifyingContract: string;
   params: any;
@@ -810,9 +854,8 @@ export async function getCreateGlvDepositSignature({
   }
   const types = {
     CreateGlvDeposit: [
-      { name: "transferTokens", type: "address[]" },
-      { name: "transferReceivers", type: "address[]" },
-      { name: "transferAmounts", type: "uint256[]" },
+      { name: "account", type: "address" },
+      { name: "transferRequests", type: "TransferRequests" },
       { name: "addresses", type: "CreateGlvDepositAddresses" },
       { name: "minGlvTokens", type: "uint256" },
       { name: "executionFee", type: "uint256" },
@@ -833,11 +876,19 @@ export async function getCreateGlvDepositSignature({
       { name: "longTokenSwapPath", type: "address[]" },
       { name: "shortTokenSwapPath", type: "address[]" },
     ],
+    TransferRequests: [
+      { name: "tokens", type: "address[]" },
+      { name: "receivers", type: "address[]" },
+      { name: "amounts", type: "uint256[]" },
+    ],
   };
   const typedData = {
-    transferTokens: transferRequests.tokens,
-    transferReceivers: transferRequests.receivers,
-    transferAmounts: transferRequests.amounts,
+    account,
+    transferRequests: {
+      tokens: transferRequests.tokens,
+      receivers: transferRequests.receivers,
+      amounts: transferRequests.amounts,
+    },
     addresses: params.addresses,
     minGlvTokens: params.minGlvTokens,
     executionFee: params.executionFee,
@@ -855,6 +906,7 @@ export async function getCreateGlvDepositSignature({
 export async function getCreateGlvWithdrawalSignature({
   signer,
   relayParams,
+  account,
   transferRequests,
   verifyingContract,
   params,
@@ -862,6 +914,7 @@ export async function getCreateGlvWithdrawalSignature({
 }: {
   signer: ethers.Signer;
   relayParams: any;
+  account: string;
   transferRequests: { tokens: string[]; receivers: string[]; amounts: BigNumberish[] };
   verifyingContract: string;
   params: any;
@@ -872,9 +925,8 @@ export async function getCreateGlvWithdrawalSignature({
   }
   const types = {
     CreateGlvWithdrawal: [
-      { name: "transferTokens", type: "address[]" },
-      { name: "transferReceivers", type: "address[]" },
-      { name: "transferAmounts", type: "uint256[]" },
+      { name: "account", type: "address" },
+      { name: "transferRequests", type: "TransferRequests" },
       { name: "addresses", type: "CreateGlvWithdrawalAddresses" },
       { name: "minLongTokenAmount", type: "uint256" },
       { name: "minShortTokenAmount", type: "uint256" },
@@ -893,11 +945,19 @@ export async function getCreateGlvWithdrawalSignature({
       { name: "longTokenSwapPath", type: "address[]" },
       { name: "shortTokenSwapPath", type: "address[]" },
     ],
+    TransferRequests: [
+      { name: "tokens", type: "address[]" },
+      { name: "receivers", type: "address[]" },
+      { name: "amounts", type: "uint256[]" },
+    ],
   };
   const typedData = {
-    transferTokens: transferRequests.tokens,
-    transferReceivers: transferRequests.receivers,
-    transferAmounts: transferRequests.amounts,
+    account,
+    transferRequests: {
+      tokens: transferRequests.tokens,
+      receivers: transferRequests.receivers,
+      amounts: transferRequests.amounts,
+    },
     addresses: params.addresses,
     minLongTokenAmount: params.minLongTokenAmount,
     minShortTokenAmount: params.minShortTokenAmount,

@@ -6,6 +6,7 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import {
   OrderType,
+  DecreasePositionSwapType,
   getOrderCount,
   getAccountOrderCount,
   getOrderKeys,
@@ -67,6 +68,7 @@ describe("Exchange.AutoCancelOrder", () => {
         order.numbers.triggerPrice,
         order.numbers.minOutputAmount,
         order.numbers.validFromTime,
+        DecreasePositionSwapType.NoSwap,
         order.flags.autoCancel
       );
 

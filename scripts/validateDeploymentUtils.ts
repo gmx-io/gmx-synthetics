@@ -19,6 +19,7 @@ const externalContractsAllowedForRoles = {
   [hashString("MARKET_KEEPER")]: true,
   [hashString("FEE_KEEPER")]: true,
   [hashString("FEE_DISTRIBUTION_KEEPER")]: true,
+  [hashString("DONATION_KEEPER")]: true,
   [hashString("ORDER_KEEPER")]: true,
   [hashString("FROZEN_ORDER_KEEPER")]: true,
   [hashString("LIQUIDATION_KEEPER")]: true,
@@ -26,6 +27,7 @@ const externalContractsAllowedForRoles = {
   [hashString("CONTRIBUTOR_KEEPER")]: true,
   [hashString("CONTRIBUTOR_DISTRIBUTOR")]: true,
   [hashString("CLAIM_ADMIN")]: true,
+  [hashString("RISK_ORACLE")]: true,
 };
 
 export interface SignalRoleInfo {
@@ -234,6 +236,11 @@ function validateSourceFile(fullContractName: string, sourceCode: string): boole
 }
 
 function showDiff(localPath: string, sourceCode: string, contractName: string) {
+  const validationFolder = path.join(__dirname, `../validation`);
+  if (!fs.existsSync(validationFolder)) {
+    fs.mkdirSync(validationFolder);
+  }
+
   const outDir = path.join(__dirname, `../validation/${hre.network.name}`);
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir);

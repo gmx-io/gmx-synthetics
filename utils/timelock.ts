@@ -7,6 +7,7 @@ import * as keys from "./keys";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { BigNumber, constants } from "ethers";
 import * as crypto from "crypto";
+import { writeJsonFile } from "./file";
 
 export async function timelockWriteMulticall({ timelock, multicallWriteParams }) {
   console.info("multicallWriteParams", multicallWriteParams);
@@ -15,6 +16,8 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
     return;
   }
 
+  // if TimelockConfig is also redeployed, use SKIP_VALIDATION=true to skip the pre-flight simulation (flag needed because the simulation
+  // is using the newly deployed contract which doesn't have the CONTROLLER role yet, actual tx will use previous hardcoded TimelockConfig)
   if (process.env.SKIP_VALIDATION === undefined) {
     await hre.deployments.read(
       "TimelockConfig",
@@ -44,6 +47,8 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
     await signExternally(await timelock.populateTransaction.multicall(multicallWriteParams));
   } else {
     console.info("NOTE: executed in read-only mode, no transactions were sent, simulation was successful");
+
+    writeJsonFile("out/timelock_tx.txt", await timelock.populateTransaction.multicall(multicallWriteParams));
   }
 }
 
@@ -100,7 +105,7 @@ export async function setDataStreamPayload(
   const targets = [dataStore.address, dataStore.address, dataStore.address];
   const values = [0, 0, 0];
   const payloads = [
-    dataStore.interface.encodeFunctionData("setBytes32", [keys.dataStreamIdKey(token), hashString(feedId)]),
+    dataStore.interface.encodeFunctionData("setBytes32", [keys.dataStreamIdKey(token), feedId]),
     dataStore.interface.encodeFunctionData("setUint", [keys.dataStreamMultiplierKey(token), dataStreamMultiplier]),
     dataStore.interface.encodeFunctionData("setUint", [
       keys.dataStreamSpreadReductionFactorKey(token),
@@ -201,6 +206,34 @@ export async function getWithdrawTokensPayload(token: string, receiver: string, 
   return {
     target: layerZeroProvider.address,
     payload: layerZeroProvider.interface.encodeFunctionData("withdrawTokens", [token, receiver, amount]),
+  };
+}
+
+export function getSetUnstakeDelayPayload(router: { address: string; interface: any }, delay: BigNumber | number) {
+  return {
+    target: router.address,
+    payload: router.interface.encodeFunctionData("setUnstakeDelay", [delay]),
+  };
+}
+
+export function getSetUnstakeExpiryPayload(router: { address: string; interface: any }, expiry: BigNumber | number) {
+  return {
+    target: router.address,
+    payload: router.interface.encodeFunctionData("setUnstakeExpiry", [expiry]),
+  };
+}
+
+export async function getRefundComposePayload(
+  endpoint: string,
+  from: string,
+  guid: string,
+  message: string,
+  receiver: string
+) {
+  const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
+  return {
+    target: layerZeroProvider.address,
+    payload: layerZeroProvider.interface.encodeFunctionData("refundCompose", [endpoint, from, guid, message, receiver]),
   };
 }
 

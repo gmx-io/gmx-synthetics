@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { expandDecimals } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { hashString } from "../../utils/hash";
 import { deployFixture } from "../../utils/fixture";
 import { TOKEN_ORACLE_TYPES, getOracleParams, encodeDataStreamData } from "../../utils/oracle";
@@ -27,6 +27,7 @@ describe("Oracle", () => {
 
     await dataStore.setBytes32(keys.dataStreamIdKey(wbtc.address), hashString("WBTC"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wbtc.address), expandDecimals(1, 34));
+    await dataStore.setUint(keys.dataStreamSpreadReductionFactorKey(wbtc.address), decimalToFloat(1));
 
     const params = await getOracleParams({
       oracleSalt,
@@ -65,11 +66,15 @@ describe("Oracle", () => {
     expect((await oracle.primaryPrices(wnt.address))[0]).eq("5000000000000000");
     expect((await oracle.primaryPrices(wnt.address))[1]).eq("5000000000000000");
 
-    expect((await oracle.primaryPrices(wbtc.address))[0]).eq("999990000");
-    expect((await oracle.primaryPrices(wbtc.address))[1]).eq("1000010000");
+    expect((await oracle.primaryPrices(wbtc.address))[0]).eq("1000000000");
+    expect((await oracle.primaryPrices(wbtc.address))[1]).eq("1000000000");
+    expect((await oracle.primaryRawPrices(wbtc.address))[0]).eq("999990000");
+    expect((await oracle.primaryRawPrices(wbtc.address))[1]).eq("1000010000");
 
     expect((await oracle.primaryPrices(usdc.address))[0]).eq("1000000000000000000000000");
     expect((await oracle.primaryPrices(usdc.address))[1]).eq("1000000000000000000000000");
+    expect((await oracle.primaryRawPrices(usdc.address))[0]).eq("1000000000000000000000000");
+    expect((await oracle.primaryRawPrices(usdc.address))[1]).eq("1000000000000000000000000");
 
     expect(await oracle.minTimestamp()).eq(block.timestamp - 1);
     expect(await oracle.maxTimestamp()).gt(block.timestamp);
@@ -81,5 +86,43 @@ describe("Oracle", () => {
         data: ["0x"],
       })
     ).to.be.revertedWithCustomError(errorsContract, "InvalidOracleProvider");
+  });
+
+  it("reverts when setting prices while prices are already set (re-entrancy guard)", async () => {
+    await mine();
+    const block = await hre.ethers.provider.getBlock();
+
+    const params = await getOracleParams({
+      oracleSalt,
+      minOracleBlockNumbers: [block.number],
+      maxOracleBlockNumbers: [block.number],
+      oracleTimestamps: [block.timestamp],
+      blockHashes: [block.hash],
+      signerIndexes,
+      tokens: [],
+      tokenOracleTypes: [],
+      precisions: [],
+      minPrices: [],
+      maxPrices: [],
+      signers,
+      dataStreamTokens: [],
+      dataStreamData: [],
+      priceFeedTokens: [usdc.address],
+    });
+
+    await oracle.setPrices(params);
+    expect(await oracle.getTokensWithPrices(0, 10)).eql([usdc.address]);
+
+    const emptyParams = { tokens: [], providers: [], data: [] };
+
+    await expect(oracle.setPrices(emptyParams)).to.be.revertedWithCustomError(
+      errorsContract,
+      "NonEmptyTokensWithPrices"
+    );
+
+    await expect(oracle.setPricesForAtomicAction(emptyParams)).to.be.revertedWithCustomError(
+      errorsContract,
+      "NonEmptyTokensWithPrices"
+    );
   });
 });

@@ -61,11 +61,23 @@ library ExecuteOrderUtils {
             params.market.marketToken
         );
 
+        bool allowZeroPoolBorrowingFactor =
+            (
+                Order.isIncreaseOrder(params.order.orderType()) &&
+                params.order.sizeDeltaUsd() == 0 &&
+                params.order.initialCollateralDeltaAmount() > 0
+            ) ||
+            (
+                Order.isDecreaseOrder(params.order.orderType()) &&
+                params.order.sizeDeltaUsd() > 0
+            );
         PositionUtils.updateFundingAndBorrowingState(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.market,
-            prices
+            prices,
+            allowZeroPoolBorrowingFactor,
+            allowZeroPoolBorrowingFactor
         );
 
         EventUtils.EventLogData memory eventData = orderExecutor.processOrder(params);

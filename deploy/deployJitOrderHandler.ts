@@ -15,6 +15,7 @@ const constructorContracts = [
 ];
 const contractName = "JitOrderHandler";
 const requireMockTimelock = !["arbitrum", "avalanche", "botanix", "megaEth"].includes(hre.network.name);
+const SKIP_TIMELOCK_ACTIONS = process.env.SKIP_TIMELOCK_ACTIONS || false;
 
 const func = createDeployFunction({
   contractName: contractName,
@@ -27,7 +28,7 @@ const func = createDeployFunction({
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
 
-    if (requireMockTimelock) {
+    if (SKIP_TIMELOCK_ACTIONS !== "true" && requireMockTimelock) {
       const referralStorage = await deployments.get("ReferralStorage");
       await execute(
         "MockTimelockV1",

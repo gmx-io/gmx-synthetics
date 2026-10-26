@@ -7,6 +7,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { MessagingFee, OFTReceipt, SendParam, MessagingReceipt, OFTLimit, OFTFeeDetail } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import { OFTComposeMsgCodec } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
+import { IMessagingComposer } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessagingComposer.sol";
 
 import {LayerZeroProvider} from "../multichain/LayerZeroProvider.sol";
 
@@ -72,6 +73,43 @@ contract MockStargatePool {
     }
 
     /**
+     * @dev Same as sendToken, but the compose message is queued on the endpoint instead of being delivered,
+     *      as Stargate does on the destination chain; anyone can then deliver it with endpoint.lzCompose
+     * @param layerZeroProvider The recipient contract (LayerZeroProvider)
+     * @param endpoint The endpoint that holds the compose queue
+     * @param _amount The amount of tokens to send
+     * @param _message The encoded message containing account, token, srcChainId
+     * @param _guid The guid of the compose message
+     * @return composedMsg The queued message, the same bytes that must be passed to endpoint.lzCompose
+     */
+    function sendTokenQueued(
+        LayerZeroProvider layerZeroProvider,
+        address endpoint,
+        uint256 _amount,
+        bytes calldata _message,
+        bytes32 _guid
+    ) external payable returns (bytes memory composedMsg) {
+        composedMsg = OFTComposeMsgCodec.encode(
+            uint64(block.timestamp), // mock nonce
+            SRC_EID,
+            _amount,
+            abi.encodePacked(OFTComposeMsgCodec.addressToBytes32(msg.sender), _message)
+        );
+
+        if (token == address(0)) {
+            // For native token: msg.value is the bridged amount, a top-up is paid by whoever delivers the message
+            require(msg.value == _amount, "Invalid ETH amount");
+            (bool success, ) = address(layerZeroProvider).call{value: _amount}("");
+            require(success, "ETH transfer failed");
+        } else {
+            IERC20(token).transferFrom(msg.sender, address(layerZeroProvider), _amount);
+        }
+
+        // `from` of the queued message is this pool
+        IMessagingComposer(endpoint).sendCompose(address(layerZeroProvider), _guid, 0, composedMsg);
+    }
+
+    /**
      * @dev Mock send function that handles the cross-chain transfer (bridgeOut flow)
      */
     function send(
@@ -80,7 +118,13 @@ contract MockStargatePool {
         address // _refundReceiver
     ) external payable returns (MessagingReceipt memory, OFTReceipt memory) {
         address receiver = address(uint160(uint256(_sendParam.to)));
-        IERC20(token).transferFrom(msg.sender, receiver, _sendParam.amountLD);
+        if (token == address(0)) {
+            // Native token: amountLD is included in msg.value, forward to receiver
+            (bool success, ) = receiver.call{value: _sendParam.amountLD}("");
+            require(success, "ETH transfer failed");
+        } else {
+            IERC20(token).transferFrom(msg.sender, receiver, _sendParam.amountLD);
+        }
 
         MessagingReceipt memory msgReceipt = MessagingReceipt({
             guid: bytes32(uint256(block.timestamp)),

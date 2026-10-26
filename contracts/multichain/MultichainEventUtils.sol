@@ -107,6 +107,54 @@ library MultichainEventUtils {
         eventEmitter.emitEventLog1("MultichainBridgeActionFailed", Cast.toBytes32(account), eventData);
     }
 
+    /// @param provider the address of the multichain provider
+    /// @param from the Stargate pool that delivered the tokens and queued the compose message
+    function emitMultichainComposeRefunded(
+        EventEmitter eventEmitter,
+        address provider,
+        address from,
+        address token,
+        address receiver,
+        bytes32 guid,
+        uint256 amount
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.addressItems.setItem(1, "from", from);
+        eventData.addressItems.setItem(2, "token", token);
+        eventData.addressItems.setItem(3, "receiver", receiver);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "guid", guid);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
+
+        eventEmitter.emitEventLog1("MultichainComposeRefunded", guid, eventData);
+    }
+
+    /// @param provider the address of the multichain provider
+    /// @param from the Stargate pool that queued the compose message
+    function emitMultichainRefundedComposeDelivered(
+        EventEmitter eventEmitter,
+        address provider,
+        address from,
+        bytes32 guid
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.addressItems.setItem(1, "from", from);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "guid", guid);
+
+        eventEmitter.emitEventLog1("MultichainRefundedComposeDelivered", guid, eventData);
+    }
+
     /// @param provider the address of the multichain provider for cross-chain action,
     /// or zero address for same-chain action
     function emitMultichainBridgeOut(

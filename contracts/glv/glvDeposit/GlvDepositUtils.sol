@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 
 import "../../nonce/NonceUtils.sol";
 import "../../gas/GasUtils.sol";
+import "../../fee/FeeUtils.sol";
 import "../../multichain/MultichainVault.sol";
 
 import "../GlvVault.sol";
@@ -77,6 +78,8 @@ library GlvDepositUtils {
         } else {
             MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
             MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
+            MarketUtils.validateDepositMarketInSwapPath(params.addresses.market, params.addresses.longTokenSwapPath);
+            MarketUtils.validateDepositMarketInSwapPath(params.addresses.market, params.addresses.shortTokenSwapPath);
 
             if (params.addresses.initialLongToken == address(0)) {
                 revert Errors.InvalidGlvDepositInitialLongToken(params.addresses.initialLongToken);
@@ -137,6 +140,7 @@ library GlvDepositUtils {
                 initialLongTokenAmount: cache.initialLongTokenAmount,
                 initialShortTokenAmount: cache.initialShortTokenAmount,
                 minGlvTokens: params.minGlvTokens,
+                uiFeeFactor: FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver),
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit,
@@ -153,10 +157,10 @@ library GlvDepositUtils {
 
         uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvDeposit.glv());
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
-        uint256 oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
+        uint256 oraclePriceCount = GasUtils.estimateExecuteGlvDepositOraclePriceCount(
+            glvDeposit,
             marketCount,
-            params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length,
-            false // glvTokenPriceUsed. at this point we don't know if the GLV token price will be used
+            true // keepers typically provide GLV oracle price during execution
         );
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 

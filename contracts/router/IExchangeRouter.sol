@@ -7,6 +7,7 @@ import "../withdrawal/IWithdrawalUtils.sol";
 import "../oracle/OracleUtils.sol";
 import "../shift/IShiftUtils.sol";
 import "../order/IBaseOrderUtils.sol";
+import "../order/Order.sol";
 
 interface IExchangeRouter {
     function createDeposit(
@@ -36,6 +37,12 @@ interface IExchangeRouter {
         IBaseOrderUtils.CreateOrderParams calldata params
     ) external payable returns (bytes32);
 
+    function createTwapOrder(
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        uint256 twapCount,
+        uint256 interval
+    ) external payable returns (bytes32[] memory orderKeys);
+
     function updateOrder(
         bytes32 key,
         uint256 sizeDeltaUsd,
@@ -43,6 +50,7 @@ interface IExchangeRouter {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         uint256 validFromTime,
+        Order.DecreasePositionSwapType decreasePositionSwapType,
         bool autoCancel
     ) external payable;
 

@@ -48,6 +48,7 @@ library ExecuteDepositUtils {
         address account;
         address receiver;
         address uiFeeReceiver;
+        uint256 uiFeeFactor;
         address tokenIn;
         address tokenOut;
         Price.Props tokenInPrice;
@@ -67,6 +68,7 @@ library ExecuteDepositUtils {
         uint256 longTokenUsd;
         uint256 shortTokenUsd;
         uint256 receivedMarketTokens;
+        uint256 bridgeFeeSwapCount;
         int256 priceImpactUsd;
         bool balanceWasImproved;
         uint256 marketTokensSupply;
@@ -132,7 +134,9 @@ library ExecuteDepositUtils {
             params.dataStore,
             params.eventEmitter,
             cache.market,
-            cache.prices
+            cache.prices,
+            true, // allowZeroPoolBorrowingFactorForLongs
+            true // allowZeroPoolBorrowingFactorForShorts
         );
 
         // deposits should improve the pool state but it should be checked if
@@ -156,7 +160,8 @@ library ExecuteDepositUtils {
             deposit.initialLongTokenAmount(),
             cache.market.marketToken,
             cache.market.longToken,
-            deposit.uiFeeReceiver()
+            deposit.uiFeeReceiver(),
+            deposit.uiFeeFactor()
         );
 
         cache.shortTokenAmount = swap(
@@ -166,7 +171,8 @@ library ExecuteDepositUtils {
             deposit.initialShortTokenAmount(),
             cache.market.marketToken,
             cache.market.shortToken,
-            deposit.uiFeeReceiver()
+            deposit.uiFeeReceiver(),
+            deposit.uiFeeFactor()
         );
 
         if (cache.longTokenAmount == 0 && cache.shortTokenAmount == 0) {
@@ -176,7 +182,7 @@ library ExecuteDepositUtils {
         cache.longTokenUsd = cache.longTokenAmount * cache.prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * cache.prices.shortTokenPrice.midPrice();
 
-        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
+        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsdForDeposit(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 cache.market,
@@ -196,6 +202,7 @@ library ExecuteDepositUtils {
                 deposit.account(),
                 deposit.receiver(),
                 deposit.uiFeeReceiver(),
+                deposit.uiFeeFactor(),
                 cache.market.longToken,
                 cache.market.shortToken,
                 cache.prices.longTokenPrice,
@@ -214,6 +221,7 @@ library ExecuteDepositUtils {
                 deposit.account(),
                 deposit.receiver(),
                 deposit.uiFeeReceiver(),
+                deposit.uiFeeFactor(),
                 cache.market.shortToken,
                 cache.market.longToken,
                 cache.prices.shortTokenPrice,
@@ -251,7 +259,8 @@ library ExecuteDepositUtils {
             cache.prices.longTokenPrice,
             cache.prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true
+            true,
+            true // allowZeroPoolBorrowingFactor
         );
 
         cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(cache.market.marketToken)));
@@ -270,7 +279,7 @@ library ExecuteDepositUtils {
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
         // use deposit.dataList to determine if the GM tokens minted should be bridged out to src chain
-        BridgeOutFromControllerUtils.bridgeOutFromController(
+        cache.bridgeFeeSwapCount = BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
             deposit.account(),
@@ -292,7 +301,9 @@ library ExecuteDepositUtils {
             deposit.callbackContract(),
             deposit.executionFee(),
             params.startingGas,
-            GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
+            GasUtils.estimateDepositOraclePriceCount(
+                deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length + cache.bridgeFeeSwapCount
+            ),
             params.keeper,
             deposit.receiver(),
             deposit.srcChainId()
@@ -317,6 +328,7 @@ library ExecuteDepositUtils {
             _params.amount,
             balanceWasImproved,
             _params.uiFeeReceiver,
+            _params.uiFeeFactor,
             params.swapPricingType
         );
 
@@ -358,7 +370,8 @@ library ExecuteDepositUtils {
             _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
             _params.tokenIn == _params.market.shortToken ? _params.tokenInPrice : _params.tokenOutPrice,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true
+            true,
+            true // allowZeroPoolBorrowingFactor
         );
 
         if (poolValueInfo.poolValue < 0) {
@@ -413,14 +426,11 @@ library ExecuteDepositUtils {
             // an additional 0.005 ETH may be used to mint market tokens
             // the swap impact pool is decreased by the used amount
             //
-            // priceImpactUsd is calculated based on pricing assuming only depositAmount of tokenIn
-            // was added to the pool
-            // since impactAmount of tokenOut is added to the pool here, the calculation of
-            // the price impact would not be entirely accurate
-            //
-            // it is possible that the addition of the positive impact amount of tokens into the pool
-            // could increase the imbalance of the pool, for most cases this should not be a significant
-            // change compared to the improvement of balance from the actual deposit
+            // the impactAmount of tokenOut is added to the pool below, which on its own would
+            // increase the imbalance of the pool and partially offset the balance improvement from
+            // the deposit; this added tokenOut is accounted for by SwapPricingUtils.getPriceImpactUsdForDeposit
+            // which recalculates priceImpactUsd with the rebate included, so the impact reflects the
+            // genuine post-rebate balance improvement
             (int256 positiveImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
@@ -535,8 +545,11 @@ library ExecuteDepositUtils {
         uint256 inputAmount,
         address market,
         address expectedOutputToken,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        uint256 uiFeeFactor
     ) internal returns (uint256) {
+        MarketUtils.validateDepositMarketInSwapPath(market, swapPath);
+
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
             params.dataStore,
             swapPath
@@ -555,6 +568,8 @@ library ExecuteDepositUtils {
                 0, // minOutputAmount
                 market, // receiver
                 uiFeeReceiver, // uiFeeReceiver
+                uiFeeFactor, // uiFeeFactor
+                0, // tokenInPoolAmountBeforeAction
                 false, // shouldUnwrapNativeToken
                 ISwapPricingUtils.SwapPricingType.Swap
             )

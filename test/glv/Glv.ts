@@ -10,6 +10,7 @@ import { contractAt } from "../../utils/deploy";
 import { expandDecimals } from "../../utils/math";
 import { expectBalances } from "../../utils/validation";
 import { handleDeposit } from "../../utils/deposit";
+import { parseLogs } from "../../utils/event";
 
 describe("Glv", () => {
   let fixture;
@@ -183,6 +184,103 @@ describe("Glv", () => {
     expect(marketListCount.toNumber()).eq(1);
     listedMarkets = await dataStore.getAddressValuesAt(marketListKey, 0, marketListCount);
     expect(listedMarkets[0]).eq(solUsdMarket.marketToken);
+  });
+
+  it("removes market with dust balance from Glv", async () => {
+    const marketListKey = keys.glvSupportedMarketListKey(ethUsdGlvAddress);
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    await handleGlvShift(fixture, {
+      create: {
+        marketTokenAmount: expandDecimals(9999, 18),
+      },
+    });
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(1, 18),
+      },
+    });
+
+    await config.setUint(
+      keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD,
+      encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
+      expandDecimals(1, 18)
+    );
+
+    await expect(
+      glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
+    ).to.be.revertedWithCustomError(errorsContract, "GlvEnabledMarket");
+
+    await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+
+    await config.setUint(
+      keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD,
+      encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
+      0
+    );
+    await expect(glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken))
+      .to.be.revertedWithCustomError(errorsContract, "GlvNonZeroMarketBalance")
+      .withArgs(ethUsdGlvAddress, ethUsdMarket.marketToken);
+
+    await config.setUint(
+      keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD,
+      encodeData(["address", "address"], [ethUsdGlvAddress, solUsdMarket.marketToken]),
+      expandDecimals(1, 18)
+    );
+    await expect(
+      glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
+    ).to.be.revertedWithCustomError(errorsContract, "GlvNonZeroMarketBalance");
+
+    await config.setUint(
+      keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD,
+      encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
+      expandDecimals(1, 18).sub(1)
+    );
+    await expect(
+      glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
+    ).to.be.revertedWithCustomError(errorsContract, "GlvNonZeroMarketBalance");
+
+    await config.setUint(
+      keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD,
+      encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
+      expandDecimals(1, 18)
+    );
+    expect(
+      await dataStore.getUint(keys.glvMarketRemovalDustThresholdKey(ethUsdGlvAddress, ethUsdMarket.marketToken))
+    ).eq(expandDecimals(1, 18));
+
+    const txReceipt = await (
+      await glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
+    ).wait();
+
+    const logs = parseLogs(fixture, txReceipt);
+    const glvMarketRemovedLog = logs.find((log) => log.parsedEventInfo?.eventName === "GlvMarketRemoved");
+    expect(glvMarketRemovedLog.parsedEventData.marketTokenBalance).eq(expandDecimals(1, 18));
+
+    expect(
+      await dataStore.getUint(keys.glvMarketRemovalDustThresholdKey(ethUsdGlvAddress, ethUsdMarket.marketToken))
+    ).eq(0);
+
+    let marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(1);
+    let listedMarkets = await dataStore.getAddressValuesAt(marketListKey, 0, marketListCount);
+    expect(listedMarkets[0]).eq(solUsdMarket.marketToken);
+
+    await glvShiftHandler.addMarketToGlv(ethUsdGlvAddress, ethUsdMarket.marketToken);
+    marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(2);
+    listedMarkets = await dataStore.getAddressValuesAt(marketListKey, 0, marketListCount);
+    expect(listedMarkets[0]).eq(solUsdMarket.marketToken);
+    expect(listedMarkets[1]).eq(ethUsdMarket.marketToken);
+
+    const glvToken = await contractAt("GlvToken", ethUsdGlvAddress);
+    expect(await glvToken.tokenBalances(ethUsdMarket.marketToken)).eq(expandDecimals(1, 18));
   });
 
   it("adds markets to Glv, single asset markets", async () => {

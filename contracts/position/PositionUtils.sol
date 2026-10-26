@@ -82,6 +82,9 @@ library PositionUtils {
         uint256 remainingCollateralAmount;
         int256 basePnlUsd;
         int256 uncappedBasePnlUsd;
+        bool pnlWasCapped;
+        // raw base-pnl pool debit, net of tokens returned by a successful same-market profit swap
+        uint256 basePnlPoolTokenAmount;
         uint256 sizeDeltaInTokens;
         int256 priceImpactUsd;
         int256 proportionalPendingImpactAmount;
@@ -125,6 +128,9 @@ library PositionUtils {
         uint256 poolTokenUsd;
         int256 poolPnl;
         int256 cappedPoolPnl;
+        bool pnlWasCapped;
+        int256 forgonePnlUsd;
+        int256 paidPnlUsd;
         uint256 sizeDeltaInTokens;
         int256 positionPnlUsd;
         int256 uncappedPositionPnlUsd;
@@ -176,14 +182,40 @@ library PositionUtils {
     // @param sizeDeltaUsd the change in position size
     // @param indexTokenPrice the price of the index token
     //
-    // @return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens)
+    // @return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens, pnlWasCapped)
     function getPositionPnlUsd(
         DataStore dataStore,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         Position.Props memory position,
         uint256 sizeDeltaUsd
-    ) public view returns (int256, int256, uint256) {
+    ) public view returns (int256, int256, uint256, bool) {
+        (int256 positionPnlUsd, int256 uncappedPositionPnlUsd, uint256 sizeDeltaInTokens, bool pnlWasCapped, ) =
+            _getPositionPnlUsd(dataStore, market, prices, position, sizeDeltaUsd);
+        return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens, pnlWasCapped);
+    }
+
+    // price slope of this close's uncapped pnl at the cap that prices it.
+    // historical allowance is slope * later pnl-token price / FLOAT_PRECISION.
+    // must be read before the close debits pnl tokens from the pool.
+    function getCappedPnlAllowanceSlope(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        Position.Props memory position,
+        uint256 sizeDeltaUsd
+    ) public view returns (uint256) {
+        (,,,, uint256 allowanceSlope) = _getPositionPnlUsd(dataStore, market, prices, position, sizeDeltaUsd);
+        return allowanceSlope;
+    }
+
+    function _getPositionPnlUsd(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        Position.Props memory position,
+        uint256 sizeDeltaUsd
+    ) internal view returns (int256, int256, uint256, bool, uint256) {
         GetPositionPnlUsdCache memory cache;
 
         uint256 executionPrice = prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false);
@@ -194,30 +226,7 @@ library PositionUtils {
         cache.uncappedTotalPositionPnl = cache.totalPositionPnl;
 
         if (cache.totalPositionPnl > 0) {
-            cache.pnlToken = position.isLong() ? market.longToken : market.shortToken;
-            cache.poolTokenAmount = MarketUtils.getPoolAmount(dataStore, market, cache.pnlToken);
-            cache.poolTokenPrice = position.isLong() ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
-            cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice;
-            cache.poolPnl = MarketUtils.getPnl(
-                dataStore,
-                market,
-                prices.indexTokenPrice,
-                position.isLong(),
-                true
-            );
-
-            cache.cappedPoolPnl = MarketUtils.getCappedPnl(
-                dataStore,
-                market.marketToken,
-                position.isLong(),
-                cache.poolPnl,
-                cache.poolTokenUsd,
-                Keys.MAX_PNL_FACTOR_FOR_TRADERS
-            );
-
-            if (cache.cappedPoolPnl != cache.poolPnl && cache.cappedPoolPnl > 0 && cache.poolPnl > 0) {
-                cache.totalPositionPnl = Precision.mulDiv(cache.totalPositionPnl.toUint256(), cache.cappedPoolPnl, cache.poolPnl.toUint256());
-            }
+            _applyTraderPnlCap(dataStore, market, prices, position, cache);
         }
 
         if (position.sizeInUsd() == sizeDeltaUsd) {
@@ -232,8 +241,135 @@ library PositionUtils {
 
         cache.positionPnlUsd = Precision.mulDiv(cache.totalPositionPnl, cache.sizeDeltaInTokens, position.sizeInTokens());
         cache.uncappedPositionPnlUsd = Precision.mulDiv(cache.uncappedTotalPositionPnl, cache.sizeDeltaInTokens, position.sizeInTokens());
+        cache.positionPnlUsd = _boundHistoricalCappedPnl(position, cache);
 
-        return (cache.positionPnlUsd, cache.uncappedPositionPnlUsd, cache.sizeDeltaInTokens);
+        return (
+            cache.positionPnlUsd,
+            cache.uncappedPositionPnlUsd,
+            cache.sizeDeltaInTokens,
+            cache.pnlWasCapped,
+            _cappedPnlAllowanceSlope(cache)
+        );
+    }
+
+    // slope for this close only, from the cap state that priced it. Later reads scale it by price.
+    function _cappedPnlAllowanceSlope(GetPositionPnlUsdCache memory cache) internal pure returns (uint256) {
+        if (!cache.pnlWasCapped || cache.poolTokenPrice == 0 || cache.poolPnl <= 0 || cache.uncappedPositionPnlUsd <= 0) {
+            return 0;
+        }
+
+        uint256 theoreticalUsd = Precision.mulDiv(
+            cache.uncappedPositionPnlUsd.toUint256(),
+            cache.cappedPoolPnl.toUint256(),
+            cache.poolPnl.toUint256()
+        );
+        return Precision.mulDiv(theoreticalUsd, Precision.FLOAT_PRECISION, cache.poolTokenPrice);
+    }
+
+    // @dev reconstructed positive pool pnl used to settle this position's capped pnl,
+    // including its own previously realized pnl. Zero when the position is not in profit.
+    function getReconstructedPoolPnl(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        Position.Props memory position
+    ) public view returns (int256) {
+        (GetPositionPnlUsdCache memory cache, bool inProfit) = _prepareTraderPnlCapCache(dataStore, market, prices, position);
+        return inProfit ? cache.poolPnl : int256(0);
+    }
+
+    function _prepareTraderPnlCapCache(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        Position.Props memory position
+    ) internal view returns (GetPositionPnlUsdCache memory cache, bool inProfit) {
+        uint256 executionPrice = prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false);
+        cache.positionValue = (position.sizeInTokens() * executionPrice).toInt256();
+        cache.totalPositionPnl = position.isLong() ? cache.positionValue - position.sizeInUsd().toInt256() : position.sizeInUsd().toInt256() - cache.positionValue;
+        if (cache.totalPositionPnl <= 0) {
+            return (cache, false);
+        }
+
+        _applyTraderPnlCap(dataStore, market, prices, position, cache);
+        return (cache, true);
+    }
+
+    // the pool state is reconstructed to include the position's own previously
+    // realized pnl, so that splitting a close into multiple decreases cannot
+    // refresh the pnl cap
+    function _applyTraderPnlCap(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        Position.Props memory position,
+        GetPositionPnlUsdCache memory cache
+    ) internal view {
+        cache.pnlToken = position.isLong() ? market.longToken : market.shortToken;
+        cache.poolTokenAmount = dataStore.getUint(Keys.poolAmountKey(market.marketToken, cache.pnlToken));
+        cache.poolTokenPrice = position.isLong() ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
+        cache.forgonePnlUsd = position.realizedUncappedPnlUsd() - position.realizedPnlUsd();
+        if (cache.forgonePnlUsd < 0) { cache.forgonePnlUsd = 0; }
+        cache.paidPnlUsd = position.realizedPnlUsd() > 0 ? position.realizedPnlUsd() : int256(0);
+
+        // restore the actual tokens deducted for capped base pnl at the current min price,
+        // not their historical USD value. Add before dividing to preserve rounding for
+        // single-token markets. The USD history below still reconstructs the pnl liability.
+        cache.poolTokenAmount = (cache.poolTokenAmount + position.cappedPnlPoolTokenAmount())
+            / MarketUtils.getPoolDivisor(market.longToken, market.shortToken);
+        cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice;
+        cache.poolPnl = MarketUtils.getPositivePnl(
+            dataStore,
+            market,
+            prices.indexTokenPrice,
+            position.isLong(),
+            true
+        ).toInt256() + cache.forgonePnlUsd + cache.paidPnlUsd;
+
+        cache.cappedPoolPnl = MarketUtils.getCappedPnl(
+            dataStore,
+            market.marketToken,
+            position.isLong(),
+            cache.poolPnl,
+            cache.poolTokenUsd,
+            Keys.MAX_PNL_FACTOR_FOR_TRADERS
+        );
+
+        if (cache.cappedPoolPnl != cache.poolPnl && cache.cappedPoolPnl > 0 && cache.poolPnl > 0) {
+            cache.pnlWasCapped = true;
+            cache.totalPositionPnl = Precision.mulDiv(cache.totalPositionPnl.toUint256(), cache.cappedPoolPnl, cache.poolPnl.toUint256());
+        }
+    }
+
+    // @dev historical capped closes keep the pool-cap ratio from the time they settled.
+    // The stored slope is scaled by the current pnl-token price, so a price move changes
+    // the allowance for pnl already realized. A later deposit or a higher trader cap does
+    // not: those change only cache.positionPnlUsd, the unrealized tranche.
+    function _boundHistoricalCappedPnl(
+        Position.Props memory position,
+        GetPositionPnlUsdCache memory cache
+    ) internal pure returns (int256) {
+        // no capped close recorded; positions that predate these fields start here too,
+        // their earlier capped closes are not reconstructed
+        if (!cache.pnlWasCapped || position.cappedPnlAllowancePerPrice() == 0 || cache.poolTokenPrice == 0) {
+            return cache.positionPnlUsd;
+        }
+
+        int256 historicalAllowanceUsd = Precision.mulDiv(
+            position.cappedPnlAllowancePerPrice(),
+            cache.poolTokenPrice,
+            Precision.FLOAT_PRECISION
+        ).toInt256();
+        if (historicalAllowanceUsd > position.realizedUncappedPnlUsd()) {
+            historicalAllowanceUsd = position.realizedUncappedPnlUsd();
+        }
+
+        int256 allowedCumulativePnlUsd = historicalAllowanceUsd + cache.positionPnlUsd - position.realizedPnlUsd();
+
+        if (allowedCumulativePnlUsd < 0) { allowedCumulativePnlUsd = 0; }
+        if (allowedCumulativePnlUsd > cache.uncappedPositionPnlUsd) { allowedCumulativePnlUsd = cache.uncappedPositionPnlUsd; }
+
+        return allowedCumulativePnlUsd;
     }
 
     // @dev validate that a position is not empty
@@ -325,13 +461,24 @@ library PositionUtils {
         IsPositionLiquidatableCache memory cache;
         IsPositionLiquidatableInfo memory info;
 
-        (cache.positionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */) = getPositionPnlUsd(
+        (cache.positionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */, /* bool pnlWasCapped */) = getPositionPnlUsd(
             dataStore,
             market,
             prices,
             position,
             position.sizeInUsd()
         );
+
+        // positive pnl is paid out using pnlTokenPrice.max and valued using pnlTokenPrice.min when
+        // paying for costs, so value it consistently here to avoid overcounting it as collateral
+        if (cache.positionPnlUsd > 0) {
+            Price.Props memory pnlTokenPrice = MarketUtils.getCachedTokenPrice(
+                position.isLong() ? market.longToken : market.shortToken,
+                market,
+                prices
+            );
+            cache.positionPnlUsd = ((cache.positionPnlUsd.toUint256() / pnlTokenPrice.max) * pnlTokenPrice.min).toInt256();
+        }
 
         cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(
             position.collateralToken(),
@@ -355,39 +502,13 @@ library PositionUtils {
             )
         );
 
-        // cap positive priceImpactUsd based on the max positive position impact factor
-        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+        cache.priceImpactUsd = getImpactUsdForLiquidationCheck(
             dataStore,
-            market.marketToken,
-            cache.priceImpactUsd,
-            position.sizeInUsd()
+            market,
+            prices,
+            position,
+            cache.priceImpactUsd
         );
-
-        cache.priceImpactUsd += position.pendingImpactAmount() > 0
-            ? position.pendingImpactAmount() * prices.indexTokenPrice.min.toInt256()
-            : position.pendingImpactAmount() * prices.indexTokenPrice.max.toInt256();
-
-        // even if there is a large positive price impact, positions that would be liquidated
-        // if the positive price impact is reduced should not be allowed to be created
-        // as they would be easily liquidated if the price impact changes
-        // cap the priceImpactUsd to zero to prevent these positions from being created
-        if (cache.priceImpactUsd >= 0) {
-            cache.priceImpactUsd = 0;
-        } else {
-            uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactorForLiquidations(
-                dataStore,
-                market.marketToken
-            );
-
-            // if there is a large build up of open interest and a sudden large price movement
-            // it may result in a large imbalance between longs and shorts
-            // this could result in very large price impact temporarily
-            // cap the max negative price impact to prevent cascading liquidations
-            int256 maxNegativePriceImpactUsd = -Precision.applyFactor(position.sizeInUsd(), maxPriceImpactFactor).toInt256();
-            if (cache.priceImpactUsd < maxNegativePriceImpactUsd) {
-                cache.priceImpactUsd = maxNegativePriceImpactUsd;
-            }
-        }
 
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             dataStore, // dataStore
@@ -399,6 +520,7 @@ library PositionUtils {
             market.shortToken, // shortToken
             position.sizeInUsd(), // sizeDeltaUsd
             address(0), // uiFeeReceiver
+            type(uint256).max, // uiFeeFactor (unused since uiFeeReceiver is the zero address)
 
             // should not account for liquidation fees to determine if position should be liquidated
             false // isLiquidation
@@ -447,6 +569,61 @@ library PositionUtils {
         }
 
         return (false, "", info);
+    }
+
+    // priceImpactUsd is the exit price impact for fully closing the position
+    function getImpactUsdForLiquidationCheck(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        Position.Props memory position,
+        int256 priceImpactUsd
+    ) internal view returns (int256) {
+        // cap positive priceImpactUsd based on the max positive position impact factor
+        priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+            dataStore,
+            market.marketToken,
+            priceImpactUsd,
+            position.sizeInUsd()
+        );
+
+        // if there is a large build up of open interest and a sudden large price movement
+        // it may result in a large imbalance between longs and shorts
+        // this could result in very large exit price impact temporarily
+        // cap the negative exit impact to prevent cascading liquidations
+        int256 maxNegativeExitImpactUsd = -Precision.applyFactor(
+            position.sizeInUsd(),
+            MarketUtils.getMaxPositionImpactFactorForLiquidations(dataStore, market.marketToken)
+        ).toInt256();
+        if (priceImpactUsd < maxNegativeExitImpactUsd) {
+            priceImpactUsd = maxNegativeExitImpactUsd;
+        }
+
+        // the pending impact is a fixed liability from entry, value it consistently with
+        // the decrease realization, minimizing the positive value and maximizing the negative value
+        priceImpactUsd += position.pendingImpactAmount() > 0
+            ? position.pendingImpactAmount() * prices.indexTokenPrice.min.toInt256()
+            : position.pendingImpactAmount() * prices.indexTokenPrice.max.toInt256();
+
+        // even if there is a large positive price impact, positions that would be liquidated
+        // if the positive price impact is reduced should not be allowed to be created
+        // as they would be easily liquidated if the price impact changes
+        // cap the priceImpactUsd to zero to prevent these positions from being created
+        if (priceImpactUsd >= 0) {
+            return 0;
+        }
+
+        // cap the combined negative impact at the max negative factor so the check is not
+        // stricter than the impact that would be realized when the position is decreased
+        int256 maxNegativePriceImpactUsd = -Precision.applyFactor(
+            position.sizeInUsd(),
+            MarketUtils.getMaxPositionImpactFactor(dataStore, market.marketToken, false)
+        ).toInt256();
+        if (priceImpactUsd < maxNegativePriceImpactUsd) {
+            priceImpactUsd = maxNegativePriceImpactUsd;
+        }
+
+        return priceImpactUsd;
     }
 
     // fees and price impact are not included for the willPositionCollateralBeSufficient validation
@@ -524,8 +701,10 @@ library PositionUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         Market.Props memory market,
-        MarketUtils.MarketPrices memory prices
-    ) external {
+        MarketUtils.MarketPrices memory prices,
+        bool allowZeroPoolBorrowingFactorForLongs,
+        bool allowZeroPoolBorrowingFactorForShorts
+    ) public {
         // update the funding amount per size for the market
         MarketUtils.updateFundingState(
             dataStore,
@@ -540,7 +719,8 @@ library PositionUtils {
             eventEmitter,
             market,
             prices,
-            true // isLong
+            true, // isLong
+            allowZeroPoolBorrowingFactorForLongs
         );
 
         // update the cumulative borrowing factor for shorts
@@ -549,7 +729,8 @@ library PositionUtils {
             eventEmitter,
             market,
             prices,
-            false // isLong
+            false, // isLong
+            allowZeroPoolBorrowingFactorForShorts
         );
     }
 
@@ -728,12 +909,17 @@ library PositionUtils {
         int256 sizeDeltaInTokens;
         if (params.position.isLong()) {
             sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() + cache.priceImpactAmount;
-        } else {
-            sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() - cache.priceImpactAmount;
-        }
 
-        if (sizeDeltaInTokens < 0) {
-            revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            if (sizeDeltaInTokens < 0) {
+                revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            }
+        } else {
+            // for shorts the negative impact increases sizeDeltaInTokens so it is checked against the order size directly
+            if (cache.priceImpactAmount < 0 && -cache.priceImpactAmount > cache.baseSizeDeltaInTokens.toInt256()) {
+                revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsd, params.order.sizeDeltaUsd());
+            }
+
+            sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() - cache.priceImpactAmount;
         }
 
         // using increase of long positions as an example

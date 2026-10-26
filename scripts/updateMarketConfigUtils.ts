@@ -2,39 +2,53 @@ import fetch from "node-fetch";
 import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
+import { FUNDING_CONFIG_BASE_KEYS } from "../utils/config";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [
-  keys.MAX_OPEN_INTEREST,
   keys.POSITION_IMPACT_FACTOR,
   keys.POSITION_IMPACT_EXPONENT_FACTOR,
+  keys.MAX_POSITION_IMPACT_FACTOR,
+  keys.MAX_POOL_AMOUNT,
+  keys.MAX_POOL_USD_FOR_DEPOSIT,
+  keys.MAX_OPEN_INTEREST,
+  keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD,
+  keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT,
+  ...FUNDING_CONFIG_BASE_KEYS,
+  keys.MIN_COLLATERAL_FACTOR,
+  keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
+  keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
+  keys.OPTIMAL_USAGE_FACTOR,
+  keys.BASE_BORROWING_FACTOR,
+  keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
 ];
 
 const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
-function getRiskOracleManagedBaseKeys() {
+const RISK_ORACLE_MARKETS_URL_BY_NETWORK = {
+  arbitrum: "https://arbitrum.gmxapi.io/v1/risk-oracle/markets/",
+  avalanche: "https://avalanche.gmxapi.io/v1/risk-oracle/markets/",
+};
+
+export function getRiskOracleManagedBaseKeys() {
   if (RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
     return RISK_ORACLE_MANAGED_BASE_KEYS;
   }
   return [];
 }
 
-const KEEPER_MANAGED_BASE_KEYS_ARBITRUM = [
-  keys.MAX_FUNDING_FACTOR_PER_SECOND,
-  keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
-  keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
-];
-
-function getKeeperManagedBaseKeys() {
-  if (hre.network.name === "arbitrum") {
-    return KEEPER_MANAGED_BASE_KEYS_ARBITRUM;
-  }
-
+export function getKeeperManagedBaseKeys() {
   return [];
 }
 
-const processMarkets = async ({
+// Base keys the market-hours switchover cron is allowed to write when SWITCHOVER_ONLY=true.
+// Everything else (OI, position impact, min collateral, borrowing, ...) is owned by the risk
+// oracle app, which switches those params. positionFeeFactor is the exception: the GMX
+// RiskOracleConfig rejects POSITION_FEE_FACTOR (InvalidBaseKey), so the cron switches it here.
+const SWITCHOVER_MANAGED_BASE_KEYS = [keys.POSITION_FEE_FACTOR];
+
+export const processMarkets = async ({
   markets,
   includeMarket,
   onchainMarketsByTokens,
@@ -46,6 +60,9 @@ const processMarkets = async ({
   includeMaxOpenInterest,
   includePositionImpact,
   includeFunding,
+  includeBorrowing,
+  includeMinCollateral,
+  switchoverOnly,
 }): Promise<[ConfigChangeItem[], string[], string[]]> => {
   const configItems: ConfigChangeItem[] = [];
   const ignoredRiskOracleParams: string[] = [];
@@ -54,7 +71,13 @@ const processMarkets = async ({
   const shouldIgnoreBaseKey = (
     baseKey: string,
     isSupportedByRiskOracle: boolean
-  ): [true, "riskOracle" | "keeper"] | [false] => {
+  ): [true, "riskOracle" | "keeper" | "switchover"] | [false] => {
+    // Switchover-only run (market-hours cron): write nothing but the whitelisted
+    // switchover keys, regardless of the include* flags or risk-oracle support.
+    if (switchoverOnly) {
+      return SWITCHOVER_MANAGED_BASE_KEYS.includes(baseKey) ? [false] : [true, "switchover"];
+    }
+
     if (baseKey === keys.MAX_OPEN_INTEREST && includeMaxOpenInterest) {
       return [false];
     }
@@ -70,9 +93,30 @@ const processMarkets = async ({
       [
         keys.MAX_FUNDING_FACTOR_PER_SECOND,
         keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+        keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
         keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       ].includes(baseKey) &&
       includeFunding
+    ) {
+      return [false];
+    }
+
+    if (
+      [keys.OPTIMAL_USAGE_FACTOR, keys.BASE_BORROWING_FACTOR, keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR].includes(
+        baseKey
+      ) &&
+      includeBorrowing
+    ) {
+      return [false];
+    }
+
+    if (
+      [
+        keys.MIN_COLLATERAL_FACTOR,
+        keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
+        keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
+      ].includes(baseKey) &&
+      includeMinCollateral
     ) {
       return [false];
     }
@@ -103,12 +147,16 @@ const processMarkets = async ({
       continue;
     }
 
+    if (process.env.SKIP_DISABLED_MARKETS === "true" && marketConfig.isDisabled) {
+      continue;
+    }
+
     const marketLabel = `${marketConfig.tokens.indexToken ?? "SPOT-ONLY"} [${marketConfig.tokens.longToken}-${
       marketConfig.tokens.shortToken
     }]`;
 
     const addConfigItem = (type: string, baseKey: string, keyData: string, value: any, label: string) => {
-      if (!value) {
+      if (value === undefined) {
         return;
       }
       const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));
@@ -497,26 +545,59 @@ const processMarkets = async ({
 
     addConfigItem(
       "uint",
+      keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minFundingIncreaseRatePerSecond,
+      `minFundingIncreaseRatePerSecond ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
       keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       encodeData(["address"], [marketToken]),
       marketConfig.fundingDecreaseFactorPerSecond,
       `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
     );
 
+    const minFundingFactorForLongs =
+      marketConfig.minFundingFactorPerSecondForLongs ?? marketConfig.minFundingFactorPerSecond;
+    const minFundingFactorForShorts =
+      marketConfig.minFundingFactorPerSecondForShorts ?? marketConfig.minFundingFactorPerSecond;
+    const maxFundingFactorForLongs =
+      marketConfig.maxFundingFactorPerSecondForLongs ?? marketConfig.maxFundingFactorPerSecond;
+    const maxFundingFactorForShorts =
+      marketConfig.maxFundingFactorPerSecondForShorts ?? marketConfig.maxFundingFactorPerSecond;
+
     addConfigItem(
       "uint",
       keys.MAX_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.maxFundingFactorPerSecond,
-      `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      encodeData(["address", "bool"], [marketToken, true]),
+      maxFundingFactorForLongs,
+      `maxFundingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      maxFundingFactorForShorts,
+      `maxFundingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
       "uint",
       keys.MIN_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.minFundingFactorPerSecond,
-      `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      encodeData(["address", "bool"], [marketToken, true]),
+      minFundingFactorForLongs,
+      `minFundingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      minFundingFactorForShorts,
+      `minFundingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
@@ -605,6 +686,22 @@ const processMarkets = async ({
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.aboveOptimalUsageBorrowingFactorForShorts,
       `aboveOptimalUsageBorrowingFactorForShorts ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_BORROWING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.maxBorrowingFactorPerSecondForLongs,
+      `maxBorrowingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_BORROWING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.maxBorrowingFactorPerSecondForShorts,
+      `maxBorrowingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
@@ -710,11 +807,15 @@ const processMarkets = async ({
 export async function updateMarketConfig({
   write = false,
   market = undefined,
+  marketHours = undefined,
   includeRiskOracleBaseKeys = false,
   includeKeeperBaseKeys = false,
   includeFunding = false,
   includePositionImpact = false,
   includeMaxOpenInterest = false,
+  includeBorrowing = false,
+  includeMinCollateral = false,
+  switchoverOnly = false,
 }) {
   if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(hre.network.name)) {
     const { errors } = await validateMarketConfigs();
@@ -727,7 +828,7 @@ export async function updateMarketConfig({
 
   const generalConfig = await hre.gmx.getGeneral();
   const tokens = await hre.gmx.getTokens();
-  const markets = await hre.gmx.getMarkets();
+  const markets = await hre.gmx.getMarkets(marketHours);
 
   const dataStore = await hre.ethers.getContract("DataStore");
 
@@ -746,7 +847,36 @@ export async function updateMarketConfig({
     includeMaxOpenInterest,
     includePositionImpact,
     includeFunding,
+    includeBorrowing,
+    includeMinCollateral,
+    switchoverOnly,
   });
+
+  const fundingUpdatedAtByMarket = new Map<string, boolean>();
+  const skippedLiveFundingParams: string[] = [];
+  const filteredConfigItems: ConfigChangeItem[] = [];
+
+  for (const item of configItems) {
+    if (!FUNDING_CONFIG_BASE_KEYS.has(item.baseKey)) {
+      filteredConfigItems.push(item);
+      continue;
+    }
+
+    const marketAddress = ethers.utils.defaultAbiCoder.decode(["address"], item.keyData)[0];
+    const marketKey = marketAddress.toLowerCase();
+    let hasFundingCheckpoint = fundingUpdatedAtByMarket.get(marketKey);
+
+    if (hasFundingCheckpoint === undefined) {
+      hasFundingCheckpoint = !(await dataStore.getUint(keys.fundingUpdatedAtKey(marketAddress))).isZero();
+      fundingUpdatedAtByMarket.set(marketKey, hasFundingCheckpoint);
+    }
+
+    if (hasFundingCheckpoint) {
+      skippedLiveFundingParams.push(item.label);
+    } else {
+      filteredConfigItems.push(item);
+    }
+  }
 
   if (ignoredRiskOracleParams.length > 0) {
     const ignoredParameterNames = getIgnoredParameterNames(ignoredRiskOracleParams);
@@ -765,7 +895,16 @@ export async function updateMarketConfig({
     console.info("Add INCLUDE_KEEPER_BASE_KEYS=true to include them\n");
   }
 
-  await handleConfigChanges(configItems, write, 100);
+  if (skippedLiveFundingParams.length > 0) {
+    console.info("\n=================\n");
+    console.info("Skipped live funding config updates that require an oracle-priced checkpoint:");
+    console.info(getIgnoredParameterNames(skippedLiveFundingParams).join(","));
+    console.info(
+      "Use MARKET=<market-token-address> WRITE=<true|false> npx hardhat run scripts/updateFundingConfig.ts --network <network>\n"
+    );
+  }
+
+  await handleConfigChanges(filteredConfigItems, write, 100);
 }
 
 function getIgnoredParameterNames(ignoredParams) {
@@ -798,24 +937,14 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
     return supported;
   }
 
-  // Chaos API does not support fuji
-  if (hre.network.name === "avalancheFuji") {
+  const url = RISK_ORACLE_MARKETS_URL_BY_NETWORK[hre.network.name];
+  if (!url) {
     return supported;
   }
 
-  const response = await fetch("https://cloud.chaoslabs.co/query/ccar-perpetuals", {
-    method: "POST",
-    headers: {
-      protocol: `gmx-v2-${hre.network.name}`,
-      "content-type": "application/json",
-    },
-    body: `{
-      "query": "{ markets { id } }"
-    }`,
-  });
-
-  const { data } = await response.json();
-  const supportedMarketTokens = data.markets.map((market) => market.id);
+  const response = await fetch(url);
+  const riskOracleMarkets = await response.json();
+  const supportedMarketTokens = riskOracleMarkets.map((market) => market.market_token);
 
   supportedMarketTokens.forEach((supportedMarketToken) => {
     const market = markets.find((market) => {
@@ -824,7 +953,8 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
     });
 
     if (!market) {
-      throw new Error(`Market with id ${supportedMarketToken} not found`);
+      console.warn(`WARN: Risk oracle market with id ${supportedMarketToken} not found in config, skipping`);
+      return;
     }
 
     supported.add(market);

@@ -15,7 +15,10 @@ import "../order/Order.sol";
 import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 
 import "../bank/StrictBank.sol";
+import "../market/MarketStoreUtils.sol";
 import "../multichain/MultichainUtils.sol";
+import "../multichain/BridgeOutFromControllerUtils.sol";
+import "../swap/SwapUtils.sol";
 
 // @title GasUtils
 // @dev Library for execution fee estimation and payments
@@ -334,9 +337,41 @@ library GasUtils {
         return 3 + swapsCount;
     }
 
+    // @dev Includes every encoded bridge-fee swap hop in the creation-time oracle estimate.
+    // The keeper must provide these prices before execution, even if the fee token is already WNT
+    // or the later bridge attempt fails. Deposits have a single GM output token, so secondaryToken is zero.
+    function estimateExecuteDepositOraclePriceCount(
+        Deposit.Props memory deposit
+    ) external view returns (uint256) {
+        uint256 swapsCount = deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
+        swapsCount += _getBridgeFeeSwapCount(
+            deposit.account(),
+            deposit.receiver(),
+            deposit.srcChainId(),
+            deposit.market(),
+            address(0),
+            deposit.dataList()
+        );
+
+        return 3 + swapsCount;
+    }
+
     // @dev get estimated number of oracle prices for withdrawal
     // @param swapsCount number of swaps in the withdrawal
     function estimateWithdrawalOraclePriceCount(uint256 swapsCount) external pure returns (uint256) {
+        return 3 + swapsCount;
+    }
+
+    // @dev Includes every encoded bridge-fee swap hop in the creation-time oracle estimate.
+    // Withdrawal output tokens depend on the explicit swap paths, so they are resolved first to
+    // determine whether the bridge action contains one fee path or two.
+    function estimateExecuteWithdrawalOraclePriceCount(
+        DataStore dataStore,
+        Withdrawal.Props memory withdrawal
+    ) external view returns (uint256) {
+        uint256 swapsCount = withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
+        swapsCount += _getWithdrawalBridgeFeeSwapCount(dataStore, withdrawal);
+
         return 3 + swapsCount;
     }
 
@@ -378,6 +413,30 @@ library GasUtils {
         return 2 + marketCount + swapsCount;
     }
 
+    // @dev Includes every encoded bridge-fee swap hop in both GLV oracle-count branches.
+    // A GLV deposit always bridges one GLV output token; marketCount and glvTokenPriceUsed retain
+    // their existing meaning and only the embedded fee-swap work is added here.
+    function estimateExecuteGlvDepositOraclePriceCount(
+        GlvDeposit.Props memory glvDeposit,
+        uint256 marketCount,
+        bool glvTokenPriceUsed
+    ) external view returns (uint256) {
+        uint256 swapsCount = glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length;
+        swapsCount += _getBridgeFeeSwapCount(
+            glvDeposit.account(),
+            glvDeposit.receiver(),
+            glvDeposit.srcChainId(),
+            glvDeposit.glv(),
+            address(0),
+            glvDeposit.dataList()
+        );
+
+        if (glvTokenPriceUsed) {
+            return 4 + swapsCount;
+        }
+        return 2 + marketCount + swapsCount;
+    }
+
     function estimateGlvWithdrawalOraclePriceCount(
         uint256 marketCount,
         uint256 swapsCount,
@@ -389,6 +448,21 @@ library GasUtils {
         return 2 + marketCount + swapsCount;
     }
 
+    // @dev Includes every encoded bridge-fee swap hop in both GLV oracle-count branches.
+    // The final long and short output tokens are resolved to select the single- or dual-output
+    // bridge encoding before counting its fee paths.
+    function estimateExecuteGlvWithdrawalOraclePriceCount(
+        DataStore dataStore,
+        GlvWithdrawal.Props memory glvWithdrawal,
+        uint256 marketCount,
+        bool glvTokenPriceUsed
+    ) external view returns (uint256) {
+        uint256 swapsCount = glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length;
+        swapsCount += _getGlvWithdrawalBridgeFeeSwapCount(dataStore, glvWithdrawal);
+
+        return estimateGlvWithdrawalOraclePriceCount(marketCount, swapsCount, glvTokenPriceUsed);
+    }
+
     function estimateCreateDepositGasLimit(
         DataStore dataStore
     ) internal view returns (uint256) {
@@ -398,9 +472,18 @@ library GasUtils {
     function estimateExecuteDepositGasLimit(
         DataStore dataStore,
         Deposit.Props memory deposit
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
+        // DEPOSIT_GAS_LIMIT includes one bridge send. Only its embedded fee swaps are added dynamically.
+        swapCount += _getBridgeFeeSwapCount(
+            deposit.account(),
+            deposit.receiver(),
+            deposit.srcChainId(),
+            deposit.market(),
+            address(0),
+            deposit.dataList()
+        );
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
         return dataStore.getUint(Keys.depositGasLimitKey()) + deposit.callbackGasLimit() + gasForSwaps;
@@ -421,9 +504,72 @@ library GasUtils {
     ) external view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
+        // WITHDRAWAL_GAS_LIMIT includes up to two bridge sends. Only their fee swaps are added dynamically.
+        swapCount += _getWithdrawalBridgeFeeSwapCount(dataStore, withdrawal);
+
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
         return dataStore.getUint(Keys.withdrawalGasLimitKey()) + withdrawal.callbackGasLimit() + gasForSwaps;
+    }
+
+    function _getWithdrawalBridgeFeeSwapCount(
+        DataStore dataStore,
+        Withdrawal.Props memory withdrawal
+    ) private view returns (uint256) {
+        // A withdrawal may converge to one output token after its explicit swaps. Resolve both final
+        // tokens so BridgeOutFromControllerUtils decodes the same single- or dual-output format as execution.
+        Market.Props memory market = MarketStoreUtils.get(dataStore, withdrawal.market());
+        address outputToken = SwapUtils.getOutputToken(dataStore, withdrawal.longTokenSwapPath(), market.longToken);
+        address secondaryOutputToken = SwapUtils.getOutputToken(dataStore, withdrawal.shortTokenSwapPath(), market.shortToken);
+
+        return _getBridgeFeeSwapCount(
+            withdrawal.account(),
+            withdrawal.receiver(),
+            withdrawal.srcChainId(),
+            outputToken,
+            secondaryOutputToken,
+            withdrawal.dataList()
+        );
+    }
+
+    function _getGlvWithdrawalBridgeFeeSwapCount(
+        DataStore dataStore,
+        GlvWithdrawal.Props memory glvWithdrawal
+    ) private view returns (uint256) {
+        // GLV withdrawals execute an underlying market withdrawal, so resolve that market's final
+        // output tokens before selecting and decoding the bridge action format.
+        Market.Props memory market = MarketStoreUtils.get(dataStore, glvWithdrawal.market());
+        address outputToken = SwapUtils.getOutputToken(dataStore, glvWithdrawal.longTokenSwapPath(), market.longToken);
+        address secondaryOutputToken = SwapUtils.getOutputToken(dataStore, glvWithdrawal.shortTokenSwapPath(), market.shortToken);
+
+        return _getBridgeFeeSwapCount(
+            glvWithdrawal.account(),
+            glvWithdrawal.receiver(),
+            glvWithdrawal.srcChainId(),
+            outputToken,
+            secondaryOutputToken,
+            glvWithdrawal.dataList()
+        );
+    }
+
+    function _getBridgeFeeSwapCount(
+        address account,
+        address receiver,
+        uint256 srcChainId,
+        address outputToken,
+        address secondaryOutputToken,
+        bytes32[] memory dataList
+    ) private view returns (uint256) {
+        // This is a creation-time upper bound: the bridge utility counts every encoded path with a
+        // non-zero fee because output amounts and provider success are not known until execution.
+        return BridgeOutFromControllerUtils.getBridgeFeeSwapCount(
+            account,
+            receiver,
+            srcChainId,
+            outputToken,
+            secondaryOutputToken,
+            dataList
+        );
     }
 
     // @dev the estimated gas limit for shifts
@@ -523,14 +669,26 @@ library GasUtils {
         uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
         uint256 glvDepositGasLimit = dataStore.getUint(Keys.glvDepositGasLimitKey());
 
-        uint256 gasLimit = glvDepositGasLimit + glvDeposit.callbackGasLimit() + gasForGlvMarkets;
+        uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        // GLV_DEPOSIT_GAS_LIMIT includes one bridge send. Fee-swap hops remain ordinary swaps and
+        // are therefore charged with SINGLE_SWAP_GAS_LIMIT whether or not a market deposit is nested.
+        uint256 bridgeFeeSwapCount = _getBridgeFeeSwapCount(
+            glvDeposit.account(),
+            glvDeposit.receiver(),
+            glvDeposit.srcChainId(),
+            glvDeposit.glv(),
+            address(0),
+            glvDeposit.dataList()
+        );
+        uint256 gasForBridgeFeeSwaps = bridgeFeeSwapCount * gasPerSwap;
+
+        uint256 gasLimit = glvDepositGasLimit + glvDeposit.callbackGasLimit() + gasForGlvMarkets + gasForBridgeFeeSwaps;
 
         if (glvDeposit.isMarketTokenDeposit()) {
             // user provided GM, no separate deposit will be created and executed in this case
             return gasLimit;
         }
 
-        uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
@@ -550,7 +708,7 @@ library GasUtils {
         DataStore dataStore,
         GlvWithdrawal.Props memory glvWithdrawal,
         uint256 marketCount
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         // glv withdrawal execution gas consumption depends on the amount of markets
         uint256 gasPerGlvPerMarket = dataStore.getUint(Keys.glvPerMarketGasLimitKey());
         uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
@@ -560,6 +718,8 @@ library GasUtils {
 
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length;
+        // The nested WITHDRAWAL_GAS_LIMIT includes up to two bridge sends. Add only embedded fee swaps here.
+        swapCount += _getGlvWithdrawalBridgeFeeSwapCount(dataStore, glvWithdrawal);
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
         return gasLimit + dataStore.getUint(Keys.withdrawalGasLimitKey()) + gasForSwaps;

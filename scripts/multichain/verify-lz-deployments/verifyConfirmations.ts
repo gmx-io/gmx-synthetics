@@ -12,7 +12,7 @@
 //   npx ts-node scripts/multichain/verify-lz-deployments/verifyConfirmations.ts
 //
 // RPC URLs: Uses .env variables if set, otherwise falls back to hardhat.config.ts defaults
-// Optional env vars: ARBITRUM_RPC_URL, ETHEREUM_RPC_URL, BASE_RPC_URL, BSC_RPC_URL, BERA_RPC_URL, BOTANIX_RPC_URL
+// Optional env vars: ARBITRUM_RPC_URL, ETHEREUM_RPC_URL, BASE_RPC_URL, BSC_RPC_URL, BERA_RPC_URL
 //
 // Note: Public RPCs may rate-limit causing transient failures. If you see mismatches,
 // re-run the script or set private RPC URLs in .env for more reliable results.

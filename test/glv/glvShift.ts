@@ -1,15 +1,17 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { time } from "@nomicfoundation/hardhat-network-helpers";
+import { mine, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import {
   handleGlvDeposit,
+  handleGlvWithdrawal,
   createGlvShift,
   handleGlvShift,
   getGlvShiftKeys,
   executeGlvShift,
   getGlvShiftCount,
   getGlvAddress,
+  setupDistressedGlvMarket,
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
@@ -19,6 +21,7 @@ import { expectBalances } from "../../utils/validation";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../../utils/market";
 import { setBytes32IfDifferent } from "../../utils/dataStore";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { hashString } from "../../utils/hash";
 
 describe("Glv Shifts", () => {
   const { provider } = ethers;
@@ -40,7 +43,8 @@ describe("Glv Shifts", () => {
     wnt,
     sol,
     usdc,
-    gmOracleProvider,
+    wbtc,
+    chainlinkDataStreamProvider,
     oracle;
 
   beforeEach(async () => {
@@ -62,7 +66,8 @@ describe("Glv Shifts", () => {
       sol,
       wnt,
       usdc,
-      gmOracleProvider,
+      wbtc,
+      chainlinkDataStreamProvider,
       oracle,
     } = fixture.contracts);
 
@@ -194,7 +199,7 @@ describe("Glv Shifts", () => {
       },
     });
 
-    await handleGlvShift(fixture, {
+    const { executeResult } = await handleGlvShift(fixture, {
       create: {
         fromMarket: ethUsdMarket,
         toMarket: solUsdMarket,
@@ -205,6 +210,11 @@ describe("Glv Shifts", () => {
         gasUsageLabel: "executeGlvShift",
       },
     });
+
+    const glvValueUpdatedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvValueUpdated");
+    expect(glvValueUpdatedLog, "GlvValueUpdated log").to.not.be.undefined;
+    expect(glvValueUpdatedLog.parsedEventData.value).eq(expandDecimals(10000, 30));
+    expect(glvValueUpdatedLog.parsedEventData.supply).eq(expandDecimals(10000, 18));
 
     await expectBalances({
       [ethUsdGlvAddress]: {
@@ -219,7 +229,7 @@ describe("Glv Shifts", () => {
     await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
     await dataStore.setAddress(
       keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
-      gmOracleProvider.address
+      chainlinkDataStreamProvider.address
     );
 
     await expectBalances({
@@ -264,6 +274,299 @@ describe("Glv Shifts", () => {
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
         [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+      },
+    });
+  });
+
+  it("execute glv shift if unrelated market has negative pool value", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    await setupDistressedGlvMarket(fixture);
+
+    const { executeResult } = await handleGlvShift(fixture, {
+      create: {
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        minMarketTokens: expandDecimals(1000, 18),
+      },
+    });
+
+    const glvShiftExecutedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvShiftExecuted");
+    expect(glvShiftExecutedLog, "GlvShiftExecuted log").to.not.be.undefined;
+
+    const glvValueUpdatedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvValueUpdated");
+    expect(glvValueUpdatedLog, "GlvValueUpdated log").to.be.undefined;
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+      },
+    });
+  });
+
+  it("execute glv shift if unrelated market has zero pool value and open interest", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    const marketType = hashString("zero-pool-borrowing-market");
+    await marketFactory.createMarket(sol.address, wnt.address, usdc.address, marketType);
+    const zeroPoolMarketAddress = getMarketTokenAddress(
+      sol.address,
+      wnt.address,
+      usdc.address,
+      marketType,
+      marketFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    await glvShiftHandler.addMarketToGlv(ethUsdGlvAddress, zeroPoolMarketAddress);
+
+    const marketToken = await ethers.getContractAt("MarketToken", zeroPoolMarketAddress);
+    await marketToken.mint(ethUsdGlvAddress, expandDecimals(1, 18));
+    const glvToken = await ethers.getContractAt("GlvToken", ethUsdGlvAddress);
+    await glvToken.syncTokenBalance(zeroPoolMarketAddress);
+
+    await dataStore.setUint(keys.openInterestKey(zeroPoolMarketAddress, wnt.address, true), decimalToFloat(600));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(zeroPoolMarketAddress, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+
+    const { executeResult } = await handleGlvShift(fixture, {
+      create: {
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        minMarketTokens: expandDecimals(1000, 18),
+      },
+    });
+
+    const glvShiftExecutedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvShiftExecuted");
+    expect(glvShiftExecutedLog, "GlvShiftExecuted log").to.not.be.undefined;
+
+    const glvValueUpdatedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvValueUpdated");
+    expect(glvValueUpdatedLog, "GlvValueUpdated log").to.not.be.undefined;
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+        [zeroPoolMarketAddress]: expandDecimals(1, 18),
+      },
+    });
+  });
+
+  it("execute glv shift with oracle GLV price if unrelated market has negative pool value", async () => {
+    const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
+    await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
+      chainlinkDataStreamProvider.address
+    );
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    await setupDistressedGlvMarket(fixture);
+
+    const { executeResult } = await handleGlvShift(fixture, {
+      create: {
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        minMarketTokens: expandDecimals(1000, 18),
+      },
+      execute: {
+        tokens: [wnt.address, usdc.address, sol.address, ethUsdGlvAddress],
+        precisions: [8, 18, 8, 8],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4), expandDecimals(1, 4)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4), expandDecimals(1, 4)],
+      },
+    });
+
+    const glvValueUpdatedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvValueUpdated");
+    expect(glvValueUpdatedLog, "GlvValueUpdated log").to.not.be.undefined;
+    expect(glvValueUpdatedLog.parsedEventData.value).eq(expandDecimals(10000, 30));
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+      },
+    });
+  });
+
+  it("getGlvValue reverts if a market has negative pool value", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    const distressedMarket = await setupDistressedGlvMarket(fixture);
+
+    const getPriceProp = (price, decimals) => ({
+      min: expandDecimals(price, decimals),
+      max: expandDecimals(price, decimals),
+    });
+
+    await expect(
+      glvReader.getGlvValue(
+        dataStore.address,
+        [ethUsdMarket.marketToken, solUsdMarket.marketToken, distressedMarket],
+        [getPriceProp(5000, 12), getPriceProp(600, 12), getPriceProp(600, 12)],
+        getPriceProp(5000, 12),
+        getPriceProp(1, 24),
+        ethUsdGlvAddress,
+        true
+      )
+    )
+      .to.be.revertedWithCustomError(errorsContract, "GlvNegativeMarketPoolValue")
+      .withArgs(ethUsdGlvAddress, distressedMarket);
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+      execute: {
+        expectedCancellationReason: "GlvNegativeMarketPoolValue",
+      },
+    });
+
+    await handleGlvWithdrawal(fixture, {
+      create: {
+        glvTokenAmount: expandDecimals(100, 18),
+      },
+      execute: {
+        expectedCancellationReason: "GlvNegativeMarketPoolValue",
+      },
+    });
+  });
+
+  it("execute glv shift fails if index price for a supported market is missing", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    await marketFactory.createMarket(wbtc.address, wnt.address, usdc.address, DEFAULT_MARKET_TYPE);
+    const btcMarketAddress = getMarketTokenAddress(
+      wbtc.address,
+      wnt.address,
+      usdc.address,
+      DEFAULT_MARKET_TYPE,
+      marketFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    await glvShiftHandler.addMarketToGlv(ethUsdGlvAddress, btcMarketAddress);
+
+    await createGlvShift(fixture, {
+      fromMarket: ethUsdMarket,
+      toMarket: solUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      minMarketTokens: expandDecimals(1000, 18),
+    });
+
+    await expect(executeGlvShift(fixture, {}))
+      .to.be.revertedWithCustomError(errorsContract, "EmptyPrimaryPrice")
+      .withArgs(wbtc.address);
+  });
+
+  it("execute glv shift does not require prices for markets after a distressed market", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    await setupDistressedGlvMarket(fixture);
+
+    await marketFactory.createMarket(wbtc.address, wnt.address, usdc.address, DEFAULT_MARKET_TYPE);
+    const btcMarketAddress = getMarketTokenAddress(
+      wbtc.address,
+      wnt.address,
+      usdc.address,
+      DEFAULT_MARKET_TYPE,
+      marketFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    await glvShiftHandler.addMarketToGlv(ethUsdGlvAddress, btcMarketAddress);
+
+    const { executeResult } = await handleGlvShift(fixture, {
+      create: {
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        minMarketTokens: expandDecimals(1000, 18),
+      },
+    });
+
+    const glvShiftExecutedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvShiftExecuted");
+    expect(glvShiftExecutedLog, "GlvShiftExecuted log").to.not.be.undefined;
+    const glvValueUpdatedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvValueUpdated");
+    expect(glvValueUpdatedLog, "GlvValueUpdated log").to.be.undefined;
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+      },
+    });
+  });
+
+  it("glv deposits resume after a distressed market is removed", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    const distressedMarket = await setupDistressedGlvMarket(fixture);
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+      execute: {
+        expectedCancellationReason: "GlvNegativeMarketPoolValue",
+      },
+    });
+
+    await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, distressedMarket), true);
+    await dataStore.setUint(
+      keys.glvMarketRemovalDustThresholdKey(ethUsdGlvAddress, distressedMarket),
+      expandDecimals(1, 18)
+    );
+    await glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, distressedMarket);
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
       },
     });
   });
@@ -348,6 +651,11 @@ describe("Glv Shifts", () => {
   describe("execute glv shift, validations", () => {
     it("GlvShiftNotFound", async () => {
       const key = ethers.constants.HashZero.slice(0, -1) + "f";
+      // Reproduce a restored fixture whose last block is stale by the next transaction.
+      const maxPriceAge = (await dataStore.getUint(keys.MAX_ORACLE_PRICE_AGE)).toNumber();
+      await time.setNextBlockTimestamp((await time.latest()) + maxPriceAge + 1);
+      // Refresh the block used for prices so oracle validation does not mask the missing-key error.
+      await mine();
       await expect(executeGlvShift(fixture, { key }))
         .to.be.revertedWithCustomError(errorsContract, "GlvShiftNotFound")
         .withArgs(key);
@@ -502,6 +810,85 @@ describe("Glv Shifts", () => {
         await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
         expect(await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME)).to.be.eq(300);
         await executeGlvShift(fixture);
+      });
+
+      // fromMarket may be disabled at execute (drain path); toMarket must still be enabled
+      it("allows execute when fromMarket is disabled but still listed", async () => {
+        await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+
+        await handleGlvShift(fixture, {
+          create: {
+            fromMarket: ethUsdMarket,
+            toMarket: solUsdMarket,
+            marketTokenAmount: expandDecimals(1000, 18),
+            minMarketTokens: expandDecimals(1000, 18),
+          },
+        });
+
+        await expectBalances({
+          [ethUsdGlvAddress]: {
+            [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+            [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+          },
+        });
+      });
+
+      it("cancels execute when toMarket is disabled after create", async () => {
+        await createGlvShift(fixture, {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+          minMarketTokens: expandDecimals(1000, 18),
+        });
+
+        await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, solUsdMarket.marketToken), true);
+
+        await executeGlvShift(fixture, {
+          expectedCancellationReason: {
+            name: "GlvDisabledMarket",
+            args: [ethUsdGlvAddress, solUsdMarket.marketToken],
+          },
+        });
+
+        expect(await getGlvShiftCount(dataStore)).eq(0);
+        // GM stays on fromMarket (execute state rolled back before cancel)
+        await expectBalances({
+          [ethUsdGlvAddress]: {
+            [ethUsdMarket.marketToken]: expandDecimals(10000, 18),
+            [solUsdMarket.marketToken]: 0,
+          },
+        });
+      });
+
+      // toMarket removed while shift is pending: execute must cancel, not sync GM outside NAV
+      it("cancels execute when toMarket was removed after create", async () => {
+        await createGlvShift(fixture, {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+          minMarketTokens: expandDecimals(1000, 18),
+        });
+
+        expect(await getGlvShiftCount(dataStore)).eq(1);
+
+        // solUsdMarket has zero GLV balance, so it can be removed after disable
+        await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, solUsdMarket.marketToken), true);
+        await glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, solUsdMarket.marketToken);
+
+        await executeGlvShift(fixture, {
+          expectedCancellationReason: {
+            name: "GlvUnsupportedMarket",
+            args: [ethUsdGlvAddress, solUsdMarket.marketToken],
+          },
+        });
+
+        expect(await getGlvShiftCount(dataStore)).eq(0);
+        await expectBalances({
+          [ethUsdGlvAddress]: {
+            [ethUsdMarket.marketToken]: expandDecimals(10000, 18),
+            [solUsdMarket.marketToken]: 0,
+          },
+        });
       });
     });
 

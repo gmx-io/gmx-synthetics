@@ -6,12 +6,12 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     ORDER_KEEPER: syntheticKeepers.mainnet,
     LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
     CLAIM_ADMIN: {
-      "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
+      "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
       ...claimAdmins.mainnet,
       ...generalConfigKeepers.mainnet,
     },
     CONFIG_KEEPER: {
-      "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
+      "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
       ...generalConfigKeepers.mainnet,
     },
     FEE_KEEPER: {
@@ -21,12 +21,12 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       ...generalConfigKeepers.mainnet,
     },
     TIMELOCK_ADMIN: {
-      "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
-      "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
-      "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
+      "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_1
+      "0x58F582455b54d7c83d03BCeed95FAf72B37fdDD7": true, // protocol_multisig_1
+      "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
     },
     TIMELOCK_MULTISIG: {
-      "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1
+      "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
     },
     GOV_TOKEN_CONTROLLER: {},
     CONTROLLER: {
@@ -82,5 +82,6 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0x72a30e76827Ce83cEf0b1BEd7e9aAF9F4a576990": true, // TimelockConfig (ROLE_ADMIN)
       "0x3d6BA4a91Ffde7C519379F8dCA5FE58b7125c294": true, // ConfigTimelockController (ROLE_ADMIN)
     },
+    MULTICHAIN_READER: {},
   };
 }

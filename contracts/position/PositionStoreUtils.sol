@@ -22,12 +22,17 @@ library PositionStoreUtils {
     bytes32 public constant SIZE_IN_TOKENS = keccak256(abi.encode("SIZE_IN_TOKENS"));
     bytes32 public constant COLLATERAL_AMOUNT = keccak256(abi.encode("COLLATERAL_AMOUNT"));
     bytes32 public constant PENDING_IMPACT_AMOUNT = keccak256(abi.encode("PENDING_IMPACT_AMOUNT"));
+    bytes32 public constant REALIZED_UNCAPPED_PNL_USD = keccak256(abi.encode("REALIZED_UNCAPPED_PNL_USD"));
+    bytes32 public constant REALIZED_PNL_USD = keccak256(abi.encode("REALIZED_PNL_USD"));
+    bytes32 public constant CAPPED_PNL_POOL_TOKEN_AMOUNT = keccak256(abi.encode("CAPPED_PNL_POOL_TOKEN_AMOUNT"));
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
     bytes32 public constant FUNDING_FEE_AMOUNT_PER_SIZE = keccak256(abi.encode("FUNDING_FEE_AMOUNT_PER_SIZE"));
     bytes32 public constant LONG_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("LONG_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE"));
     bytes32 public constant SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE"));
     bytes32 public constant INCREASED_AT_TIME = keccak256(abi.encode("INCREASED_AT_TIME"));
     bytes32 public constant DECREASED_AT_TIME = keccak256(abi.encode("DECREASED_AT_TIME"));
+    bytes32 public constant CAPPED_PNL_REFERENCE_POOL_PNL_USD = keccak256(abi.encode("CAPPED_PNL_REFERENCE_POOL_PNL_USD"));
+    bytes32 public constant CAPPED_PNL_ALLOWANCE_PER_PRICE = keccak256(abi.encode("CAPPED_PNL_ALLOWANCE_PER_PRICE"));
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
 
@@ -65,6 +70,18 @@ library PositionStoreUtils {
             keccak256(abi.encode(key, PENDING_IMPACT_AMOUNT))
         ));
 
+        position.setRealizedUncappedPnlUsd(dataStore.getInt(
+            keccak256(abi.encode(key, REALIZED_UNCAPPED_PNL_USD))
+        ));
+
+        position.setRealizedPnlUsd(dataStore.getInt(
+            keccak256(abi.encode(key, REALIZED_PNL_USD))
+        ));
+
+        position.setCappedPnlPoolTokenAmount(dataStore.getUint(
+            keccak256(abi.encode(key, CAPPED_PNL_POOL_TOKEN_AMOUNT))
+        ));
+
         position.setBorrowingFactor(dataStore.getUint(
             keccak256(abi.encode(key, BORROWING_FACTOR))
         ));
@@ -87,6 +104,14 @@ library PositionStoreUtils {
 
         position.setDecreasedAtTime(dataStore.getUint(
             keccak256(abi.encode(key, DECREASED_AT_TIME))
+        ));
+
+        position.setCappedPnlReferencePoolPnlUsd(dataStore.getInt(
+            keccak256(abi.encode(key, CAPPED_PNL_REFERENCE_POOL_PNL_USD))
+        ));
+
+        position.setCappedPnlAllowancePerPrice(dataStore.getUint(
+            keccak256(abi.encode(key, CAPPED_PNL_ALLOWANCE_PER_PRICE))
         ));
 
         position.setIsLong(dataStore.getBool(
@@ -125,6 +150,21 @@ library PositionStoreUtils {
         dataStore.setInt(
             keccak256(abi.encode(key, PENDING_IMPACT_AMOUNT)),
             position.pendingImpactAmount()
+        );
+
+        dataStore.setInt(
+            keccak256(abi.encode(key, REALIZED_UNCAPPED_PNL_USD)),
+            position.realizedUncappedPnlUsd()
+        );
+
+        dataStore.setInt(
+            keccak256(abi.encode(key, REALIZED_PNL_USD)),
+            position.realizedPnlUsd()
+        );
+
+        dataStore.setUint(
+            keccak256(abi.encode(key, CAPPED_PNL_POOL_TOKEN_AMOUNT)),
+            position.cappedPnlPoolTokenAmount()
         );
 
         dataStore.setUint(
@@ -172,6 +212,16 @@ library PositionStoreUtils {
             position.decreasedAtTime()
         );
 
+        dataStore.setInt(
+            keccak256(abi.encode(key, CAPPED_PNL_REFERENCE_POOL_PNL_USD)),
+            position.cappedPnlReferencePoolPnlUsd()
+        );
+
+        dataStore.setUint(
+            keccak256(abi.encode(key, CAPPED_PNL_ALLOWANCE_PER_PRICE)),
+            position.cappedPnlAllowancePerPrice()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, IS_LONG)),
             position.isLong()
@@ -209,6 +259,18 @@ library PositionStoreUtils {
             keccak256(abi.encode(key, PENDING_IMPACT_AMOUNT))
         );
 
+        dataStore.removeInt(
+            keccak256(abi.encode(key, REALIZED_UNCAPPED_PNL_USD))
+        );
+
+        dataStore.removeInt(
+            keccak256(abi.encode(key, REALIZED_PNL_USD))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, CAPPED_PNL_POOL_TOKEN_AMOUNT))
+        );
+
         dataStore.removeUint(
             keccak256(abi.encode(key, SIZE_IN_USD))
         );
@@ -243,6 +305,14 @@ library PositionStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, DECREASED_AT_TIME))
+        );
+
+        dataStore.removeInt(
+            keccak256(abi.encode(key, CAPPED_PNL_REFERENCE_POOL_PNL_USD))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, CAPPED_PNL_ALLOWANCE_PER_PRICE))
         );
 
         dataStore.removeBool(

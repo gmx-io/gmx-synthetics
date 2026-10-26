@@ -66,7 +66,7 @@ library AdlUtils {
     // where auto-deleveraging is required
     //
     // This function checks the pending profit state and updates an isAdlEnabled
-    // flag to avoid having to repeatedly validate whether auto-deleveraging is required
+    // flag. This flag is using for early return and signal if ADL is not enabled.
     //
     // Once the pending profit has been reduced below the threshold this function can
     // be called again to clear the flag
@@ -97,7 +97,7 @@ library AdlUtils {
         }
 
         Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, _market);
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketRawPrices(oracle, _market);
         // if the MAX_PNL_FACTOR_FOR_ADL is set to be higher than MAX_PNL_FACTOR_FOR_WITHDRAWALS
         // it is possible for a pool to be in a state where withdrawals and ADL is not allowed
         // this is similar to the case where there is a large amount of open positions relative
@@ -177,6 +177,7 @@ library AdlUtils {
             0, // executionFee
             params.dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
+            0, // uiFeeFactor (uiFeeReceiver is the zero address, so no ui fee is charged)
             params.updatedAtTime, // updatedAtTime
             0, // validFromTime
             lastSrcChainId // srcChainId

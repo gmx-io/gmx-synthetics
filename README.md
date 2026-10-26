@@ -438,6 +438,10 @@ if (usageFactor > optimalUsageFactor) {
 }
 ```
 
+For both models, the final borrowing factor is capped by the per-market, per-side
+`MAX_BORROWING_FACTOR_PER_SECOND` value. This cap must be configured to a nonzero
+value for each side before enabling borrowing accrual.
+
 There is also an option to set a skipBorrowingFeeForSmallerSide flag, this would result in the borrowing fee for the smaller side being set to zero. For example, if there are more longs than shorts and skipBorrowingFeeForSmallerSide is true, then the borrowing fee for shorts would be zero.
 
 ## Price Impact
@@ -653,7 +657,7 @@ After the initial setup:
 
 - The GLV shift feature can be exploited by temporarily increasing the utilization in a market that typically has low utilization. Once the keeper executes the shift, the attacker can lower the utilization back to its normal levels. Position fees and price impact should be configured in a way that makes this attack expensive enough to cover the GLV loss.
 
-- In GLV there may be GM markets which are above their maximum pnlToPoolFactorForTraders. If this GM market's maxPnlFactorForDeposits is higher than maxPnlFactorForTraders then the GM market is valued lower during deposits than it will be once traders have realized their capped profits. Malicious user may observe a GM market in such a condition and deposit into the GLV containing it in order to gain from ADLs which will soon follow. To avoid this maxPnlFactorForDeposits should be less than or equal to maxPnlFactorForTraders.
+- In GLV there may be GM markets which are above their maximum pnlToPoolFactorForTraders. If this GM market's maxPnlFactorForDeposits is higher than maxPnlFactorForTraders then the GM market is valued lower during deposits than it will be once traders have realized their capped profits. Malicious user may observe a GM market in such a condition and deposit into the GLV containing it in order to gain from ADLs which will soon follow. To avoid this maxPnlFactorForDeposits should be less than or equal to maxPnlFactorForTraders. Config also enforces maxPnlFactorForWithdrawals <= maxPnlFactorForTraders because swaps check both sides against the withdrawal cap. Both constraints apply independently to each market and side. When lowering the trader cap, lower any deposit or withdrawal cap that would exceed it first; when raising either operational cap above the current trader cap, raise the trader cap first.
 
 - It's technically possible for market value to become negative. In this case the GLV would be unusable until the market value becomes positive.
 
@@ -668,6 +672,7 @@ After the initial setup:
 ## Deployment
 
 - `scripts/verifyFallback.ts` can be used to verify contracts
+- `scripts/sourcifyVerify.ts` checks the deployment records of a network on Sourcify and submits the unverified ones, run it after each deployment: `DRY_RUN=false npx hardhat run --no-compile --network <network> scripts/sourcifyVerify.ts` (without `DRY_RUN=false` it only reports)
 - One MarketToken contract would need to be verified using `npx hardhat verify`, thereafter all MarketToken contracts should be verified as the source code would be the same
 
 ## Configuration

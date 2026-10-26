@@ -1,38 +1,40 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { expandDecimals, percentageToFloat } from "../utils/math";
+import { expandDecimals } from "../utils/math";
 
 export type BuybackBatchAmount = {
   token: string;
   amount: BigNumberish;
 };
 
-export type BuybackGmxFactor = {
+export type BuybackPrimaryTokenFactor = {
   version: number;
   factor: BigNumberish;
 };
 
 export type BuybackConfig = {
   batchAmounts: BuybackBatchAmount[];
-  gmxFactors: BuybackGmxFactor[];
+  primaryTokenFactors: BuybackPrimaryTokenFactor[];
   maxPriceAge: number;
 };
 
 export default async function (hre: HardhatRuntimeEnvironment): Promise<BuybackConfig> {
   const defaultEmptyConfig = {
     batchAmounts: [],
-    gmxFactors: [],
+    primaryTokenFactors: [],
     maxPriceAge: 0,
   };
 
-  const defaultBuybackGmxFactor = [
+  // the split factors are 0 on arbitrum and avalanche since 2026-03 (buybacks run on the exchanges);
+  // the on-chain values read 0 under the old and the new key on both chains (2026-10-21)
+  const defaultBuybackPrimaryTokenFactor = [
     {
       version: 1,
-      factor: percentageToFloat("30%"),
+      factor: 0,
     },
     {
       version: 2,
-      factor: percentageToFloat("72.97%"), // 27 / 37
+      factor: 0,
     },
   ];
 
@@ -53,7 +55,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<BuybackC
           amount: expandDecimals(15, 17),
         },
       ],
-      gmxFactors: defaultBuybackGmxFactor,
+      primaryTokenFactors: defaultBuybackPrimaryTokenFactor,
       maxPriceAge: defaultMaxPriceAge,
     },
 
@@ -68,7 +70,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<BuybackC
           amount: expandDecimals(150, 18),
         },
       ],
-      gmxFactors: defaultBuybackGmxFactor,
+      primaryTokenFactors: defaultBuybackPrimaryTokenFactor,
       maxPriceAge: defaultMaxPriceAge,
     },
 

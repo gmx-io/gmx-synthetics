@@ -32,6 +32,7 @@ library SwapUtils {
      * @param tokenIn The address of the token that is being swapped.
      * @param amountIn The amount of the token that is being swapped.
      * @param receiver The address to which the swapped tokens should be sent.
+     * @param shouldRelaxMaxPoolAmountForTokenIn A boolean indicating whether max pool amount validation for tokenIn can be skipped if tokenIn is not increased.
      * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
      */
     struct _SwapParams {
@@ -39,6 +40,7 @@ library SwapUtils {
         address tokenIn;
         uint256 amountIn;
         address receiver;
+        bool shouldRelaxMaxPoolAmountForTokenIn;
         bool shouldUnwrapNativeToken;
     }
 
@@ -133,6 +135,20 @@ library SwapUtils {
                 tokenOut,
                 outputAmount,
                 receiver,
+                // only the first hop in the swap path can use already-debited withdrawal inventory.
+                // Later hops receive fresh output from the previous market,
+                // so they should still enforce maxPoolAmount.
+
+                // address(params.bank) == market.marketToken means only same-bank swaps qualify.
+                // This is the case where SwapUtils does not transfer fresh tokenIn into the market.
+                // Normal swaps/deposits/orders transfer fresh tokenIn in, so their bank is never the
+                // marketToken and they never reach the relaxed path.
+
+                // even when eligible, maxPoolAmount validation is only skipped if the tokenIn pool did not increase
+                // past params.tokenInPoolAmountBeforeAction (see _shouldSkipMaxPoolAmountValidationForTokenIn).
+                // Callers that pass tokenInPoolAmountBeforeAction as 0 keep strict validation
+                // for any non-empty tokenIn pool.
+                i == 0 && address(params.bank) == market.marketToken,
                 i == params.swapPathMarkets.length - 1 ? params.shouldUnwrapNativeToken : false // only convert ETH on the last swap if needed
             );
 
@@ -199,6 +215,19 @@ library SwapUtils {
         cache.tokenOut = MarketUtils.getOppositeToken(_params.tokenIn, _params.market);
         cache.tokenInPrice = params.oracle.getPrimaryPrice(_params.tokenIn);
         cache.tokenOutPrice = params.oracle.getPrimaryPrice(cache.tokenOut);
+        MarketUtils.MarketPrices memory prices = _getMarketPrices(params, _params, cache);
+
+        // the same max pnl validation runs before and after the pool amounts change, so a swap
+        // cannot change whether a side is above its max pnl factor
+        //
+        // a swap that grows the pool of a side whose trader pnl is capped raises the amount of
+        // pnl those positions can realize, without adding any capital: the market token is
+        // repriced in the same transaction as the previously capped pnl is recognized, and the
+        // extra payout comes out of the remaining liquidity
+        //
+        // this applies whether the swap only reduces the breach or clears it entirely, so both
+        // are blocked; ADL is the recovery path for a breached market, not swaps
+        _validateMaxPnl(params, _params, prices);
 
         // note that this may not be entirely accurate since the effect of the
         // swap fees are not accounted for
@@ -222,6 +251,9 @@ library SwapUtils {
             _params.amountIn,
             cache.balanceWasImproved,
             params.uiFeeReceiver,
+            params.uiFeeFactor == type(uint256).max
+                ? FeeUtils.getUiFeeFactor(params.dataStore, params.uiFeeReceiver)
+                : params.uiFeeFactor,
             params.swapPricingType
         );
 
@@ -316,6 +348,28 @@ library SwapUtils {
             cache.poolAmountOut = cache.amountOut;
         }
 
+        // Checkpoint both borrowing sides before changing either pool amount. Borrowing rates
+        // depend on the side-specific pool values, so applying a post-swap rate to time elapsed
+        // before the swap would retroactively reprice borrowing. A depleted side with reserved
+        // USD is allowed to accrue zero so that restoring its pool still advances the timestamp.
+        MarketUtils.updateCumulativeBorrowingFactor(
+            params.dataStore,
+            params.eventEmitter,
+            _params.market,
+            prices,
+            true, // isLong
+            true // allowZeroPoolBorrowingFactor
+        );
+
+        MarketUtils.updateCumulativeBorrowingFactor(
+            params.dataStore,
+            params.eventEmitter,
+            _params.market,
+            prices,
+            false, // isLong
+            true // allowZeroPoolBorrowingFactor
+        );
+
         // the amountOut value includes the positive price impact amount
         if (_params.receiver != _params.market.marketToken) {
             MarketToken(payable(_params.market.marketToken)).transferOut(
@@ -344,13 +398,9 @@ library SwapUtils {
             -cache.poolAmountOut.toInt256()
         );
 
-        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
-            params.oracle.getPrimaryPrice(_params.market.indexToken),
-            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
-            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
-        );
-
-        MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        if (!_shouldSkipMaxPoolAmountValidationForTokenIn(params, _params)) {
+            MarketUtils.validatePoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        }
 
         // for single token markets cache.tokenOut will always equal _params.market.longToken
         // so only the reserve for longs will be validated
@@ -362,17 +412,8 @@ library SwapUtils {
             cache.tokenOut == _params.market.longToken
         );
 
-        MarketUtils.validateMaxPnl(
-            params.dataStore,
-            _params.market,
-            prices,
-            _params.tokenIn == _params.market.longToken
-                ? Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
-                : Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            cache.tokenOut == _params.market.shortToken
-                ? Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
-                : Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
-        );
+        // see the matching validation before the pool amounts were updated
+        _validateMaxPnl(params, _params, prices);
 
         SwapPricingUtils.EmitSwapInfoParams memory emitSwapInfoParams;
 
@@ -403,5 +444,53 @@ library SwapUtils {
         );
 
         return (cache.tokenOut, cache.amountOut);
+    }
+
+    function _getMarketPrices(
+        ISwapUtils.SwapParams memory params,
+        _SwapParams memory _params,
+        SwapCache memory cache
+    ) internal view returns (MarketUtils.MarketPrices memory) {
+        return MarketUtils.MarketPrices(
+            params.oracle.getPrimaryPrice(_params.market.indexToken),
+            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
+            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
+        );
+    }
+
+    // a swap only moves value between the two token pools without adding net capital,
+    // so unlike a deposit, growing a side must not be judged against the looser max pnl
+    // factor for deposits: both sides are checked against the max pnl factor for
+    // withdrawals
+    //
+    // the positive pnl liability is used instead of the netted pnl, since losses of
+    // positions collateralized in the other token settle into the other token's pool
+    // and cannot back the payouts owed from this side's pool; this matches the
+    // liability that the MAX_PNL_FACTOR_FOR_TRADERS payout cap is applied to
+    function _validateMaxPnl(
+        ISwapUtils.SwapParams memory params,
+        _SwapParams memory _params,
+        MarketUtils.MarketPrices memory prices
+    ) internal view {
+        MarketUtils.validateMaxPositivePnl(
+            params.dataStore,
+            _params.market,
+            prices,
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
+        );
+    }
+
+    function _shouldSkipMaxPoolAmountValidationForTokenIn(
+        ISwapUtils.SwapParams memory params,
+        _SwapParams memory _params
+    ) internal view returns (bool) {
+        if (!_params.shouldRelaxMaxPoolAmountForTokenIn) {
+            return false;
+        }
+
+        // if token amount not increased, return true, and skip the validation
+        uint256 poolAmount = MarketUtils.getPoolAmount(params.dataStore, _params.market, _params.tokenIn);
+        return poolAmount <= params.tokenInPoolAmountBeforeAction;
     }
 }

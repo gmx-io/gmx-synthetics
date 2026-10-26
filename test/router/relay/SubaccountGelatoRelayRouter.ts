@@ -20,6 +20,7 @@ import {
   sendBatch,
   sendCancelOrder,
   sendCreateOrder,
+  sendCreateTwapOrder,
   sendRemoveSubaccount,
   sendUpdateOrder,
 } from "../../../utils/relay/subaccountGelatoRelay";
@@ -29,6 +30,8 @@ import { ethers } from "ethers";
 import { handleDeposit } from "../../../utils/deposit";
 import { deployContract } from "../../../utils/deploy";
 import { parseLogs } from "../../../utils/event";
+import { getRelayParams } from "../../../utils/relay/helpers";
+import { getCreateTwapOrderSignature } from "../../../utils/relay/signatures";
 
 const INVALID_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -97,6 +100,7 @@ describe("SubaccountGelatoRelayRouter", () => {
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
     await usdc.mint(user1.address, expandDecimals(10000, 6));
     await wnt.connect(user1).deposit({ value: expandDecimals(1000, 18) });
+    await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(10000));
     await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(100));
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
@@ -428,6 +432,9 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("MaxSubaccountActionCountExceeded", async () => {
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
       await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
       await dataStore.setUint(
         keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
@@ -449,6 +456,9 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("SubaccountApprovalExpired", async () => {
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
       await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
@@ -839,6 +849,1087 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
   });
 
+  describe("createTwapOrder", () => {
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    });
+
+    it("InvalidReceiverForSubaccountOrder", async () => {
+      await enableSubaccount();
+
+      createOrderParams.params.addresses.receiver = user2.address;
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidReceiverForSubaccountOrder");
+    });
+
+    it("InvalidCancellationReceiverForSubaccountOrder", async () => {
+      await enableSubaccount();
+
+      createOrderParams.params.addresses.cancellationReceiver = user2.address;
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidCancellationReceiverForSubaccountOrder");
+    });
+
+    it("InsufficientRelayFee", async () => {
+      await enableSubaccount();
+
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee.mul(3);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientRelayFee");
+    });
+
+    it("NonEmptyExternalCallsForSubaccountOrder", async () => {
+      await enableSubaccount();
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+          externalCalls: {
+            sendTokens: [ethers.constants.AddressZero],
+            sendAmounts: [0],
+            externalCallTargets: [user0.address],
+            externalCallDataList: ["0x"],
+            refundTokens: [],
+            refundReceivers: [],
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
+    });
+
+    it("InsufficientExecutionFee", async () => {
+      await enableSubaccount();
+
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 15);
+      createOrderParams.params.numbers.executionFee = 1;
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee");
+    });
+
+    it("execution fee should be capped", async () => {
+      await enableSubaccount();
+
+      const twapCount = 2;
+      const cappedExecutionFee = bigNumberify("10286934020000000");
+
+      await dataStore.setAddress(keys.HOLDING_ADDRESS, user3.address);
+      createOrderParams.feeParams.feeAmount = expandDecimals(201, 15);
+      createOrderParams.params.numbers.executionFee = expandDecimals(1, 17);
+
+      await expectBalance(wnt.address, user3.address, 0);
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount,
+        interval: 300,
+      });
+
+      const orderKeys = await getOrderKeys(dataStore, 0, twapCount);
+      for (const orderKey of orderKeys) {
+        const order = await reader.getOrder(dataStore.address, orderKey);
+        expect(order.numbers.executionFee).eq(cappedExecutionFee);
+      }
+
+      await expectBalance(
+        wnt.address,
+        user3.address,
+        createOrderParams.params.numbers.executionFee.sub(cappedExecutionFee).mul(twapCount)
+      );
+    });
+
+    it("InvalidSignature", async () => {
+      await enableSubaccount();
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          signature: INVALID_SIGNATURE,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await enableSubaccount();
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          signer: ethers.Wallet.createRandom(),
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+    });
+
+    it("InvalidUserDigest", async () => {
+      await enableSubaccount();
+
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        userNonce: 0,
+        twapCount: 3,
+        interval: 300,
+      });
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          userNonce: 0,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
+    });
+
+    it("DeadlinePassed", async () => {
+      await enableSubaccount();
+
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          deadline: 5,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          deadline: 0,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await time.setNextBlockTimestamp(9999999100);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          deadline: 9999999099,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await time.setNextBlockTimestamp(9999999200);
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        deadline: 9999999200,
+        twapCount: 3,
+        interval: 300,
+      });
+    });
+
+    it("InvalidPermitSpender", async () => {
+      await enableSubaccount();
+
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user1,
+        user2.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          tokenPermits: [tokenPermit],
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidPermitSpender");
+    });
+
+    it("UnexpectedRelayFeeToken", async () => {
+      await enableSubaccount();
+
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 18));
+      createOrderParams.feeParams.feeToken = usdc.address;
+      createOrderParams.feeParams.feeAmount = expandDecimals(10, 18);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "UnexpectedRelayFeeToken");
+    });
+
+    it("UnexpectedRelayFeeTokenAfterSwap", async () => {
+      await enableSubaccount();
+
+      createOrderParams.feeParams.feeSwapPath = [ethUsdMarket.marketToken];
+      createOrderParams.oracleParams = {
+        tokens: [usdc.address, wnt.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "UnexpectedRelayFeeTokenAfterSwap");
+    });
+
+    it("InvalidTwapCount", async () => {
+      await enableSubaccount();
+
+      createOrderParams.feeParams.feeAmount = createOrderParams.gelatoRelayFeeAmount.add(expandDecimals(1, 15));
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 1,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidTwapCount");
+    });
+
+    it("InvalidInterval", async () => {
+      await enableSubaccount();
+
+      createOrderParams.feeParams.feeAmount = createOrderParams.gelatoRelayFeeAmount.add(expandDecimals(2, 15));
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 2,
+          interval: 0,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidInterval");
+    });
+
+    it("InvalidSubaccountApprovalSubaccount", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+      const subaccountApproval = await getSubaccountApproval({
+        subaccountApproval: {
+          subaccount: ethers.constants.AddressZero,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          integrationId: ethers.constants.HashZero,
+          deadline: 9999999999,
+          nonce: 0,
+        },
+        desChainId: chainId,
+        account: user1.address,
+        relayRouter: subaccountGelatoRelayRouter,
+        chainId,
+        signer: user1,
+      });
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          subaccountApproval,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSubaccountApprovalSubaccount");
+    });
+
+    it("SubaccountApprovalDeadlinePassed", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 0,
+            integrationId: integrationId,
+            nonce: 0,
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "SubaccountApprovalDeadlinePassed");
+
+      await time.setNextBlockTimestamp(9999999100);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999099,
+            integrationId: integrationId,
+            nonce: 0,
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "SubaccountApprovalDeadlinePassed");
+
+      await time.setNextBlockTimestamp(9999999200);
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount: 3,
+        interval: 300,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999201,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+      });
+    });
+
+    it("SubaccountNotAuthorized", async () => {
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized");
+    });
+
+    it("MaxSubaccountActionCountExceeded", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "MaxSubaccountActionCountExceeded");
+
+      await dataStore.setUint(
+        keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        3
+      );
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.not.be.reverted;
+    });
+
+    it("SubaccountApprovalExpired", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "SubaccountApprovalExpired");
+
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+      await dataStore.setUint(
+        keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        10
+      );
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+        })
+      ).to.not.be.reverted;
+    });
+
+    it("InvalidSignature of subaccount approval", async () => {
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999999,
+            integrationId: integrationId,
+            nonce: 0,
+            signature: "0x123123",
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "InvalidSignature")
+        .withArgs("subaccount approval");
+    });
+
+    it("InvalidRecoveredSigner of subaccount approval", async () => {
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(3)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 3,
+          interval: 300,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999999,
+            integrationId: integrationId,
+            nonce: 0,
+            signer: ethers.Wallet.createRandom(),
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount: 3,
+        interval: 300,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+      });
+    });
+
+    it("InvalidSubaccountApprovalNonce", async () => {
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(2)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 2,
+          interval: 300,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999999,
+            integrationId: integrationId,
+            nonce: 1,
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSubaccountApprovalNonce");
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount: 2,
+        interval: 300,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+      });
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        userNonce: 1,
+        twapCount: 2,
+        interval: 300,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 1,
+        },
+      });
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          userNonce: 2,
+          twapCount: 2,
+          interval: 300,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999999,
+            integrationId: integrationId,
+            nonce: 1,
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSubaccountApprovalNonce");
+    });
+
+    it("updates subaccount approval, max allowed count, and expires at", async () => {
+      const twapCount = 3;
+
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(twapCount)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      const subaccountListKey = keys.subaccountListKey(user1.address);
+      const subaccountActionCountKey = keys.subaccountActionCountKey(
+        user1.address,
+        user0.address,
+        keys.SUBACCOUNT_ORDER_ACTION
+      );
+
+      expect(await dataStore.getAddressCount(subaccountListKey)).to.eq(0);
+      expect(await dataStore.getUint(subaccountActionCountKey)).to.eq(0);
+      expect(
+        await dataStore.getUint(
+          keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION)
+        )
+      ).to.eq(0);
+      expect(
+        await dataStore.getUint(keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION))
+      ).to.eq(0);
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount,
+        interval: 300,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+      });
+
+      expect(await dataStore.getUint(subaccountActionCountKey)).to.eq(twapCount);
+      expect(await dataStore.getAddressCount(subaccountListKey)).to.eq(1);
+      expect(await dataStore.getAddressValuesAt(subaccountListKey, 0, 1)).to.deep.eq([user0.address]);
+      expect(
+        await dataStore.getUint(
+          keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION)
+        )
+      ).to.eq(10);
+      expect(
+        await dataStore.getUint(keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION))
+      ).to.eq(9999999999);
+    });
+
+    it("MaxRelayFeeSwapForSubaccountExceeded", async () => {
+      await enableSubaccount();
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
+
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
+
+      await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, 0);
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 2,
+          interval: 300,
+          feeParams: {
+            feeToken: usdc.address,
+            feeAmount: expandDecimals(1, 6),
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+          oracleParams: {
+            tokens: [usdc.address, wnt.address],
+            providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+            data: ["0x", "0x"],
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "MaxRelayFeeSwapForSubaccountExceeded")
+        .withArgs(decimalToFloat(1), decimalToFloat(0));
+
+      await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(100));
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          twapCount: 2,
+          interval: 300,
+          feeParams: {
+            feeToken: usdc.address,
+            feeAmount: expandDecimals(101, 6),
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+          oracleParams: {
+            tokens: [usdc.address, wnt.address],
+            providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+            data: ["0x", "0x"],
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "MaxRelayFeeSwapForSubaccountExceeded")
+        .withArgs(decimalToFloat(101), decimalToFloat(100));
+
+      await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(102));
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount: 2,
+        interval: 300,
+        feeParams: {
+          feeToken: usdc.address,
+          feeAmount: expandDecimals(101, 6),
+          feeSwapPath: [ethUsdMarket.marketToken],
+        },
+        oracleParams: {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        },
+      });
+    });
+
+    it("swap relay fee", async () => {
+      const twapCount = 2;
+
+      await enableSubaccount();
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
+
+      const atomicSwapFeeFactor = percentageToFloat("1%");
+      const swapFeeFactor = percentageToFloat("0.05%");
+      await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+      await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), swapFeeFactor);
+      await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), swapFeeFactor);
+
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
+
+      const usdcBalanceBefore = await usdc.balanceOf(user1.address);
+      const feeAmount = expandDecimals(20, 6);
+      createOrderParams.gelatoRelayFeeAmount = expandDecimals(196, 13);
+
+      const tx = await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount,
+        interval: 300,
+        feeParams: {
+          feeToken: usdc.address,
+          feeAmount,
+          feeSwapPath: [ethUsdMarket.marketToken],
+        },
+        oracleParams: {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        },
+      });
+
+      const orderKeys = await getOrderKeys(dataStore, 0, twapCount);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      expect(order.numbers.executionFee).eq(
+        expandDecimals(4, 15)
+          .sub(applyFactor(expandDecimals(4, 15), atomicSwapFeeFactor))
+          .sub(createOrderParams.gelatoRelayFeeAmount)
+          .div(twapCount)
+      );
+
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
+
+      const usdcBalanceAfter = await usdc.balanceOf(user1.address);
+      expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+
+      const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+      const swapFeesCollectedLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapFeesCollected");
+      expect(swapInfoLog.parsedEventData.amountIn.sub(swapInfoLog.parsedEventData.amountInAfterFees)).eq(
+        applyFactor(swapInfoLog.parsedEventData.amountIn, atomicSwapFeeFactor)
+      );
+      expect(swapFeesCollectedLog.parsedEventData.swapFeeType).eq(keys.ATOMIC_SWAP_FEE_TYPE);
+    });
+
+    it("creates twap orders and updates subaccount action count", async () => {
+      await enableSubaccount();
+
+      const twapCount = 3;
+      const interval = 300;
+      const executionFee = createOrderParams.params.numbers.executionFee;
+      const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
+      const collateralDeltaAmountTwap = collateralDeltaAmount.mul(twapCount);
+      const executionFeeTwap = executionFee.mul(twapCount);
+      const subaccountActionCountKey = keys.subaccountActionCountKey(
+        user1.address,
+        user0.address,
+        keys.SUBACCOUNT_ORDER_ACTION
+      );
+
+      createOrderParams.feeParams.feeAmount = executionFeeTwap.add(createOrderParams.gelatoRelayFeeAmount);
+      createOrderParams.params.numbers.validFromTime = 100;
+
+      const tx = await sendCreateTwapOrder({
+        ...createOrderParams,
+        twapCount,
+        interval,
+      });
+
+      expect(await getOrderCount(dataStore)).eq(twapCount);
+      expect(await dataStore.getUint(subaccountActionCountKey)).eq(twapCount);
+      expect(await wnt.allowance(user1.address, router.address)).eq(
+        expandDecimals(1, 18).sub(createOrderParams.feeParams.feeAmount).sub(collateralDeltaAmountTwap)
+      );
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
+
+      const orderKeys = await getOrderKeys(dataStore, 0, twapCount);
+      for (let i = 0; i < twapCount; i++) {
+        const order = await reader.getOrder(dataStore.address, orderKeys[i]);
+
+        expect(order.addresses.account).eq(user1.address);
+        expect(order.addresses.receiver).eq(user1.address);
+        expect(order.addresses.callbackContract).eq(user2.address);
+        expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+        expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
+        expect(order.numbers.executionFee).eq(executionFee);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+        expect(order.numbers.validFromTime).eq(100 + i * interval);
+      }
+
+      await logGasUsage({
+        tx,
+        label: "subaccountGelatoRelayRouter.createTwapOrder",
+      });
+    });
+
+    it("minified digest signature", async () => {
+      const twapCount = 2;
+      const interval = 300;
+
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(twapCount)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      const relayParams = await getRelayParams({ ...createOrderParams, userNonce: 1 });
+      const subaccountApproval = await getSubaccountApproval({
+        ...createOrderParams,
+        signer: createOrderParams.subaccountApprovalSigner,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+      });
+      const signature = await getCreateTwapOrderSignature({
+        signer: user0,
+        relayParams,
+        subaccountApproval,
+        account: user1.address,
+        verifyingContract: subaccountGelatoRelayRouter.address,
+        params: createOrderParams.params,
+        twapCount,
+        interval,
+        chainId,
+      });
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        userNonce: 1,
+        signature,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+        twapCount,
+        interval,
+      });
+
+      const relayParams2 = await getRelayParams({ ...createOrderParams, userNonce: 2 });
+      const subaccountApproval2 = await getSubaccountApproval({
+        ...createOrderParams,
+        signer: createOrderParams.subaccountApprovalSigner,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 1,
+        },
+      });
+      const signature2 = await getCreateTwapOrderSignature({
+        signer: user0,
+        relayParams: relayParams2,
+        subaccountApproval: subaccountApproval2,
+        account: user1.address,
+        verifyingContract: subaccountGelatoRelayRouter.address,
+        params: createOrderParams.params,
+        twapCount,
+        interval,
+        chainId,
+        minified: true,
+      });
+
+      expect(signature2).not.eq(
+        await getCreateTwapOrderSignature({
+          signer: user0,
+          relayParams: relayParams2,
+          subaccountApproval: subaccountApproval2,
+          account: user1.address,
+          verifyingContract: subaccountGelatoRelayRouter.address,
+          params: createOrderParams.params,
+          twapCount,
+          interval,
+          chainId,
+        })
+      );
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          userNonce: 2,
+          signature,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999999,
+            integrationId: integrationId,
+            nonce: 1,
+          },
+          twapCount,
+          interval,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        userNonce: 2,
+        signature: signature2,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 1,
+        },
+        twapCount,
+        interval,
+      });
+
+      expect(await getOrderCount(dataStore)).eq(4);
+    });
+
+    it("includes twapCount and interval in the signature", async () => {
+      const twapCount = 2;
+      const interval = 300;
+      const userNonce = 4242;
+
+      createOrderParams.feeParams.feeAmount = createOrderParams.params.numbers.executionFee
+        .mul(twapCount)
+        .add(createOrderParams.gelatoRelayFeeAmount);
+
+      const relayParams = await getRelayParams({
+        ...createOrderParams,
+        userNonce,
+      });
+      const subaccountApproval = await getSubaccountApproval({
+        ...createOrderParams,
+        signer: createOrderParams.subaccountApprovalSigner,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+      });
+      const signature = await getCreateTwapOrderSignature({
+        signer: user0,
+        relayParams,
+        subaccountApproval,
+        account: user1.address,
+        verifyingContract: subaccountGelatoRelayRouter.address,
+        params: createOrderParams.params,
+        twapCount,
+        interval,
+        chainId,
+      });
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          userNonce,
+          signature,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999999,
+            integrationId: integrationId,
+            nonce: 0,
+          },
+          twapCount: twapCount + 1,
+          interval,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      await expect(
+        sendCreateTwapOrder({
+          ...createOrderParams,
+          userNonce,
+          signature,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999999,
+            integrationId: integrationId,
+            nonce: 0,
+          },
+          twapCount,
+          interval: interval + 1,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      await sendCreateTwapOrder({
+        ...createOrderParams,
+        userNonce,
+        signature,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+        twapCount,
+        interval,
+      });
+    });
+  });
+
   //#region updateOrder
   describe("updateOrder", () => {
     let updateOrderParams: Parameters<typeof sendUpdateOrder>[0];
@@ -872,6 +1963,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           triggerPrice: decimalToFloat(4800),
           minOutputAmount: 700,
           validFromTime: 0,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: false,
           executionFeeIncrease: 0,
         },
@@ -1022,8 +2114,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // 0.2 WETH in total (initial 0.001 + 0.199 from update)
-      expect(order.numbers.executionFee).closeTo("8039135020000000", "10000000000000");
-      expect(await wnt.balanceOf(holdingAddress)).closeTo("92960864980000000", "10000000000000");
+      expect(order.numbers.executionFee).closeTo("8049979000000000", "10000000000000");
+      expect(await wnt.balanceOf(holdingAddress)).closeTo("92950020080000000", "10000000000000");
     });
 
     it("EmptyOrder", async () => {
@@ -1432,6 +2524,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           triggerPrice: 303,
           minOutputAmount: 304,
           validFromTime: 305,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: true,
           executionFeeIncrease: 0,
         },
@@ -1451,6 +2544,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       expect(order2After.numbers.triggerPrice).eq(303);
       expect(order2After.numbers.minOutputAmount).eq(304);
       expect(order2After.numbers.validFromTime).eq(305);
+      expect(order2After.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.NoSwap);
       expect(order2After.flags.autoCancel).eq(true);
 
       const orderKeysAfter = await getOrderKeys(dataStore, 0, 2);
@@ -1462,6 +2556,136 @@ describe("SubaccountGelatoRelayRouter", () => {
         tx: tx2,
         label: "gelatoRelayRouter batch 1 cancel order, 1 update order",
       });
+    });
+  });
+
+  //#region subaccount approval account binding
+  // The subaccount approval nonce, revocation counter and action count are all keyed by the main
+  // account, so a second account starts from a clean slate and would accept a replayed approval.
+  // The account inside the approval hash is what prevents that, which matters for sibling ERC-1271
+  // wallets sharing an owner: they validate the same raw digest with the same signature bytes.
+  describe("subaccount approval account binding", () => {
+    let walletA, walletB;
+
+    const approvalPayload = () => ({
+      subaccount: user0.address,
+      shouldAdd: true,
+      expiresAt: 9999999999,
+      maxAllowedCount: 10,
+      actionType: keys.SUBACCOUNT_ORDER_ACTION,
+      deadline: 9999999999,
+      integrationId,
+      nonce: 0,
+    });
+
+    const signApprovalFor = (account: string) =>
+      getSubaccountApproval({
+        account,
+        signer: user1,
+        subaccountApproval: approvalPayload(),
+        relayRouter: subaccountGelatoRelayRouter,
+        desChainId: chainId,
+        chainId,
+      });
+
+    const orderParamsFor = (account: string) => ({
+      ...createOrderParams,
+      account,
+      tokenPermits: [],
+      params: {
+        ...defaultCreateOrderParams,
+        addresses: {
+          ...defaultCreateOrderParams.addresses,
+          receiver: account,
+          cancellationReceiver: account,
+        },
+      },
+    });
+
+    const fundContractWallet = async (wallet: string) => {
+      await wnt.connect(user1).transfer(wallet, expandDecimals(10, 18));
+      await impersonateAccount(wallet);
+      await setBalance(wallet, expandDecimals(10, 18));
+      const walletSigner = await hre.ethers.getSigner(wallet);
+      await wnt.connect(walletSigner).approve(router.address, expandDecimals(100, 18));
+      await stopImpersonatingAccount(wallet);
+    };
+
+    beforeEach(async () => {
+      const walletFactory = await deployContract("MockERC1271WalletFactory", []);
+      const saltA = hre.ethers.utils.formatBytes32String("siblingA");
+      const saltB = hre.ethers.utils.formatBytes32String("siblingB");
+      await walletFactory.createWallet(user1.address, saltA);
+      await walletFactory.createWallet(user1.address, saltB);
+      walletA = await walletFactory.getWalletAddress(user1.address, saltA);
+      walletB = await walletFactory.getWalletAddress(user1.address, saltB);
+
+      await fundContractWallet(walletA);
+      await fundContractWallet(walletB);
+
+      await wnt.connect(user1).approve(router.address, expandDecimals(100, 18));
+    });
+
+    it("siblings sharing an owner accept the same raw digest", async () => {
+      const digest = hre.ethers.utils.hashMessage("sibling wallets");
+      const signature = await user1.signMessage("sibling wallets");
+
+      const siblingA = await hre.ethers.getContractAt("MockERC1271Wallet", walletA);
+      const siblingB = await hre.ethers.getContractAt("MockERC1271Wallet", walletB);
+      expect(await siblingA.isValidSignature(digest, signature)).eq("0x1626ba7e");
+      expect(await siblingB.isValidSignature(digest, signature)).eq("0x1626ba7e");
+    });
+
+    it("an approval signed for one sibling wallet cannot be replayed on another", async () => {
+      const subaccountApproval = await signApprovalFor(walletA);
+
+      await expect(sendCreateOrder({ ...orderParamsFor(walletB), subaccountApproval })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(walletB))).eq(0);
+      expect(await subaccountGelatoRelayRouter.subaccountApprovalNonces(walletB)).eq(0);
+
+      await sendCreateOrder({ ...orderParamsFor(walletA), subaccountApproval });
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(walletA), 0, 1)).to.deep.eq([user0.address]);
+    });
+
+    it("an approval signed for one EOA cannot be submitted for another", async () => {
+      await wnt.connect(user1).transfer(user2.address, expandDecimals(10, 18));
+      await wnt.connect(user2).approve(router.address, expandDecimals(100, 18));
+
+      const subaccountApproval = await signApprovalFor(user1.address);
+
+      await expect(
+        sendCreateOrder({ ...orderParamsFor(user2.address), subaccountApproval })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user2.address))).eq(0);
+
+      await sendCreateOrder({ ...orderParamsFor(user1.address), subaccountApproval });
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(user1.address), 0, 1)).to.deep.eq([
+        user0.address,
+      ]);
+    });
+
+    it("different accounts can approve the same subaccount with identical payloads", async () => {
+      await wnt.connect(user1).transfer(user2.address, expandDecimals(10, 18));
+      await wnt.connect(user2).approve(router.address, expandDecimals(100, 18));
+
+      await sendCreateOrder({ ...orderParamsFor(user1.address), subaccountApproval: approvalPayload() });
+      await sendCreateOrder({
+        ...orderParamsFor(user2.address),
+        subaccountApprovalSigner: user2,
+        subaccountApproval: approvalPayload(),
+      });
+
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(user1.address), 0, 1)).to.deep.eq([
+        user0.address,
+      ]);
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(user2.address), 0, 1)).to.deep.eq([
+        user0.address,
+      ]);
     });
   });
 });

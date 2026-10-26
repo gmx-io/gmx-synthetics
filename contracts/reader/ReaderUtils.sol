@@ -9,6 +9,7 @@ import "../data/Keys.sol";
 import "../market/MarketStoreUtils.sol";
 
 import "../position/Position.sol";
+import "../position/PositionStoreUtils.sol";
 
 import "../order/OrderStoreUtils.sol";
 
@@ -41,6 +42,8 @@ library ReaderUtils {
         Market.Props market;
         uint256 borrowingFactorPerSecondForLongs;
         uint256 borrowingFactorPerSecondForShorts;
+        bool borrowingFactorForLongsAvailable;
+        bool borrowingFactorForShortsAvailable;
         BaseFundingValues baseFunding;
         MarketUtils.GetNextFundingAmountPerSizeResult nextFunding;
         VirtualInventory virtualInventory;
@@ -75,6 +78,21 @@ library ReaderUtils {
         }
 
         return orders;
+    }
+
+    function getAccountPositions(
+        DataStore dataStore,
+        address account,
+        uint256 start,
+        uint256 end
+    ) external view returns (Position.Props[] memory) {
+        bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
+        Position.Props[] memory positions = new Position.Props[](positionKeys.length);
+        for (uint256 i; i < positionKeys.length; i++) {
+            positions[i] = PositionStoreUtils.get(dataStore, positionKeys[i]);
+        }
+
+        return positions;
     }
 
     function getBaseFundingValues(DataStore dataStore, Market.Props memory market) public view returns (BaseFundingValues memory) {
@@ -158,18 +176,24 @@ library ReaderUtils {
     ) public view returns (MarketInfo memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
 
-        uint256 borrowingFactorPerSecondForLongs = MarketUtils.getBorrowingFactorPerSecond(
+        (
+            uint256 borrowingFactorPerSecondForLongs,
+            bool borrowingFactorForLongsAvailable
+        ) = MarketUtils.getBorrowingFactorPerSecondWithAvailability(
             dataStore,
             market,
             prices,
-            true
+            true // isLong
         );
 
-        uint256 borrowingFactorPerSecondForShorts = MarketUtils.getBorrowingFactorPerSecond(
+        (
+            uint256 borrowingFactorPerSecondForShorts,
+            bool borrowingFactorForShortsAvailable
+        ) = MarketUtils.getBorrowingFactorPerSecondWithAvailability(
             dataStore,
             market,
             prices,
-            false
+            false // isLong
         );
 
         BaseFundingValues memory baseFunding = getBaseFundingValues(dataStore, market);
@@ -189,6 +213,8 @@ library ReaderUtils {
                 market,
                 borrowingFactorPerSecondForLongs,
                 borrowingFactorPerSecondForShorts,
+                borrowingFactorForLongsAvailable,
+                borrowingFactorForShortsAvailable,
                 baseFunding,
                 nextFunding,
                 virtualInventory,

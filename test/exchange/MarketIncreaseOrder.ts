@@ -462,7 +462,10 @@ describe("Exchange.MarketIncreaseOrder", () => {
       shouldUnwrapNativeToken: false,
     };
 
-    await handleOrder(fixture, { create: params });
+    await handleOrder(fixture, {
+      create: params,
+      execute: { gasUsageLabel: "executeOrder with one swap" },
+    });
 
     const block = await provider.getBlock();
 

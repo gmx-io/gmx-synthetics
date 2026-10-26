@@ -1,10 +1,12 @@
 import hre from "hardhat";
 import Role from "../artifacts/contracts/role/Role.sol/Role.json";
+import Role2 from "../artifacts/contracts/role/Role2.sol/Role2.json";
 import { hashString } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
 import { getContractNameFromEtherscan, getContractCreationFromEtherscan } from "../utils/explorer";
 import { FileCache } from "./cacheUtils";
 import { isRelayFeeExcludedKey } from "../utils/keys";
+import { PROTOCOL_MULTISIG } from "../utils/constants";
 
 interface ContractInfo {
   isContract: boolean;
@@ -18,6 +20,7 @@ const _cache = new FileCache<ContractInfo>(`contractInfoCache-${hre.network.name
 
 const GMX_V2_DEPLOYER_ADDRESS = "0xe7bfff2ab721264887230037940490351700a068";
 const GMX_V1_DEPLOYER_ADDRESS = "0x5f799f365fa8a2b60ac0429c48b153ca5a6f0cf8";
+const GMX_KMS_DEPLOYER_ADDRESS = "0xe60cad9eb9f45591e82fd6386d5a32f8d2a31d40"; // used from 2.2c deployment onwards
 
 const FEE_HANDLER_ORACLES = {
   arbitrum: "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4",
@@ -26,7 +29,7 @@ const FEE_HANDLER_ORACLES = {
 
 const trustedExternalContracts = new Set(
   [
-    "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9",
+    PROTOCOL_MULTISIG,
     "0x8d1d2e24ec641edc6a1ebe0f3ae7af0ebc573e0d",
     "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3",
     "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55",
@@ -45,7 +48,7 @@ async function validateMember({ role, member, errors }) {
   if (["ROLE_ADMIN", "TIMELOCK_MULTISIG", "CONTROLLER"].includes(role)) {
     const code = await hre.ethers.provider.getCode(member);
     if (code === "0x") {
-      errors.push(`EOA (Externally Owned Account) with ${role} role`);
+      errors.push(`EOA (Externally Owned Account) with ${role} role: ${member.toLowerCase()}`);
     }
   }
 }
@@ -64,6 +67,13 @@ function getAvalancheValues() {
   };
 }
 
+function getMegaEthValues() {
+  return {
+    referralStorageAddress: "0xAd917849372eaEF498E982F90bA6459a43ecbd31",
+    dataStreamVerifierAddress: "0xf514688BC967c31e946B03A1fc10F55ddd69169C",
+  };
+}
+
 function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddress?: string } {
   if (hre.network.name === "avalancheFuji") {
     return {};
@@ -71,16 +81,25 @@ function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddre
     return getArbitrumValues();
   } else if (hre.network.name === "avalanche") {
     return getAvalancheValues();
+  } else if (hre.network.name === "megaEth") {
+    return getMegaEthValues();
   }
   throw new Error("Unsupported network");
 }
 
 export async function validateRoles() {
-  const roles = Role.abi.map((i) => i.name) as string[];
+  let roles = Role.abi.map((i) => i.name) as string[];
+  const roles2 = Role2.abi.map((i) => i.name) as string[];
+  roles = [...new Set(roles.concat(roles2, ["DONATION_KEEPER"]))];
+
   const deployments = await hre.deployments.all();
   const contractNameByAddress = Object.fromEntries(
     Object.entries(deployments).map(([contractName, deployment]) => [deployment.address, contractName])
   );
+
+  contractNameByAddress["0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D"] = "Safe";
+  contractNameByAddress[PROTOCOL_MULTISIG] = "Safe";
+
   console.log(`checking ${roles.length} roles`);
   console.log(roles);
 
@@ -173,6 +192,7 @@ export async function validateRoles() {
       if (unexpectedDeployer) {
         warns.push(`contract ${contractName} ${member} with role ${role} was not deployed by GMX deployer`);
       }
+      console.log(`checking ${role}, ${member}`);
       if (!expectedRoles[role][member.toLowerCase()]) {
         const { isContract, contractName } = await getContractInfo(contractNameByAddress, member);
         if (isContract && !contractName) {
@@ -252,6 +272,7 @@ async function getContractInfo(
   if (!contractName) {
     const code = await hre.ethers.provider.getCode(contractAddress);
     if (code !== "0x") {
+      console.log(`getting contract info for ${contractAddress}`);
       let isVerified: boolean;
       ({ contractName, isVerified } = await getContractNameFromEtherscan(contractAddress));
       shouldCache = isVerified;
@@ -273,13 +294,14 @@ async function getContractInfo(
 export function getIsGmxDeployer(contractAddress: string) {
   return (
     contractAddress.toLowerCase() === GMX_V1_DEPLOYER_ADDRESS.toLowerCase() ||
-    contractAddress.toLowerCase() === GMX_V2_DEPLOYER_ADDRESS.toLowerCase()
+    contractAddress.toLowerCase() === GMX_V2_DEPLOYER_ADDRESS.toLowerCase() ||
+    contractAddress.toLowerCase() === GMX_KMS_DEPLOYER_ADDRESS.toLowerCase()
   );
 }
 
 async function validateDataStreamProviderHasDiscount() {
   // fee discount is not needed on certain networks like Botanix
-  if (hre.network.name === "botanix") {
+  if (hre.network.name === "botanix" || hre.network.name === "megaEth") {
     return;
   }
   console.log("validating data stream provider has discount");
@@ -350,15 +372,8 @@ async function validateIsReferralStorageHandler() {
       );
     }
 
-    const jitOrderHandlerDeployment = await hre.deployments.get("JitOrderHandler");
-    const isJitOderHandler = await referralStorage.isHandler(jitOrderHandlerDeployment.address);
-    if (!isJitOderHandler) {
-      console.warn(
-        "🟠 JitOrderHandler %s is missing the handler role in ReferralStorage %s",
-        jitOrderHandlerDeployment.address,
-        referralStorageAddress
-      );
-    }
+    // JitOrderHandler does not need the handler role: it only executes existing orders
+    // (via OrderHandler.doExecuteOrder) and never writes to ReferralStorage
 
     const referralStorageTimelock = new hre.ethers.Contract(
       await referralStorage.gov(),

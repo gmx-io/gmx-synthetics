@@ -13,6 +13,7 @@ import "./IDepositUtils.sol";
 import "../nonce/NonceUtils.sol";
 import "../price/Price.sol";
 import "../market/MarketUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -50,6 +51,8 @@ library DepositUtils {
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.addresses.market);
         MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
         MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
+        MarketUtils.validateDepositMarketInSwapPath(market.marketToken, params.addresses.longTokenSwapPath);
+        MarketUtils.validateDepositMarketInSwapPath(market.marketToken, params.addresses.shortTokenSwapPath);
 
         // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
         // be non-zero, the initialShortTokenAmount would be zero
@@ -77,41 +80,31 @@ library DepositUtils {
 
         AccountUtils.validateReceiver(params.addresses.receiver);
 
-        Deposit.Props memory deposit = Deposit.Props(
-            Deposit.Addresses(
-                account,
-                params.addresses.receiver,
-                params.addresses.callbackContract,
-                params.addresses.uiFeeReceiver,
-                market.marketToken,
-                params.addresses.initialLongToken,
-                params.addresses.initialShortToken,
-                params.addresses.longTokenSwapPath,
-                params.addresses.shortTokenSwapPath
-            ),
-            Deposit.Numbers(
-                initialLongTokenAmount,
-                initialShortTokenAmount,
-                params.minMarketTokens,
-                Chain.currentTimestamp(), // updatedAtTime
-                params.executionFee,
-                params.callbackGasLimit,
-                srcChainId
-            ),
-            Deposit.Flags(
-                params.shouldUnwrapNativeToken
-            ),
-            params.dataList
-        );
+        // use setters to avoid stackTooDeep error
+        Deposit.Props memory deposit;
+        deposit.setAccount(account);
+        deposit.setReceiver(params.addresses.receiver);
+        deposit.setCallbackContract(params.addresses.callbackContract);
+        deposit.setUiFeeReceiver(params.addresses.uiFeeReceiver);
+        deposit.setMarket(market.marketToken);
+        deposit.setInitialLongToken(params.addresses.initialLongToken);
+        deposit.setInitialShortToken(params.addresses.initialShortToken);
+        deposit.setLongTokenSwapPath(params.addresses.longTokenSwapPath);
+        deposit.setShortTokenSwapPath(params.addresses.shortTokenSwapPath);
+        deposit.setInitialLongTokenAmount(initialLongTokenAmount);
+        deposit.setInitialShortTokenAmount(initialShortTokenAmount);
+        deposit.setMinMarketTokens(params.minMarketTokens);
+        deposit.setUiFeeFactor(FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver));
+        deposit.setUpdatedAtTime(Chain.currentTimestamp());
+        deposit.setExecutionFee(params.executionFee);
+        deposit.setCallbackGasLimit(params.callbackGasLimit);
+        deposit.setSrcChainId(srcChainId);
+        deposit.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
+        deposit.setDataList(params.dataList);
 
         CallbackUtils.validateCallbackGasLimit(dataStore, deposit.callbackGasLimit());
 
-        GasUtils.validateExecutionFee(
-            dataStore,
-            GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit), // estimatedGasLimit
-            params.executionFee,
-            GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length) // oraclePriceCount
-        );
+        _validateExecutionFee(dataStore, deposit);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
@@ -120,6 +113,15 @@ library DepositUtils {
         DepositEventUtils.emitDepositCreated(eventEmitter, key, deposit, Deposit.DepositType.Normal);
 
         return key;
+    }
+
+    function _validateExecutionFee(DataStore dataStore, Deposit.Props memory deposit) private view {
+        GasUtils.validateExecutionFee(
+            dataStore,
+            GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit),
+            deposit.executionFee(),
+            GasUtils.estimateExecuteDepositOraclePriceCount(deposit)
+        );
     }
 
     // @dev cancels a deposit, funds are sent back to the user

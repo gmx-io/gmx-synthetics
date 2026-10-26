@@ -77,8 +77,15 @@ library DecreasePositionUtils {
         );
 
         // cap the order size to the position size
+        // a MarketDecrease may become oversized if the position is partially
+        // reduced (e.g. by liquidation, ADL or another decrease) before the order
+        // is executed, in which case it is capped to close the remaining position
+        // instead of reverting and being cancelled
+        // a Liquidation order is created with sizeDeltaUsd equal to the position
+        // size and executed atomically, so it should never be oversized
         if (params.order.sizeDeltaUsd() > params.position.sizeInUsd()) {
-            if (params.order.orderType() == Order.OrderType.LimitDecrease ||
+            if (params.order.orderType() == Order.OrderType.MarketDecrease ||
+                params.order.orderType() == Order.OrderType.LimitDecrease ||
                 params.order.orderType() == Order.OrderType.StopLossDecrease) {
 
                 OrderEventUtils.emitOrderSizeDeltaAutoUpdated(
@@ -110,7 +117,7 @@ library DecreasePositionUtils {
         // remaining collateral amount and update the order attributes if needed
         if (params.order.sizeDeltaUsd() < params.position.sizeInUsd()) {
             // estimate pnl based on indexTokenPrice
-            (cache.estimatedPositionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+            (cache.estimatedPositionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */, /* bool pnlWasCapped */) = PositionUtils.getPositionPnlUsd(
                 params.contracts.dataStore,
                 params.market,
                 cache.prices,
@@ -238,6 +245,16 @@ library DecreasePositionUtils {
             }
         }
 
+        // the slope uses the cap that prices this close. processCollateral debits the
+        // pnl tokens immediately after pricing, so the slope has to be captured first.
+        uint256 allowanceSlope = PositionUtils.getCappedPnlAllowanceSlope(
+            params.contracts.dataStore,
+            params.market,
+            cache.prices,
+            params.position,
+            params.order.sizeDeltaUsd()
+        );
+
         cache.initialCollateralAmount = params.position.collateralAmount();
         (
             PositionUtils.DecreasePositionCollateralValues memory values,
@@ -260,6 +277,24 @@ library DecreasePositionUtils {
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
         params.position.setCollateralAmount(values.remainingCollateralAmount);
         params.position.setPendingImpactAmount(params.position.pendingImpactAmount() - values.proportionalPendingImpactAmount);
+        // only pnl realized while capping is active is tracked, losses and pnl paid out
+        // in full while below the cap are settled and do not affect future decreases
+        if (values.pnlWasCapped) {
+            // read the reconstructed pool pnl before this close is added to realized history
+            int256 referencePoolPnl = PositionUtils.getReconstructedPoolPnl(
+                params.contracts.dataStore,
+                params.market,
+                cache.prices,
+                params.position
+            );
+            if (referencePoolPnl > params.position.cappedPnlReferencePoolPnlUsd()) {
+                params.position.setCappedPnlReferencePoolPnlUsd(referencePoolPnl);
+            }
+            params.position.setCappedPnlAllowancePerPrice(params.position.cappedPnlAllowancePerPrice() + allowanceSlope);
+            params.position.setRealizedUncappedPnlUsd(params.position.realizedUncappedPnlUsd() + values.uncappedBasePnlUsd);
+            params.position.setRealizedPnlUsd(params.position.realizedPnlUsd() + values.basePnlUsd);
+            params.position.setCappedPnlPoolTokenAmount(params.position.cappedPnlPoolTokenAmount() + values.basePnlPoolTokenAmount);
+        }
         params.position.setDecreasedAtTime(Chain.currentTimestamp());
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
@@ -356,7 +391,8 @@ library DecreasePositionUtils {
             params.order.orderType(),
             values,
             cache.prices.indexTokenPrice,
-            cache.collateralTokenPrice
+            cache.collateralTokenPrice,
+            fees.balanceWasImproved
         );
 
         values = DecreasePositionSwapUtils.swapWithdrawnCollateralToPnlToken(params, values);

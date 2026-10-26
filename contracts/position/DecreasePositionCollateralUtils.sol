@@ -36,8 +36,6 @@ library DecreasePositionCollateralUtils {
 
     struct ProcessCollateralCache {
         bool isInsolventCloseAllowed;
-        bool wasSwapped;
-        uint256 swapOutputAmount;
         PayForCostResult result;
         bool balanceWasImproved;
     }
@@ -90,7 +88,7 @@ library DecreasePositionCollateralUtils {
         // the sizeDeltaInTokens is calculated as position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd()
         // the basePnlUsd is the pnl to be realized, and is calculated as:
         // totalPositionPnl * sizeDeltaInTokens / position.sizeInTokens()
-        (values.basePnlUsd, values.uncappedBasePnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
+        (values.basePnlUsd, values.uncappedBasePnlUsd, values.sizeDeltaInTokens, values.pnlWasCapped) = PositionUtils.getPositionPnlUsd(
             params.contracts.dataStore,
             params.market,
             cache.prices,
@@ -114,26 +112,27 @@ library DecreasePositionCollateralUtils {
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
             params.order.uiFeeReceiver(), // uiFeeReceiver
+            params.order.uiFeeFactor(), // uiFeeFactor
             Order.isLiquidationOrder(params.order.orderType()) // isLiquidation
         );
 
         // if the pnl is positive, deduct the pnl amount from the pool
         if (values.basePnlUsd > 0) {
             // use pnlTokenPrice.max to minimize the tokens paid out
-            uint256 deductionAmountForPool = values.basePnlUsd.toUint256() / cache.pnlTokenPrice.max;
+            values.basePnlPoolTokenAmount = values.basePnlUsd.toUint256() / cache.pnlTokenPrice.max;
 
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market,
                 cache.pnlToken,
-                -deductionAmountForPool.toInt256()
+                -values.basePnlPoolTokenAmount.toInt256()
             );
 
             if (values.output.outputToken == cache.pnlToken) {
-                values.output.outputAmount += deductionAmountForPool;
+                values.output.outputAmount += values.basePnlPoolTokenAmount;
             } else {
-                values.output.secondaryOutputAmount += deductionAmountForPool;
+                values.output.secondaryOutputAmount += values.basePnlPoolTokenAmount;
             }
         }
 
@@ -223,18 +222,10 @@ library DecreasePositionCollateralUtils {
         // if the decreasePositionSwapType was set to NoSwap or if the swap fails due
         // to insufficient liquidity or other reasons then it is possible that
         // the profit remains in a different token from the collateral token
-        (collateralCache.wasSwapped, collateralCache.swapOutputAmount) = DecreasePositionSwapUtils.swapProfitToCollateralToken(
+        values = DecreasePositionSwapUtils.swapProfitToCollateralToken(
             params,
-            cache.pnlToken,
-            values.output.secondaryOutputAmount
+            values
         );
-
-        // if the swap was successful the profit should have been swapped
-        // to the collateral token
-        if (collateralCache.wasSwapped) {
-            values.output.outputAmount += collateralCache.swapOutputAmount;
-            values.output.secondaryOutputAmount = 0;
-        }
 
         values.remainingCollateralAmount = params.position.collateralAmount();
 
@@ -735,7 +726,8 @@ library DecreasePositionCollateralUtils {
             positionFeeAmount: 0,
             totalCostAmountExcludingFunding: 0,
             totalCostAmount: 0,
-            totalDiscountAmount: 0
+            totalDiscountAmount: 0,
+            balanceWasImproved: fees.balanceWasImproved
         });
 
         return _fees;

@@ -74,13 +74,14 @@ library OrderEventUtils {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", order.account());
 
-        eventData.uintItems.initItems(6);
+        eventData.uintItems.initItems(7);
         eventData.uintItems.setItem(0, "sizeDeltaUsd", order.sizeDeltaUsd());
         eventData.uintItems.setItem(1, "acceptablePrice", order.acceptablePrice());
         eventData.uintItems.setItem(2, "triggerPrice", order.triggerPrice());
         eventData.uintItems.setItem(3, "minOutputAmount", order.minOutputAmount());
         eventData.uintItems.setItem(4, "updatedAtTime", order.updatedAtTime());
         eventData.uintItems.setItem(5, "validFromTime", order.validFromTime());
+        eventData.uintItems.setItem(6, "decreasePositionSwapType", uint256(order.decreasePositionSwapType()));
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "autoCancel", order.autoCancel());
@@ -212,7 +213,7 @@ library OrderEventUtils {
         eventData.addressItems.initArrayItems(1);
         eventData.addressItems.setItem(0, "swapPath", order.swapPath());
 
-        eventData.uintItems.initItems(12);
+        eventData.uintItems.initItems(13);
         eventData.uintItems.setItem(0, "orderType", uint256(order.orderType()));
         eventData.uintItems.setItem(1, "decreasePositionSwapType", uint256(order.decreasePositionSwapType()));
         eventData.uintItems.setItem(2, "sizeDeltaUsd", order.sizeDeltaUsd());
@@ -222,9 +223,10 @@ library OrderEventUtils {
         eventData.uintItems.setItem(6, "executionFee", order.executionFee());
         eventData.uintItems.setItem(7, "callbackGasLimit", order.callbackGasLimit());
         eventData.uintItems.setItem(8, "minOutputAmount", order.minOutputAmount());
-        eventData.uintItems.setItem(9, "updatedAtTime", order.updatedAtTime());
-        eventData.uintItems.setItem(10, "validFromTime", order.validFromTime());
-        eventData.uintItems.setItem(11, "srcChainId", order.srcChainId());
+        eventData.uintItems.setItem(9, "uiFeeFactor", order.uiFeeFactor());
+        eventData.uintItems.setItem(10, "updatedAtTime", order.updatedAtTime());
+        eventData.uintItems.setItem(11, "validFromTime", order.validFromTime());
+        eventData.uintItems.setItem(12, "srcChainId", order.srcChainId());
 
         eventData.boolItems.initItems(3);
         eventData.boolItems.setItem(0, "isLong", order.isLong());

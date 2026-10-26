@@ -12,9 +12,15 @@ import {DataStore} from "../data/DataStore.sol";
 import {BasicMulticall} from "../utils/BasicMulticall.sol";
 import {Precision} from "../utils/Precision.sol";
 import {ConfigTimelockController} from "./ConfigTimelockController.sol";
-import {OracleModule} from "../oracle/OracleModule.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {MarketUtils} from "../market/MarketUtils.sol";
+import {IMultichainProvider} from "../multichain/IMultichainProvider.sol";
+
+interface IUnstakeTimelockTarget {
+    function MAX_UNSTAKE_DELAY() external view returns (uint256);
+    function unstakeDelay() external view returns (uint256);
+    function unstakeExpiry() external view returns (uint256);
+}
 
 contract TimelockConfig is RoleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
@@ -425,6 +431,55 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         _signalPendingAction("SignalWithdrawTokens", eventData);
     }
 
+    // @dev signal the refund of a compose message that is still queued on the endpoint, the message carries the token and amount
+    // @param target the multichain provider holding the tokens
+    // @param endpoint the endpoint holding the compose queue
+    // @param from the Stargate pool that queued the message
+    // @param guid the guid of the compose message
+    // @param message the compose message as queued on the endpoint
+    // @param receiver the account receiving the refunded tokens
+    function signalRefundCompose(
+        address target,
+        address endpoint,
+        address from,
+        bytes32 guid,
+        bytes calldata message,
+        address receiver,
+        bytes32 predecessor,
+        bytes32 salt
+    ) external onlyTimelockAdmin {
+        if (target == address(0)) {
+            revert Errors.EmptyTarget();
+        }
+        if (receiver == address(0)) {
+            revert Errors.EmptyReceiver();
+        }
+
+        bytes memory payload = abi.encodeWithSelector(
+            IMultichainProvider.refundCompose.selector,
+            endpoint,
+            from,
+            guid,
+            message,
+            receiver
+        );
+        _schedule(target, payload, predecessor, salt);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "target", target);
+        eventData.addressItems.setItem(1, "endpoint", endpoint);
+        eventData.addressItems.setItem(2, "from", from);
+        eventData.addressItems.setItem(3, "receiver", receiver);
+
+        eventData.bytes32Items.initItems(2);
+        eventData.bytes32Items.setItem(0, "guid", guid);
+        eventData.bytes32Items.setItem(1, "messageHash", keccak256(message));
+
+        _signalPendingAction("SignalRefundCompose", eventData);
+    }
+
     function signalSetEdgeDataStream(
         address token,
         bytes32 edgeDataStreamId,
@@ -434,6 +489,9 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     ) external onlyTimelockAdmin {
         if (edgeDataStreamId == bytes32(0)) {
             revert Errors.EmptyDataStreamFeedId(token);
+        }
+        if (edgeDataStreamTokenDecimals == 0) {
+            revert Errors.InvalidEdgeDataStreamDecimals(token, edgeDataStreamTokenDecimals);
         }
 
         bytes[] memory payloads = new bytes[](2);
@@ -521,6 +579,69 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.uintItems.setItem(0, "amounts", amounts);
 
         _signalPendingAction("SignalSetMaxTotalContributorTokenAmount", eventData);
+    }
+
+    function signalSetUnstakeDelay(
+        address target,
+        uint256 delay,
+        bytes32 predecessor,
+        bytes32 salt
+    ) external onlyTimelockAdmin {
+        if (target == address(0)) {
+            revert Errors.EmptyTarget();
+        }
+
+        IUnstakeTimelockTarget router = IUnstakeTimelockTarget(target);
+        uint256 maxDelay = router.MAX_UNSTAKE_DELAY();
+        if (delay > maxDelay) {
+            revert Errors.MaxUnstakeDelayExceeded(delay, maxDelay);
+        }
+        uint256 expiry = router.unstakeExpiry();
+        if (expiry != 0 && delay >= expiry) {
+            revert Errors.UnstakeDelayExceedsExpiry(delay, expiry);
+        }
+
+        bytes memory payload = abi.encodeWithSignature("setUnstakeDelay(uint256)", delay);
+        _schedule(target, payload, predecessor, salt);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "target", target);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "delay", delay);
+
+        _signalPendingAction("SignalSetUnstakeDelay", eventData);
+    }
+
+    function signalSetUnstakeExpiry(
+        address target,
+        uint256 expiry,
+        bytes32 predecessor,
+        bytes32 salt
+    ) external onlyTimelockAdmin {
+        if (target == address(0)) {
+            revert Errors.EmptyTarget();
+        }
+
+        uint256 delay = IUnstakeTimelockTarget(target).unstakeDelay();
+        if (expiry != 0 && expiry <= delay) {
+            revert Errors.UnstakeDelayExceedsExpiry(delay, expiry);
+        }
+
+        bytes memory payload = abi.encodeWithSignature("setUnstakeExpiry(uint256)", expiry);
+        _schedule(target, payload, predecessor, salt);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "target", target);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "expiry", expiry);
+
+        _signalPendingAction("SignalSetUnstakeExpiry", eventData);
     }
 
     function execute(address target, bytes calldata payload, bytes32 predecessor, bytes32 salt) external onlyTimelockAdmin {

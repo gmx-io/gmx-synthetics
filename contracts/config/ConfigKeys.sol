@@ -1,0 +1,261 @@
+// SPDX-License-Identifier: BUSL-1.1
+
+pragma solidity ^0.8.0;
+
+import "../data/Keys.sol";
+import "../data/Keys2.sol";
+
+library ConfigKeys {
+    function allowedBaseKeyList() external pure returns (bytes32[185] memory keys) {
+        keys[0] = Keys.MIN_HANDLE_EXECUTION_ERROR_GAS;
+        keys[1] = Keys.MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD;
+        keys[2] = Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION;
+
+        keys[3] = Keys.IS_MARKET_DISABLED;
+
+        keys[4] = Keys.MAX_SWAP_PATH_LENGTH;
+        keys[5] = Keys.MAX_CALLBACK_GAS_LIMIT;
+        keys[6] = Keys.REFUND_EXECUTION_FEE_GAS_LIMIT;
+
+        keys[7] = Keys.MIN_POSITION_SIZE_USD;
+        keys[8] = Keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS;
+
+        keys[9] = Keys.MAX_POOL_AMOUNT;
+        keys[10] = Keys.MAX_POOL_USD_FOR_DEPOSIT;
+        keys[11] = Keys.MAX_COLLATERAL_SUM;
+        keys[12] = Keys.MAX_OPEN_INTEREST;
+
+        keys[13] = Keys.MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT;
+
+        keys[14] = Keys.CREATE_DEPOSIT_FEATURE_DISABLED;
+        keys[15] = Keys.CANCEL_DEPOSIT_FEATURE_DISABLED;
+        keys[16] = Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED;
+
+        keys[17] = Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED;
+        keys[18] = Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED;
+        keys[19] = Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED;
+        keys[20] = Keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED;
+        keys[21] = Keys.WITHDRAWAL_SWAP_FEATURE_DISABLED;
+
+        keys[22] = Keys.CREATE_SHIFT_FEATURE_DISABLED;
+        keys[23] = Keys.CANCEL_SHIFT_FEATURE_DISABLED;
+        keys[24] = Keys.EXECUTE_SHIFT_FEATURE_DISABLED;
+
+        keys[25] = Keys.CREATE_ORDER_FEATURE_DISABLED;
+        keys[26] = Keys.EXECUTE_ORDER_FEATURE_DISABLED;
+        keys[27] = Keys.EXECUTE_ADL_FEATURE_DISABLED;
+        keys[28] = Keys.UPDATE_ORDER_FEATURE_DISABLED;
+        keys[29] = Keys.CANCEL_ORDER_FEATURE_DISABLED;
+
+        keys[30] = Keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED;
+        keys[31] = Keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED;
+        keys[32] = Keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED;
+
+        keys[33] = Keys.CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED;
+        keys[34] = Keys.CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED;
+        keys[35] = Keys.EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED;
+
+        keys[36] = Keys.CREATE_GLV_SHIFT_FEATURE_DISABLED;
+        keys[37] = Keys.EXECUTE_GLV_SHIFT_FEATURE_DISABLED;
+
+        keys[38] = Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED;
+        keys[39] = Keys.CLAIM_COLLATERAL_FEATURE_DISABLED;
+        keys[40] = Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED;
+        keys[41] = Keys.CLAIM_UI_FEES_FEATURE_DISABLED;
+        keys[42] = Keys.GENERAL_CLAIM_FEATURE_DISABLED;
+
+        keys[43] = Keys.JIT_FEATURE_DISABLED;
+
+        keys[44] = Keys.MIN_AFFILIATE_REWARD_FACTOR;
+
+        keys[45] = Keys.SUBACCOUNT_FEATURE_DISABLED;
+        keys[46] = Keys.GASLESS_FEATURE_DISABLED;
+        keys[47] = Keys.ATOMIC_SWAP_FEATURE_DISABLED;
+        keys[48] = Keys.BRIDGE_FEE_SWAP_FEATURE_DISABLED;
+
+        keys[49] = Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS;
+        keys[50] = Keys.MAX_ORACLE_PRICE_AGE;
+        keys[51] = Keys.MAX_ATOMIC_ORACLE_PRICE_AGE;
+        keys[52] = Keys.MAX_ORACLE_TIMESTAMP_RANGE;
+        keys[53] = Keys.ORACLE_TIMESTAMP_ADJUSTMENT;
+        keys[54] = Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY;
+        keys[55] = Keys.CHAINLINK_PAYMENT_TOKEN;
+        keys[56] = Keys.SEQUENCER_GRACE_DURATION;
+        keys[57] = Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR;
+
+        keys[58] = Keys.POSITION_FEE_RECEIVER_FACTOR;
+        keys[59] = Keys.LIQUIDATION_FEE_RECEIVER_FACTOR;
+        keys[60] = Keys.SWAP_FEE_RECEIVER_FACTOR;
+        keys[61] = Keys.BORROWING_FEE_RECEIVER_FACTOR;
+
+        keys[62] = Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1;
+        keys[63] = Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE;
+        keys[64] = Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR;
+
+        keys[65] = Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1;
+        keys[66] = Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE;
+        keys[67] = Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR;
+
+        keys[68] = Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR;
+
+        keys[69] = Keys.CREATE_DEPOSIT_GAS_LIMIT;
+        keys[70] = Keys.DEPOSIT_GAS_LIMIT;
+        keys[71] = Keys.CREATE_WITHDRAWAL_GAS_LIMIT;
+        keys[72] = Keys.WITHDRAWAL_GAS_LIMIT;
+        keys[73] = Keys.CREATE_GLV_DEPOSIT_GAS_LIMIT;
+        keys[74] = Keys.GLV_DEPOSIT_GAS_LIMIT;
+        keys[75] = Keys.CREATE_GLV_WITHDRAWAL_GAS_LIMIT;
+        keys[76] = Keys.GLV_WITHDRAWAL_GAS_LIMIT;
+        keys[77] = Keys.GLV_SHIFT_GAS_LIMIT;
+        keys[78] = Keys.GLV_PER_MARKET_GAS_LIMIT;
+        keys[79] = Keys.SHIFT_GAS_LIMIT;
+        keys[80] = Keys.SINGLE_SWAP_GAS_LIMIT;
+        keys[81] = Keys.INCREASE_ORDER_GAS_LIMIT;
+        keys[82] = Keys.DECREASE_ORDER_GAS_LIMIT;
+        keys[83] = Keys.SWAP_ORDER_GAS_LIMIT;
+        keys[84] = Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT;
+        keys[85] = Keys.REGISTER_CODE_GAS_LIMIT;
+        keys[86] = Keys.TOKEN_TRANSFER_GAS_LIMIT;
+        keys[87] = Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT;
+
+        keys[88] = Keys.REQUEST_EXPIRATION_TIME;
+        keys[89] = Keys.MIN_COLLATERAL_FACTOR;
+        keys[90] = Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER;
+        keys[91] = Keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION;
+        keys[92] = Keys.MIN_COLLATERAL_USD;
+
+        keys[93] = Keys.VIRTUAL_TOKEN_ID;
+        keys[94] = Keys.VIRTUAL_MARKET_ID;
+        keys[95] = Keys.VIRTUAL_INVENTORY_FOR_SWAPS;
+        keys[96] = Keys.VIRTUAL_INVENTORY_FOR_POSITIONS;
+        keys[97] = Keys.VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS;
+
+        keys[98] = Keys.POSITION_IMPACT_FACTOR;
+        keys[99] = Keys.POSITION_IMPACT_EXPONENT_FACTOR;
+        keys[100] = Keys.MAX_POSITION_IMPACT_FACTOR;
+        keys[101] = Keys.POSITION_FEE_FACTOR;
+        keys[102] = Keys.PRO_DISCOUNT_FACTOR;
+        keys[103] = Keys.PRO_TRADER_TIER;
+        keys[104] = Keys.LIQUIDATION_FEE_FACTOR;
+
+        keys[105] = Keys.SWAP_IMPACT_FACTOR;
+        keys[106] = Keys.SWAP_IMPACT_EXPONENT_FACTOR;
+        keys[107] = Keys.SWAP_FEE_FACTOR;
+        keys[108] = Keys.DEPOSIT_FEE_FACTOR;
+        keys[109] = Keys.WITHDRAWAL_FEE_FACTOR;
+        keys[110] = Keys.ATOMIC_SWAP_FEE_FACTOR;
+        keys[111] = Keys.ATOMIC_WITHDRAWAL_FEE_FACTOR;
+
+        keys[112] = Keys.MAX_UI_FEE_FACTOR;
+        keys[113] = Keys.MAX_AUTO_CANCEL_ORDERS;
+        keys[114] = Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS;
+
+        keys[115] = Keys.ORACLE_TYPE;
+
+        keys[116] = Keys.RESERVE_FACTOR;
+        keys[117] = Keys.OPEN_INTEREST_RESERVE_FACTOR;
+
+        keys[118] = Keys.MAX_PNL_FACTOR;
+        keys[119] = Keys.MIN_PNL_FACTOR_AFTER_ADL;
+        keys[120] = Keys.MAX_LENDABLE_IMPACT_FACTOR;
+        keys[121] = Keys.MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS;
+        keys[122] = Keys.MAX_LENDABLE_IMPACT_USD;
+
+        keys[123] = Keys.OPTIMAL_USAGE_FACTOR;
+        keys[124] = Keys.BASE_BORROWING_FACTOR;
+        keys[125] = Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR;
+        keys[126] = Keys.MAX_BORROWING_FACTOR_PER_SECOND;
+        keys[127] = Keys.BORROWING_FACTOR;
+        keys[128] = Keys.BORROWING_EXPONENT_FACTOR;
+        keys[129] = Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE;
+
+        keys[130] = Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE;
+
+        keys[131] = Keys.PRICE_FEED_HEARTBEAT_DURATION;
+
+        keys[132] = Keys.IS_GLV_MARKET_DISABLED;
+        keys[133] = Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD;
+        keys[134] = Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT;
+        keys[135] = Keys.GLV_SHIFT_MAX_LOSS_FACTOR;
+        keys[136] = Keys.GLV_SHIFT_MIN_INTERVAL;
+        keys[137] = Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT;
+        keys[138] = Keys.GLV_MAX_MARKET_COUNT;
+        keys[139] = Keys.GLV_MARKET_REMOVAL_DUST_THRESHOLD;
+
+        keys[140] = Keys.BUYBACK_BATCH_AMOUNT;
+        keys[141] = Keys.BUYBACK_PRIMARY_TOKEN_FACTOR;
+        keys[142] = Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR;
+        keys[143] = Keys.BUYBACK_MAX_PRICE_AGE;
+
+        keys[144] = Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR;
+        keys[145] = Keys.DATA_STREAM_MAX_INTERVAL;
+
+        keys[146] = Keys.IS_MULTICHAIN_PROVIDER_ENABLED;
+        keys[147] = Keys.IS_MULTICHAIN_ENDPOINT_ENABLED;
+        keys[148] = Keys.IS_RELAY_FEE_EXCLUDED;
+        keys[149] = Keys.IS_SRC_CHAIN_ID_ENABLED;
+        keys[150] = Keys.EID_TO_SRC_CHAIN_ID;
+
+        keys[151] = Keys.MAX_DATA_LENGTH;
+
+        keys[152] = Keys.CLAIMABLE_COLLATERAL_DELAY;
+
+        keys[153] = Keys.SUBACCOUNT_INTEGRATION_DISABLED;
+        keys[154] = Keys.RELAY_FEE_ADDRESS;
+        keys[155] = Keys.EIP6492_DEPLOYER;
+        keys[156] = Keys.GELATO_RELAY_FEE_BASE_AMOUNT;
+        keys[157] = Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR;
+        keys[158] = Keys.MAX_RELAY_FEE_SWAP_USD;
+        keys[159] = Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT;
+        keys[160] = Keys.MAX_BRIDGE_FEE_SWAP_FACTOR;
+
+        keys[161] = Keys2.MULTICHAIN_READ_CHANNEL;
+        keys[162] = Keys2.MULTICHAIN_PEERS;
+        keys[163] = Keys2.MULTICHAIN_CONFIRMATIONS;
+        keys[164] = Keys2.MULTICHAIN_AUTHORIZED_ORIGINATORS;
+
+        keys[165] = Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_DAY;
+        keys[166] = Keys2.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY;
+        keys[167] = Keys2.FEE_DISTRIBUTOR_GAS_LIMIT;
+        keys[168] = Keys2.FEE_DISTRIBUTOR_CHAIN_ID;
+        keys[169] = Keys2.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR;
+        keys[170] = Keys2.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID;
+        keys[171] = Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO;
+        keys[172] = Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN;
+        keys[173] = Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS;
+        keys[174] = Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR;
+        keys[175] = Keys2.FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY;
+        keys[176] = Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES;
+        keys[177] = Keys2.FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD;
+        keys[178] = Keys2.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR;
+
+        keys[179] = Keys2.CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS;
+
+        keys[180] = Keys.INCENTIVE_VESTER_DEPOSIT_FEATURE_DISABLED;
+        keys[181] = Keys.INCENTIVE_VESTER_TRANSFER_FEATURE_DISABLED;
+        keys[182] = Keys.INCENTIVE_VESTER_CLAIM_FEATURE_DISABLED;
+        keys[183] = Keys.INCENTIVE_ISSUER_CLAIM_FEATURE_DISABLED;
+        keys[184] = Keys.SIGNAL_UNSTAKE_FEATURE_DISABLED;
+    }
+
+    function allowedLimitedBaseKeyList() external pure returns (bytes32[13] memory keys) {
+        keys[0] = Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1;
+        keys[1] = Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE;
+        keys[2] = Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR;
+
+        keys[3] = Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1;
+        keys[4] = Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE;
+        keys[5] = Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR;
+
+        keys[6] = Keys.MAX_BORROWING_FACTOR_PER_SECOND;
+
+        keys[7] = Keys.MAX_POOL_AMOUNT;
+        keys[8] = Keys.MAX_POOL_USD_FOR_DEPOSIT;
+        keys[9] = Keys.MAX_OPEN_INTEREST;
+
+        keys[10] = Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD;
+        keys[11] = Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT;
+
+        keys[12] = Keys.PRO_TRADER_TIER;
+    }
+}

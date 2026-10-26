@@ -2,23 +2,19 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-
 import "../../data/DataStore.sol";
+import "../../data/Keys.sol";
 import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
 import "../../oracle/IOracle.sol";
 import "../../oracle/OracleUtils.sol";
 import "../../market/MarketUtils.sol";
+import "../../multichain/IMultichainProvider.sol";
 import "../../swap/ISwapUtils.sol";
 import { SubaccountApproval } from "../../subaccount/SubaccountUtils.sol";
 
-import "../../deposit/IDepositUtils.sol";
-import "../../glv/glvDeposit/IGlvDepositUtils.sol";
-import "../../withdrawal/IWithdrawalUtils.sol";
-import "../../glv/glvWithdrawal/IGlvWithdrawalUtils.sol";
-import "../../shift/IShiftUtils.sol";
 import "../../swap/ISwapHandler.sol";
+import "../../utils/Precision.sol";
 
 import "./IRelayUtils.sol";
 
@@ -29,7 +25,7 @@ struct Contracts {
     address wnt;
 }
 
-string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
+string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,uint256 decreasePositionSwapType,bool autoCancel,uint256 executionFeeIncrease)";
 
 string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
 string constant CREATE_ORDER_NUMBERS = "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)";
@@ -40,6 +36,14 @@ string constant CREATE_ORDER_PARAMS = string(
         "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32[] dataList)",
         CREATE_ORDER_ADDRESSES,
         CREATE_ORDER_NUMBERS
+    )
+);
+string constant CREATE_TWAP_ORDER_PARAMS = string(
+    abi.encodePacked(
+        "CreateTwapOrder(address account,CreateOrderParams params,uint256 twapCount,uint256 interval,bytes32 relayParams,bytes32 subaccountApproval)",
+        CREATE_ORDER_ADDRESSES,
+        CREATE_ORDER_NUMBERS,
+        CREATE_ORDER_PARAMS_ROOT
     )
 );
 
@@ -67,18 +71,17 @@ library RelayUtils {
                 CREATE_ORDER_NUMBERS
             )
         );
+    bytes32 public constant CREATE_TWAP_ORDER_TYPEHASH = keccak256(bytes(CREATE_TWAP_ORDER_PARAMS));
 
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId)"
+                "SubaccountApproval(address account,address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,uint256 revocationCounter,bytes32 eip6492SignatureWrapperHash)"
             )
         );
 
-    bytes32 public constant MINIFIED_TYPEHASH = keccak256(bytes("Minified(bytes32 digest)"));
-
     bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
-        keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
+        keccak256(bytes("RemoveSubaccount(address account,address subaccount,bytes32 relayParams)"));
 
     bytes32 public constant BATCH_TYPEHASH =
         keccak256(
@@ -94,96 +97,10 @@ library RelayUtils {
             )
         );
 
-    // Multichain
-    bytes32 public constant SET_TRADER_REFERRAL_CODE_TYPEHASH =
-        keccak256(bytes("SetTraderReferralCode(bytes32 referralCode,bytes32 relayParams)"));
-
-    bytes32 public constant REGISTER_CODE_TYPEHASH =
-        keccak256(bytes("RegisterCode(bytes32 referralCode,bytes32 relayParams)"));
-
-    bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateDeposit(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateDepositAddresses addresses,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateDepositAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-            )
-        );
-    bytes32 public constant CREATE_DEPOSIT_ADDRESSES_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateDepositAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-            )
-        );
-
-    bytes32 public constant CREATE_WITHDRAWAL_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateWithdrawal(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateWithdrawalAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-            )
-        );
-    bytes32 public constant CREATE_WITHDRAWAL_ADDRESSES_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-            )
-        );
-
-    bytes32 public constant CREATE_SHIFT_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateShift(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateShiftAddresses addresses,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateShiftAddresses(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket)"
-            )
-        );
-    bytes32 public constant CREATE_SHIFT_ADDRESSES_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateShiftAddresses(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket)"
-            )
-        );
-
-    bytes32 public constant CREATE_GLV_DEPOSIT_TYPEHASH =
-        keccak256(
-            "CreateGlvDeposit(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateGlvDepositAddresses addresses,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList,bytes32 relayParams)CreateGlvDepositAddresses(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-        );
-    bytes32 public constant CREATE_GLV_DEPOSIT_ADDRESSES_TYPEHASH =
-        keccak256(
-            "CreateGlvDepositAddresses(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-        );
-
-    bytes32 public constant CREATE_GLV_WITHDRAWAL_TYPEHASH =
-        keccak256(
-            "CreateGlvWithdrawal(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateGlvWithdrawalAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateGlvWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-        );
-    bytes32 public constant CREATE_GLV_WITHDRAWAL_ADDRESSES_TYPEHASH =
-        keccak256(
-            "CreateGlvWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-        );
-
-    bytes32 public constant TRANSFER_REQUESTS_TYPEHASH =
-        keccak256(bytes("TransferRequests(address[] tokens,address[] receivers,uint256[] amounts)"));
-
-    bytes32 public constant BRIDGE_OUT_TYPEHASH =
-        keccak256(bytes("BridgeOut(address token,uint256 amount,uint256 minAmountOut,address provider,bytes data,bytes32 relayParams)"));
-
-    bytes32 public constant CLAIM_FUNDING_FEES_TYPEHASH =
-        keccak256(bytes("ClaimFundingFees(address[] markets,address[] tokens,address receiver,bytes32 relayParams)"));
-    bytes32 public constant CLAIM_COLLATERAL_TYPEHASH =
-        keccak256(
-            bytes(
-                "ClaimCollateral(address[] markets,address[] tokens,uint256[] timeKeys,address receiver,bytes32 relayParams)"
-            )
-        );
-    bytes32 public constant CLAIM_AFFILIATE_REWARDS_TYPEHASH =
-        keccak256(
-            bytes("ClaimAffiliateRewards(address[] markets,address[] tokens,address receiver,bytes32 relayParams)")
-        );
-
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
         keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
     bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
     bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
-
-    address constant GMX_SIMULATION_ORIGIN = address(uint160(uint256(keccak256("GMX SIMULATION ORIGIN"))));
-
 
     function getDomainSeparator(uint256 sourceChainId) external view returns (bytes32) {
         return
@@ -198,51 +115,59 @@ library RelayUtils {
             );
     }
 
-    function validateSignature(
-        bytes32 domainSeparator,
-        bytes32 digest,
-        bytes calldata signature,
-        address expectedSigner,
-        string memory signatureType
+    // @dev general cap on fee swap size to limit oracle mispricing extraction
+    // used for both relay fee swaps and bridge fee swaps
+    function validateMaxFeeSwapUsd(
+        DataStore dataStore,
+        IOracle oracle,
+        address feeToken,
+        uint256 feeAmount,
+        bool isSubaccount
+    ) internal view {
+        uint256 feeUsd = feeAmount * oracle.getPrimaryPrice(feeToken).max;
+
+        uint256 maxRelayFeeSwapUsd = dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD);
+        if (feeUsd > maxRelayFeeSwapUsd) {
+            revert Errors.MaxRelayFeeSwapExceeded(feeUsd, maxRelayFeeSwapUsd);
+        }
+
+        if (isSubaccount) {
+            // a malicious subaccount could create a large swap with a negative price impact
+            // and then execute a personal swap with a positive price impact
+            // to mitigate this, we limit the max relay fee swap size for subaccounts
+            uint256 maxRelayFeeSwapUsdForSubaccount = dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT);
+            if (feeUsd > maxRelayFeeSwapUsdForSubaccount) {
+                revert Errors.MaxRelayFeeSwapForSubaccountExceeded(feeUsd, maxRelayFeeSwapUsdForSubaccount);
+            }
+        }
+    }
+
+    // Cap signed bridgeFee.feeAmount against the live messaging fee using the same
+    // oracle rate as the atomic swap (feeToken.min / wnt.max). Comparing both sides
+    // in WNT prevents mixed-time WNT vs feeToken reports from inflating a USD ratio
+    // (WNT.max / feeToken.max) while the swap itself still settles at the oracle rate.
+    function validateBridgeFeeAgainstQuote(
+        DataStore dataStore,
+        IOracle oracle,
+        IMultichainProvider multichainProvider,
+        address account,
+        IRelayUtils.BridgeOutParams calldata params,
+        address wnt
     ) external view {
-        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
+        uint256 messagingFee = multichainProvider.quoteBridgeOutFee(account, params);
+        uint256 maxBridgeFeeWnt = Precision.applyFactor(
+            messagingFee,
+            dataStore.getUint(Keys.MAX_BRIDGE_FEE_SWAP_FACTOR)
+        );
 
-        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
-        // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
-        if (tx.origin == GMX_SIMULATION_ORIGIN) {
-            return;
-        }
+        uint256 feeTokenPriceMin = oracle.getPrimaryPrice(params.bridgeFee.feeToken).min;
+        uint256 wntPriceMax = oracle.getPrimaryPrice(wnt).max;
 
-        if (error != ECDSA.RecoverError.NoError) {
-            revert Errors.InvalidSignature(signatureType);
-        }
-
-        // for some cases, e.g. ledger, signing does not work because the payload
-        // is too large
-        // for these cases, the user can sign a minified structHash instead
-        // the user should be shown the source data that was used to construct
-        // the minified structHash so that they can verify it independently
-        if (recovered != expectedSigner) {
-            bytes32 minifiedStructHash = keccak256(
-                abi.encode(
-                    MINIFIED_TYPEHASH,
-                    digest
-                )
+        if (params.bridgeFee.feeAmount * feeTokenPriceMin > maxBridgeFeeWnt * wntPriceMax) {
+            revert Errors.MaxBridgeFeeSwapExceeded(
+                params.bridgeFee.feeAmount * feeTokenPriceMin / wntPriceMax,
+                maxBridgeFeeWnt
             );
-
-            // since digest is already validated in BaseGelatoRelayRouter,
-            // we do not call _validateDigest on minifiedDigest
-            bytes32 minifiedDigest = ECDSA.toTypedDataHash(domainSeparator, minifiedStructHash);
-
-            (address recoveredFromMinified, ECDSA.RecoverError errorFromMinified) = ECDSA.tryRecover(minifiedDigest, signature);
-
-            if (errorFromMinified != ECDSA.RecoverError.NoError) {
-                revert Errors.InvalidSignature(signatureType);
-            }
-
-            if (recoveredFromMinified != expectedSigner) {
-                revert Errors.InvalidRecoveredSigner(signatureType, recovered, recoveredFromMinified, expectedSigner);
-            }
         }
     }
 
@@ -269,6 +194,8 @@ library RelayUtils {
                 minOutputAmount: 0,
                 receiver: address(this),
                 uiFeeReceiver: address(0),
+                uiFeeFactor: type(uint256).max,
+                tokenInPoolAmountBeforeAction: 0,
                 shouldUnwrapNativeToken: false,
                 swapPricingType: ISwapPricingUtils.SwapPricingType.AtomicSwap
             })
@@ -289,25 +216,29 @@ library RelayUtils {
                     relayParams.fee,
                     relayParams.userNonce,
                     relayParams.deadline,
-                    relayParams.desChainId
+                    relayParams.desChainId,
+                    relayParams.eip6492SignatureWrapperHash
                 )
             );
     }
 
     function getRemoveSubaccountStructHash(
         IRelayUtils.RelayParams calldata relayParams,
+        address account,
         address subaccount
     ) external pure returns (bytes32) {
-        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, _getRelayParamsHash(relayParams)));
+        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, account, subaccount, _getRelayParamsHash(relayParams)));
     }
 
     function getSubaccountApprovalStructHash(
+        address account,
         SubaccountApproval calldata subaccountApproval
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     SUBACCOUNT_APPROVAL_TYPEHASH,
+                    account,
                     subaccountApproval.subaccount,
                     subaccountApproval.shouldAdd,
                     subaccountApproval.expiresAt,
@@ -316,7 +247,9 @@ library RelayUtils {
                     subaccountApproval.nonce,
                     subaccountApproval.desChainId,
                     subaccountApproval.deadline,
-                    subaccountApproval.integrationId
+                    subaccountApproval.integrationId,
+                    subaccountApproval.revocationCounter,
+                    subaccountApproval.eip6492SignatureWrapperHash
                 )
             );
     }
@@ -352,6 +285,7 @@ library RelayUtils {
 
     function getCreateOrderStructHash(
         IRelayUtils.RelayParams calldata relayParams,
+        address account,
         IBaseOrderUtils.CreateOrderParams memory params
     ) external pure returns (bytes32) {
         bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
@@ -360,7 +294,7 @@ library RelayUtils {
             keccak256(
                 abi.encode(
                     CREATE_ORDER_TYPEHASH,
-                    address(0),
+                    account,
                     _getCreateOrderAddressesStructHash(params.addresses),
                     _getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
@@ -372,6 +306,57 @@ library RelayUtils {
                     keccak256(abi.encodePacked(params.dataList)),
                     relayParamsHash,
                     bytes32(0)
+                )
+            );
+    }
+
+    function getCreateTwapOrderStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        SubaccountApproval calldata subaccountApproval,
+        address account,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        uint256 twapCount,
+        uint256 interval
+    ) external pure returns (bytes32) {
+        return
+            _getCreateTwapOrderStructHash(
+                relayParams,
+                keccak256(abi.encode(subaccountApproval)),
+                account,
+                params,
+                twapCount,
+                interval
+            );
+    }
+
+    function getCreateTwapOrderStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        uint256 twapCount,
+        uint256 interval
+    ) external pure returns (bytes32) {
+        return _getCreateTwapOrderStructHash(relayParams, bytes32(0), account, params, twapCount, interval);
+    }
+
+    function _getCreateTwapOrderStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        bytes32 subaccountApprovalHash,
+        address account,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        uint256 twapCount,
+        uint256 interval
+    ) private pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_TWAP_ORDER_TYPEHASH,
+                    account,
+                    _getCreateOrderParamsStructHash(params),
+                    twapCount,
+                    interval,
+                    _getRelayParamsHash(relayParams),
+                    subaccountApprovalHash
                 )
             );
     }
@@ -415,9 +400,10 @@ library RelayUtils {
 
     function getUpdateOrderStructHash(
         IRelayUtils.RelayParams calldata relayParams,
+        address account,
         IRelayUtils.UpdateOrderParams calldata params
     ) external pure returns (bytes32) {
-        return _getUpdateOrderStructHash(relayParams, bytes32(0), address(0), params);
+        return _getUpdateOrderStructHash(relayParams, bytes32(0), account, params);
     }
 
     function getUpdateOrderStructHash(
@@ -458,6 +444,7 @@ library RelayUtils {
                     params.triggerPrice,
                     params.minOutputAmount,
                     params.validFromTime,
+                    uint256(params.decreasePositionSwapType),
                     params.autoCancel,
                     params.executionFeeIncrease
                 )
@@ -473,8 +460,8 @@ library RelayUtils {
         return _getCancelOrderStructHash(relayParams, keccak256(abi.encode(subaccountApproval)), account, key);
     }
 
-    function getCancelOrderStructHash(IRelayUtils.RelayParams calldata relayParams, bytes32 key) external pure returns (bytes32) {
-        return _getCancelOrderStructHash(relayParams, bytes32(0), address(0), key);
+    function getCancelOrderStructHash(IRelayUtils.RelayParams calldata relayParams, address account, bytes32 key) external pure returns (bytes32) {
+        return _getCancelOrderStructHash(relayParams, bytes32(0), account, key);
     }
 
     function _getCancelOrderStructHash(
@@ -496,7 +483,7 @@ library RelayUtils {
     }
 
     function _getCreateOrderParamsStructHash(
-        IBaseOrderUtils.CreateOrderParams calldata params
+        IBaseOrderUtils.CreateOrderParams memory params
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -534,13 +521,14 @@ library RelayUtils {
 
     function getBatchStructHash(
         IRelayUtils.RelayParams calldata relayParams,
+        address account,
         IRelayUtils.BatchParams calldata params
     ) external pure returns (bytes32) {
         return
             _getBatchStructHash(
                 relayParams,
                 bytes32(0),
-                address(0),
+                account,
                 params.createOrderParamsList,
                 params.updateOrderParamsList,
                 params.cancelOrderKeys
@@ -589,314 +577,4 @@ library RelayUtils {
         return keccak256(abi.encodePacked(updateOrderParamsStructHashes));
     }
 
-    //////////////////// MULTICHAIN ////////////////////
-
-    function getTraderReferralCodeStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        bytes32 referralCode
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    SET_TRADER_REFERRAL_CODE_TYPEHASH,
-                    referralCode,
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getRegisterCodeStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        bytes32 referralCode
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    REGISTER_CODE_TYPEHASH,
-                    referralCode,
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getClaimFundingFeesStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        address[] memory markets,
-        address[] memory tokens,
-        address receiver
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CLAIM_FUNDING_FEES_TYPEHASH,
-                    keccak256(abi.encodePacked(markets)),
-                    keccak256(abi.encodePacked(tokens)),
-                    receiver,
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getClaimCollateralStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        address[] memory markets,
-        address[] memory tokens,
-        uint256[] memory timeKeys,
-        address receiver
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CLAIM_COLLATERAL_TYPEHASH,
-                    keccak256(abi.encodePacked(markets)),
-                    keccak256(abi.encodePacked(tokens)),
-                    keccak256(abi.encodePacked(timeKeys)),
-                    receiver,
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getClaimAffiliateRewardsStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        address[] memory markets,
-        address[] memory tokens,
-        address receiver
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CLAIM_AFFILIATE_REWARDS_TYPEHASH,
-                    keccak256(abi.encodePacked(markets)),
-                    keccak256(abi.encodePacked(tokens)),
-                    receiver,
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getCreateDepositStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        IRelayUtils.TransferRequests calldata transferRequests,
-        IDepositUtils.CreateDepositParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_DEPOSIT_TYPEHASH,
-                    keccak256(abi.encodePacked(transferRequests.tokens)),
-                    keccak256(abi.encodePacked(transferRequests.receivers)),
-                    keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateDepositAdressesStructHash(params.addresses),
-                    params.minMarketTokens,
-                    params.shouldUnwrapNativeToken,
-                    params.executionFee,
-                    params.callbackGasLimit,
-                    keccak256(abi.encodePacked(params.dataList)),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateDepositAdressesStructHash(
-        IDepositUtils.CreateDepositParamsAddresses memory addresses
-    ) private pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_DEPOSIT_ADDRESSES_TYPEHASH,
-                    addresses.receiver,
-                    addresses.callbackContract,
-                    addresses.uiFeeReceiver,
-                    addresses.market,
-                    addresses.initialLongToken,
-                    addresses.initialShortToken,
-                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
-                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
-                )
-            );
-    }
-
-    function getCreateGlvDepositStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        IRelayUtils.TransferRequests calldata transferRequests,
-        IGlvDepositUtils.CreateGlvDepositParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_GLV_DEPOSIT_TYPEHASH,
-                    keccak256(abi.encodePacked(transferRequests.tokens)),
-                    keccak256(abi.encodePacked(transferRequests.receivers)),
-                    keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateGlvDepositAddressesStructHash(params.addresses),
-                    params.minGlvTokens,
-                    params.executionFee,
-                    params.callbackGasLimit,
-                    params.shouldUnwrapNativeToken,
-                    params.isMarketTokenDeposit,
-                    keccak256(abi.encodePacked(params.dataList)),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateGlvDepositAddressesStructHash(
-        IGlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
-    ) private pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_GLV_DEPOSIT_ADDRESSES_TYPEHASH,
-                    addresses.glv,
-                    addresses.market,
-                    addresses.receiver,
-                    addresses.callbackContract,
-                    addresses.uiFeeReceiver,
-                    addresses.initialLongToken,
-                    addresses.initialShortToken,
-                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
-                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
-                )
-            );
-    }
-
-    function getCreateWithdrawalStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        IRelayUtils.TransferRequests calldata transferRequests,
-        IWithdrawalUtils.CreateWithdrawalParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_WITHDRAWAL_TYPEHASH,
-                    keccak256(abi.encodePacked(transferRequests.tokens)),
-                    keccak256(abi.encodePacked(transferRequests.receivers)),
-                    keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateWithdrawalAddressesStructHash(params.addresses),
-                    params.minLongTokenAmount,
-                    params.minShortTokenAmount,
-                    params.shouldUnwrapNativeToken,
-                    params.executionFee,
-                    params.callbackGasLimit,
-                    keccak256(abi.encodePacked(params.dataList)),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateWithdrawalAddressesStructHash(
-        IWithdrawalUtils.CreateWithdrawalParamsAddresses memory addresses
-    ) private pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_WITHDRAWAL_ADDRESSES_TYPEHASH,
-                    addresses.receiver,
-                    addresses.callbackContract,
-                    addresses.uiFeeReceiver,
-                    addresses.market,
-                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
-                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
-                )
-            );
-    }
-
-    function getCreateShiftStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        IRelayUtils.TransferRequests calldata transferRequests,
-        IShiftUtils.CreateShiftParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_SHIFT_TYPEHASH,
-                    keccak256(abi.encodePacked(transferRequests.tokens)),
-                    keccak256(abi.encodePacked(transferRequests.receivers)),
-                    keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateShiftAddressesStructHash(params.addresses),
-                    params.minMarketTokens,
-                    params.executionFee,
-                    params.callbackGasLimit,
-                    keccak256(abi.encodePacked(params.dataList)),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateShiftAddressesStructHash(
-        IShiftUtils.CreateShiftParamsAddresses memory addresses
-    ) private pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_SHIFT_ADDRESSES_TYPEHASH,
-                    addresses.receiver,
-                    addresses.callbackContract,
-                    addresses.uiFeeReceiver,
-                    addresses.fromMarket,
-                    addresses.toMarket
-                )
-            );
-    }
-
-    function getCreateGlvWithdrawalStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        IRelayUtils.TransferRequests calldata transferRequests,
-        IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_GLV_WITHDRAWAL_TYPEHASH,
-                    keccak256(abi.encodePacked(transferRequests.tokens)),
-                    keccak256(abi.encodePacked(transferRequests.receivers)),
-                    keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateGlvWithdrawalAddressesStructHash(params.addresses),
-                    params.minLongTokenAmount,
-                    params.minShortTokenAmount,
-                    params.shouldUnwrapNativeToken,
-                    params.executionFee,
-                    params.callbackGasLimit,
-                    keccak256(abi.encodePacked(params.dataList)),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateGlvWithdrawalAddressesStructHash(
-        IGlvWithdrawalUtils.CreateGlvWithdrawalParamsAddresses memory addresses
-    ) private pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_GLV_WITHDRAWAL_ADDRESSES_TYPEHASH,
-                    addresses.receiver,
-                    addresses.callbackContract,
-                    addresses.uiFeeReceiver,
-                    addresses.market,
-                    addresses.glv,
-                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
-                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
-                )
-            );
-    }
-
-    function getBridgeOutStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        IRelayUtils.BridgeOutParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    BRIDGE_OUT_TYPEHASH,
-                    params.token,
-                    params.amount,
-                    params.minAmountOut,
-                    params.provider,
-                    keccak256(abi.encodePacked(params.data)),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
 }

@@ -4,7 +4,7 @@ import { GlvShiftHandler } from "../typechain-types";
 
 const { ethers } = hre;
 async function main() {
-  console.log("run createGlvShift");
+  console.log("run removeMarketFromGlv");
   const glvShiftHandler: GlvShiftHandler = await ethers.getContract("GlvShiftHandler");
 
   const glv = process.env.GLV;

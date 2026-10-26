@@ -28,6 +28,7 @@ library Errors {
 
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
+    error OraclePricesRequiredForConfigUpdate(bytes32 baseKey);
     error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
     error InvalidClaimableReductionFactor(uint256 value);
@@ -121,6 +122,7 @@ library Errors {
     error EmptyDepositAmountsAfterSwap();
     error InvalidPoolValueForDeposit(int256 poolValue);
     error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);
+    error InvalidDepositMarketInSwapPath(address market);
     error InvalidReceiverForFirstDeposit(address receiver, address expectedReceiver);
     error InvalidMinMarketTokensForFirstDeposit(uint256 minMarketTokens, uint256 expectedMinMarketTokens);
 
@@ -224,31 +226,21 @@ library Errors {
     error EmptyValidatedPrices(); // not used, kept for compatibility
     error InvalidOracleProvider(address provider);
     error InvalidOracleProviderForToken(address provider, address expectedProvider);
-    error GmEmptySigner(uint256 signerIndex);
     error InvalidOracleSetPricesProvidersParam(uint256 tokensLength, uint256 providersLength);
     error InvalidOracleSetPricesDataParam(uint256 tokensLength, uint256 dataLength);
-    error GmInvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
-    error GmInvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
     error EmptyDataStreamFeedId(address token);
     error InvalidDataStreamFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
     error InvalidDataStreamBidAsk(address token, int192 bid, int192 ask);
     error InvalidDataStreamPrices(address token, int192 bid, int192 ask);
+    error InvalidDataStreamTimestamps(address token, uint256 validFromTimestamp, uint256 observationsTimestamp);
+    error MaxDataStreamIntervalExceeded(address token, uint256 validFromTimestamp, uint256 observationsTimestamp, uint256 maxInterval);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp, uint256 currentTimestamp);
     error MaxOracleTimestampRangeExceeded(uint256 range, uint256 maxRange);
-    error GmMinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
-    error GmMaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
-    error BlockNumbersNotSorted(uint256 minOracleBlockNumber, uint256 prevMinOracleBlockNumber);
-    error GmMinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
-    error GmMaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error EmptyChainlinkPriceFeedMultiplier(address token);
     error EmptyDataStreamMultiplier(address token);
     error InvalidDataStreamSpreadReductionFactor(address token, uint256 spreadReductionFactor);
     error InvalidFeedPrice(address token, int256 price);
     error ChainlinkPriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
-    error GmMaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
-    error InvalidGmOraclePrice(address token);
-    error InvalidGmSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
-    error InvalidGmMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
     error InvalidMinMaxForPrice(address token, uint256 min, uint256 max);
     error EmptyChainlinkPriceFeed(address token);
@@ -261,14 +253,14 @@ library Errors {
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
     error NonAtomicOracleProvider(address provider);
+    error InvalidPriceFeed(address feedAddress);
+    error StaticPriceNotSet(address token);
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
     error EndOfOracleSimulation();
 
     // OracleUtils errors
-    error InvalidGmSignature(address recoveredSigner, address expectedSigner);
-
     error EmptyPrimaryPrice(address token);
 
     error OracleTimestampsAreSmallerThanRequired(uint256 minOracleTimestamp, uint256 expectedTimestamp);
@@ -299,6 +291,8 @@ library Errors {
     error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
     error InvalidReceiver(address receiver);
     error UnexpectedValidFromTime(uint256 orderType);
+    error InvalidTwapCount(uint256 twapCount);
+    error InvalidInterval(uint256 interval);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
@@ -452,13 +446,6 @@ library Errors {
     // Cast errors
     error Uint256AsBytesLengthExceeds32Bytes(uint256 length);
 
-    // ConfigSyncer errors
-    error SyncConfigInvalidInputLengths(uint256 marketsLength, uint256 parametersLength);
-    error SyncConfigUpdatesDisabledForMarket(address market);
-    error SyncConfigUpdatesDisabledForParameter(string parameter);
-    error SyncConfigUpdatesDisabledForMarketParameter(address market, string parameter);
-    error SyncConfigInvalidMarketFromData(address market, address marketFromData);
-
     // Reader errors
     error EmptyMarketPrice(address market);
 
@@ -479,6 +466,11 @@ library Errors {
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
     error InsufficientFee(uint256 feeProvided, uint256 feeRequired);
+    error InsufficientBridgeOutputAmount(uint256 outputAmount, uint256 minAmountOut);
+    error MultichainFailedActionNotFound(bytes32 guid);
+    error MultichainActionRetryFailed(bytes32 guid);
+    error MultichainComposeNotFound(bytes32 guid);
+    error MultichainComposeAlreadyRefunded(bytes32 guid);
 
     enum SignatureType {
         Call,
@@ -488,8 +480,10 @@ library Errors {
     // Gelato relay errors
     error InvalidSignature(string signatureType);
     error InvalidRecoveredSigner(string signatureType, address recovered, address recoveredFromMinified, address expectedSigner);
+    error InvalidEIP6492SignatureWrapper();
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
+    error UnexpectedBridgeFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
     error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay
     error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);
@@ -501,6 +495,7 @@ library Errors {
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();
+    error InvalidSubaccountApprovalRevocationCounter(uint256 stored, uint256 signed);
     error NonEmptyExternalCallsForSubaccountOrder();
 
     // EventUtils error
@@ -513,10 +508,13 @@ library Errors {
     error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamExpo(int256 expo);
+    error InvalidEdgeDataStreamDecimals(address token, uint256 decimals);
     error RelayEmptyBatch();
     error RelayCalldataTooLong(uint256 calldataLength);
     error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
+    error MaxRelayFeeSwapExceeded(uint256 feeUsd, uint256 maxFeeUsd);
     error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
+    error MaxBridgeFeeSwapExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 
     error RemovalShouldNotBeSkipped(bytes32 listKey, bytes32 entityKey);
 
@@ -529,17 +527,89 @@ library Errors {
     error OutdatedReadResponse(uint256 timestamp);
     error InvalidDistributionState(uint256 distributionStateUint);
     error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
-    error BridgingTransactionFailed(bytes result);
-    error MaxWntReferralRewardsInUsdAmountExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsdAmount);
-    error MaxWntReferralRewardsInUsdExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
-    error MaxEsGmxReferralRewardsAmountExceeded(uint256 tokensForReferralRewards, uint256 maxEsGmxReferralRewards);
-    error MaxReferralRewardsExceeded(address token, uint256 cumulativeTransferAmount, uint256 tokensForReferralRewards);
-    error MaxWntFromTreasuryExceeded(uint256 maxWntFromTreasury, uint256 additionalWntFromTreasury);
-    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
-    error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
-    error KeeperAmountMismatch(uint256 wntForKeepers, uint256 wntToKeepers);
+    error MaxFeesFromTreasuryExceeded(uint256 maxFeesFromTreasury, uint256 additionalFeesFromTreasury);
+    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength);
+    error KeeperAmountMismatch(uint256 feesForKeepers, uint256 feesToKeepers);
     error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
-    error InvalidReferralRewardToken(address token);
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
     error ZeroTreasuryAddress();
+    error InvalidWithdrawTarget(address withdrawTarget, address expected);
+    error InvalidDistributorRewardToken(address rewardToken, address gmx);
+    error UnexpectedReadResponseGuid(bytes32 guid, bytes32 expectedGuid);
+    error DistributionResetNotAllowed(uint256 distributionStateUint, uint256 stateUpdatedAt);
+    error SnapshotAlreadyCommitted(uint256 epochId);
+    error StaleSnapshotEpoch(uint256 committedEpoch);
+    error ReadInitiatedAfterDeadline(uint256 readTimestamp, uint256 deadline);
+    error InvalidReadResponseDelay(uint256 delay);
+    error EmptyDataStoreForChain(uint256 chainId);
+    error InvalidReadDataLength(uint256 length, uint256 expectedLength);
+
+    // CreReceiver errors
+    error UnauthorizedWorkflowOwner(address workflowOwner);
+    error UnauthorizedWorkflow(bytes32 workflowId, bytes10 workflowName, address workflowOwner);
+    error InvalidCreReceiverTarget(address target);
+    error CreReceiverCallFailed(bytes data);
+
+    // EsGmxIssuer errors
+    error IncentiveVesterAlreadySet(address vester);
+    error EmptyIncentiveVester();
+    error UncappedVesterHasIssuer(address issuer);
+    error IncentiveWithdrawalExceedsExcessBalance(uint256 amount, uint256 excessBalance);
+    error EmptyIssuanceBatch();
+    error InvalidIssuanceBatchLengths(uint256 accountsLength, uint256 amountsLength);
+    error IssuanceEpochFinalized(uint256 epochId);
+    error IssuanceBatchIndexAlreadyProcessed(uint256 epochId, uint256 batchIndex);
+    error IssuanceBatchContentAlreadyProcessed(uint256 epochId, bytes32 batchHash);
+    error IssuanceBatchNotSorted(uint256 index);
+    error EmptyIssuanceAccount(uint256 index);
+    error EmptyIssuanceAmount(uint256 index);
+    error InsufficientIssuanceFunding(uint256 outstandingAmount, uint256 balance);
+    error IssuanceEpochEntryCountMismatch(uint256 expectedEntryCount, uint256 entryCount);
+    error IssuanceEpochTotalMismatch(uint256 expectedTotal, uint256 totalAmount);
+    error EmptyIssuanceReduction(uint256 amount, uint256 unclaimedAmount);
+    error IssuerClaimExceedsClaimable(uint256 amount, uint256 claimableAmount);
+
+    // RatioVester errors
+    error VesterAlreadyDeactivated(uint256 deactivatedAt);
+    error VesterDeactivationNoticeTooShort(uint256 deactivatedAt, uint256 minDeactivatedAt);
+    error VesterDeactivationNotExtended(uint256 deactivatedAt, uint256 currentDeactivatedAt);
+    error IncentiveIssuerNotBound(address issuer);
+    error IncentiveIssuerBindingNotConfirmed();
+    error VesterProvisioningComplete();
+    error VesterProvisioningNotComplete();
+    error InvalidProvisionCapLengths(uint256 accountsLength, uint256 capsLength);
+    error VesterDeactivated(uint256 deactivatedAt);
+    error EmptyVesterDepositAmount();
+    error VestingCapExceeded(uint256 totalVested, uint256 cap);
+    error InsufficientVesterBacking(uint256 obligations, uint256 balance);
+    error SelfVestingTransfer(address account);
+    error VesterAccountFrozen(address account);
+    error VestingSenderHasOpenSession(address account);
+    error VestingReceiverNotFresh(address account);
+    error EmptyVesterWithdrawal(address account);
+    error IncentiveTokenNonTransferrable();
+
+    // RewardRouterV3 errors
+    error DesignatedVesterAlreadyAdded(address vester);
+    error DesignatedVesterNotFound(address vester);
+    error EmptyDesignatedVesters();
+    error InvalidDesignatedVester(address vester);
+    error DesignatedVesterNotDrained(address vester);
+    error TransferVesterConfigChanged(uint256 signalledVersion, uint256 currentVersion);
+    error InsufficientStrictTransferAllowance(uint256 allowance, uint256 balance);
+    error TransferNotSignalled(address sender, address receiver);
+    error InvalidGmxReceiver(address receiver);
+    error EmptyStakeAmount();
+    error StakingReceiverNotFresh(address receiver, address module);
+    error StakingSenderHasVestedTokens(address sender);
+    error StakingSenderHasPairAmounts(address sender);
+    error EmptyIncentiveIssuer();
+    error UnsupportedVotingPowerType(uint256 votingPowerType);
+    error UnstakeAmountExceedsStake(uint256 totalRequested, uint256 stakedAmount);
+    error MaxUnstakeRequestsExceeded(uint256 count, uint256 maxCount);
+    error UnstakeNotSignalled(uint256 amount, uint256 executableAmount);
+    error MaxUnstakeDelayExceeded(uint256 delay, uint256 maxDelay);
+    error UnstakeDelayExceedsExpiry(uint256 delay, uint256 expiry);
+    error MaxUnstakeRequestsOnTransfer(address sender, address receiver, uint256 count);
+    error UnbackedPairAmountLocked(address account, uint256 excessAmount, uint256 walletBalance);
 }

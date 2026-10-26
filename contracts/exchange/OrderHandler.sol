@@ -14,9 +14,7 @@ import "../multichain/MultichainVault.sol";
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
 contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
-    using SafeCast for uint256;
     using Order for Order.Props;
-    using Array for uint256[];
 
     IOrderExecutor public immutable increaseOrderExecutor;
     IOrderExecutor public immutable decreaseOrderExecutor;
@@ -59,8 +57,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         IBaseOrderUtils.CreateOrderParams calldata params,
         bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
-        validateDataListLength(params.dataList.length);
+        _validateCreateOrderFeature(params);
 
         return OrderUtils.createOrder(
             dataStore,
@@ -74,11 +71,23 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         );
     }
 
-    struct UpdateOrderCache {
-        address wnt;
-        uint256 receivedWnt;
-        uint256 estimatedGasLimit;
-        uint256 oraclePriceCount;
+    // @dev creates a twap order in the order store
+    // @param account the order's account
+    // @param srcChainId the source chain id
+    // @param params BaseOrderUtils.CreateOrderParams
+    // @param shouldCapMaxExecutionFee whether to cap the max execution fee
+    // @param twapCount the number of twap orders to create
+    // @param interval the interval between twap orders
+    function createTwapOrder(
+        address account,
+        uint256 srcChainId,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool shouldCapMaxExecutionFee,
+        uint256 twapCount,
+        uint256 interval
+    ) external override globalNonReentrant onlyController returns (bytes32[] memory orderKeys) {
+        _validateCreateOrderFeature(params);
+        return OrderUtils.createTwapOrder(dataStore, eventEmitter, orderVault, referralStorage, account, srcChainId, params, shouldCapMaxExecutionFee, twapCount, interval);
     }
 
     /**
@@ -111,6 +120,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         uint256 validFromTime,
+        Order.DecreasePositionSwapType decreasePositionSwapType,
         bool autoCancel,
         Order.Props memory order,
         bool shouldCapMaxExecutionFee
@@ -127,51 +137,21 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
             revert Errors.UnsupportedOrderType(uint256(order.orderType()));
         }
 
-        if (order.autoCancel() != autoCancel) {
-            OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
-            OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
-        }
-        order.setAutoCancel(autoCancel);
-
-        order.setSizeDeltaUsd(sizeDeltaUsd);
-        order.setTriggerPrice(triggerPrice);
-        order.setAcceptablePrice(acceptablePrice);
-        order.setMinOutputAmount(minOutputAmount);
-        order.setValidFromTime(validFromTime);
-        order.setIsFrozen(false);
-
-        UpdateOrderCache memory cache;
-        // allow topping up of executionFee as frozen orders
-        // will have their executionFee reduced
-        cache.wnt = TokenUtils.wnt(dataStore);
-        cache.receivedWnt = orderVault.recordTransferIn(cache.wnt);
-
-        cache.estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        cache.oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
-        (uint256 executionFee, uint256 executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
+        OrderUtils.updateOrder(OrderUtils.UpdateOrderParams(
             dataStore,
-            cache.estimatedGasLimit,
-            order.executionFee() + cache.receivedWnt,
-            cache.oraclePriceCount,
-            shouldCapMaxExecutionFee
-        );
-        order.setExecutionFee(executionFee);
-
-        if (executionFeeDiff != 0) {
-            GasUtils.transferExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), executionFeeDiff);
-        }
-
-        order.touch();
-
-        BaseOrderUtils.validateNonEmptyOrder(order);
-
-        OrderStoreUtils.set(dataStore, key, order);
-
-        OrderEventUtils.emitOrderUpdated(
             eventEmitter,
+            orderVault,
             key,
-            order
-        );
+            sizeDeltaUsd,
+            acceptablePrice,
+            triggerPrice,
+            minOutputAmount,
+            validFromTime,
+            decreasePositionSwapType,
+            autoCancel,
+            order,
+            shouldCapMaxExecutionFee
+        ));
     }
 
     /**
@@ -182,7 +162,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
      *
      * @param key The unique ID of the order to be cancelled
      */
-    function cancelOrder(bytes32 key) external override globalNonReentrant onlyController {
+    function cancelOrder(bytes32 key) external override globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -195,9 +175,14 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
                 order.updatedAtTime(),
                 "Order"
             );
+        } else {
+            // keeper can only cancel market orders
+            if (!roleStore.hasRole(msg.sender, Role.CONTROLLER)) {
+                revert Errors.Unauthorized(msg.sender, "CONTROLLER");
+            }
         }
 
-        // note that order.account would receive the execution fee for the
+        // note that order.account or keeper would receive the execution fee for the
         // gas cost of cancelling the order
         // the cancellationReceiver would receive the excess executionf fee refund
         OrderUtils.cancelOrder(
@@ -207,7 +192,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
                 multichainVault,
                 orderVault,
                 key,
-                order.account(), // keeper
+                roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : order.account(), // keeper
                 startingGas,
                 true, // isExternalCall
                 false, // isAutoCancel
@@ -228,7 +213,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Order.Props memory order = _getOrder(key);
 
         this.doExecuteOrder(
             key,
@@ -251,7 +236,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
     {
         uint256 startingGas = gasleft();
 
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Order.Props memory order = _getOrder(key);
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         GasUtils.validateExecutionGas(dataStore, startingGas, estimatedGasLimit);
 
@@ -333,7 +318,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
 
         validateNonKeeperError(errorSelector, reasonBytes);
 
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Order.Props memory order = _getOrder(key);
         bool isMarketOrder = Order.isMarketOrder(order.orderType());
 
         if (
@@ -420,6 +405,19 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
             reason,
             reasonBytes
         );
+    }
+
+    // @dev get an order from the order store
+    // @param key the order's key
+    function _getOrder(bytes32 key) internal view returns (Order.Props memory) {
+        return OrderStoreUtils.get(dataStore, key);
+    }
+
+    // @dev validate that the create order feature is enabled and the data list length is valid
+    // @param params the parameters used to create the order
+    function _validateCreateOrderFeature(IBaseOrderUtils.CreateOrderParams calldata params) internal view {
+        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
+        validateDataListLength(params.dataList.length);
     }
 
     // @dev validate that the keeper is a frozen order keeper

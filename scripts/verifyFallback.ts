@@ -77,6 +77,37 @@ function encodeArg(arg) {
   return `"${arg}"`;
 }
 
+// a library used only in the constructor cannot be read from the deployed bytecode, so its address comes from the
+// record; only such libraries are passed, as a record can also list libraries the contract does not link
+async function getConstructorOnlyLibraries(contractFQN: string, recordLibraries: Record<string, string> = {}) {
+  const artifact = await hre.artifacts.readArtifact(contractFQN);
+  const getLibraryNames = (linkReferences = {}) =>
+    Object.values(linkReferences).flatMap((libraries) => Object.keys(libraries));
+  const deployedLibraryNames = getLibraryNames(artifact.deployedLinkReferences);
+
+  const libraries: Record<string, string> = {};
+  for (const libraryName of getLibraryNames(artifact.linkReferences)) {
+    if (!deployedLibraryNames.includes(libraryName) && recordLibraries[libraryName]) {
+      libraries[libraryName] = recordLibraries[libraryName];
+    }
+  }
+  return libraries;
+}
+
+// one retry after a short pause covers a transient explorer error, e.g. an HTML page instead of JSON
+async function verifyWithRetry(params) {
+  const attempt = () =>
+    withTimeout(hre.run("verify-complex-args", params), 5 * 60_000).catch((error) => ({ success: false, error }));
+
+  let result = await attempt();
+  if (!result.success) {
+    console.warn(`verification failed, retrying in 10s: ${result.error}`);
+    await delay(10_000);
+    result = await attempt();
+  }
+  return result;
+}
+
 async function verifyForNetwork(verificationNetwork) {
   const apiUrl = getExplorerUrl(verificationNetwork);
   const apiHost = new URL(apiUrl).host;
@@ -94,6 +125,7 @@ async function verifyForNetwork(verificationNetwork) {
 
   const unverifiedContracts = [];
   const largeContracts = [];
+  const skippedContracts = [];
 
   let index = 0;
   for (const [name, deployment] of Object.entries(allDeployments)) {
@@ -105,7 +137,9 @@ async function verifyForNetwork(verificationNetwork) {
     const argStr = args.map((arg) => encodeArg(arg)).join(" ");
 
     const metadata = JSON.parse(deployment.metadata);
-    const contractFQN = `${Object.keys(metadata.settings.compilationTarget)[0]}:${name}`;
+    // the compiled contract name, the deployment name can differ from it
+    const sourceName = Object.keys(metadata.settings.compilationTarget)[0];
+    const contractFQN = `${sourceName}:${metadata.settings.compilationTarget[sourceName]}`;
     const contractArg = `--contract ${contractFQN}`;
     const command = `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`;
 
@@ -113,6 +147,14 @@ async function verifyForNetwork(verificationNetwork) {
       continue;
     }
 
+    // a record whose source left the codebase cannot be verified from this build
+    if (!(await hre.artifacts.artifactExists(contractFQN))) {
+      console.log(`skipping ${name} ${address}: no artifact for ${contractFQN}`);
+      skippedContracts.push({ name, address, contractFQN });
+      continue;
+    }
+
+    let libraries: Record<string, string> = {};
     try {
       let isContractVerified = cache[address];
 
@@ -134,20 +176,22 @@ async function verifyForNetwork(verificationNetwork) {
 
       if (process.env.SKIP_LARGE_CONTRACTS && largeContractsMap[name]) {
         console.log(`skipping large contract: ${name}`);
-        largeContracts.push({ address, command });
+        largeContracts.push({ name, address, command });
         continue;
       }
 
+      libraries = await getConstructorOnlyLibraries(contractFQN, deployment.libraries);
       console.log("Verifying contract %s %s %s", name, address, argStr);
-      const { success, error } = await withTimeout(
-        hre.run("verify-complex-args", {
-          contract: contractFQN,
-          network: verificationNetwork,
-          address: address,
-          constructorArgsParams: argStr,
-        }),
-        5 * 60_000
-      );
+      if (Object.keys(libraries).length > 0) {
+        console.log("libraries", libraries);
+      }
+      const { success, error } = await verifyWithRetry({
+        contract: contractFQN,
+        network: verificationNetwork,
+        address: address,
+        constructorArgsParams: argStr,
+        libraries,
+      });
 
       if (!success) {
         throw new Error(error);
@@ -156,9 +200,11 @@ async function verifyForNetwork(verificationNetwork) {
       cache[address] = true;
     } catch (ex) {
       unverifiedContracts.push({
+        name,
         address,
         error: ex,
         command,
+        libraries,
       });
       console.error("Failed to verify contract %s in %ss", address, (Date.now() - start) / 1000);
       console.error("error", ex);
@@ -174,6 +220,9 @@ async function verifyForNetwork(verificationNetwork) {
     for (let i = 0; i < unverifiedContracts.length; i++) {
       const unverifiedContract = unverifiedContracts[i];
       console.log(`${i + 1}: ${unverifiedContract.address}`);
+      if (Object.keys(unverifiedContract.libraries).length > 0) {
+        console.log(`Libraries: ${JSON.stringify(unverifiedContract.libraries)}`);
+      }
       console.log(`Command: ${unverifiedContract.command}\n`);
     }
     console.log(`-------`);
@@ -196,22 +245,43 @@ async function verifyForNetwork(verificationNetwork) {
     }
     console.log(`-------`);
   }
+
+  if (skippedContracts.length > 0) {
+    console.log(`${skippedContracts.length} records skipped, no artifact in this build`);
+    console.log(`-------`);
+    for (let i = 0; i < skippedContracts.length; i++) {
+      const skippedContract = skippedContracts[i];
+      console.log(`${i + 1}: ${skippedContract.name} ${skippedContract.address} ${skippedContract.contractFQN}`);
+    }
+    console.log(`-------`);
+  }
+
+  // repeated at the very end, so a skipped or failed contract is not lost in the output above
+  const names = (contracts) => contracts.map((contract) => contract.name).join(", ");
+  if (largeContracts.length > 0) {
+    console.log(`WARNING: ${largeContracts.length} large contracts skipped: ${names(largeContracts)}`);
+  }
+  if (skippedContracts.length > 0) {
+    console.log(
+      `WARNING: ${skippedContracts.length} records skipped, no artifact in this build: ${names(skippedContracts)}`
+    );
+  }
+  if (unverifiedContracts.length > 0) {
+    console.log(`ERROR: ${unverifiedContracts.length} contracts not verified: ${names(unverifiedContracts)}`);
+  }
+
+  return unverifiedContracts.length;
 }
 
 async function main() {
   const networkName = process.env.VERIFICATION_NETWORK ? process.env.VERIFICATION_NETWORK : hre.network.name;
-
-  if (networkName === "avalanche") {
-    await verifyForNetwork("avalanche");
-    // await verifyForNetwork("snowscan");
-  } else {
-    await verifyForNetwork(networkName);
-  }
+  return verifyForNetwork(networkName);
 }
 
 main()
-  .then(() => {
-    process.exit(0);
+  .then((unverifiedCount) => {
+    // non-zero while contracts stay unverified, the deployment pipeline checks it
+    process.exit(unverifiedCount > 0 ? 1 : 0);
   })
   .catch((ex) => {
     console.error(ex);

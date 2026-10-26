@@ -21,6 +21,7 @@ library Shift {
     struct Numbers {
         uint256 marketTokenAmount;
         uint256 minMarketTokens;
+        uint256 uiFeeFactor;
         uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
@@ -89,6 +90,14 @@ library Shift {
 
     function setMinMarketTokens(Props memory props, uint256 value) internal pure {
         props.numbers.minMarketTokens = value;
+    }
+
+    function uiFeeFactor(Props memory props) internal pure returns (uint256) {
+        return props.numbers.uiFeeFactor;
+    }
+
+    function setUiFeeFactor(Props memory props, uint256 value) internal pure {
+        props.numbers.uiFeeFactor = value;
     }
 
     function updatedAtTime(Props memory props) internal pure returns (uint256) {

@@ -556,7 +556,6 @@ const defaultRpcs: Record<NetworkName, string> = {
   base: "https://base.gateway.tenderly.co",
   bsc: "https://bsc-dataseed.binance.org",
   bera: "https://rpc.berachain.com",
-  botanix: "https://rpc.botanixlabs.com",
 };
 
 const alchemyRpcs: Record<NetworkName, string> = {
@@ -565,7 +564,6 @@ const alchemyRpcs: Record<NetworkName, string> = {
   base: "https://base-mainnet.g.alchemy.com/v2",
   bsc: "https://bnb-mainnet.g.alchemy.com/v2",
   bera: "https://berachain-mainnet.g.alchemy.com/v2",
-  botanix: "https://botanix-mainnet.g.alchemy.com/v2",
 };
 
 export function getRpcUrl(network: NetworkName): string {
@@ -576,7 +574,6 @@ export function getRpcUrl(network: NetworkName): string {
     base: "BASE_RPC_URL",
     bsc: "BSC_RPC_URL",
     bera: "BERA_RPC_URL",
-    botanix: "BOTANIX_RPC_URL",
   };
 
   const envRpcUrl = process.env[envVarMap[network]];

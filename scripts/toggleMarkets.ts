@@ -31,6 +31,11 @@ export async function main() {
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
+  const includeMarkets = process.env.MARKET
+    ? process.env.MARKET.split(",").map((market) => market.trim().toLowerCase())
+    : undefined;
+  const matchedMarkets = new Set<string>();
+
   const multicallWriteParams = [];
 
   for (const marketConfig of markets) {
@@ -38,6 +43,13 @@ export async function main() {
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
     const onchainMarket = onchainMarketsByTokens[marketKey];
     const marketToken = onchainMarket.marketToken;
+
+    if (includeMarkets) {
+      if (!includeMarkets.includes(marketToken.toLowerCase())) {
+        continue;
+      }
+      matchedMarkets.add(marketToken.toLowerCase());
+    }
 
     const marketName = marketConfig.tokens.indexToken ? `${marketConfig.tokens.indexToken}/USD` : "SWAP-ONLY";
     const marketNameFull = `${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}], ${marketToken}`;
@@ -66,6 +78,13 @@ export async function main() {
     }
 
     await toggleMarket({ ...toggleMarketParams, isDisabled: marketConfig.isDisabled });
+  }
+
+  if (includeMarkets) {
+    const missingMarkets = includeMarkets.filter((market) => !matchedMarkets.has(market));
+    if (missingMarkets.length > 0) {
+      throw new Error(`markets not found in config: ${missingMarkets.join(", ")}`);
+    }
   }
 
   console.log(`updating ${multicallWriteParams.length} params`);

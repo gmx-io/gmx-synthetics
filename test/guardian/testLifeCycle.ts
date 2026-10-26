@@ -1440,7 +1440,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("225782", "10000"); // 0.225782 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("60904483", "100000"); // 60.904483 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("62832893", "100000"); // 62.832893 USDC
         },
       },
     });
@@ -1537,7 +1537,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("20738", "20000"); // 0.020738 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("30677911", "20000"); // 30.67 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("30100588", "20000"); // 30.100588 USDC
         },
       },
     });
@@ -1597,7 +1597,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("31107", "20000"); //  0.031107 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("42921864", "20000"); // 42.921864 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("42055900", "20000"); // 42.055900 USDC
         },
       },
     });

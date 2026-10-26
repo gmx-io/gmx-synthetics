@@ -34,6 +34,10 @@ export const ACCOUNT_GLV_WITHDRAWAL_LIST = hashString("ACCOUNT_GLV_WITHDRAWAL_LI
 export const SHIFT_LIST = hashString("SHIFT_LIST");
 export const ACCOUNT_SHIFT_LIST = hashString("ACCOUNT_SHIFT_LIST");
 
+export const ACCOUNT_UNSTAKE_REQUEST_LIST = hashString("ACCOUNT_UNSTAKE_REQUEST_LIST");
+export const PENDING_RECEIVER = hashString("PENDING_RECEIVER");
+export const PENDING_TRANSFER_VESTER_VERSION = hashString("PENDING_TRANSFER_VESTER_VERSION");
+
 export const GLV_SHIFT_LIST = hashString("GLV_SHIFT_LIST");
 
 export const POSITION_LIST = hashString("POSITION_LIST");
@@ -50,6 +54,13 @@ export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATUR
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
 export const EXECUTE_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_DEPOSIT_FEATURE_DISABLED");
 export const GASLESS_FEATURE_DISABLED = hashString("GASLESS_FEATURE_DISABLED");
+export const INCENTIVE_VESTER_DEPOSIT_FEATURE_DISABLED = hashString("INCENTIVE_VESTER_DEPOSIT_FEATURE_DISABLED");
+export const INCENTIVE_VESTER_TRANSFER_FEATURE_DISABLED = hashString("INCENTIVE_VESTER_TRANSFER_FEATURE_DISABLED");
+export const INCENTIVE_VESTER_CLAIM_FEATURE_DISABLED = hashString("INCENTIVE_VESTER_CLAIM_FEATURE_DISABLED");
+export const INCENTIVE_ISSUER_CLAIM_FEATURE_DISABLED = hashString("INCENTIVE_ISSUER_CLAIM_FEATURE_DISABLED");
+export const SIGNAL_UNSTAKE_FEATURE_DISABLED = hashString("SIGNAL_UNSTAKE_FEATURE_DISABLED");
+export const ATOMIC_SWAP_FEATURE_DISABLED = hashString("ATOMIC_SWAP_FEATURE_DISABLED");
+export const BRIDGE_FEE_SWAP_FEATURE_DISABLED = hashString("BRIDGE_FEE_SWAP_FEATURE_DISABLED");
 export const JIT_FEATURE_DISABLED = hashString("JIT_FEATURE_DISABLED");
 
 export const CREATE_ORDER_FEATURE_DISABLED = hashString("CREATE_ORDER_FEATURE_DISABLED");
@@ -62,6 +73,7 @@ export const CREATE_WITHDRAWAL_FEATURE_DISABLED = hashString("CREATE_WITHDRAWAL_
 export const CANCEL_WITHDRAWAL_FEATURE_DISABLED = hashString("CANCEL_WITHDRAWAL_FEATURE_DISABLED");
 export const EXECUTE_WITHDRAWAL_FEATURE_DISABLED = hashString("EXECUTE_WITHDRAWAL_FEATURE_DISABLED");
 export const EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED = hashString("EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED");
+export const WITHDRAWAL_SWAP_FEATURE_DISABLED = hashString("WITHDRAWAL_SWAP_FEATURE_DISABLED");
 
 export const CREATE_SHIFT_FEATURE_DISABLED = hashString("CREATE_SHIFT_FEATURE_DISABLED");
 export const EXECUTE_SHIFT_FEATURE_DISABLED = hashString("EXECUTE_SHIFT_FEATURE_DISABLED");
@@ -89,6 +101,7 @@ export const MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS = hashString(
 );
 
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
+export const RISK_ORACLE_MARKET_ENABLED = hashString("RISK_ORACLE_MARKET_ENABLED");
 export const MAX_SWAP_PATH_LENGTH = hashString("MAX_SWAP_PATH_LENGTH");
 export const MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT");
 
@@ -117,12 +130,14 @@ export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER
 
 export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
+export const MAX_RELAY_FEE_SWAP_USD = hashString("MAX_RELAY_FEE_SWAP_USD");
 export const MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = hashString("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT");
+export const MAX_BRIDGE_FEE_SWAP_FACTOR = hashString("MAX_BRIDGE_FEE_SWAP_FACTOR");
 export const GELATO_RELAY_FEE_BASE_AMOUNT = hashString("GELATO_RELAY_FEE_BASE_AMOUNT");
 export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_MULTIPLIER_FACTOR");
 
 export const RELAY_FEE_ADDRESS = hashString("RELAY_FEE_ADDRESS");
-
+export const EIP6492_DEPLOYER = hashString("EIP6492_DEPLOYER");
 export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 
 export const PRICE_FEED = hashString("PRICE_FEED");
@@ -133,6 +148,7 @@ export const EDGE_DATA_STREAM_ID = hashString("EDGE_DATA_STREAM_ID");
 export const EDGE_DATA_STREAM_TOKEN_DECIMALS = hashString("EDGE_DATA_STREAM_TOKEN_DECIMALS");
 export const DATA_STREAM_MULTIPLIER = hashString("DATA_STREAM_MULTIPLIER");
 export const DATA_STREAM_SPREAD_REDUCTION_FACTOR = hashString("DATA_STREAM_SPREAD_REDUCTION_FACTOR");
+export const DATA_STREAM_MAX_INTERVAL = hashString("DATA_STREAM_MAX_INTERVAL");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
@@ -154,6 +170,9 @@ export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 export const POSITION_IMPACT_POOL_AMOUNT = hashString("POSITION_IMPACT_POOL_AMOUNT");
 export const LENT_POSITION_IMPACT_POOL_AMOUNT = hashString("LENT_POSITION_IMPACT_POOL_AMOUNT");
 export const PENDING_IMPACT_AMOUNT = hashString("PENDING_IMPACT_AMOUNT");
+export const REALIZED_UNCAPPED_PNL_USD = hashString("REALIZED_UNCAPPED_PNL_USD");
+export const REALIZED_PNL_USD = hashString("REALIZED_PNL_USD");
+export const CAPPED_PNL_POOL_TOKEN_AMOUNT = hashString("CAPPED_PNL_POOL_TOKEN_AMOUNT");
 export const TOTAL_PENDING_IMPACT_AMOUNT = hashString("TOTAL_PENDING_IMPACT_AMOUNT");
 export const MIN_POSITION_IMPACT_POOL_AMOUNT = hashString("MIN_POSITION_IMPACT_POOL_AMOUNT");
 export const POSITION_IMPACT_POOL_DISTRIBUTION_RATE = hashString("POSITION_IMPACT_POOL_DISTRIBUTION_RATE");
@@ -203,6 +222,7 @@ export const FUNDING_EXPONENT_FACTOR = hashString("FUNDING_EXPONENT_FACTOR");
 
 export const SAVED_FUNDING_FACTOR_PER_SECOND = hashString("SAVED_FUNDING_FACTOR_PER_SECOND");
 export const FUNDING_INCREASE_FACTOR_PER_SECOND = hashString("FUNDING_INCREASE_FACTOR_PER_SECOND");
+export const MIN_FUNDING_INCREASE_RATE_PER_SECOND = hashString("MIN_FUNDING_INCREASE_RATE_PER_SECOND");
 export const FUNDING_DECREASE_FACTOR_PER_SECOND = hashString("FUNDING_DECREASE_FACTOR_PER_SECOND");
 export const MIN_FUNDING_FACTOR_PER_SECOND = hashString("MIN_FUNDING_FACTOR_PER_SECOND");
 export const MAX_FUNDING_FACTOR_PER_SECOND = hashString("MAX_FUNDING_FACTOR_PER_SECOND");
@@ -216,6 +236,7 @@ export const FUNDING_UPDATED_AT = hashString("FUNDING_UPDATED_AT");
 export const OPTIMAL_USAGE_FACTOR = hashString("OPTIMAL_USAGE_FACTOR");
 export const BASE_BORROWING_FACTOR = hashString("BASE_BORROWING_FACTOR");
 export const ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = hashString("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR");
+export const MAX_BORROWING_FACTOR_PER_SECOND = hashString("MAX_BORROWING_FACTOR_PER_SECOND");
 
 export const BORROWING_FACTOR = hashString("BORROWING_FACTOR");
 export const BORROWING_EXPONENT_FACTOR = hashString("BORROWING_EXPONENT_FACTOR");
@@ -252,6 +273,7 @@ export const GLV_PER_MARKET_GAS_LIMIT = hashString("GLV_PER_MARKET_GAS_LIMIT");
 
 export const CUMULATIVE_BORROWING_FACTOR = hashString("CUMULATIVE_BORROWING_FACTOR");
 export const CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = hashString("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT");
+export const TOTAL_BORROWING = hashString("TOTAL_BORROWING");
 
 export const VIRTUAL_TOKEN_ID = hashString("VIRTUAL_TOKEN_ID");
 export const VIRTUAL_MARKET_ID = hashString("VIRTUAL_MARKET_ID");
@@ -267,6 +289,7 @@ export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 export const SUBACCOUNT_EXPIRES_AT = hashString("SUBACCOUNT_EXPIRES_AT");
 export const SUBACCOUNT_INTEGRATION_ID = hashString("SUBACCOUNT_INTEGRATION_ID");
 export const SUBACCOUNT_INTEGRATION_DISABLED = hashString("SUBACCOUNT_INTEGRATION_DISABLED");
+export const SUBACCOUNT_REVOCATION_COUNTER = hashString("SUBACCOUNT_REVOCATION_COUNTER");
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
 export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
 
@@ -275,18 +298,14 @@ export const GLV_MAX_MARKET_COUNT = hashString("GLV_MAX_MARKET_COUNT");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT");
 export const GLV_SHIFT_MIN_INTERVAL = hashString("GLV_SHIFT_MIN_INTERVAL");
+export const GLV_MARKET_REMOVAL_DUST_THRESHOLD = hashString("GLV_MARKET_REMOVAL_DUST_THRESHOLD");
 export const IS_GLV_MARKET_DISABLED = hashString("IS_GLV_MARKET_DISABLED");
 
-export const SYNC_CONFIG_FEATURE_DISABLED = hashString("SYNC_CONFIG_FEATURE_DISABLED");
-export const SYNC_CONFIG_MARKET_DISABLED = hashString("SYNC_CONFIG_MARKET_DISABLED");
-export const SYNC_CONFIG_PARAMETER_DISABLED = hashString("SYNC_CONFIG_PARAMETER_DISABLED");
-export const SYNC_CONFIG_MARKET_PARAMETER_DISABLED = hashString("SYNC_CONFIG_MARKET_PARAMETER_DISABLED");
-export const SYNC_CONFIG_UPDATE_COMPLETED = hashString("SYNC_CONFIG_UPDATE_COMPLETED");
-export const SYNC_CONFIG_LATEST_UPDATE_ID = hashString("SYNC_CONFIG_LATEST_UPDATE_ID");
+export const MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT = hashString("MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT");
 
 export const BUYBACK_BATCH_AMOUNT = hashString("BUYBACK_BATCH_AMOUNT");
 export const BUYBACK_AVAILABLE_FEE_AMOUNT = hashString("BUYBACK_AVAILABLE_FEE_AMOUNT");
-export const BUYBACK_GMX_FACTOR = hashString("BUYBACK_GMX_FACTOR");
+export const BUYBACK_PRIMARY_TOKEN_FACTOR = hashString("BUYBACK_PRIMARY_TOKEN_FACTOR");
 export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMPACT_FACTOR");
 export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
@@ -308,21 +327,12 @@ export const MULTICHAIN_READ_CHANNEL = hashString("MULTICHAIN_READ_CHANNEL");
 export const MULTICHAIN_PEERS = hashString("MULTICHAIN_PEERS");
 export const MULTICHAIN_CONFIRMATIONS = hashString("MULTICHAIN_CONFIRMATIONS");
 export const MULTICHAIN_AUTHORIZED_ORIGINATORS = hashString("MULTICHAIN_AUTHORIZED_ORIGINATORS");
+export const MULTICHAIN_FAILED_ACTION = hashString("MULTICHAIN_FAILED_ACTION");
+export const MULTICHAIN_REFUNDED_COMPOSE = hashString("MULTICHAIN_REFUNDED_COMPOSE");
 
 export const FEE_DISTRIBUTOR_DISTRIBUTION_DAY = hashString("FEE_DISTRIBUTOR_DISTRIBUTION_DAY");
 export const FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = hashString("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP");
 export const FEE_DISTRIBUTOR_STATE = hashString("FEE_DISTRIBUTOR_STATE");
-export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT = hashString(
-  "FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT"
-);
-export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR = hashString(
-  "FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR"
-);
-export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT = hashString(
-  "FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT"
-);
-export const FEE_DISTRIBUTOR_GMX_PRICE = hashString("FEE_DISTRIBUTOR_GMX_PRICE");
-export const FEE_DISTRIBUTOR_WNT_PRICE = hashString("FEE_DISTRIBUTOR_WNT_PRICE");
 export const FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = hashString("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY");
 export const FEE_DISTRIBUTOR_GAS_LIMIT = hashString("FEE_DISTRIBUTOR_GAS_LIMIT");
 export const FEE_DISTRIBUTOR_CHAIN_ID = hashString("FEE_DISTRIBUTOR_CHAIN_ID");
@@ -331,19 +341,31 @@ export const FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX = hashString("FEE_DISTRIBUTOR_
 export const FEE_DISTRIBUTOR_STAKED_GMX = hashString("FEE_DISTRIBUTOR_STAKED_GMX");
 export const FEE_DISTRIBUTOR_TOTAL_STAKED_GMX = hashString("FEE_DISTRIBUTOR_TOTAL_STAKED_GMX");
 export const FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR = hashString("FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR");
+export const FEE_DISTRIBUTOR_MIN_INCOMING_GMX = hashString("FEE_DISTRIBUTOR_MIN_INCOMING_GMX");
 export const FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = hashString("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP");
 export const FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = hashString("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID");
 export const FEE_DISTRIBUTOR_ADDRESS_INFO = hashString("FEE_DISTRIBUTOR_ADDRESS_INFO");
 export const FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN = hashString("FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN");
 export const FEE_DISTRIBUTOR_KEEPER_COSTS = hashString("FEE_DISTRIBUTOR_KEEPER_COSTS");
 export const FEE_DISTRIBUTOR_CHAINLINK_FACTOR = hashString("FEE_DISTRIBUTOR_CHAINLINK_FACTOR");
-export const FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = hashString("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY");
-export const FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR = hashString("FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR");
-export const FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR = hashString("FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR");
+export const FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY = hashString("FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY");
+export const FEE_DISTRIBUTOR_DISTRIBUTE_FEES = hashString("FEE_DISTRIBUTOR_DISTRIBUTE_FEES");
+export const FEE_DISTRIBUTOR_SNAPSHOT_EPOCH = hashString("FEE_DISTRIBUTOR_SNAPSHOT_EPOCH");
+export const FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX = hashString("FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX");
+export const FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX = hashString("FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX");
+export const FEE_DISTRIBUTOR_SNAPSHOT_WITHDRAWABLE_GMX = hashString("FEE_DISTRIBUTOR_SNAPSHOT_WITHDRAWABLE_GMX");
+export const FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX = hashString("FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX");
+export const FEE_DISTRIBUTOR_EXPECTED_READ_GUID = hashString("FEE_DISTRIBUTOR_EXPECTED_READ_GUID");
+export const FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH = hashString("FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH");
+export const FEE_DISTRIBUTOR_STATE_UPDATED_AT = hashString("FEE_DISTRIBUTOR_STATE_UPDATED_AT");
+export const FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD = hashString("FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD");
+export const FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR = hashString("FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR");
 
 export const CONTRIBUTOR_LAST_PAYMENT_AT = hashString("CONTRIBUTOR_LAST_PAYMENT_AT");
 export const CONTRIBUTOR_ACCOUNT_LIST = hashString("CONTRIBUTOR_ACCOUNT_LIST");
 export const CONTRIBUTOR_TOKEN_AMOUNT = hashString("CONTRIBUTOR_TOKEN_AMOUNT");
+
+export const CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS = hashString("CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -355,6 +377,18 @@ export function accountWithdrawalListKey(account) {
 
 export function accountShiftListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_SHIFT_LIST, account]);
+}
+
+export function accountUnstakeRequestListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_UNSTAKE_REQUEST_LIST, account]);
+}
+
+export function pendingReceiverKey(sender) {
+  return hashData(["bytes32", "address"], [PENDING_RECEIVER, sender]);
+}
+
+export function pendingTransferVesterVersionKey(sender) {
+  return hashData(["bytes32", "address"], [PENDING_TRANSFER_VESTER_VERSION, sender]);
 }
 
 export function accountPositionListKey(account) {
@@ -377,6 +411,10 @@ export function isMarketDisabledKey(market) {
   return hashData(["bytes32", "address"], [IS_MARKET_DISABLED, market]);
 }
 
+export function isRiskOracleMarketEnabledKey(market) {
+  return hashData(["bytes32", "address"], [RISK_ORACLE_MARKET_ENABLED, market]);
+}
+
 export function minMarketTokensForFirstDeposit(market) {
   return hashData(["bytes32", "address"], [MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT, market]);
 }
@@ -391,6 +429,38 @@ export function cancelDepositFeatureDisabledKey(contract) {
 
 export function gaslessFeatureDisabledKey(module: string) {
   return hashData(["bytes32", "address"], [GASLESS_FEATURE_DISABLED, module]);
+}
+
+export function incentiveVesterDepositFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [INCENTIVE_VESTER_DEPOSIT_FEATURE_DISABLED, module]);
+}
+
+export function incentiveVesterTransferFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [INCENTIVE_VESTER_TRANSFER_FEATURE_DISABLED, module]);
+}
+
+export function incentiveVesterClaimFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [INCENTIVE_VESTER_CLAIM_FEATURE_DISABLED, module]);
+}
+
+export function incentiveIssuerClaimFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [INCENTIVE_ISSUER_CLAIM_FEATURE_DISABLED, module]);
+}
+
+export function signalUnstakeFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [SIGNAL_UNSTAKE_FEATURE_DISABLED, module]);
+}
+
+export function atomicSwapFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEATURE_DISABLED, module]);
+}
+
+export function bridgeFeeSwapFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [BRIDGE_FEE_SWAP_FEATURE_DISABLED, module]);
+}
+
+export function withdrawalSwapFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [WITHDRAWAL_SWAP_FEATURE_DISABLED, module]);
 }
 
 export function jitFeatureDisabledKey(contract) {
@@ -433,11 +503,20 @@ export function claimableFundingAmountKey(market: string, token: string, account
   return hashData(["bytes32", "address", "address", "address"], [CLAIMABLE_FUNDING_AMOUNT, market, token, account]);
 }
 
+export function claimableFundingAmountTotalKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [CLAIMABLE_FUNDING_AMOUNT, market, token]);
+}
+
 export function claimableCollateralAmountKey(market: string, token: string, timeKey: number, account: string) {
   return hashData(
     ["bytes32", "address", "address", "uint256", "address"],
     [CLAIMABLE_COLLATERAL_AMOUNT, market, token, timeKey, account]
   );
+}
+
+// Total (pool-level) key for claimable collateral - used in validateMarketTokenBalance
+export function claimableCollateralAmountTotalKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [CLAIMABLE_COLLATERAL_AMOUNT, market, token]);
 }
 
 export function claimableCollateralFactorKey(market: string, token: string, timeKey: number) {
@@ -475,8 +554,18 @@ export function claimableUiFeeAmountKey(market: string, token: string, uiFeeRece
   );
 }
 
+// Total (pool-level) key for claimable UI fees
+export function claimableUiFeeAmountTotalKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [CLAIMABLE_UI_FEE_AMOUNT, market, token]);
+}
+
 export function affiliateRewardKey(market: string, token: string, account: string) {
   return hashData(["bytes32", "address", "address", "address"], [AFFILIATE_REWARD, market, token, account]);
+}
+
+// Total (pool-level) key for affiliate rewards
+export function affiliateRewardTotalKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [AFFILIATE_REWARD, market, token]);
 }
 
 export function minAffiliateRewardFactorKey(referralTierLevel: number) {
@@ -517,6 +606,10 @@ export function dataStreamMultiplierKey(token: string) {
 
 export function dataStreamSpreadReductionFactorKey(token: string) {
   return hashData(["bytes32", "address"], [DATA_STREAM_SPREAD_REDUCTION_FACTOR, token]);
+}
+
+export function dataStreamMaxIntervalKey(token: string) {
+  return hashData(["bytes32", "address"], [DATA_STREAM_MAX_INTERVAL, token]);
 }
 
 export function stablePriceKey(token: string) {
@@ -730,16 +823,20 @@ export function fundingIncreaseFactorPerSecondKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_INCREASE_FACTOR_PER_SECOND, market]);
 }
 
+export function minFundingIncreaseRatePerSecondKey(market: string) {
+  return hashData(["bytes32", "address"], [MIN_FUNDING_INCREASE_RATE_PER_SECOND, market]);
+}
+
 export function fundingDecreaseFactorPerSecondKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_DECREASE_FACTOR_PER_SECOND, market]);
 }
 
-export function minFundingFactorPerSecondKey(market: string) {
-  return hashData(["bytes32", "address"], [MIN_FUNDING_FACTOR_PER_SECOND, market]);
+export function minFundingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MIN_FUNDING_FACTOR_PER_SECOND, market, isLong]);
 }
 
-export function maxFundingFactorPerSecondKey(market: string) {
-  return hashData(["bytes32", "address"], [MAX_FUNDING_FACTOR_PER_SECOND, market]);
+export function maxFundingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_FUNDING_FACTOR_PER_SECOND, market, isLong]);
 }
 
 export function thresholdForStableFundingKey(market: string) {
@@ -770,6 +867,22 @@ export function fundingUpdatedAtKey(market: string) {
 
 export function borrowingFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [BORROWING_FACTOR, market, isLong]);
+}
+
+export function optimalUsageFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [OPTIMAL_USAGE_FACTOR, market, isLong]);
+}
+
+export function baseBorrowingFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [BASE_BORROWING_FACTOR, market, isLong]);
+}
+
+export function aboveOptimalUsageBorrowingFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR, market, isLong]);
+}
+
+export function maxBorrowingFactorPerSecondKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_BORROWING_FACTOR_PER_SECOND, market, isLong]);
 }
 
 export function borrowingExponentFactorKey(market: string, isLong: boolean) {
@@ -828,6 +941,10 @@ export function cumulativeBorrowingFactorUpdatedAtKey(market: string, isLong: bo
   return hashData(["bytes32", "address", "bool"], [CUMULATIVE_BORROWING_FACTOR_UPDATED_AT, market, isLong]);
 }
 
+export function totalBorrowingKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [TOTAL_BORROWING, market, isLong]);
+}
+
 export function virtualTokenIdKey(token: string) {
   return hashData(["bytes32", "address"], [VIRTUAL_TOKEN_ID, token]);
 }
@@ -869,6 +986,18 @@ export function subaccountAutoTopUpAmountKey(account: string, subaccount: string
   return hashData(["bytes32", "address", "address"], [SUBACCOUNT_AUTO_TOP_UP_AMOUNT, account, subaccount]);
 }
 
+export function subaccountIntegrationIdKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_INTEGRATION_ID, account, subaccount]);
+}
+
+export function subaccountIntegrationDisabledKey(integrationId: string) {
+  return hashData(["bytes32", "bytes32"], [SUBACCOUNT_INTEGRATION_DISABLED, integrationId]);
+}
+
+export function subaccountRevocationCounterKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_REVOCATION_COUNTER, account, subaccount]);
+}
+
 export function glvSupportedMarketListKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SUPPORTED_MARKET_LIST, glv]);
 }
@@ -897,6 +1026,10 @@ export function glvShiftMinIntervalKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SHIFT_MIN_INTERVAL, glv]);
 }
 
+export function glvMarketRemovalDustThresholdKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [GLV_MARKET_REMOVAL_DUST_THRESHOLD, glv, market]);
+}
+
 export function glvShiftMaxLossFactorKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SHIFT_MAX_LOSS_FACTOR, glv]);
 }
@@ -905,40 +1038,20 @@ export function isGlvMarketDisabledKey(glv: string, market: string) {
   return hashData(["bytes32", "address", "address"], [IS_GLV_MARKET_DISABLED, glv, market]);
 }
 
-export function syncConfigFeatureDisabledKey(contract: string) {
-  return hashData(["bytes32", "address"], [SYNC_CONFIG_FEATURE_DISABLED, contract]);
-}
-
-export function syncConfigMarketDisabledKey(market: string) {
-  return hashData(["bytes32", "address"], [SYNC_CONFIG_MARKET_DISABLED, market]);
-}
-
-export function syncConfigParameterDisabledKey(parameter: string) {
-  return hashData(["bytes32", "string"], [SYNC_CONFIG_PARAMETER_DISABLED, parameter]);
-}
-
-export function syncConfigMarketParameterDisabledKey(market: string, parameter: string) {
-  return hashData(["bytes32", "address", "string"], [SYNC_CONFIG_MARKET_PARAMETER_DISABLED, market, parameter]);
-}
-
-export function syncConfigUpdateCompletedKey(updateId: number) {
-  return hashData(["bytes32", "uint256"], [SYNC_CONFIG_UPDATE_COMPLETED, updateId]);
-}
-
-export function syncConfigLatestUpdateIdKey() {
-  return SYNC_CONFIG_LATEST_UPDATE_ID;
-}
-
 export function buybackBatchAmountKey(token: string) {
   return hashData(["bytes32", "address"], [BUYBACK_BATCH_AMOUNT, token]);
+}
+
+export function maxTotalContributorTokenAmountKey(token: string) {
+  return hashData(["bytes32", "address"], [MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT, token]);
 }
 
 export function buybackAvailableFeeAmountKey(feeToken: string, swapToken: string) {
   return hashData(["bytes32", "address", "address"], [BUYBACK_AVAILABLE_FEE_AMOUNT, feeToken, swapToken]);
 }
 
-export function buybackGmxFactorKey(version: number) {
-  return hashData(["bytes32", "uint256"], [BUYBACK_GMX_FACTOR, version]);
+export function buybackPrimaryTokenFactorKey(version: number) {
+  return hashData(["bytes32", "uint256"], [BUYBACK_PRIMARY_TOKEN_FACTOR, version]);
 }
 
 export function buybackMaxPriceImpactFactorKey(token: string) {
@@ -993,12 +1106,32 @@ export function multichainAuthorizedOriginatorsKey(originator: string) {
   return hashData(["bytes32", "address"], [MULTICHAIN_AUTHORIZED_ORIGINATORS, originator]);
 }
 
+export function multichainFailedActionKey(guid: string, messageHash: string) {
+  return hashData(["bytes32", "bytes32", "bytes32"], [MULTICHAIN_FAILED_ACTION, guid, messageHash]);
+}
+
+export function multichainRefundedComposeKey(guid: string, messageHash: string) {
+  return hashData(["bytes32", "bytes32", "bytes32"], [MULTICHAIN_REFUNDED_COMPOSE, guid, messageHash]);
+}
+
 export function feeDistributorFeeAmountGmxKey(chainId: number) {
   return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_FEE_AMOUNT_GMX, chainId]);
 }
 
 export function feeDistributorStakedGmxKey(chainId: number) {
   return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_STAKED_GMX, chainId]);
+}
+
+export function feeDistributorSnapshotEpochKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_SNAPSHOT_EPOCH, chainId]);
+}
+
+export function feeDistributorSnapshotFeeAmountGmxKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX, chainId]);
+}
+
+export function feeDistributorSnapshotStakedGmxKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX, chainId]);
 }
 
 export function feeDistributorBridgeSlippageFactorKey(chainId: number) {
@@ -1019,4 +1152,8 @@ export function feeDistributorAddressInfoForChainKey(chainId: number, addressNam
 
 export function contributorTokenAmountKey(account: string, token: string) {
   return hashData(["bytes32", "address", "address"], [CONTRIBUTOR_TOKEN_AMOUNT, account, token]);
+}
+
+export function creReceiverAuthorizedWorkflowIdsKey(workflowId: string) {
+  return hashData(["bytes32", "bytes32"], [CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS, workflowId]);
 }

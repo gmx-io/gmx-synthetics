@@ -1,7 +1,21 @@
 import { BigNumber } from "ethers";
+import * as keys from "./keys";
+
+export const FUNDING_CONFIG_BASE_KEYS = new Set([
+  keys.FUNDING_FACTOR,
+  keys.FUNDING_EXPONENT_FACTOR,
+  keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+  keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+  keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+  keys.MIN_FUNDING_FACTOR_PER_SECOND,
+  keys.MAX_FUNDING_FACTOR_PER_SECOND,
+  keys.THRESHOLD_FOR_STABLE_FUNDING,
+  keys.THRESHOLD_FOR_DECREASE_FUNDING,
+]);
 
 export const EXCLUDED_CONFIG_KEYS = {
   ACCOUNT_DEPOSIT_LIST: true,
+  ACCOUNT_UNSTAKE_REQUEST_LIST: true,
   ACCOUNT_ORDER_LIST: true,
   ACCOUNT_POSITION_LIST: true,
   ACCOUNT_SHIFT_LIST: true,
@@ -69,10 +83,13 @@ export const EXCLUDED_CONFIG_KEYS = {
   MULTICHAIN_BALANCE: true,
   NONCE: true,
   OPEN_INTEREST: true,
+  PENDING_RECEIVER: true,
+  PENDING_TRANSFER_VESTER_VERSION: true,
   OPEN_INTEREST_IN_TOKENS: true,
   ORACLE_TIMESTAMP_ADJUSTMENT: true,
   ORACLE_PROVIDER_FOR_TOKEN: true,
   ORACLE_PROVIDER_UPDATED_AT: true,
+  STATIC_ORACLE_PRICE: true,
   ORDER_LIST: true,
   POOL_AMOUNT: true,
   POSITION_FEE_TYPE: true,
@@ -92,6 +109,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   SUBACCOUNT_AUTO_TOP_UP_AMOUNT: true,
   SUBACCOUNT_ORDER_ACTION: true,
   SUBACCOUNT_LIST: true,
+  SUBACCOUNT_REVOCATION_COUNTER: true,
   SWAP_FEE_TYPE: true,
   ATOMIC_SWAP_FEE_TYPE: true,
   SWAP_IMPACT_POOL_AMOUNT: true,
@@ -111,24 +129,26 @@ export const EXCLUDED_CONFIG_KEYS = {
   GLV_SUPPORTED_MARKET_LIST: true,
   GLV_CUMULATIVE_DEPOSITED_USD: true,
   GLV_SHIFT_LAST_EXECUTED_AT: true,
-  SYNC_CONFIG_UPDATE_COMPLETED: true,
-  SYNC_CONFIG_LATEST_UPDATE_ID: true,
   BUYBACK_AVAILABLE_FEE_AMOUNT: true,
   WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT: true,
   HOLDING_ADDRESS: true,
   MULTICHAIN_GUID_TO_ORIGINATOR: true,
   FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP: true,
   FEE_DISTRIBUTOR_STATE: true,
-  FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT: true,
-  FEE_DISTRIBUTOR_GMX_PRICE: true,
-  FEE_DISTRIBUTOR_WNT_PRICE: true,
   FEE_DISTRIBUTOR_FEE_AMOUNT_GMX: true,
   FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX: true,
-  FEE_DISTRIBUTOR_FEE_AMOUNT_USD: true,
   FEE_DISTRIBUTOR_STAKED_GMX: true,
   FEE_DISTRIBUTOR_TOTAL_STAKED_GMX: true,
   FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP: true,
-  FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED: true,
+  FUNDING_FACTOR: true,
+  FUNDING_EXPONENT_FACTOR: true,
+  FUNDING_INCREASE_FACTOR_PER_SECOND: true,
+  MIN_FUNDING_INCREASE_RATE_PER_SECOND: true,
+  FUNDING_DECREASE_FACTOR_PER_SECOND: true,
+  MIN_FUNDING_FACTOR_PER_SECOND: true,
+  MAX_FUNDING_FACTOR_PER_SECOND: true,
+  THRESHOLD_FOR_STABLE_FUNDING: true,
+  THRESHOLD_FOR_DECREASE_FUNDING: true,
 };
 
 export async function appendUintConfigIfDifferent(
@@ -215,7 +235,8 @@ async function appendConfigIfDifferent(
   const key = getFullKey(baseKey, keyData);
   keyData = keyData || "0x";
 
-  const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
+  const isFundingConfig = type === "uint" && FUNDING_CONFIG_BASE_KEYS.has(baseKey);
+  const setMethod = isFundingConfig ? "setFundingUintWithOraclePrices" : `set${type[0].toUpperCase()}${type.slice(1)}`;
 
   const currentValue: string = dataCache[key];
 
@@ -238,7 +259,10 @@ async function appendConfigIfDifferent(
       changeStr,
       key
     );
-    list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
+    const args = isFundingConfig
+      ? [baseKey, keyData, value, { tokens: [], providers: [], data: [] }]
+      : [baseKey, keyData, value];
+    list.push(config.interface.encodeFunctionData(setMethod, args));
   } else {
     // console.info("skipping config %s %s (%s) as it is already set to %s", type, label, key, value.toString());
   }

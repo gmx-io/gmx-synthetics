@@ -11,8 +11,11 @@ import {
   encodeRegisterCodeMessage,
   encodeWithdrawalMessage,
   bridgeInTokens,
+  getMockComposeMessage,
+  MOCK_COMPOSE_GUID,
 } from "../../utils/multichain";
 import { hashString } from "../../utils/hash";
+import { errorsContract } from "../../utils/error";
 import { sendSetTraderReferralCode, sendRegisterCode } from "../../utils/relay/gelatoRelay";
 import {
   sendCreateDeposit,
@@ -726,12 +729,30 @@ describe("LayerZeroProvider", () => {
         const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, user1.address);
 
         // Should not fail silently but emits an event (i.e. MultichainBridgeActionFailed)
-        await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
+        const tx = await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
 
         // Code owner should still be user0
         expect(await referralStorage.codeOwners(referralCode)).eq(user0.address);
         // usdcAmount is still added to user's multichain balance
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
+
+        // the failed action is recorded, a retry fails again and keeps the record
+        const composeMessage = await getMockComposeMessage(
+          mockStargatePoolUsdc,
+          await tx.wait(),
+          user1.address,
+          usdcAmount,
+          message
+        );
+        const failedActionKey = keys.multichainFailedActionKey(
+          MOCK_COMPOSE_GUID,
+          ethers.utils.keccak256(composeMessage)
+        );
+        expect(await dataStore.getBool(failedActionKey)).eq(true);
+        await expect(layerZeroProvider.retryAction(MOCK_COMPOSE_GUID, composeMessage))
+          .to.be.revertedWithCustomError(errorsContract, "MultichainActionRetryFailed")
+          .withArgs(MOCK_COMPOSE_GUID);
+        expect(await dataStore.getBool(failedActionKey)).eq(true);
       });
     });
   });

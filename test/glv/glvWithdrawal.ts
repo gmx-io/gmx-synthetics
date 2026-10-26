@@ -25,25 +25,29 @@ import { printGasUsage } from "../../utils/gas";
 import { expectBalances } from "../../utils/validation";
 import { setBytes32IfDifferent } from "../../utils/dataStore";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { grantRole } from "../../utils/role";
+import { parseLogs, getEventData } from "../../utils/event";
 
 describe("Glv Withdrawals", () => {
   const { provider } = ethers;
 
   let fixture;
-  let user0, user1, user2;
+  let user0, user1, user2, user3;
   let glvReader,
     dataStore,
     ethUsdMarket,
     ethUsdGlvAddress,
     btcUsdMarket,
     glvRouter,
+    glvWithdrawalHandler,
+    withdrawalHandler,
     wnt,
     sol,
     usdc,
     glvFactory,
     glvVault,
     roleStore,
-    gmOracleProvider,
+    chainlinkDataStreamProvider,
     glvShiftHandler,
     ethUsdSingleTokenMarket2,
     oracle;
@@ -51,7 +55,7 @@ describe("Glv Withdrawals", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
 
     ({
       glvReader,
@@ -60,6 +64,8 @@ describe("Glv Withdrawals", () => {
       ethUsdGlvAddress,
       btcUsdMarket,
       glvRouter,
+      glvWithdrawalHandler,
+      withdrawalHandler,
       wnt,
       usdc,
       sol,
@@ -68,7 +74,7 @@ describe("Glv Withdrawals", () => {
       roleStore,
       glvShiftHandler,
       ethUsdSingleTokenMarket2,
-      gmOracleProvider,
+      chainlinkDataStreamProvider,
       oracle,
     } = fixture.contracts);
   });
@@ -348,6 +354,88 @@ describe("Glv Withdrawals", () => {
     );
   });
 
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
+  // cancelGlvWithdrawal also lets ORDER_KEEPER cancel before expiration; the last test covers that.
+
+  async function createGlvWithdrawalForKeeperTest() {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(10 * 5000, 6),
+      },
+    });
+
+    const glvToken = await contractAt("GlvToken", ethUsdGlvAddress);
+    const glvTokenAmount = expandDecimals(1000, 18);
+    await glvToken.mint(user0.address, glvTokenAmount);
+
+    await createGlvWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      glv: ethUsdGlvAddress,
+      market: ethUsdMarket,
+      glvTokenAmount,
+      executionFee: expandDecimals(1, 15),
+    });
+
+    const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
+    return glvWithdrawalKeys[0];
+  }
+
+  it("cancelGlvWithdrawal by ORDER_KEEPER pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const glvWithdrawalKey = await createGlvWithdrawalForKeeperTest();
+
+    // advance past expiration; the pre-expiration case is tested separately below.
+    const refTime = (await ethers.provider.getBlock("latest")).timestamp;
+    await increaseTime(refTime, 300);
+
+    const txn = await glvWithdrawalHandler.connect(orderKeeperSigner).cancelGlvWithdrawal(glvWithdrawalKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+
+    const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
+    expect(refundEvent.receiver).eq(user1.address); // glvWithdrawal.receiver()
+  });
+
+  it("cancelGlvWithdrawal by CONTROLLER-only signer pays the keeper portion to glvWithdrawal.account", async () => {
+    const controllerOnlySigner = user3;
+    await grantRole(roleStore, controllerOnlySigner.address, "CONTROLLER");
+
+    const glvWithdrawalKey = await createGlvWithdrawalForKeeperTest();
+
+    const refTime = (await ethers.provider.getBlock("latest")).timestamp;
+    await increaseTime(refTime, 300);
+
+    const txn = await glvWithdrawalHandler.connect(controllerOnlySigner).cancelGlvWithdrawal(glvWithdrawalKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(user0.address); // glvWithdrawal.account()
+  });
+
+  // ORDER_KEEPER can cancel a glvWithdrawal before expiration; the keeper should still receive
+  // the keeper portion of the execution fee.
+  it("cancelGlvWithdrawal by ORDER_KEEPER before expiration pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const glvWithdrawalKey = await createGlvWithdrawalForKeeperTest();
+
+    // no increaseTime — keepers can cancel before expiration.
+    const txn = await glvWithdrawalHandler.connect(orderKeeperSigner).cancelGlvWithdrawal(glvWithdrawalKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+  });
+
   describe("execute glv withdrawal, validations", () => {
     it("GlvWithdrawalNotFound", async () => {
       const key = ethers.constants.HashZero.slice(0, -1) + "f";
@@ -507,12 +595,137 @@ describe("Glv Withdrawals", () => {
     });
   });
 
+  it("createGlvWithdrawal is blocked with a swap path when withdrawalSwapFeatureDisabled is set", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    const _withdrawalSwapFeatureDisabledKey = keys.withdrawalSwapFeatureDisabledKey(glvWithdrawalHandler.address);
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await expect(
+      createGlvWithdrawal(fixture, {
+        glvTokenAmount: expandDecimals(1000, 18),
+        longTokenSwapPath: [ethUsdMarket.marketToken],
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    await expect(
+      createGlvWithdrawal(fixture, {
+        glvTokenAmount: expandDecimals(1000, 18),
+        shortTokenSwapPath: [ethUsdMarket.marketToken],
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+    });
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+  });
+
+  it("executeGlvWithdrawal is blocked by the withdrawalHandler-scoped withdrawalSwapFeatureDisabled key and stays pending", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+      longTokenSwapPath: [ethUsdMarket.marketToken],
+    });
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    const _withdrawalSwapFeatureDisabledKey = keys.withdrawalSwapFeatureDisabledKey(withdrawalHandler.address);
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await expect(executeGlvWithdrawal(fixture))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, false);
+
+    await executeGlvWithdrawal(fixture);
+    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
+  });
+
+  it("executeGlvWithdrawal is blocked by the glvWithdrawalHandler-scoped withdrawalSwapFeatureDisabled key and stays pending", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    const _withdrawalSwapFeatureDisabledKey = keys.withdrawalSwapFeatureDisabledKey(glvWithdrawalHandler.address);
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+      longTokenSwapPath: [ethUsdMarket.marketToken],
+    });
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await expect(executeGlvWithdrawal(fixture))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, false);
+
+    await executeGlvWithdrawal(fixture);
+    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+      shortTokenSwapPath: [ethUsdMarket.marketToken],
+    });
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await expect(executeGlvWithdrawal(fixture))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_withdrawalSwapFeatureDisabledKey);
+
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, false);
+
+    await executeGlvWithdrawal(fixture);
+    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
+
+    await dataStore.setBool(_withdrawalSwapFeatureDisabledKey, true);
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+    });
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    await executeGlvWithdrawal(fixture);
+    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
+  });
+
   it("execute glv withdrawal with oracle GLV price", async () => {
     const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
     await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
     await dataStore.setAddress(
       keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
-      gmOracleProvider.address
+      chainlinkDataStreamProvider.address
     );
 
     await expectBalances({

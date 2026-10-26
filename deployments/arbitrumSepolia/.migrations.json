@@ -7,7 +7,6 @@
   "GovToken_1": 1746824293,
   "ProtocolGovernor_1": 1746824297,
   "OracleStore_3": 1746824317,
-  "GmOracleProvider_2": 1746824339,
   "MultichainVault_1": 1746824485,
   "OrderVault_1": 1746824489,
   "ReferralStorage_2": 1746824526,
@@ -25,5 +24,19 @@
   "ClaimVault_1": 1755765475,
   "ContributorHandler_1": 1761770214,
   "MockTimelockV1": 1763068970,
-  "FeeDistributorVault_1": 1763069805
+  "FeeDistributorVault_1": 1763069805,
+  "EdgeDataStreamVerifier_6": 1771919856,
+  "EdgeDataStreamProvider_6": 1771919860,
+  "StaticOracleProvider_1": 1781192600,
+  "EIP6492Deployer_1": 1781271586,
+  "FeeVault_1": 1781271654,
+  "ChainlinkPriceFeedProvider_7": 1789619393,
+  "Oracle_7": 1789619406,
+  "StaticOracleProvider_2": 1789619414,
+  "ChainlinkDataStreamProvider_7": 1789621574,
+  "EIP6492Deployer_2": 1789621744,
+  "EdgeDataStreamProvider_7": 1789621752,
+  "IncentiveMockTokens_1": 1789622837,
+  "EsGmxIssuer_1": 1789622850,
+  "IncentiveVesters_1": 1789623044
 }

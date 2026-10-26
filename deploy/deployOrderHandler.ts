@@ -17,6 +17,7 @@ const constructorContracts = [
 const contractName = "OrderHandler";
 
 const requireMockTimelock = !["arbitrum", "avalanche", "botanix", "megaEth"].includes(hre.network.name);
+const SKIP_TIMELOCK_ACTIONS = process.env.SKIP_TIMELOCK_ACTIONS || false;
 
 const func = createDeployFunction({
   contractName: contractName,
@@ -30,7 +31,7 @@ const func = createDeployFunction({
     const { execute } = deployments;
     const { get } = deployments;
 
-    if (requireMockTimelock) {
+    if (SKIP_TIMELOCK_ACTIONS !== "true" && requireMockTimelock) {
       const referralStorage = await get("ReferralStorage");
       await execute(
         "MockTimelockV1",

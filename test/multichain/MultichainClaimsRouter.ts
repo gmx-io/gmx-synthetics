@@ -60,6 +60,8 @@ describe("MultichainClaimsRouter", () => {
 
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+
+    await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(10000));
   });
 
   const feeAmount = expandDecimals(3, 15);

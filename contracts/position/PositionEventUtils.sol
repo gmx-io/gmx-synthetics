@@ -35,6 +35,7 @@ library PositionEventUtils {
         int256 priceImpactUsd;
         int256 priceImpactAmount;
         Order.OrderType orderType;
+        bool balanceWasImproved;
     }
 
     function emitPositionIncrease(PositionIncreaseParams memory params) external {
@@ -68,8 +69,9 @@ library PositionEventUtils {
         eventData.intItems.setItem(1, "pendingPriceImpactUsd", params.priceImpactUsd);
         eventData.intItems.setItem(2, "pendingPriceImpactAmount", params.priceImpactAmount);
 
-        eventData.boolItems.initItems(1);
+        eventData.boolItems.initItems(2);
         eventData.boolItems.setItem(0, "isLong", params.position.isLong());
+        eventData.boolItems.setItem(1, "balanceWasImproved", params.balanceWasImproved);
 
         eventData.bytes32Items.initItems(2);
         eventData.bytes32Items.setItem(0, "orderKey", params.orderKey);
@@ -92,7 +94,8 @@ library PositionEventUtils {
         Order.OrderType orderType,
         PositionUtils.DecreasePositionCollateralValues memory values,
         Price.Props memory indexTokenPrice,
-        Price.Props memory collateralTokenPrice
+        Price.Props memory collateralTokenPrice,
+        bool balanceWasImproved
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -101,7 +104,7 @@ library PositionEventUtils {
         eventData.addressItems.setItem(1, "market", position.market());
         eventData.addressItems.setItem(2, "collateralToken", position.collateralToken());
 
-        eventData.uintItems.initItems(18);
+        eventData.uintItems.initItems(20);
         eventData.uintItems.setItem(0, "sizeInUsd", position.sizeInUsd());
         eventData.uintItems.setItem(1, "sizeInTokens", position.sizeInTokens());
         eventData.uintItems.setItem(2, "collateralAmount", position.collateralAmount());
@@ -120,16 +123,22 @@ library PositionEventUtils {
         eventData.uintItems.setItem(15, "values.priceImpactDiffUsd", values.priceImpactDiffUsd);
         eventData.uintItems.setItem(16, "orderType", uint256(orderType));
         eventData.uintItems.setItem(17, "decreasedAtTime", position.decreasedAtTime());
+        eventData.uintItems.setItem(18, "cappedPnlPoolTokenAmount", position.cappedPnlPoolTokenAmount());
+        eventData.uintItems.setItem(19, "cappedPnlAllowancePerPrice", position.cappedPnlAllowancePerPrice());
 
-        eventData.intItems.initItems(5);
+        eventData.intItems.initItems(8);
         eventData.intItems.setItem(0, "priceImpactUsd", values.priceImpactUsd);
         eventData.intItems.setItem(1, "basePnlUsd", values.basePnlUsd);
         eventData.intItems.setItem(2, "uncappedBasePnlUsd", values.uncappedBasePnlUsd);
         eventData.intItems.setItem(3, "proportionalPendingImpactUsd", values.proportionalPendingImpactUsd);
         eventData.intItems.setItem(4, "totalImpactUsd", values.totalImpactUsd);
+        eventData.intItems.setItem(5, "realizedUncappedPnlUsd", position.realizedUncappedPnlUsd());
+        eventData.intItems.setItem(6, "realizedPnlUsd", position.realizedPnlUsd());
+        eventData.intItems.setItem(7, "cappedPnlReferencePoolPnlUsd", position.cappedPnlReferencePoolPnlUsd());
 
-        eventData.boolItems.initItems(1);
+        eventData.boolItems.initItems(2);
         eventData.boolItems.setItem(0, "isLong", position.isLong());
+        eventData.boolItems.setItem(1, "balanceWasImproved", balanceWasImproved);
 
         eventData.bytes32Items.initItems(2);
         eventData.bytes32Items.setItem(0, "orderKey", orderKey);
@@ -328,8 +337,9 @@ library PositionEventUtils {
             eventData.uintItems.setItem(++dynamicItemIndex, "liquidationFeeAmountForFeeReceiver", fees.liquidation.liquidationFeeAmountForFeeReceiver);
         }
 
-        eventData.boolItems.initItems(1);
+        eventData.boolItems.initItems(2);
         eventData.boolItems.setItem(0, "isIncrease", isIncrease);
+        eventData.boolItems.setItem(1, "balanceWasImproved", fees.balanceWasImproved);
 
         eventEmitter.emitEventLog1(
             eventName,

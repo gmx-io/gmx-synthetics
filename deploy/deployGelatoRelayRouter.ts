@@ -19,7 +19,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["GasUtils", "OrderStoreUtils", "RelayUtils"],
+  libraryNames: ["GasUtils", "OrderStoreUtils", "RelayUtils", "SignatureUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");

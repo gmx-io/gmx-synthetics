@@ -3,6 +3,7 @@ import { CreateOrderParams, UpdateOrderParams, sendRelayTransaction, getRelayPar
 import {
   getBatchSignature,
   getCreateOrderSignature,
+  getCreateTwapOrderSignature,
   getUpdateOrderSignature,
   getCancelOrderSignature,
   getSetTraderReferralCodeSignature,
@@ -79,6 +80,36 @@ export async function sendCreateOrder(p: Parameters<typeof getSendCreateOrderCal
   });
 }
 
+export async function getSendCreateTwapOrderCalldata(
+  p: Parameters<typeof getSendCreateOrderCalldata>[0] & {
+    twapCount: BigNumberish;
+    interval: BigNumberish;
+  }
+) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCreateTwapOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+
+  return p.relayRouter.interface.encodeFunctionData("createTwapOrder", [
+    { ...relayParams, signature },
+    p.account,
+    p.params,
+    p.twapCount,
+    p.interval,
+  ]);
+}
+
+export async function sendCreateTwapOrder(p: Parameters<typeof getSendCreateTwapOrderCalldata>[0]) {
+  const calldata = await getSendCreateTwapOrderCalldata(p);
+  return sendRelayTransaction({
+    calldata,
+    ...p,
+  });
+}
+
 export async function sendUpdateOrder(p: {
   sender: ethers.Signer;
   signer: ethers.Signer;
@@ -107,6 +138,7 @@ export async function sendUpdateOrder(p: {
     triggerPrice: BigNumberish;
     minOutputAmount: BigNumberish;
     validFromTime: BigNumberish;
+    decreasePositionSwapType: BigNumberish;
     autoCancel: boolean;
     executionFeeIncrease: BigNumberish;
   };

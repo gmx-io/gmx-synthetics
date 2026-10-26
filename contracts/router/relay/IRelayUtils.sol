@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../../oracle/OracleUtils.sol";
 import "../../order/IBaseOrderUtils.sol";
+import "../../order/Order.sol";
 
 interface IRelayUtils {
     struct FeeParams {
@@ -78,6 +79,9 @@ interface IRelayUtils {
         uint256 deadline;
         bytes signature;
         uint256 desChainId;
+        // hash of the EIP-6492 wrapper: keccak256(abi.encode(factory, factoryCalldata))
+        // 0 for EOA / already-deployed ERC-1271 signatures that have no wrapper
+        bytes32 eip6492SignatureWrapperHash;
     }
 
     struct TransferRequests {
@@ -86,12 +90,21 @@ interface IRelayUtils {
         uint256[] amounts;
     }
 
+    struct BridgeFeeParams {
+        address feeToken;
+        uint256 feeAmount;
+        address[] feeSwapPath;
+        // min WNT output for the bridge fee swap, ignored if no swap is needed
+        uint256 minOutputAmount;
+    }
+
     struct BridgeOutParams {
         address token;
         uint256 amount;
         uint256 minAmountOut;
         address provider;
         bytes data; // provider specific data e.g. dstEid
+        BridgeFeeParams bridgeFee;
     }
 
     // @note all params except account should be part of the corresponding struct hash
@@ -102,6 +115,7 @@ interface IRelayUtils {
         uint256 triggerPrice;
         uint256 minOutputAmount;
         uint256 validFromTime;
+        Order.DecreasePositionSwapType decreasePositionSwapType;
         bool autoCancel;
         // should be non zero if order's execution fee should be increased
         // otherwise should be 0

@@ -88,6 +88,151 @@ describe("MarketUtils", () => {
     expect(usageFactor).eq(percentageToFloat("8%"));
   });
 
+  it("getBorrowingFactorPerSecond only returns zero for a zero pool when explicitly allowed", async () => {
+    const marketUtilsTest = await deployContract("MarketUtilsTest", []);
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), 0);
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+
+    await expect(
+      marketUtilsTest.getBorrowingFactorPerSecond(dataStore.address, ethUsdMarket, prices.ethUsdMarket, true, false)
+    ).to.be.revertedWithCustomError(errorsContract, "UnableToGetBorrowingFactorEmptyPoolUsd");
+
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        true,
+        true
+      )
+    ).eq(0);
+  });
+
+  it("getBorrowingFactorPerSecond returns zero only for the zero-pool side", async () => {
+    const marketUtilsTest = await deployContract("MarketUtilsTest", []);
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, usdc.address), 0);
+    await dataStore.setUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, false), decimalToFloat(1000));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+    await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 7));
+
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        false,
+        true
+      )
+    ).eq(0);
+
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        true,
+        false
+      )
+    ).gt(0);
+  });
+
+  it("getBorrowingFactorPerSecond caps kink usage at 100%", async () => {
+    const marketUtilsTest = await deployContract("MarketUtilsTest", []);
+    const aboveOptimalUsageBorrowingFactor = decimalToFloat(4, 8);
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(100, 18));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(100, 18)
+    );
+    await dataStore.setUint(keys.optimalUsageFactorKey(ethUsdMarket.marketToken, true), percentageToFloat("80%"));
+    await dataStore.setUint(
+      keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, true),
+      percentageToFloat("50%")
+    );
+    await dataStore.setUint(keys.baseBorrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(
+      keys.aboveOptimalUsageBorrowingFactorKey(ethUsdMarket.marketToken, true),
+      aboveOptimalUsageBorrowingFactor
+    );
+    await dataStore.setUint(keys.maxBorrowingFactorPerSecondKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 7));
+
+    const poolUsd = await marketUtilsTest.getPoolUsdWithoutPnl(
+      dataStore.address,
+      ethUsdMarket,
+      prices.ethUsdMarket,
+      true,
+      false
+    );
+    const reservedUsd = await marketUtilsTest.getReservedUsd(
+      dataStore.address,
+      ethUsdMarket,
+      prices.ethUsdMarket,
+      true
+    );
+    const usageFactor = await marketUtilsTest.getUsageFactor(
+      dataStore.address,
+      ethUsdMarket,
+      true,
+      reservedUsd,
+      poolUsd
+    );
+
+    expect(usageFactor).eq(percentageToFloat("200%"));
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        true,
+        false
+      )
+    ).eq(aboveOptimalUsageBorrowingFactor);
+  });
+
+  it("getBorrowingFactorPerSecond caps the kink model rate", async () => {
+    const marketUtilsTest = await deployContract("MarketUtilsTest", []);
+    const maxBorrowingFactorPerSecond = decimalToFloat(7, 8);
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), 1);
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+    await dataStore.setUint(keys.optimalUsageFactorKey(ethUsdMarket.marketToken, true), percentageToFloat("80%"));
+    await dataStore.setUint(
+      keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, true),
+      percentageToFloat("50%")
+    );
+    await dataStore.setUint(keys.baseBorrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(
+      keys.aboveOptimalUsageBorrowingFactorKey(ethUsdMarket.marketToken, true),
+      decimalToFloat(1, 7)
+    );
+    await dataStore.setUint(
+      keys.maxBorrowingFactorPerSecondKey(ethUsdMarket.marketToken, true),
+      maxBorrowingFactorPerSecond
+    );
+
+    expect(
+      await marketUtilsTest.getBorrowingFactorPerSecond(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        true,
+        false
+      )
+    ).eq(maxBorrowingFactorPerSecond);
+  });
+
   it("claimCollateral applies claimableReductionFactor correctly before timeDelay", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));

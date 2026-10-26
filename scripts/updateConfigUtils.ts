@@ -1,4 +1,5 @@
 import prompts from "prompts";
+import { ethers } from "ethers";
 import {
   appendAddressConfigIfDifferent,
   appendBoolConfigIfDifferent,
@@ -7,7 +8,10 @@ import {
   getFullKey,
 } from "../utils/config";
 import { bigNumberify } from "../utils/math";
+import * as keys from "../utils/keys";
 import { handleInBatches } from "../utils/batch";
+
+const isCliCall = process.env.CLI === "true";
 
 export interface ConfigChangeItem {
   type: string;
@@ -21,6 +25,75 @@ export enum ChangeResult {
   NO_CHANGES,
   SIMULATE,
   WRITE,
+}
+
+// Config rejects any write that leaves the deposit or withdrawal cap above the trader cap.
+// Each dependent cap goes first if it fits under the current trader cap, otherwise the trader cap goes first.
+// Collect both dependencies before reordering so that moving one cap cannot invalidate the other cap's order.
+export function orderMaxPnlFactorItems(items: ConfigChangeItem[], dataCache: Record<string, any>): ConfigChangeItem[] {
+  const decodeMaxPnlFactorItem = (item: ConfigChangeItem) => {
+    if (item.type !== "uint" || item.baseKey !== keys.MAX_PNL_FACTOR || !item.keyData) {
+      return undefined;
+    }
+    try {
+      const [pnlFactorType, market, isLong] = ethers.utils.defaultAbiCoder.decode(
+        ["bytes32", "address", "bool"],
+        item.keyData
+      );
+      return { pnlFactorType, market, isLong };
+    } catch (e) {
+      return undefined;
+    }
+  };
+
+  const prerequisites = new Map<ConfigChangeItem, ConfigChangeItem[]>();
+
+  for (const dependentItem of items) {
+    const dependent = decodeMaxPnlFactorItem(dependentItem);
+    if (
+      !dependent ||
+      (dependent.pnlFactorType !== keys.MAX_PNL_FACTOR_FOR_DEPOSITS &&
+        dependent.pnlFactorType !== keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS)
+    ) {
+      continue;
+    }
+
+    const tradersItem = items.find((item) => {
+      const traders = decodeMaxPnlFactorItem(item);
+      return (
+        traders &&
+        traders.pnlFactorType === keys.MAX_PNL_FACTOR_FOR_TRADERS &&
+        traders.market === dependent.market &&
+        traders.isLong === dependent.isLong
+      );
+    });
+    if (!tradersItem) {
+      continue;
+    }
+
+    const currentTraders = dataCache[getFullKey(tradersItem.baseKey, tradersItem.keyData)];
+    const dependentFirst = currentTraders !== undefined && bigNumberify(dependentItem.value).lte(currentTraders);
+    const [first, second] = dependentFirst ? [dependentItem, tradersItem] : [tradersItem, dependentItem];
+    prerequisites.set(second, [...(prerequisites.get(second) || []), first]);
+  }
+
+  const ordered: ConfigChangeItem[] = [];
+  const emitted = new Set<ConfigChangeItem>();
+  const appendWithPrerequisites = (item: ConfigChangeItem) => {
+    if (emitted.has(item)) {
+      return;
+    }
+    for (const prerequisite of prerequisites.get(item) || []) {
+      appendWithPrerequisites(prerequisite);
+    }
+    emitted.add(item);
+    ordered.push(item);
+  };
+  for (const item of items) {
+    appendWithPrerequisites(item);
+  }
+
+  return ordered;
 }
 
 export async function handleConfigChanges(
@@ -102,7 +175,7 @@ export async function handleConfigChanges(
 
   const multicallWriteParams = [];
 
-  for (const item of items) {
+  for (const item of orderMaxPnlFactorItems(items, dataCache)) {
     if (item.type === "uint") {
       await appendUintConfigIfDifferent(
         multicallWriteParams,
@@ -152,13 +225,17 @@ export async function handleConfigChanges(
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
 
-  const { roles } = await hre.gmx.getRoles();
-  const from = Object.keys(roles.CONFIG_KEEPER)[0];
+  const [signer] = await hre.ethers.getSigners();
+  console.log("config update signer:", signer.address);
+  // later writes may depend on earlier ones, e.g. deposit and withdrawal caps must not exceed
+  // the trader cap, so each batch is simulated on top of the batches before it
+  const simulatedWriteParams = [];
   await handleInBatches(multicallWriteParams, batchSize, async (batch) => {
-    await config.connect(from).callStatic.multicall(batch);
+    simulatedWriteParams.push(...batch);
+    await config.connect(signer).callStatic.multicall(simulatedWriteParams);
   });
 
-  if (!write) {
+  if (!write && !isCliCall) {
     ({ write } = await prompts({
       type: "confirm",
       name: "write",
@@ -169,7 +246,7 @@ export async function handleConfigChanges(
   try {
     if (write) {
       await handleInBatches(multicallWriteParams, batchSize, async (batch) => {
-        const tx = await config.multicall(batch);
+        const tx = await config.connect(signer).multicall(batch);
         console.log(`tx sent: ${tx.hash}`);
       });
       return ChangeResult.WRITE;

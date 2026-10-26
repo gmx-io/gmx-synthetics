@@ -2,11 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../error/Errors.sol";
 import "../event/EventEmitter.sol";
 
 import "./MultichainVault.sol";
@@ -17,8 +15,6 @@ import "./IMultichainProvider.sol";
  * @title MultichainUtils
  */
 library MultichainUtils {
-    using SafeERC20 for IERC20;
-
     /**
      * Records a deposit from another chain. IMultichainProvider has CONTROLLER role
      * @param multichainProvider the multichain provider contract
@@ -119,7 +115,9 @@ library MultichainUtils {
         }
 
         dataStore.decrementUint(Keys.multichainBalanceKey(account, token), amount);
+
         multichainVault.transferOut(token, receiver, amount);
+
         MultichainEventUtils.emitMultichainTransferOut(eventEmitter, token, account, receiver, amount, srcChainId);
     }
 

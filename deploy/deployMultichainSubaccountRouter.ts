@@ -40,6 +40,7 @@ const func = createDeployFunction({
     "MultichainUtils",
     "OrderStoreUtils",
     "RelayUtils",
+    "SignatureUtils",
     "SubaccountRouterUtils",
     "SubaccountUtils",
   ],

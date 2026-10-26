@@ -4,7 +4,14 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
-import { OrderType, executeOrder, createOrder, getOrderKeys, getOrderCount } from "../../utils/order";
+import {
+  OrderType,
+  DecreasePositionSwapType,
+  executeOrder,
+  createOrder,
+  getOrderKeys,
+  getOrderCount,
+} from "../../utils/order";
 import { getPositionCount } from "../../utils/position";
 
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
@@ -63,6 +70,7 @@ describe("Guardian.FrozenOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 
@@ -144,6 +152,7 @@ describe("Guardian.FrozenOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 
@@ -224,6 +233,7 @@ describe("Guardian.FrozenOrder", () => {
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
       0, // validFromTime
+      DecreasePositionSwapType.NoSwap,
       false // autoCancel
     );
 

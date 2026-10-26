@@ -18,7 +18,9 @@ import "../../router/Router.sol";
 import "../../token/TokenUtils.sol";
 import "../../gas/GasUtils.sol";
 
+import "./EIP6492Deployer.sol";
 import "./RelayUtils.sol";
+import "./SignatureUtils.sol";
 
 
 /*
@@ -128,6 +130,45 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             orderHandler.createOrder(account, srcChainId, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
+    function _createTwapOrder(
+        address account,
+        uint256 srcChainId,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool isSubaccount,
+        uint256 twapCount,
+        uint256 interval
+    ) internal returns (bytes32[] memory) {
+        Contracts memory contracts = _getContracts();
+        IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), params.numbers.executionFee * twapCount);
+
+        if (
+            params.numbers.initialCollateralDeltaAmount != 0 &&
+            (Order.isSwapOrder(params.orderType) || Order.isIncreaseOrder(params.orderType))
+        ) {
+            // for increase and swap orders OrderUtils sets initialCollateralDeltaAmount based on the amount of received initialCollateralToken
+            // instead of using initialCollateralDeltaAmount from params
+            // it is possible to use external calls to send tokens to OrderVault, in this case initialCollateralDeltaAmount could be zero
+            // and there is no need to call _sendTokens here
+            _sendTokens(
+                account,
+                params.addresses.initialCollateralToken,
+                address(contracts.orderVault),
+                params.numbers.initialCollateralDeltaAmount * twapCount,
+                srcChainId
+            );
+        }
+
+        return
+            orderHandler.createTwapOrder(
+                account,
+                srcChainId,
+                params,
+                isSubaccount && params.addresses.callbackContract != address(0),
+                twapCount,
+                interval
+            );
+    }
+
     function _updateOrder(address account, IRelayUtils.UpdateOrderParams calldata params, bool isSubaccount) internal {
         Contracts memory contracts = _getContracts();
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, params.key);
@@ -151,6 +192,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.triggerPrice,
             params.minOutputAmount,
             params.validFromTime,
+            params.decreasePositionSwapType,
             params.autoCancel,
             order,
             // shouldCapMaxExecutionFee
@@ -277,16 +319,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         if (relayParams.fee.feeSwapPath.length != 0) {
-            if (isSubaccount) {
-                // a malicious subaccount could create a large swap with a negative price impact
-                // and then execute a personal swap with a positive price impact
-                // to mitigate this, we limit the max relay fee swap size for subaccounts
-                uint256 maxRelayFeeSwapUsd = contracts.dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT);
-                uint256 relayFeeUsd = relayParams.fee.feeAmount * oracle.getPrimaryPrice(relayParams.fee.feeToken).max;
-                if (relayFeeUsd > maxRelayFeeSwapUsd) {
-                    revert Errors.MaxRelayFeeSwapForSubaccountExceeded(relayFeeUsd, maxRelayFeeSwapUsd);
-                }
-            }
+            RelayUtils.validateMaxFeeSwapUsd(
+                contracts.dataStore,
+                oracle,
+                relayParams.fee.feeToken,
+                relayParams.fee.feeAmount,
+                isSubaccount
+            );
 
             // send tokens to the orderVault to swap
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount, srcChainId);
@@ -387,12 +426,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         _validateDigest(digest);
 
-        RelayUtils.validateSignature(
+        SignatureUtils.validateSignature(
             domainSeparator,
             digest,
             relayParams.signature,
             account,
-            "call"
+            "call",
+            EIP6492Deployer(dataStore.getAddress(Keys.EIP6492_DEPLOYER)),
+            relayParams.eip6492SignatureWrapperHash
         );
     }
 

@@ -22,6 +22,7 @@ import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
+import "../fee/FeeUtils.sol";
 import "../referral/ReferralUtils.sol";
 import "../multichain/MultichainUtils.sol";
 import "../swap/SwapUtils.sol";
@@ -57,6 +58,29 @@ library OrderUtils {
         uint256 executionFeeDiff;
     }
 
+    struct UpdateOrderParams {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        OrderVault orderVault;
+        bytes32 key;
+        uint256 sizeDeltaUsd;
+        uint256 acceptablePrice;
+        uint256 triggerPrice;
+        uint256 minOutputAmount;
+        uint256 validFromTime;
+        Order.DecreasePositionSwapType decreasePositionSwapType;
+        bool autoCancel;
+        Order.Props order;
+        bool shouldCapMaxExecutionFee;
+    }
+
+    struct UpdateOrderCache {
+        address wnt;
+        uint256 receivedWnt;
+        uint256 estimatedGasLimit;
+        uint256 oraclePriceCount;
+    }
+
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -76,6 +100,141 @@ library OrderUtils {
         IBaseOrderUtils.CreateOrderParams memory params,
         bool shouldCapMaxExecutionFee
     ) external returns (bytes32) {
+        return _createOrder(dataStore, eventEmitter, orderVault, referralStorage, account, srcChainId, params, shouldCapMaxExecutionFee, true);
+    }
+
+    // @dev create twap orders in the order store
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param orderVault OrderVault
+    // @param referralStorage ReferralStorage
+    // @param account the order's account
+    // @param srcChainId the source chain id
+    // @param params BaseOrderUtils.CreateOrderParams
+    // @param shouldCapMaxExecutionFee whether to cap the max execution fee
+    // @param twapCount the number of twap orders to create
+    // @param interval the interval between twap orders
+    function createTwapOrder(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        OrderVault orderVault,
+        IReferralStorage referralStorage,
+        address account,
+        uint256 srcChainId,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        bool shouldCapMaxExecutionFee, 
+        uint256 twapCount,
+        uint256 interval
+    ) external returns (bytes32[] memory orderKeys) {
+        // twap count must be greater than 1
+        if (twapCount < 2) revert Errors.InvalidTwapCount(twapCount);
+        if (interval == 0) revert Errors.InvalidInterval(interval);
+        orderKeys = new bytes32[](twapCount);
+        // check balances of initialCollateralToken and wnt for execution fee in the orderVault
+        {
+            bool shouldRecordSeparateExecutionFeeTransfer = true;
+            address wnt = TokenUtils.wnt(dataStore);
+            uint256 executionFeeTwap =  params.numbers.executionFee * twapCount;
+            if (
+                params.orderType == Order.OrderType.MarketSwap ||
+                params.orderType == Order.OrderType.LimitSwap ||
+                params.orderType == Order.OrderType.MarketIncrease ||
+                params.orderType == Order.OrderType.LimitIncrease ||
+                params.orderType == Order.OrderType.StopIncrease
+            ) {
+                uint256 initialCollateralDeltaAmountTwap = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
+                // execution fee is the same for all twap orders
+                if (params.addresses.initialCollateralToken == wnt) {
+                    if (initialCollateralDeltaAmountTwap < executionFeeTwap) {
+                        revert Errors.InsufficientWntAmountForExecutionFee(
+                            initialCollateralDeltaAmountTwap,
+                            executionFeeTwap
+                        );
+                    }
+                    params.numbers.initialCollateralDeltaAmount = (initialCollateralDeltaAmountTwap - executionFeeTwap) / twapCount;
+                    shouldRecordSeparateExecutionFeeTransfer = false;
+                } else {
+                    params.numbers.initialCollateralDeltaAmount = initialCollateralDeltaAmountTwap / twapCount;
+                }
+            }
+
+            if (shouldRecordSeparateExecutionFeeTransfer) {
+                uint256 wntAmount = orderVault.recordTransferIn(wnt);
+                if (wntAmount < executionFeeTwap) {
+                    revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, executionFeeTwap);
+                }
+                params.numbers.executionFee = wntAmount / twapCount;
+            }
+        }
+
+        uint256 startValidFromTime = params.numbers.validFromTime;
+        for (uint256 i = 0; i < twapCount; i++) {
+            params.numbers.validFromTime = startValidFromTime + i * interval; 
+            orderKeys[i] = _createOrder(dataStore, eventEmitter, orderVault, referralStorage, account, srcChainId, params, shouldCapMaxExecutionFee, false);
+        }
+        return orderKeys;
+    }
+
+    function updateOrder(UpdateOrderParams memory params) external {
+        if (params.order.autoCancel() != params.autoCancel) {
+            updateAutoCancelList(params.dataStore, params.key, params.order, params.autoCancel);
+            validateTotalCallbackGasLimitForAutoCancelOrders(params.dataStore, params.order);
+        }
+        params.order.setAutoCancel(params.autoCancel);
+
+        params.order.setSizeDeltaUsd(params.sizeDeltaUsd);
+        params.order.setTriggerPrice(params.triggerPrice);
+        params.order.setAcceptablePrice(params.acceptablePrice);
+        params.order.setMinOutputAmount(params.minOutputAmount);
+        params.order.setValidFromTime(params.validFromTime);
+        params.order.setDecreasePositionSwapType(params.decreasePositionSwapType);
+        params.order.setIsFrozen(false);
+
+        UpdateOrderCache memory cache;
+        // allow topping up of executionFee as frozen orders
+        // will have their executionFee reduced
+        cache.wnt = TokenUtils.wnt(params.dataStore);
+        cache.receivedWnt = params.orderVault.recordTransferIn(cache.wnt);
+
+        cache.estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(params.dataStore, params.order);
+        cache.oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(params.order.swapPath().length);
+        (uint256 executionFee, uint256 executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
+            params.dataStore,
+            cache.estimatedGasLimit,
+            params.order.executionFee() + cache.receivedWnt,
+            cache.oraclePriceCount,
+            params.shouldCapMaxExecutionFee
+        );
+        params.order.setExecutionFee(executionFee);
+
+        if (executionFeeDiff != 0) {
+            GasUtils.transferExcessiveExecutionFee(params.dataStore, params.eventEmitter, params.orderVault, params.order.account(), executionFeeDiff);
+        }
+
+        params.order.touch();
+
+        BaseOrderUtils.validateNonEmptyOrder(params.order);
+
+        OrderStoreUtils.set(params.dataStore, params.key, params.order);
+
+        OrderEventUtils.emitOrderUpdated(
+            params.eventEmitter,
+            params.key,
+            params.order
+        );
+    }
+
+    function _createOrder(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        OrderVault orderVault,
+        IReferralStorage referralStorage,
+        address account,
+        uint256 srcChainId,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        bool shouldCapMaxExecutionFee,
+        bool checkBalance
+    ) private returns (bytes32) {
         AccountUtils.validateAccount(account);
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
@@ -94,16 +253,21 @@ library OrderUtils {
         ) {
             // for swaps and increase orders, the initialCollateralDeltaAmount is set based on the amount of tokens
             // transferred to the orderVault
-            cache.initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
-            if (params.addresses.initialCollateralToken == cache.wnt) {
-                if (cache.initialCollateralDeltaAmount < params.numbers.executionFee) {
-                    revert Errors.InsufficientWntAmountForExecutionFee(
-                        cache.initialCollateralDeltaAmount,
-                        params.numbers.executionFee
-                    );
+            // if checkBalance is true, the balance of the initialCollateralToken in the orderVault is checked
+            if (checkBalance) {
+                cache.initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
+                if (params.addresses.initialCollateralToken == TokenUtils.wnt(dataStore)) {
+                    if (cache.initialCollateralDeltaAmount < params.numbers.executionFee) {
+                        revert Errors.InsufficientWntAmountForExecutionFee(
+                            cache.initialCollateralDeltaAmount,
+                            params.numbers.executionFee
+                        );
+                    }
+                    cache.initialCollateralDeltaAmount -= params.numbers.executionFee;
+                    cache.shouldRecordSeparateExecutionFeeTransfer = false;
                 }
-                cache.initialCollateralDeltaAmount -= params.numbers.executionFee;
-                cache.shouldRecordSeparateExecutionFeeTransfer = false;
+            } else {
+                cache.initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
             }
         } else if (
             params.orderType == Order.OrderType.MarketDecrease ||
@@ -117,12 +281,14 @@ library OrderUtils {
         }
 
         if (cache.shouldRecordSeparateExecutionFeeTransfer) {
-            uint256 wntAmount = orderVault.recordTransferIn(cache.wnt);
-            if (wntAmount < params.numbers.executionFee) {
-                revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
-            }
+            if (checkBalance) { 
+                uint256 wntAmount = orderVault.recordTransferIn(cache.wnt);
+                if (wntAmount < params.numbers.executionFee) {
+                    revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
+                }
 
-            params.numbers.executionFee = wntAmount;
+                params.numbers.executionFee = wntAmount;
+            } 
         }
 
         if (Order.isPositionOrder(params.orderType)) {
@@ -158,6 +324,7 @@ library OrderUtils {
         order.setAcceptablePrice(params.numbers.acceptablePrice);
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
+        order.setUiFeeFactor(FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver));
         order.setValidFromTime(params.numbers.validFromTime);
         order.setSrcChainId(srcChainId);
         order.setIsLong(params.isLong);

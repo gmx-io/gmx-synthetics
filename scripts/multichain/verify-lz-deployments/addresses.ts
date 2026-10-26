@@ -5,7 +5,7 @@
 // Types
 // =============================================================================
 
-export type NetworkName = "arbitrum" | "ethereum" | "base" | "bsc" | "bera" | "botanix";
+export type NetworkName = "arbitrum" | "ethereum" | "base" | "bsc" | "bera";
 
 export interface NetworkConfig {
   eid: number;
@@ -33,10 +33,9 @@ export interface GlvContract {
 // =============================================================================
 
 const LZ_ENDPOINT_STANDARD = "0x1a44076050125825900e736c501f859c50fE728c";
-const LZ_ENDPOINT_ALT = "0x6F475642a6e85809B1c36Fa62763669b1b48DD5B"; // Bera, Botanix
+const LZ_ENDPOINT_ALT = "0x6F475642a6e85809B1c36Fa62763669b1b48DD5B"; // Bera
 
 const STANDARD_MULTISIG = "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D";
-const BOTANIX_MULTISIG = "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c";
 
 export const networks: Record<NetworkName, NetworkConfig> = {
   arbitrum: {
@@ -64,15 +63,10 @@ export const networks: Record<NetworkName, NetworkConfig> = {
     endpoint: LZ_ENDPOINT_ALT,
     owner: STANDARD_MULTISIG,
   },
-  botanix: {
-    eid: 30376,
-    endpoint: LZ_ENDPOINT_ALT,
-    owner: BOTANIX_MULTISIG,
-  },
 };
 
-export const allNetworks: NetworkName[] = ["arbitrum", "ethereum", "base", "bsc", "bera", "botanix"];
-export const expansionNetworks: NetworkName[] = ["ethereum", "base", "bsc", "bera", "botanix"];
+export const allNetworks: NetworkName[] = ["arbitrum", "ethereum", "base", "bsc", "bera"];
+export const expansionNetworks: NetworkName[] = ["ethereum", "base", "bsc", "bera"];
 
 // =============================================================================
 // GM Contract Addresses
@@ -99,7 +93,6 @@ export const gmBtcBtc: PerNetworkGmContract = {
     base: "0x5E922D32c7278f6c5621a016c03055c54C97D27b", // OFT
     bsc: "0x2e6Bf9Bdd2A7872bDae170C13F34d64692f842C1", // OFT
     bera: "0xa2d2e356c64dE9b0a5b4CFDfF2B4c82C0eC3D7A2", // OFT
-    botanix: "0x9717D91D6943546A990Ae509a46655BA4Ad57649", // OFT
   },
 };
 
@@ -112,7 +105,6 @@ export const gmWethWeth: PerNetworkGmContract = {
     base: "0x47dFf0cbE239c02479C5944b9F4F3Ade8a212457", // OFT
     bsc: "0x5Ece4d3F43D3BD8cBffc1d2CE851E7605D403D3C", // OFT
     bera: "0x2e6Bf9Bdd2A7872bDae170C13F34d64692f842C1", // OFT
-    botanix: "0x9f260cf66B3240e75C1bEe51a65936b513618159", // OFT
   },
 };
 
@@ -132,7 +124,6 @@ export const glvWethUsdc: GlvContract = {
     base: "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6", // OFT
     bsc: "0x0BC5aB50Fd581b34681A9be180179b1Ef0b238c7", // OFT
     bera: "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6", // OFT
-    botanix: "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6", // OFT
   },
 };
 
@@ -145,7 +136,6 @@ export const glvWbtcUsdc: GlvContract = {
     base: "0xbCB170fEDDa90cd7593f016DFdabA032Ca1F222b", // OFT
     bsc: "0x3c21894169D669C5f0767c1289E71Ec8d6132C0F", // OFT
     bera: "0xbCB170fEDDa90cd7593f016DFdabA032Ca1F222b", // OFT
-    botanix: "0xbCB170fEDDa90cd7593f016DFdabA032Ca1F222b", // OFT
   },
 };
 
@@ -194,12 +184,6 @@ export const dvnAddressesByNetwork: Record<NetworkName, DVNAddresses> = {
     horizen: "0xecbaa45c33ce6fa284995e5f8314f5bc7f1c2008",
     deutsche: "0x0273fbff931704884668a9efe50e7a2b3fc30505",
   },
-  botanix: {
-    layerzero: "0x282b3386571f7f794450d5789911a9804fa346b4",
-    canary: "0xbcefdadb8d24b1d36c26b522235012cd4cf162f6",
-    horizen: "0x713d826aaa1f974c1dc0472fc71219e93c3b1614",
-    deutsche: "0x7a3d18e2324536294cd6f054cdde7c994f40391a",
-  },
 };
 
 // =============================================================================
@@ -225,10 +209,6 @@ export const libAddressesByNetwork: Record<NetworkName, { sendLib: string; recei
     receiveLib: "0xB217266c3A98C8B2709Ee26836C98cf12f6cCEC1", // ReceiveUln302
   },
   bera: {
-    sendLib: "0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7", // SendUln302
-    receiveLib: "0xe1844c5D63a9543023008D332Bd3d2e6f1FE1043", // ReceiveUln302
-  },
-  botanix: {
     sendLib: "0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7", // SendUln302
     receiveLib: "0xe1844c5D63a9543023008D332Bd3d2e6f1FE1043", // ReceiveUln302
   },

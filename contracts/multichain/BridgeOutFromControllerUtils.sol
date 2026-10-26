@@ -35,6 +35,7 @@ library BridgeOutFromControllerUtils {
         uint256 deadline;
         address provider;
         bytes providerData;
+        IRelayUtils.BridgeFeeParams bridgeFee;
     }
 
     struct BridgeOutActionData {
@@ -43,9 +44,72 @@ library BridgeOutFromControllerUtils {
         address provider;
         bytes providerData;
         uint256 minAmountOut;
+        IRelayUtils.BridgeFeeParams bridgeFee;
         address secondaryProvider;
         bytes secondaryProviderData;
         uint256 secondaryMinAmountOut;
+        IRelayUtils.BridgeFeeParams secondaryBridgeFee;
+    }
+
+    // @dev Returns the number of fee-swap hops encoded in a remote bridge action.
+    // Output amounts are not known when a withdrawal is created, so every encoded
+    // fee swap with a non-zero fee is included in the execution-fee estimate.
+    function getBridgeFeeSwapCount(
+        address account,
+        address receiver,
+        uint256 srcChainId,
+        address token,
+        address secondaryToken,
+        bytes32[] memory dataList
+    ) external view returns (uint256) {
+        if (
+            account != receiver ||
+            srcChainId == 0 ||
+            srcChainId == block.chainid ||
+            dataList.length == 0 ||
+            dataList[0] != Keys.GMX_DATA_ACTION
+        ) {
+            return 0;
+        }
+
+        bytes memory data = Array.dataArrayToBytes(dataList);
+        (IMultichainProvider.ActionType actionType, bytes memory actionData) = abi.decode(
+            data,
+            (IMultichainProvider.ActionType, bytes)
+        );
+
+        if (actionType != IMultichainProvider.ActionType.BridgeOut) {
+            return 0;
+        }
+
+        if (token == secondaryToken || secondaryToken == address(0)) {
+            (
+                ,
+                ,
+                ,
+                ,
+                ,
+                IRelayUtils.BridgeFeeParams memory bridgeFee
+            ) = abi.decode(
+                actionData,
+                (uint256, uint256, address, bytes, uint256, IRelayUtils.BridgeFeeParams)
+            );
+
+            return bridgeFee.feeAmount == 0 ? 0 : bridgeFee.feeSwapPath.length;
+        }
+
+        BridgeOutActionData memory decodedActionData = abi.decode(actionData, (BridgeOutActionData));
+        uint256 bridgeFeeSwapCount;
+
+        if (decodedActionData.bridgeFee.feeAmount != 0) {
+            bridgeFeeSwapCount = decodedActionData.bridgeFee.feeSwapPath.length;
+        }
+
+        if (decodedActionData.secondaryBridgeFee.feeAmount != 0) {
+            bridgeFeeSwapCount += decodedActionData.secondaryBridgeFee.feeSwapPath.length;
+        }
+
+        return bridgeFeeSwapCount;
     }
 
     /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
@@ -60,7 +124,7 @@ library BridgeOutFromControllerUtils {
         address token,
         uint256 amount,
         bytes32[] memory dataList
-    ) external {
+    ) external returns (uint256) {
         if (!_shouldProcessBridgeOut(
             account,
             receiver,
@@ -68,7 +132,7 @@ library BridgeOutFromControllerUtils {
             srcChainId,
             dataList
         )) {
-            return;
+            return 0;
         }
 
         bytes memory data = Array.dataArrayToBytes(dataList);
@@ -80,9 +144,9 @@ library BridgeOutFromControllerUtils {
         );
 
         if (_bridgeOutParams.actionType == IMultichainProvider.ActionType.BridgeOut) {
-            (_bridgeOutParams.desChainId, _bridgeOutParams.deadline, _bridgeOutParams.provider, _bridgeOutParams.providerData, _bridgeOutParams.minAmountOut) = abi.decode(
+            (_bridgeOutParams.desChainId, _bridgeOutParams.deadline, _bridgeOutParams.provider, _bridgeOutParams.providerData, _bridgeOutParams.minAmountOut, _bridgeOutParams.bridgeFee) = abi.decode(
                 actionData,
-                (uint256, uint256, address, bytes, uint256)
+                (uint256, uint256, address, bytes, uint256, IRelayUtils.BridgeFeeParams)
             );
 
             _bridgeOutParams.account = account;
@@ -90,19 +154,29 @@ library BridgeOutFromControllerUtils {
             _bridgeOutParams.token = token;
             _bridgeOutParams.amount = amount;
 
+            uint256 bridgeFeeSwapCount = _getBridgeFeeSwapCount(
+                srcChainId,
+                amount,
+                _bridgeOutParams.bridgeFee
+            );
+
             _bridgeOut(
                 eventEmitter,
                 multichainTransferRouter,
                 _bridgeOutParams
             );
+
+            return bridgeFeeSwapCount;
         }
+
+        return 0;
     }
 
     function bridgeOutFromController(
         EventEmitter eventEmitter,
         IMultichainTransferRouter multichainTransferRouter,
         BridgeOutFromControllerParams memory params
-    ) external {
+    ) external returns (uint256) {
         if (!_shouldProcessBridgeOut(
             params.account,
             params.receiver,
@@ -110,7 +184,7 @@ library BridgeOutFromControllerUtils {
             params.srcChainId,
             params.dataList
         )) {
-            return;
+            return 0;
         }
 
         bytes memory data = Array.dataArrayToBytes(params.dataList);
@@ -130,10 +204,11 @@ library BridgeOutFromControllerUtils {
                     _bridgeOutParams.deadline,
                     _bridgeOutParams.provider,
                     _bridgeOutParams.providerData,
-                    _bridgeOutParams.minAmountOut
+                    _bridgeOutParams.minAmountOut,
+                    _bridgeOutParams.bridgeFee
                 ) = abi.decode(
                     actionData,
-                    (uint256, uint256, address, bytes, uint256)
+                    (uint256, uint256, address, bytes, uint256, IRelayUtils.BridgeFeeParams)
                 );
 
                 _bridgeOutParams.account = params.account;
@@ -141,13 +216,32 @@ library BridgeOutFromControllerUtils {
                 _bridgeOutParams.token = params.token;
                 _bridgeOutParams.amount = params.amount + params.secondaryAmount;
 
+                uint256 bridgeFeeSwapCount = _getBridgeFeeSwapCount(
+                    params.srcChainId,
+                    _bridgeOutParams.amount,
+                    _bridgeOutParams.bridgeFee
+                );
+
                 _bridgeOut(
                     eventEmitter,
                     multichainTransferRouter,
                     _bridgeOutParams
                 );
+
+                return bridgeFeeSwapCount;
             } else {
                 BridgeOutActionData memory decodedActionData = abi.decode(actionData, (BridgeOutActionData));
+
+                uint256 bridgeFeeSwapCount = _getBridgeFeeSwapCount(
+                    params.srcChainId,
+                    params.amount,
+                    decodedActionData.bridgeFee
+                );
+                bridgeFeeSwapCount += _getBridgeFeeSwapCount(
+                    params.srcChainId,
+                    params.secondaryAmount,
+                    decodedActionData.secondaryBridgeFee
+                );
 
                 _bridgeOut(
                     eventEmitter,
@@ -162,7 +256,8 @@ library BridgeOutFromControllerUtils {
                         minAmountOut: decodedActionData.minAmountOut,
                         deadline: decodedActionData.deadline,
                         provider: decodedActionData.provider,
-                        providerData: decodedActionData.providerData
+                        providerData: decodedActionData.providerData,
+                        bridgeFee: decodedActionData.bridgeFee
                     })
                 );
 
@@ -179,11 +274,32 @@ library BridgeOutFromControllerUtils {
                         minAmountOut: decodedActionData.secondaryMinAmountOut,
                         deadline: decodedActionData.deadline,
                         provider: decodedActionData.secondaryProvider,
-                        providerData: decodedActionData.secondaryProviderData
+                        providerData: decodedActionData.secondaryProviderData,
+                        bridgeFee: decodedActionData.secondaryBridgeFee
                     })
                 );
+
+                return bridgeFeeSwapCount;
             }
         }
+
+        return 0;
+    }
+
+    function _getBridgeFeeSwapCount(
+        uint256 srcChainId,
+        uint256 amount,
+        IRelayUtils.BridgeFeeParams memory bridgeFee
+    ) private view returns (uint256) {
+        if (
+            srcChainId == block.chainid ||
+            amount == 0 ||
+            bridgeFee.feeAmount == 0
+        ) {
+            return 0;
+        }
+
+        return bridgeFee.feeSwapPath.length;
     }
 
     function _bridgeOut(
@@ -200,7 +316,8 @@ library BridgeOutFromControllerUtils {
             amount: params.amount,
             minAmountOut: params.minAmountOut,
             provider: params.provider,
-            data: params.providerData
+            data: params.providerData,
+            bridgeFee: params.bridgeFee
         });
 
         try multichainTransferRouter.bridgeOutFromController(params.account, params.srcChainId, params.desChainId, params.deadline, bridgeOutParams) {

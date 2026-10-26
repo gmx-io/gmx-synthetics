@@ -155,6 +155,95 @@ export async function createOrder(fixture, overrides) {
   return { txReceipt, logs, key };
 }
 
+export async function createTwapOrder(fixture, overrides) {
+  const { initialCollateralToken, orderType, gasUsageLabel, twapCount, interval } = overrides;
+
+  const { orderVault, orderHandler, wnt } = fixture.contracts;
+  const { wallet, user0 } = fixture.accounts;
+
+  const decreasePositionSwapType = overrides.decreasePositionSwapType || DecreasePositionSwapType.NoSwap;
+  const sender = overrides.sender || wallet;
+  const account = overrides.account || user0;
+  const receiver = overrides.receiver || account;
+  const cancellationReceiver = overrides.cancellationReceiver || receiver;
+  const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
+  const market = overrides.market || { marketToken: ethers.constants.AddressZero };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
+  const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
+  const initialCollateralDeltaAmount = bigNumberify(overrides.initialCollateralDeltaAmount ?? "0");
+  const swapPath = overrides.swapPath || [];
+  const acceptablePrice = overrides.acceptablePrice || expandDecimals(5200, 12);
+  const triggerPrice = overrides.triggerPrice || "0";
+  const isLong = overrides.isLong === undefined ? true : overrides.isLong;
+  const executionFee = bigNumberify(overrides.executionFee ?? fixture.props.executionFee);
+  const executionFeeToMint = bigNumberify(overrides.executionFeeToMint ?? executionFee.mul(twapCount));
+  const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
+  const minOutputAmount = overrides.minOutputAmount || 0;
+  const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
+  const autoCancel = overrides.autoCancel || false;
+  const referralCode = overrides.referralCode || ethers.constants.HashZero;
+  const validFromTime = overrides.validFromTime || 0;
+  const srcChainId = overrides.srcChainId || 0;
+  const dataList = overrides.dataList || [];
+  const initialCollateralToMint = bigNumberify(
+    overrides.initialCollateralToMint || initialCollateralDeltaAmount.mul(twapCount)
+  );
+
+  if (
+    [
+      OrderType.MarketSwap,
+      OrderType.LimitSwap,
+      OrderType.MarketIncrease,
+      OrderType.LimitIncrease,
+      OrderType.StopIncrease,
+    ].includes(orderType)
+  ) {
+    await initialCollateralToken.mint(orderVault.address, initialCollateralToMint);
+  }
+
+  await wnt.mint(orderVault.address, executionFeeToMint);
+
+  const params = {
+    addresses: {
+      receiver: receiver.address,
+      cancellationReceiver: cancellationReceiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      initialCollateralToken: initialCollateralToken.address,
+      swapPath,
+    },
+    numbers: {
+      sizeDeltaUsd,
+      initialCollateralDeltaAmount,
+      acceptablePrice,
+      triggerPrice,
+      executionFee,
+      callbackGasLimit,
+      minOutputAmount,
+      validFromTime,
+    },
+    orderType,
+    decreasePositionSwapType,
+    isLong,
+    shouldUnwrapNativeToken,
+    autoCancel,
+    referralCode,
+    dataList,
+  };
+
+  const txReceipt = await logGasUsage({
+    tx: orderHandler.connect(sender).createTwapOrder(account.address, srcChainId, params, false, twapCount, interval),
+    label: gasUsageLabel,
+  });
+
+  const logs = parseLogs(fixture, txReceipt);
+
+  const key = getEventDataValue(logs, "OrderCreated", "key");
+
+  return { txReceipt, logs, key };
+}
+
 export async function executeOrder(fixture, overrides: any = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;

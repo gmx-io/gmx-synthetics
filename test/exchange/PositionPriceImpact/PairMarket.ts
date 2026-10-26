@@ -138,7 +138,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
       create: { ...params, isLong: false, sizeDeltaUsd: decimalToFloat(500 * 1000) },
       execute: {
         gasUsageLabel: "executeOrder",
-        expectedCancellationReason: "OrderNotFulfillableAtAcceptablePrice",
+        expectedCancellationReason: "PriceImpactLargerThanOrderSize",
       },
     });
 
@@ -960,5 +960,137 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq("-89999999999999999"); // 0.089999999999999999 ETH, 450 USD
     // proportional impact pending from increase - impact from decrease => 450 - 337.5 => 112.5 USD => 0.0225 ETH
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("22500000000000001"); // 0.0225 ETH, 112.5 USD
+  });
+
+  it("emits balanceWasImproved independently of price impact sign", async () => {
+    // positive 0.05% / negative 0.1% for every $100,000 of imbalance, exponent 2
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
+
+    const baseParams = {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [],
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: 0,
+      shouldUnwrapNativeToken: false,
+    };
+
+    // opening a long from a balanced pool increases imbalance
+    await handleOrder(fixture, {
+      create: {
+        ...baseParams,
+        account: user0,
+        sizeDeltaUsd: decimalToFloat(50 * 1000),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+      execute: {
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
+
+          expect(positionIncreaseEvent.balanceWasImproved).eq(false);
+          expect(positionFeesCollectedEvent.balanceWasImproved).eq(false);
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).lt(0);
+        },
+      },
+    });
+
+    // same-side rebalance: $40k short against $50k long reduces imbalance and has positive impact
+    await handleOrder(fixture, {
+      create: {
+        ...baseParams,
+        account: user1,
+        sizeDeltaUsd: decimalToFloat(40 * 1000),
+        acceptablePrice: expandDecimals(5000, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+      },
+      execute: {
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
+
+          expect(positionIncreaseEvent.balanceWasImproved).eq(true);
+          expect(positionFeesCollectedEvent.balanceWasImproved).eq(true);
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).gt(0);
+        },
+      },
+    });
+
+    // closing the balancing short increases imbalance again
+    await handleOrder(fixture, {
+      create: {
+        ...baseParams,
+        account: user1,
+        sizeDeltaUsd: decimalToFloat(40 * 1000),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: false,
+      },
+      execute: {
+        afterExecution: ({ logs }) => {
+          const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
+          const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
+
+          expect(positionDecreaseEvent.balanceWasImproved).eq(false);
+          expect(positionFeesCollectedEvent.balanceWasImproved).eq(false);
+          expect(positionDecreaseEvent.priceImpactUsd).lt(0);
+        },
+      },
+    });
+
+    // crossover: $90k short against $50k long improves |imbalance| (50k -> 40k)
+    // positive impact on 50k (12.5) is outweighed by negative impact on 40k (16)
+    await handleOrder(fixture, {
+      create: {
+        ...baseParams,
+        account: user2,
+        sizeDeltaUsd: decimalToFloat(90 * 1000),
+        acceptablePrice: expandDecimals(4900, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+      },
+      execute: {
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
+
+          expect(positionIncreaseEvent.balanceWasImproved).eq(true);
+          expect(positionFeesCollectedEvent.balanceWasImproved).eq(true);
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).lt(0);
+        },
+      },
+    });
+
+    // decreasing part of the overweight short improves balance on the same side
+    await handleOrder(fixture, {
+      create: {
+        ...baseParams,
+        account: user2,
+        sizeDeltaUsd: decimalToFloat(30 * 1000),
+        acceptablePrice: expandDecimals(5100, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: false,
+      },
+      execute: {
+        afterExecution: ({ logs }) => {
+          const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
+          const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
+
+          expect(positionDecreaseEvent.balanceWasImproved).eq(true);
+          expect(positionFeesCollectedEvent.balanceWasImproved).eq(true);
+          expect(positionDecreaseEvent.priceImpactUsd).gt(0);
+        },
+      },
+    });
   });
 });

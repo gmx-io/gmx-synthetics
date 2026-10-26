@@ -21,5 +21,15 @@ interface IMultichainProvider {
 
     function bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams memory params) external returns (uint256);
 
+    function quoteBridgeOutFee(address account, IRelayUtils.BridgeOutParams memory params) external view returns (uint256);
+
     function withdrawTokens(address token, address receiver, uint256 amount) external;
+
+    function refundCompose(
+        address endpoint,
+        address from,
+        bytes32 guid,
+        bytes calldata message,
+        address receiver
+    ) external;
 }

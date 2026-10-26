@@ -54,6 +54,11 @@ library Position {
     // @param sizeInTokens the position's size in tokens
     // @param collateralAmount the amount of collateralToken for collateral
     // @param pendingImpactAmount the amount of pending impact for the position
+    // @param realizedUncappedPnlUsd the cumulative uncapped base pnl from decreases while capping is active
+    // @param realizedPnlUsd the cumulative realized base pnl from decreases while capping is active
+    // @param cappedPnlPoolTokenAmount the cumulative raw pnl tokens deducted from the pool for capped base pnl,
+    // net of tokens returned by successful same-market profit swaps, before applying the pool divisor.
+    // Position fees, price impact and collateral withdrawals are not included in the base-pnl debit.
     // @param borrowingFactor the position's borrowing factor
     // @param fundingFeeAmountPerSize the position's funding fee per size
     // @param longTokenClaimableFundingAmountPerSize the position's claimable funding amount per size
@@ -62,17 +67,28 @@ library Position {
     // for the market.shortToken
     // @param increasedAtTime the time at which this position was increased
     // @param decreasedAtTime the time at which this position was decreased
+    // @param cappedPnlReferencePoolPnlUsd the largest reconstructed pool pnl at which capped
+    // pnl for this position was settled
+    // @param cappedPnlAllowancePerPrice the sum of each capped close's uncapped pnl times
+    // that close's pool cap ratio, divided by the pnl-token price. Later payouts scale this
+    // by the current pnl-token price, so price changes move historical allowance, while later
+    // liquidity and trader-cap changes apply only to the unrealized tranche
     struct Numbers {
         uint256 sizeInUsd;
         uint256 sizeInTokens;
         uint256 collateralAmount;
         int256 pendingImpactAmount;
+        int256 realizedUncappedPnlUsd;
+        int256 realizedPnlUsd;
+        uint256 cappedPnlPoolTokenAmount;
         uint256 borrowingFactor;
         uint256 fundingFeeAmountPerSize;
         uint256 longTokenClaimableFundingAmountPerSize;
         uint256 shortTokenClaimableFundingAmountPerSize;
         uint256 increasedAtTime;
         uint256 decreasedAtTime;
+        int256 cappedPnlReferencePoolPnlUsd;
+        uint256 cappedPnlAllowancePerPrice;
     }
 
     // @param isLong whether the position is a long or short
@@ -136,6 +152,30 @@ library Position {
         props.numbers.pendingImpactAmount = value;
     }
 
+    function realizedUncappedPnlUsd(Props memory props) internal pure returns (int256) {
+        return props.numbers.realizedUncappedPnlUsd;
+    }
+
+    function setRealizedUncappedPnlUsd(Props memory props, int256 value) internal pure {
+        props.numbers.realizedUncappedPnlUsd = value;
+    }
+
+    function realizedPnlUsd(Props memory props) internal pure returns (int256) {
+        return props.numbers.realizedPnlUsd;
+    }
+
+    function setRealizedPnlUsd(Props memory props, int256 value) internal pure {
+        props.numbers.realizedPnlUsd = value;
+    }
+
+    function cappedPnlPoolTokenAmount(Props memory props) internal pure returns (uint256) {
+        return props.numbers.cappedPnlPoolTokenAmount;
+    }
+
+    function setCappedPnlPoolTokenAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.cappedPnlPoolTokenAmount = value;
+    }
+
     function borrowingFactor(Props memory props) internal pure returns (uint256) {
         return props.numbers.borrowingFactor;
     }
@@ -182,6 +222,22 @@ library Position {
 
     function setDecreasedAtTime(Props memory props, uint256 value) internal pure {
         props.numbers.decreasedAtTime = value;
+    }
+
+    function cappedPnlReferencePoolPnlUsd(Props memory props) internal pure returns (int256) {
+        return props.numbers.cappedPnlReferencePoolPnlUsd;
+    }
+
+    function setCappedPnlReferencePoolPnlUsd(Props memory props, int256 value) internal pure {
+        props.numbers.cappedPnlReferencePoolPnlUsd = value;
+    }
+
+    function cappedPnlAllowancePerPrice(Props memory props) internal pure returns (uint256) {
+        return props.numbers.cappedPnlAllowancePerPrice;
+    }
+
+    function setCappedPnlAllowancePerPrice(Props memory props, uint256 value) internal pure {
+        props.numbers.cappedPnlAllowancePerPrice = value;
     }
 
     function isLong(Props memory props) internal pure returns (bool) {

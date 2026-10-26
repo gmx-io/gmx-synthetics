@@ -59,7 +59,8 @@ library ReaderWithdrawalUtils {
             prices.longTokenPrice,
             prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            false
+            false, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
 
         if (poolValueInfo.poolValue <= 0) {

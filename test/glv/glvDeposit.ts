@@ -23,19 +23,23 @@ import { handleDeposit } from "../../utils/deposit";
 import { expectBalances } from "../../utils/validation";
 import { setBytes32IfDifferent } from "../../utils/dataStore";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { grantRole } from "../../utils/role";
+import { parseLogs, getEventData } from "../../utils/event";
 
 describe("Glv Deposits", () => {
   const { provider } = ethers;
   const { AddressZero } = ethers.constants;
 
   let fixture;
-  let user0, user1, user2;
+  let user0, user1, user2, user3;
   let glvReader,
     glvFactory,
     roleStore,
     dataStore,
     glvShiftHandler,
+    glvDepositHandler,
     ethUsdMarket,
+    ethUsdSpotOnlyMarket,
     btcUsdMarket,
     solUsdMarket,
     ethUsdSingleTokenMarket2,
@@ -45,18 +49,20 @@ describe("Glv Deposits", () => {
     sol,
     glvRouter,
     ethUsdGlvAddress,
-    gmOracleProvider,
+    chainlinkDataStreamProvider,
     oracle;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
     ({
       glvReader,
       dataStore,
       glvShiftHandler,
+      glvDepositHandler,
       ethUsdMarket,
+      ethUsdSpotOnlyMarket,
       solUsdMarket,
       btcUsdMarket,
       ethUsdSingleTokenMarket2,
@@ -68,7 +74,7 @@ describe("Glv Deposits", () => {
       ethUsdGlvAddress,
       glvFactory,
       roleStore,
-      gmOracleProvider,
+      chainlinkDataStreamProvider,
       oracle,
     } = fixture.contracts);
   });
@@ -212,7 +218,7 @@ describe("Glv Deposits", () => {
       initialLongToken: ethUsdMarket.longToken,
       initialShortToken: ethUsdMarket.shortToken,
       longTokenSwapPath: [btcUsdMarket.marketToken],
-      shortTokenSwapPath: [ethUsdMarket.marketToken],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
       minGlvTokens: 100,
       longTokenAmount: expandDecimals(10, 18),
       shortTokenAmount: expandDecimals(10 * 5000, 6),
@@ -344,12 +350,42 @@ describe("Glv Deposits", () => {
     });
   });
 
+  it("execute glv deposit tolerates a zero-pool constituent market", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    const glvToken = await contractAt("GlvToken", ethUsdGlvAddress);
+    const initialGlvBalance = await glvToken.balanceOf(user0.address);
+
+    await dataStore.setUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address), 0);
+    await dataStore.setUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true), decimalToFloat(5000));
+    await dataStore.setUint(
+      keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true),
+      expandDecimals(1, 18)
+    );
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        market: solUsdMarket,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    expect(await glvToken.balanceOf(user0.address)).gt(initialGlvBalance);
+  });
+
   it("execute glv deposit with oracle GLV price", async () => {
     const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
     await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
     await dataStore.setAddress(
       keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
-      gmOracleProvider.address
+      chainlinkDataStreamProvider.address
     );
 
     await expectBalances({
@@ -462,14 +498,22 @@ describe("Glv Deposits", () => {
       },
     });
 
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdSpotOnlyMarket,
+        longTokenAmount: expandDecimals(100, 18),
+        shortTokenAmount: expandDecimals(500_000, 6),
+      },
+    });
+
     const params = {
       initialLongToken: usdc.address,
       longTokenAmount: expandDecimals(50_000, 6),
-      longTokenSwapPath: [ethUsdMarket.marketToken],
+      longTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
 
       initialShortToken: wnt.address,
       shortTokenAmount: expandDecimals(10, 18),
-      shortTokenSwapPath: [ethUsdMarket.marketToken],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken],
 
       dataList: [],
     };
@@ -484,6 +528,20 @@ describe("Glv Deposits", () => {
         [ethUsdGlvAddress]: expandDecimals(100_000, 18),
       },
     });
+  });
+
+  it("create glv deposit rejects its destination market in a swap path", async () => {
+    await expect(
+      createGlvDeposit(fixture, {
+        initialLongToken: usdc.address,
+        longTokenAmount: expandDecimals(50_000, 6),
+        longTokenSwapPath: [ethUsdMarket.marketToken],
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "InvalidDepositMarketInSwapPath")
+      .withArgs(ethUsdMarket.marketToken);
+
+    expect(await getGlvDepositCount(dataStore)).eq(0);
   });
 
   it("execute glv deposit, single asset", async () => {
@@ -786,6 +844,73 @@ describe("Glv Deposits", () => {
         },
       });
     });
+
+    // disable alone must not block execution: NAV still includes the market while it remains listed
+    it("allows execute when market is disabled but still listed", async () => {
+      await createGlvDeposit(fixture, {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      });
+
+      await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+
+      await executeGlvDeposit(fixture);
+
+      await expectBalances({
+        [user0.address]: {
+          [ethUsdGlvAddress]: expandDecimals(10_000, 18),
+        },
+        [ethUsdGlvAddress]: {
+          [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
+        },
+      });
+    });
+
+    // market removed while request is pending: execute must cancel and refund, not mint vs understated NAV
+    it("cancels execute when market was removed after create", async () => {
+      // seed GLV via another market so ethUsdMarket can be removed with a zero balance
+      await handleGlvDeposit(fixture, {
+        create: {
+          market: solUsdMarket,
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+
+      const longTokenAmount = expandDecimals(1, 18);
+      const shortTokenAmount = expandDecimals(5000, 6);
+
+      await createGlvDeposit(fixture, {
+        market: ethUsdMarket,
+        longTokenAmount,
+        shortTokenAmount,
+      });
+
+      expect(await getGlvDepositCount(dataStore)).eq(1);
+
+      await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+      await glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken);
+
+      await executeGlvDeposit(fixture, {
+        expectedCancellationReason: {
+          name: "GlvUnsupportedMarket",
+          args: [ethUsdGlvAddress, ethUsdMarket.marketToken],
+        },
+      });
+
+      expect(await getGlvDepositCount(dataStore)).eq(0);
+
+      // vault assets refunded to the account; no ethUsdMarket GM left on the GLV
+      await expectBalances({
+        [user0.address]: {
+          [wnt.address]: longTokenAmount,
+          [usdc.address]: shortTokenAmount,
+        },
+        [ethUsdGlvAddress]: {
+          [ethUsdMarket.marketToken]: 0,
+        },
+      });
+    });
   });
 
   it("simulate execute glv deposit", async () => {
@@ -1068,5 +1193,56 @@ describe("Glv Deposits", () => {
       errorsContract,
       "EmptyGlvDeposit"
     );
+  });
+
+  // Hardhat's deployer has both ORDER_KEEPER and CONTROLLER, so we use user2 (ORDER_KEEPER only)
+  // and user3 (CONTROLLER only) to test the two cases separately.
+
+  async function createCancellableGlvDeposit() {
+    await createGlvDeposit(fixture, {
+      glv: ethUsdGlvAddress,
+      receiver: user1,
+      market: ethUsdMarket,
+      initialLongToken: ethUsdMarket.longToken,
+      initialShortToken: ethUsdMarket.shortToken,
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(10 * 5000, 6),
+      minGlvTokens: 100,
+      executionFee: expandDecimals(1, 15),
+    });
+
+    const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
+    const refTime = (await provider.getBlock("latest")).timestamp;
+    await increaseTime(refTime, 300);
+    return glvDepositKeys[0];
+  }
+
+  it("cancelGlvDeposit by ORDER_KEEPER pays the keeper portion to the caller", async () => {
+    const orderKeeperSigner = user2;
+    await grantRole(roleStore, orderKeeperSigner.address, "ORDER_KEEPER");
+
+    const glvDepositKey = await createCancellableGlvDeposit();
+
+    const txn = await glvDepositHandler.connect(orderKeeperSigner).cancelGlvDeposit(glvDepositKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(orderKeeperSigner.address);
+
+    const refundEvent = getEventData(parsedLogs, "ExecutionFeeRefund");
+    expect(refundEvent.receiver).eq(user1.address); // glvDeposit.receiver()
+  });
+
+  it("cancelGlvDeposit by CONTROLLER-only signer pays the keeper portion to glvDeposit.account", async () => {
+    const controllerOnlySigner = user3;
+    await grantRole(roleStore, controllerOnlySigner.address, "CONTROLLER");
+
+    const glvDepositKey = await createCancellableGlvDeposit();
+
+    const txn = await glvDepositHandler.connect(controllerOnlySigner).cancelGlvDeposit(glvDepositKey);
+    const parsedLogs = parseLogs(fixture, await txn.wait());
+
+    const keeperEvent = getEventData(parsedLogs, "KeeperExecutionFee");
+    expect(keeperEvent.keeper).eq(user0.address); // glvDeposit.account()
   });
 });

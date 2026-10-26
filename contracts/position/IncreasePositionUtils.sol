@@ -249,6 +249,7 @@ library IncreasePositionUtils {
         eventParams.priceImpactUsd = cache.priceImpactUsd;
         eventParams.priceImpactAmount = cache.priceImpactAmount;
         eventParams.orderType = params.order.orderType();
+        eventParams.balanceWasImproved = cache.balanceWasImproved;
 
         PositionEventUtils.emitPositionIncrease(eventParams);
     }
@@ -274,6 +275,7 @@ library IncreasePositionUtils {
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
             params.order.uiFeeReceiver(), // uiFeeReceiver
+            params.order.uiFeeFactor(), // uiFeeFactor
             false // isLiquidation
         );
 

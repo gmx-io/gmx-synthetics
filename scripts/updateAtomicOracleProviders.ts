@@ -1,15 +1,16 @@
 import hre from "hardhat";
 import { setAtomicOracleProviderPayload, timelockWriteMulticall } from "../utils/timelock";
+import { getTimelockConfig } from "../utils/timelockConfig";
 
 const expectedTimelockMethods = ["signalSetAtomicOracleProvider", "setAtomicOracleProviderAfterSignal"];
 
 async function main() {
-  const timelock = await hre.ethers.getContract("TimelockConfig");
+  const timelock = await getTimelockConfig();
 
-  // const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
-  const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
+  const oracleProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
+  // const oracleProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
 
-  const providersToAdd = [chainlinkDataStreamProvider.address];
+  const providersToAdd = [oracleProvider.address];
 
   const multicallWriteParams = [];
 

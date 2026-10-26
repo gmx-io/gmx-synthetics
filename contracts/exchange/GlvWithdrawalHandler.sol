@@ -46,6 +46,13 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
+        if (
+            params.addresses.longTokenSwapPath.length != 0 ||
+            params.addresses.shortTokenSwapPath.length != 0
+        ) {
+            FeatureUtils.validateFeature(_dataStore, Keys.withdrawalSwapFeatureDisabledKey(address(this)));
+        }
+
         return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 
@@ -85,6 +92,10 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         uint256 startingGas = gasleft();
 
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
+
+        if (glvWithdrawal.longTokenSwapPath().length != 0 || glvWithdrawal.shortTokenSwapPath().length != 0) {
+            FeatureUtils.validateFeature(dataStore, Keys.withdrawalSwapFeatureDisabledKey(address(this)));
+        }
 
         GlvWithdrawalUtils.ExecuteGlvWithdrawalParams memory params = GlvWithdrawalUtils.ExecuteGlvWithdrawalParams({
             key: key,
@@ -127,14 +138,18 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         GlvWithdrawalUtils.cancelGlvWithdrawal(params);
     }
 
-    function cancelGlvWithdrawal(bytes32 key) external globalNonReentrant onlyController {
+    function cancelGlvWithdrawal(bytes32 key) external globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
         FeatureUtils.validateFeature(_dataStore, Keys.cancelGlvWithdrawalFeatureDisabledKey(address(this)));
 
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
-        validateRequestCancellation(glvWithdrawal.updatedAtTime(), "GlvWithdrawal");
+
+        if (!roleStore.hasRole(msg.sender, Role.ORDER_KEEPER)) {
+            // allow keepers to cancel glvWithdrawals even if requestExpirationTime is not passed
+            validateRequestCancellation(glvWithdrawal.updatedAtTime(), "GlvWithdrawal");
+        }
 
         GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
             dataStore: dataStore,
@@ -143,7 +158,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
             glvVault: glvVault,
             oracle: oracle,
             key: key,
-            keeper: glvWithdrawal.account(),
+            keeper: roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ? msg.sender : glvWithdrawal.account(),
             startingGas: startingGas,
             reason: Keys.USER_INITIATED_CANCEL,
             reasonBytes: ""

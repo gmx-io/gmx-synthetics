@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import "../market/MarketUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "../utils/Precision.sol";
 import "../utils/Calc.sol";
@@ -107,6 +108,55 @@ library SwapPricingUtils {
     //
     // @return the price impact in USD and the balanceWasImproved boolean
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) external view returns (int256, bool) {
+        return getPriceImpactUsdWithVirtualInventory(params);
+    }
+
+    // @dev get the deposit price impact in USD, accounting for the positive impact rebate
+    //
+    // a positive impact pays a rebate in tokenOut that is added back to the pool (see
+    // ExecuteDepositUtils._executeDeposit) but is not reflected in the initial calculation; the
+    // impact is recalculated with the rebate included as a delta so it reflects the post-rebate balance
+    //
+    // @param params GetPriceImpactUsdParams
+    // @return the price impact in USD and the balanceWasImproved boolean
+    function getPriceImpactUsdForDeposit(GetPriceImpactUsdParams memory params) external view returns (int256, bool) {
+        (int256 priceImpactUsd, bool balanceWasImproved) = getPriceImpactUsdWithVirtualInventory(params);
+
+        // only a positive impact adds a rebate to the pool, so there is nothing else to recompute
+        if (priceImpactUsd <= 0) {
+            return (priceImpactUsd, balanceWasImproved);
+        }
+
+        uint256 usdDeltaForTokenA = params.usdDeltaForTokenA.toUint256();
+        uint256 usdDeltaForTokenB = params.usdDeltaForTokenB.toUint256();
+        uint256 totalUsdDelta = usdDeltaForTokenA + usdDeltaForTokenB;
+
+        if (totalUsdDelta == 0) {
+            return (priceImpactUsd, balanceWasImproved);
+        }
+
+        // each side's rebate is paid in the opposite token, so it equals the OTHER side's share of
+        // the impact; use the original deltas on both lines
+        int256 rebateForTokenA = Precision.mulDiv(priceImpactUsd, usdDeltaForTokenB, totalUsdDelta);
+        int256 rebateForTokenB = Precision.mulDiv(priceImpactUsd, usdDeltaForTokenA, totalUsdDelta);
+        params.usdDeltaForTokenA = params.usdDeltaForTokenA + rebateForTokenA;
+        params.usdDeltaForTokenB = params.usdDeltaForTokenB + rebateForTokenB;
+
+        (int256 adjustedPriceImpactUsd, /* bool adjustedBalanceWasImproved */) = getPriceImpactUsdWithVirtualInventory(params);
+
+        // floor at zero so a balance-improving deposit is never charged (also covers a same-side /
+        // crossover flip between passes); report the first-pass balanceWasImproved for fee tiering
+        if (adjustedPriceImpactUsd < 0) {
+            return (int256(0), balanceWasImproved);
+        }
+
+        return (adjustedPriceImpactUsd, balanceWasImproved);
+    }
+
+    // @dev get the price impact in USD, accounting for virtual inventory
+    // @param params GetPriceImpactUsdParams
+    // @return the price impact in USD and the balanceWasImproved boolean
+    function getPriceImpactUsdWithVirtualInventory(GetPriceImpactUsdParams memory params) internal view returns (int256, bool) {
         PoolParams memory poolParams = getNextPoolAmountsUsd(params);
 
         (int256 priceImpactUsd, bool balanceWasImproved) = _getPriceImpactUsd(params.dataStore, params.market, poolParams);
@@ -268,6 +318,50 @@ library SwapPricingUtils {
         address uiFeeReceiver,
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external view returns (SwapFees memory) {
+        return _getSwapFees(
+            dataStore,
+            marketToken,
+            amount,
+            balanceWasImproved,
+            uiFeeReceiver,
+            FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver),
+            swapPricingType
+        );
+    }
+
+    // @dev get the swap fees using an explicit UI fee factor
+    // @param dataStore DataStore
+    // @param marketToken the address of the market token
+    // @param amount the total swap fee amount
+    function getSwapFees(
+        DataStore dataStore,
+        address marketToken,
+        uint256 amount,
+        bool balanceWasImproved,
+        address uiFeeReceiver,
+        uint256 uiFeeFactor,
+        ISwapPricingUtils.SwapPricingType swapPricingType
+    ) external view returns (SwapFees memory) {
+        return _getSwapFees(
+            dataStore,
+            marketToken,
+            amount,
+            balanceWasImproved,
+            uiFeeReceiver,
+            uiFeeFactor,
+            swapPricingType
+        );
+    }
+
+    function _getSwapFees(
+        DataStore dataStore,
+        address marketToken,
+        uint256 amount,
+        bool balanceWasImproved,
+        address uiFeeReceiver,
+        uint256 uiFeeFactor,
+        ISwapPricingUtils.SwapPricingType swapPricingType
+    ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
         // note that since it is possible to incur both positive and negative price impact values
@@ -299,7 +393,11 @@ library SwapPricingUtils {
         fees.feeAmountForPool = feeAmount - fees.feeReceiverAmount;
 
         fees.uiFeeReceiver = uiFeeReceiver;
-        fees.uiFeeReceiverFactor = MarketUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
+        // a uiFeeFactor of type(uint256).max is used as a sentinel value to read the
+        // currently configured factor, otherwise the snapshotted factor is used
+        fees.uiFeeReceiverFactor = uiFeeFactor == type(uint256).max
+            ? FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver)
+            : uiFeeFactor;
         fees.uiFeeAmount = Precision.applyFactor(amount, fees.uiFeeReceiverFactor);
 
         fees.amountAfterFees = amount - feeAmount - fees.uiFeeAmount;

@@ -4,7 +4,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { usingResult } from "../../../utils/use";
 import { deployFixture } from "../../../utils/fixture";
 import { getExecuteParams } from "../../../utils/exchange";
-import { expandDecimals, decimalToFloat } from "../../../utils/math";
+import { applyFactor, expandDecimals, decimalToFloat } from "../../../utils/math";
 import { handleDeposit } from "../../../utils/deposit";
 import { OrderType, handleOrder } from "../../../utils/order";
 import { getEventData } from "../../../utils/event";
@@ -50,8 +50,10 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     await dataStore.setUint(keys.thresholdForDecreaseFundingKey(ethUsdMarket.marketToken), decimalToFloat(3, 2)); // 3%
     await dataStore.setUint(keys.fundingIncreaseFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1, 6)); // 0.0001%
     await dataStore.setUint(keys.fundingDecreaseFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(2, 8)); // 0.000002%
-    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken), 0);
-    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1));
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, true), 0);
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), 0);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, true), decimalToFloat(1));
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), decimalToFloat(1));
 
     // user0 opens a $106k long position, using wnt as collateral
     await handleOrder(fixture, {
@@ -492,11 +494,207 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     });
   }
 
+  it("uses min funding increase rate when calculated increase is lower", async () => {
+    await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
+    await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
+
+    await dataStore.setUint(keys.thresholdForStableFundingKey(ethUsdMarket.marketToken), 0);
+    await dataStore.setUint(keys.thresholdForDecreaseFundingKey(ethUsdMarket.marketToken), 0);
+
+    const fundingIncreaseFactorPerSecond = decimalToFloat(1, 12); // 0.0000000000001%
+    const minFundingIncreaseRatePerSecond = decimalToFloat(1, 10); // 0.0000000001%
+
+    await dataStore.setUint(
+      keys.fundingIncreaseFactorPerSecondKey(ethUsdMarket.marketToken),
+      fundingIncreaseFactorPerSecond
+    );
+    await dataStore.setUint(
+      keys.minFundingIncreaseRatePerSecondKey(ethUsdMarket.marketToken),
+      minFundingIncreaseRatePerSecond
+    );
+    await dataStore.setUint(keys.fundingDecreaseFactorPerSecondKey(ethUsdMarket.marketToken), 0);
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, true), 0);
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), 0);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, true), decimalToFloat(1));
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), decimalToFloat(1));
+
+    // user0 opens a $106k long position, using wnt as collateral
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(106_000),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    // user1 opens a $94k short position, using usdc as collateral
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(10_000, 6),
+        sizeDeltaUsd: decimalToFloat(94_000),
+        acceptablePrice: expandDecimals(4950, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+      },
+    });
+
+    const diffFactor = decimalToFloat(6, 2); // 6%
+    const calculatedIncreaseFactorPerSecond = applyFactor(diffFactor, fundingIncreaseFactorPerSecond);
+    expect(calculatedIncreaseFactorPerSecond).lt(minFundingIncreaseRatePerSecond);
+
+    await time.increase(10 * 60);
+
+    const expectedIncrease = minFundingIncreaseRatePerSecond.mul(10 * 60);
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        expect(marketInfo.nextFunding.longsPayShorts).eq(true);
+        expect(marketInfo.nextFunding.fundingFactorPerSecond).eq(expectedIncrease);
+        expect(marketInfo.nextFunding.nextSavedFundingFactorPerSecond).eq(expectedIncrease);
+      }
+    );
+  });
+
   it("adaptive funding", async () => {
     await testAdaptiveFunding(false);
   });
 
+  it("preserves saved funding factor when one side has zero open interest", async () => {
+    // 1. set saved funding factor to 0.0001%
+    // 2. create long position
+    // 3. expect saved funding factor to be 0.0001%
+
+    const savedFundingFactor = decimalToFloat(1, 6);
+
+    await dataStore.setInt(keys.savedFundingFactorPerSecondKey(ethUsdMarket.marketToken), savedFundingFactor);
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(100_000),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    expect(await dataStore.getInt(keys.savedFundingFactorPerSecondKey(ethUsdMarket.marketToken))).eq(
+      savedFundingFactor
+    );
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        expect(marketInfo.nextFunding.fundingFactorPerSecond).eq(savedFundingFactor);
+        expect(marketInfo.nextFunding.nextSavedFundingFactorPerSecond).eq(savedFundingFactor);
+        expect(marketInfo.nextFunding.longsPayShorts).eq(true);
+      }
+    );
+  });
+
   it("adaptive funding with USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE as true", async () => {
     await testAdaptiveFunding(true);
+  });
+
+  // funding is charged at the average of an interval's start and end rates, so the total funding for a
+  // fixed imbalance over a fixed duration is the same whether settled in one update or many
+  it("charges cadence-independent (time-integrated) funding under adaptive funding", async () => {
+    const totalDuration = 60 * 60; // 1 hour
+
+    async function runScenario(numIntervals) {
+      const f = await deployFixture();
+      const { user0: long, user1: short } = f.accounts;
+      const { dataStore: ds, ethUsdMarket: market, wnt: wntToken, usdc: usdcToken } = f.contracts;
+
+      await handleDeposit(f, {
+        create: {
+          market,
+          longTokenAmount: expandDecimals(10_000, 18),
+          shortTokenAmount: expandDecimals(5_000_000, 6),
+        },
+      });
+
+      // every interval is an Increase (zero thresholds, no decrease) and the rate ramps linearly and
+      // uncapped (no min bound, high max bound)
+      await ds.setUint(keys.fundingFactorKey(market.marketToken), decimalToFloat(1, 10));
+      await ds.setUint(keys.fundingExponentFactorKey(market.marketToken), decimalToFloat(1));
+      await ds.setUint(keys.thresholdForStableFundingKey(market.marketToken), 0);
+      await ds.setUint(keys.thresholdForDecreaseFundingKey(market.marketToken), 0);
+      await ds.setUint(keys.fundingIncreaseFactorPerSecondKey(market.marketToken), decimalToFloat(1, 10));
+      await ds.setUint(keys.fundingDecreaseFactorPerSecondKey(market.marketToken), 0);
+      await ds.setUint(keys.minFundingFactorPerSecondKey(market.marketToken, true), 0);
+      await ds.setUint(keys.minFundingFactorPerSecondKey(market.marketToken, false), 0);
+      await ds.setUint(keys.maxFundingFactorPerSecondKey(market.marketToken, true), decimalToFloat(1));
+      await ds.setUint(keys.maxFundingFactorPerSecondKey(market.marketToken, false), decimalToFloat(1));
+
+      // user0 opens a $150k long, user1 a $50k short => longs pay shorts with a fixed 50% imbalance
+      await handleOrder(f, {
+        create: {
+          account: long,
+          market,
+          initialCollateralToken: wntToken,
+          initialCollateralDeltaAmount: expandDecimals(10, 18),
+          sizeDeltaUsd: decimalToFloat(150_000),
+          acceptablePrice: expandDecimals(5050, 12),
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+        },
+      });
+
+      await handleOrder(f, {
+        create: {
+          account: short,
+          market,
+          initialCollateralToken: usdcToken,
+          initialCollateralDeltaAmount: expandDecimals(10_000, 6),
+          sizeDeltaUsd: decimalToFloat(50_000),
+          acceptablePrice: expandDecimals(4950, 12),
+          orderType: OrderType.MarketIncrease,
+          isLong: false,
+        },
+      });
+
+      // the tiny short-side order triggers a funding update without materially changing the imbalance
+      for (let i = 0; i < numIntervals; i++) {
+        await time.increase(totalDuration / numIntervals);
+
+        await handleOrder(f, {
+          create: {
+            account: short,
+            market,
+            initialCollateralToken: usdcToken,
+            initialCollateralDeltaAmount: expandDecimals(1, 6),
+            sizeDeltaUsd: decimalToFloat(1),
+            acceptablePrice: expandDecimals(4950, 12),
+            orderType: OrderType.MarketIncrease,
+            isLong: false,
+          },
+        });
+      }
+
+      // cumulative funding fee per size charged to longs collateralized in wnt
+      return ds.getUint(keys.fundingFeeAmountPerSizeKey(market.marketToken, wntToken.address, true));
+    }
+
+    const singleUpdate = await runScenario(1);
+    const manyUpdates = await runScenario(12);
+
+    // equal within tolerance => cadence-independent (pre-fix the single update over-accrues ~1.8x)
+    expect(singleUpdate).to.be.gt(0);
+    expect(manyUpdates).to.be.gt(0);
+    expect(singleUpdate).to.be.closeTo(manyUpdates, manyUpdates.div(40)); // within 2.5%
   });
 });

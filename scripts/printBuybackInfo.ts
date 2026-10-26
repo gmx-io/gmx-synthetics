@@ -9,6 +9,8 @@ function getOracleAbi() {
     return "https://arbitrum-api.gmxinfra.io/";
   } else if (hre.network.name === "avalanche") {
     return "https://avalanche-api.gmxinfra.io/";
+  } else if (hre.network.name === "botanix") {
+    return "https://botanix-api.gmxinfra.io/";
   }
   throw new Error("Unsupported network");
 }
@@ -35,7 +37,7 @@ async function main() {
 
   const pricesByToken = await getPricesFromTickers();
   const dataStore = await hre.ethers.getContract("DataStore");
-  const feeHandler = await hre.ethers.getContract("FeeHandler");
+  const feeVault = await hre.ethers.getContract("FeeVault");
   const buybackTokens = [tokens.GMX, hre.network.name === "arbitrum" ? tokens.WETH : tokens.WAVAX];
 
   const data = await Promise.all(
@@ -50,10 +52,12 @@ async function main() {
 
   const tokensLength = Object.values(tokens).length;
 
+  let totalFeesUsd = 0;
   for (const [i, buybackToken] of buybackTokens.entries()) {
+    let feesTotalUsdPerBuybackToken = 0;
     console.log(`Buyback token: ${buybackToken.symbol}`);
     const withdrawableAmount = await dataStore.getUint(keys.withdrawableBuybackTokenAmountKey(buybackToken.address));
-    const contractBalance = await getBalanceOf(buybackToken.address, feeHandler.address);
+    const contractBalance = await getBalanceOf(buybackToken.address, feeVault.address);
     console.log(
       `Withdrawable amount: ${withdrawableAmount.toString()}, Contract balance: ${contractBalance.toString()}`
     );
@@ -67,15 +71,29 @@ async function main() {
         continue;
       }
       const price = pricesByToken[feeToken.address];
+      const usdAmount = amount.mul(price);
+      feesTotalUsdPerBuybackToken = usdAmount.add(feesTotalUsdPerBuybackToken);
       console.log(
         `    Fee token: ${feeToken.symbol.padEnd(6)} amount: ${formatAmount(
           amount,
           feeToken.decimals,
           4
-        )} ($${formatAmount(amount.mul(price), 30, 2)})`
+        )} ($${formatAmount(usdAmount, 30, 2)})`
       );
     }
+    const buybackTokenUsdAmount = withdrawableAmount.mul(pricesByToken[buybackToken.address]);
+    console.log(
+      `[${buybackToken.symbol}] $${formatAmount(buybackTokenUsdAmount, 30, 2)} Fees: $${formatAmount(
+        feesTotalUsdPerBuybackToken,
+        30,
+        2
+      )}`
+    );
+    feesTotalUsdPerBuybackToken = feesTotalUsdPerBuybackToken.add(buybackTokenUsdAmount);
+    console.log(`Sum: $${formatAmount(feesTotalUsdPerBuybackToken, 30, 2)}`);
+    totalFeesUsd = feesTotalUsdPerBuybackToken.add(totalFeesUsd);
   }
+  console.log(`Total: $${formatAmount(totalFeesUsd, 30, 2)}`);
 }
 
 main()

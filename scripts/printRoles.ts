@@ -1,32 +1,8 @@
 import hre from "hardhat";
 
-import { hashString } from "../utils/hash";
+import { getRoleName, knownRoles } from "../utils/roleNames";
 
 const { ethers } = hre;
-
-const knownRoles = Object.fromEntries(
-  [
-    "ROLE_ADMIN",
-    "TIMELOCK_ADMIN",
-    "TIMELOCK_MULTISIG",
-    "CONFIG_KEEPER",
-    "LIMITED_CONFIG_KEEPER",
-    "CONTROLLER",
-    "GOV_TOKEN_CONTROLLER",
-    "ROUTER_PLUGIN",
-    "MARKET_KEEPER",
-    "FEE_KEEPER",
-    "FEE_DISTRIBUTION_KEEPER",
-    "ORDER_KEEPER",
-    "FROZEN_ORDER_KEEPER",
-    "PRICING_KEEPER",
-    "LIQUIDATION_KEEPER",
-    "ADL_KEEPER",
-    "CONTRIBUTOR_KEEPER",
-    "CONTRIBUTOR_DISTRIBUTOR",
-    "CLAIM_ADMIN",
-  ].map((role) => [hashString(role), role])
-);
 
 async function main() {
   const roleStore = await ethers.getContract("RoleStore");
@@ -52,7 +28,7 @@ async function main() {
       }
       return `${m} (${addressToName[m]})`;
     });
-    console.log("%s:\n\t%s", knownRoles[role] || role, roleData.join("\n\t"));
+    console.log("%s:\n\t%s", getRoleName(role) ?? role, roleData.join("\n\t"));
   }
 }
 

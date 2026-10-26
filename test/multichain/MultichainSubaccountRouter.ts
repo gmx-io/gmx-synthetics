@@ -121,6 +121,7 @@ describe("MultichainSubaccountRouter", () => {
     await impersonateAccount(GELATO_RELAY_ADDRESS);
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
 
+    await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(10000));
     await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(100));
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
@@ -818,6 +819,7 @@ describe("MultichainSubaccountRouter", () => {
           triggerPrice: decimalToFloat(4800),
           minOutputAmount: 700,
           validFromTime: 0,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: false,
           executionFeeIncrease: 0,
         },
@@ -962,8 +964,8 @@ describe("MultichainSubaccountRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // 0.2 WETH in total (initial 0.001 + 0.199 from update)
-      expect(order.numbers.executionFee).closeTo("8058060700000000", "10000000000000");
-      expect(await wnt.balanceOf(holdingAddress)).closeTo("92941939300000000", "10000000000000");
+      expect(order.numbers.executionFee).closeTo("8068357000000000", "10000000000000");
+      expect(await wnt.balanceOf(holdingAddress)).closeTo("92931643000000000", "10000000000000");
     });
 
     it("EmptyOrder", async () => {
@@ -1189,6 +1191,34 @@ describe("MultichainSubaccountRouter", () => {
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
     });
 
+    // Two different main accounts that have approved the same subaccount
+    // address must each be able to revoke it independently. The two signed
+    // payloads share every field except the signer's account, so the digests
+    // must differ.
+    it("two users revoking the same subaccount do not collide", async () => {
+      // both user1 and user3 approve user0 as a subaccount
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.addAddress(keys.subaccountListKey(user3.address), user0.address);
+
+      // top up both main accounts' multichain WNT balances to pay the relay fee
+      await bridgeInTokens(fixture, { account: user1, amount: expandDecimals(2, 15) });
+      await bridgeInTokens(fixture, { account: user3, amount: expandDecimals(2, 15) });
+
+      const user3Params = {
+        ...params,
+        signer: user3,
+        account: user3.address,
+      };
+
+      // user1 revokes user0 first
+      await expect(sendRemoveSubaccount(params)).to.not.be.reverted;
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
+
+      // user3's identical-shape payload (different signer/account) must also succeed;
+      await expect(sendRemoveSubaccount(user3Params)).to.not.be.reverted;
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user3.address))).to.eq(0);
+    });
+
     it("swap relay fee with external call", async () => {
       const externalExchange = await deployContract("MockExternalExchange", []);
       await wnt.connect(user1).mint(user1.address, expandDecimals(1, 17));
@@ -1330,6 +1360,7 @@ describe("MultichainSubaccountRouter", () => {
           triggerPrice: 303,
           minOutputAmount: 304,
           validFromTime: 305,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: true,
           executionFeeIncrease: 0,
         },
@@ -1349,6 +1380,7 @@ describe("MultichainSubaccountRouter", () => {
       expect(order2After.numbers.triggerPrice).eq(303);
       expect(order2After.numbers.minOutputAmount).eq(304);
       expect(order2After.numbers.validFromTime).eq(305);
+      expect(order2After.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.NoSwap);
       expect(order2After.flags.autoCancel).eq(true);
 
       const orderKeysAfter = await getOrderKeys(dataStore, 0, 2);
@@ -1360,6 +1392,74 @@ describe("MultichainSubaccountRouter", () => {
         tx: tx2,
         label: "gelatoRelayRouter batch 1 cancel order, 1 update order",
       });
+    });
+  });
+
+  //#region subaccount approval account binding
+  // this router shares SubaccountRouterUtils with SubaccountGelatoRelayRouter, so the account inside
+  // the approval hash must stop a cross-account replay here as well. An EOA account is bound by its
+  // own address recovering from the signature, so the replay only has to be blocked explicitly for
+  // ERC-1271 wallets, where signing authority is decoupled from the account address
+  describe("subaccount approval account binding", () => {
+    it("an approval signed for one sibling wallet cannot be replayed on another", async () => {
+      const walletFactory = await deployContract("MockERC1271WalletFactory", []);
+      const saltA = hre.ethers.utils.formatBytes32String("siblingA");
+      const saltB = hre.ethers.utils.formatBytes32String("siblingB");
+      await walletFactory.createWallet(user1.address, saltA);
+      await walletFactory.createWallet(user1.address, saltB);
+      const walletA = await walletFactory.getWalletAddress(user1.address, saltA);
+      const walletB = await walletFactory.getWalletAddress(user1.address, saltB);
+
+      for (const wallet of [walletA, walletB]) {
+        await impersonateAccount(wallet);
+        await setBalance(wallet, expandDecimals(2000, 18));
+        const walletSigner = await hre.ethers.getSigner(wallet);
+        await bridgeInTokens(fixture, { account: walletSigner, amount: wntAmountBridged });
+        await stopImpersonatingAccount(wallet);
+      }
+
+      const subaccountApproval = await getSubaccountApproval({
+        account: walletA,
+        signer: user1, // owner of both sibling wallets
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId,
+          nonce: 0,
+        },
+        relayRouter: multichainSubaccountRouter,
+        desChainId: chainId,
+        chainId,
+      });
+
+      // subaccount orders must pay out to the main account, so the order addresses follow it
+      const orderParamsFor = (account: string) => ({
+        ...createOrderParams,
+        account,
+        params: {
+          ...defaultCreateOrderParams,
+          addresses: {
+            ...defaultCreateOrderParams.addresses,
+            receiver: account,
+            cancellationReceiver: account,
+          },
+        },
+      });
+
+      await expect(sendCreateOrder({ ...orderParamsFor(walletB), subaccountApproval })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(walletB))).eq(0);
+
+      // the same approval is still valid for the account it was signed for
+      await sendCreateOrder({ ...orderParamsFor(walletA), subaccountApproval });
+      expect(await dataStore.getAddressValuesAt(keys.subaccountListKey(walletA), 0, 1)).to.deep.eq([user0.address]);
     });
   });
 });

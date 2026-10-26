@@ -16,6 +16,7 @@ import "../callback/CallbackUtils.sol";
 
 import "../price/Price.sol";
 import "../market/MarketUtils.sol";
+import "../fee/FeeUtils.sol";
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 
@@ -97,6 +98,7 @@ library WithdrawalUtils {
                 marketTokenAmount,
                 params.minLongTokenAmount,
                 params.minShortTokenAmount,
+                0, // uiFeeFactor, set below to avoid a stack too deep error
                 Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
                 params.callbackGasLimit,
@@ -108,11 +110,13 @@ library WithdrawalUtils {
             params.dataList
         );
 
+        withdrawal.setUiFeeFactor(FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver));
+
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
 
         if (!isAtomicWithdrawal) {
             uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
-            uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
+            uint256 oraclePriceCount = GasUtils.estimateExecuteWithdrawalOraclePriceCount(dataStore, withdrawal);
             GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
         }
 

@@ -22,6 +22,10 @@ contract MockGMX_LockboxAdapter is OFTAdapter, MockOverridableInboundRateLimiter
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
+    // Expose the actual parameters passed by FeeDistributor for bridge regression tests.
+    uint256 public lastAmountLD;
+    uint256 public lastMinAmountLD;
+
     constructor(
         RateLimitConfig[] memory _rateLimitConfigs,
         address _token,
@@ -49,6 +53,8 @@ contract MockGMX_LockboxAdapter is OFTAdapter, MockOverridableInboundRateLimiter
         /// @dev amountReceivedLD is amountSentLD with other token amount changes such as fee, etc.
         /// @dev For lockbox adapters, these are typically the same (no fees)
         (amountSentLD, amountReceivedLD) = super._debit(_from, _amountLD, _minAmountLD, _dstEid);
+        lastAmountLD = _amountLD;
+        lastMinAmountLD = _minAmountLD;
 
         _outflowOverridable(_from, amountSentLD, _dstEid);
     }

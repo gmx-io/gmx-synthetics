@@ -20,6 +20,7 @@ const NETWORK_INFO = {
   arbitrum: { type: "mainnet", chainId: 42161, name: "Arbitrum One" },
   avalanche: { type: "mainnet", chainId: 43114, name: "Avalanche C-Chain" },
   botanix: { type: "mainnet", chainId: 3637, name: "Botanix" },
+  megaEth: { type: "mainnet", chainId: 4326, name: "MegaETH" },
   arbitrumSepolia: { type: "testnet", chainId: 421614, name: "Arbitrum Sepolia" },
   avalancheFuji: { type: "testnet", chainId: 43113, name: "Avalanche Fuji" },
 };

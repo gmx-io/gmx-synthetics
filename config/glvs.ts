@@ -1,8 +1,10 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { DonationConfigValues } from "./types";
 import { percentageToFloat, expandDecimals, numberToBigNumber, bigNumberify } from "../utils/math";
+import { SECONDS_PER_DAY } from "../utils/constants";
 
-type GlvConfig = {
+export type GlvConfig = {
   name: string;
   symbol: string;
 
@@ -23,8 +25,21 @@ type GlvConfig = {
     isMarketDisabled?: boolean;
     glvMaxMarketTokenBalanceAmount: BigNumberish;
     glvMaxMarketTokenBalanceUsd: BigNumberish;
+    // Managed only by updateDonationConfig.ts, not the core GLV-config updater.
+    // Omission leaves the pair unmanaged; use isEnabled: false to disable donations.
+    donation?: DonationConfigValues;
   }[];
 }[];
+
+// Applied explicitly to the three USDG GLV-market pairs, never to every constituent.
+const usdgGlvDonationConfig: DonationConfigValues = {
+  fundingAccount: "0x62cCEB1d45268c47D1b25CDbdbdc9EE3B1fca457",
+  isEnabled: true,
+  maxDonationFactor: percentageToFloat("0.03%"), // 3 bp
+  donationPeriodDuration: SECONDS_PER_DAY, // Unix-aligned day, not a rolling window.
+  // GM tokens per GLV-market pair, not a shared vault budget or a USD amount.
+  maxDonationAmountPerPeriod: expandDecimals(30_000, 18),
+};
 
 function createGlvMarketConfig(
   tokenSymbol: string,
@@ -54,7 +69,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WETH",
         shortToken: "USDC",
         shiftMaxLossFactor: percentageToFloat("0.025%"),
-        shiftMinInterval: 30 * 60, // 30 minutes
+        shiftMinInterval: 0,
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("WETH", 35_000_000, 1.98),
@@ -65,7 +80,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("BERA", arbitrum_ethUsdcDefaultCap, 1.22),
           createGlvMarketConfig("TRUMP", arbitrum_ethUsdcDefaultCap, 1.41),
           createGlvMarketConfig("RENDER", arbitrum_ethUsdcDefaultCap, 1.24),
-          createGlvMarketConfig("MELANIA", arbitrum_ethUsdcDefaultCap, 1.21),
+          createGlvMarketConfig("MELANIA", arbitrum_ethUsdcDefaultCap, 1.21, true),
           createGlvMarketConfig("ATOM", arbitrum_ethUsdcDefaultCap, 1.69),
           createGlvMarketConfig("NEAR", arbitrum_ethUsdcDefaultCap, 1.6),
           createGlvMarketConfig("SHIB", arbitrum_ethUsdcDefaultCap, 1.51),
@@ -75,7 +90,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("SEI", arbitrum_ethUsdcDefaultCap, 1.33),
           createGlvMarketConfig("APT", arbitrum_ethUsdcDefaultCap, 1.36),
           createGlvMarketConfig("TIA", arbitrum_ethUsdcDefaultCap, 1.36),
-          createGlvMarketConfig("TON", arbitrum_ethUsdcDefaultCap, 1.47),
+          createGlvMarketConfig("TON", arbitrum_ethUsdcDefaultCap, 1.47, true),
           createGlvMarketConfig("TRX", arbitrum_ethUsdcDefaultCap, 1.34),
           createGlvMarketConfig("BONK", arbitrum_ethUsdcDefaultCap, 1.56),
           createGlvMarketConfig("WLD", arbitrum_ethUsdcDefaultCap, 1.23),
@@ -95,20 +110,31 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("PEPE", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("AAVE", arbitrum_ethUsdcDefaultCap, 1, true),
           createGlvMarketConfig("AERO", arbitrum_ethUsdcDefaultCap, 1),
-          createGlvMarketConfig("BRETT", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("BRETT", arbitrum_ethUsdcDefaultCap, 1, true),
           createGlvMarketConfig("WLFI", arbitrum_ethUsdcDefaultCap, 1),
-          createGlvMarketConfig("WELL", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("WELL", arbitrum_ethUsdcDefaultCap, 1, true),
           createGlvMarketConfig("VVV", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("MORPHO", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LINK", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("ZORA", arbitrum_ethUsdcDefaultCap, 1),
-          createGlvMarketConfig("KTA", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("KTA", arbitrum_ethUsdcDefaultCap, 1, true),
           createGlvMarketConfig("AVNT", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LINEA", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("SKY", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("MON", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("SYRUP", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("CHZ", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("LIT", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("MEGA", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("SPCX", arbitrum_ethUsdcDefaultCap, 1),
+          // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
+          createGlvMarketConfig("GOLD", arbitrum_ethUsdcDefaultCap, 1), // XAU
+          createGlvMarketConfig("SILVER", arbitrum_ethUsdcDefaultCap, 1), // XAG
+          createGlvMarketConfig("WTIOIL", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("BRENTOIL", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("NATGAS", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("QQQ", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("SPY", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {
@@ -118,19 +144,19 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WBTC.e",
         shortToken: "USDC",
         shiftMaxLossFactor: percentageToFloat("0.025%"),
-        shiftMinInterval: 30 * 60, // 30 minutes
+        shiftMinInterval: 0,
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("BTC", 30_000_000, 2.7),
           createGlvMarketConfig("FARTCOIN", 4_300_000, 1.4),
           createGlvMarketConfig("ORDI", arbitrum_btcUsdcDefaultCap, 1.47),
           createGlvMarketConfig("STX", arbitrum_btcUsdcDefaultCap, 1.55),
-          createGlvMarketConfig("SATS", arbitrum_btcUsdcDefaultCap, 1.61),
+          createGlvMarketConfig("SATS", arbitrum_btcUsdcDefaultCap, 1.61, true),
           createGlvMarketConfig("TAO", arbitrum_btcUsdcDefaultCap, 1.42),
-          createGlvMarketConfig("BOME", arbitrum_btcUsdcDefaultCap, 1.3),
-          createGlvMarketConfig("MEME", arbitrum_btcUsdcDefaultCap, 1.22),
+          createGlvMarketConfig("BOME", arbitrum_btcUsdcDefaultCap, 1.3, true),
+          createGlvMarketConfig("MEME", arbitrum_btcUsdcDefaultCap, 1.22, true),
           createGlvMarketConfig("FLOKI", arbitrum_btcUsdcDefaultCap, 1.13),
-          createGlvMarketConfig("MEW", arbitrum_btcUsdcDefaultCap, 1.18),
+          createGlvMarketConfig("MEW", arbitrum_btcUsdcDefaultCap, 1.18, true),
           createGlvMarketConfig("ADA", arbitrum_btcUsdcDefaultCap, 1.07),
           createGlvMarketConfig("XLM", arbitrum_btcUsdcDefaultCap, 1.07),
           createGlvMarketConfig("BCH", arbitrum_btcUsdcDefaultCap, 1.11),
@@ -139,17 +165,17 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("FIL", arbitrum_btcUsdcDefaultCap, 1.12),
           createGlvMarketConfig("INJ", arbitrum_btcUsdcDefaultCap, 1.19),
           createGlvMarketConfig("DYDX", arbitrum_btcUsdcDefaultCap, 1.1),
-          createGlvMarketConfig("AI16Z", arbitrum_btcUsdcDefaultCap, 1.26),
+          createGlvMarketConfig("AI16Z", arbitrum_btcUsdcDefaultCap, 1.26, true),
           createGlvMarketConfig("VIRTUAL", arbitrum_btcUsdcDefaultCap, 1.1),
           createGlvMarketConfig("PENGU", arbitrum_btcUsdcDefaultCap, 1.04),
           createGlvMarketConfig("S", arbitrum_btcUsdcDefaultCap, 1.27),
           createGlvMarketConfig("CAKE", arbitrum_btcUsdcDefaultCap, 1.14),
           createGlvMarketConfig("HYPE", arbitrum_btcUsdcDefaultCap, 2.63),
           createGlvMarketConfig("JUP", arbitrum_btcUsdcDefaultCap, 1.1),
-          createGlvMarketConfig("OM", arbitrum_btcUsdcDefaultCap, 1.21),
+          createGlvMarketConfig("OM", arbitrum_btcUsdcDefaultCap, 1.21, true),
           createGlvMarketConfig("MOODENG", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("XMR", arbitrum_btcUsdcDefaultCap, 0.93),
-          createGlvMarketConfig("PI", arbitrum_btcUsdcDefaultCap, 1.07),
+          createGlvMarketConfig("PI", arbitrum_btcUsdcDefaultCap, 1.07, true),
           createGlvMarketConfig("PUMP", arbitrum_btcUsdcDefaultCap, 1.05),
           createGlvMarketConfig("ALGO", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("HBAR", arbitrum_btcUsdcDefaultCap, 1),
@@ -165,6 +191,29 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("AR", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("DASH", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("JTO", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("XAUT.v2", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("IP", arbitrum_btcUsdcDefaultCap, 1, true),
+          createGlvMarketConfig("CC", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("MET", arbitrum_btcUsdcDefaultCap, 1),
+        ],
+      },
+      {
+        name: "GMX Liquidity Vault [USDG-USDG]",
+        symbol: "GLV [USDG-USDG]",
+        address: "0x4Cd5A94a30876320ac65F2e192493EE476f13866",
+        longToken: "USDG",
+        shortToken: "USDG",
+        shiftMaxLossFactor: percentageToFloat("0.025%"),
+        shiftMinInterval: 0,
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          { ...createGlvMarketConfig("BTC", 24_000_000, 1), donation: { ...usdgGlvDonationConfig } },
+          { ...createGlvMarketConfig("WETH", 24_000_000, 1), donation: { ...usdgGlvDonationConfig } },
+          { ...createGlvMarketConfig("SOL", 12_000_000, 1), donation: { ...usdgGlvDonationConfig } },
+          createGlvMarketConfig("NEAR", 2_000_000, 1),
+          createGlvMarketConfig("XRP", 5_000_000, 1),
+          createGlvMarketConfig("ZEC", 5_000_000, 1),
+          createGlvMarketConfig("HYPE", 5_000_000, 1),
         ],
       },
     ],
@@ -184,14 +233,31 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("DOGE", avalanche_avaxUsdcDefaultCap, 2.69),
           createGlvMarketConfig("LTC", avalanche_avaxUsdcDefaultCap, 3.25),
           createGlvMarketConfig("TRUMP", avalanche_avaxUsdcDefaultCap, 1.06),
-          createGlvMarketConfig("MELANIA", avalanche_avaxUsdcDefaultCap, 1.03),
+          createGlvMarketConfig("MELANIA", avalanche_avaxUsdcDefaultCap, 1.03, true),
           createGlvMarketConfig("PUMP", avalanche_avaxUsdcDefaultCap, 1),
           createGlvMarketConfig("WLFI", avalanche_avaxUsdcDefaultCap, 1),
         ],
       },
     ],
     botanix: [],
-    megaEth: [],
+    megaEth: [
+      {
+        name: "GMX Liquidity Vault [USDm-USDm]",
+        symbol: "GLV [USDm-USDm]",
+        address: "0x3782d91C5888dE31F627495e6aAAC3f09499fe72",
+        longToken: "USDm",
+        shortToken: "USDm",
+        shiftMaxLossFactor: percentageToFloat("0.1%"),
+        shiftMinInterval: 60 * 60, // 1 hour
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          createGlvMarketConfig("BTC", 5_000_000, 1),
+          createGlvMarketConfig("WETH", 5_000_000, 1),
+          createGlvMarketConfig("SOL", 5_000_000, 1),
+          createGlvMarketConfig("MEGA", 2_000_000, 1), // max token amount
+        ],
+      },
+    ],
     arbitrumSepolia: [
       {
         name: "GMX Liquidity Vault [WETH-USDC.SG]",
@@ -205,6 +271,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           createGlvMarketConfig("WETH", 15_000_000, 1),
           createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.0),
+          // RWA and Commodities (real asset names are preferred e.g. GOLD instead of XAU)
+          createGlvMarketConfig("XAU", 5_000_000, 1), // GOLD
+          createGlvMarketConfig("XAG", 5_000_000, 1), // SILVER
+          createGlvMarketConfig("XPT", 2_000_000, 1), // PLATINUM
+          createGlvMarketConfig("XPD", 2_000_000, 1), // PALLADIUM
+          createGlvMarketConfig("WTIOIL", 5_000_000, 1), // CL
+          createGlvMarketConfig("BRENTOIL", 5_000_000, 1), // BZ
+          createGlvMarketConfig("NATGAS", 5_000_000, 1), // NATGAS
         ],
       },
     ],

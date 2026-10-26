@@ -248,13 +248,18 @@ export async function getOracleParams({
   dataStreamData,
   priceFeedTokens,
 }) {
-  const signerInfo = getSignerInfo(signerIndexes);
-
   const dataStore = await hre.ethers.getContract("DataStore");
   const oracle = await hre.ethers.getContract("Oracle");
-  const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const chainlinkDataStreamFeedProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
+
+  const configTokens = await hre.gmx.getTokens();
+  const decimalsByAddress: { [addr: string]: number } = {};
+  for (const token of Object.values(configTokens) as Array<{ address?: string; decimals?: number }>) {
+    if (token.address && token.decimals !== undefined) {
+      decimalsByAddress[token.address.toLowerCase()] = token.decimals;
+    }
+  }
 
   const params = {
     tokens: [],
@@ -263,61 +268,53 @@ export async function getOracleParams({
   };
 
   for (let i = 0; i < tokens.length; i++) {
-    const minOracleBlockNumber = minOracleBlockNumbers[i];
-    const maxOracleBlockNumber = maxOracleBlockNumbers[i];
-    const oracleTimestamp = oracleTimestamps[i];
-    const blockHash = blockHashes[i];
     const token = tokens[i];
-    const tokenOracleType = tokenOracleTypes[i];
     const precision = precisions[i];
-
     const minPrice = minPrices[i];
     const maxPrice = maxPrices[i];
-
-    const signatures = [];
-    const signedMinPrices = [];
-    const signedMaxPrices = [];
-
-    for (let j = 0; j < signers.length; j++) {
-      const signature = await signPrice({
-        signer: signers[j],
-        salt: oracleSalt,
-        minOracleBlockNumber,
-        maxOracleBlockNumber,
-        oracleTimestamp,
-        blockHash,
-        token,
-        tokenOracleType,
-        precision,
-        minPrice,
-        maxPrice,
-      });
-
-      signedMinPrices.push(minPrice);
-      signedMaxPrices.push(maxPrice);
-      signatures.push(signature);
+    const observationTimestamp = oracleTimestamps[i] || (await ethers.provider.getBlock("latest")).timestamp;
+    const feedIdKey = keys.dataStreamIdKey(token);
+    let feedId = await dataStore.getBytes32(feedIdKey);
+    if (feedId === ethers.constants.HashZero) {
+      feedId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["address"], [token]));
+      await dataStore.setBytes32(feedIdKey, feedId);
     }
 
-    const data = ethers.utils.defaultAbiCoder.encode(
-      ["tuple(address, uint256, uint256, uint256, uint256, uint256, bytes32, uint256[], uint256[], bytes[])"],
-      [
-        [
-          token,
-          signerInfo,
-          precision,
-          minOracleBlockNumber,
-          maxOracleBlockNumber,
-          oracleTimestamp,
-          blockHash,
-          signedMinPrices,
-          signedMaxPrices,
-          signatures,
-        ],
-      ]
-    );
+    const dataStreamMultiplierKey = keys.dataStreamMultiplierKey(token);
+    let dataStreamMultiplier = await dataStore.getUint(dataStreamMultiplierKey);
+    if (dataStreamMultiplier.eq(0)) {
+      let tokenDecimals = decimalsByAddress[token.toLowerCase()];
+      if (tokenDecimals === undefined) {
+        try {
+          const tokenContract = await ethers.getContractAt("MintableToken", token);
+          tokenDecimals = await tokenContract.decimals();
+        } catch (e) {
+          throw new Error(`Cannot fetch token decimals for ${token}`);
+        }
+      }
+      dataStreamMultiplier = expandDecimals(1, 60 - 8 - tokenDecimals);
+      await dataStore.setUint(dataStreamMultiplierKey, dataStreamMultiplier);
+    }
+    const minPrice30 = minPrice.mul(expandDecimals(1, precision));
+    const maxPrice30 = maxPrice.mul(expandDecimals(1, precision));
+    const bid = minPrice30.mul(expandDecimals(1, 30)).div(dataStreamMultiplier);
+    const ask = maxPrice30.mul(expandDecimals(1, 30)).div(dataStreamMultiplier);
+    const mid = bid.add(ask).div(2);
+    const data = encodeDataStreamData({
+      feedId,
+      validFromTimestamp: observationTimestamp,
+      observationsTimestamp: observationTimestamp,
+      nativeFee: 0,
+      linkFee: 0,
+      expiresAt: observationTimestamp + 3600,
+      // Keep `price` aligned with bid / ask envelope used for min / max.
+      price: mid.toString(),
+      bid: bid.toString(),
+      ask: ask.toString(),
+    });
 
     params.tokens.push(token);
-    params.providers.push(gmOracleProvider.address);
+    params.providers.push(chainlinkDataStreamFeedProvider.address);
     params.data.push(data);
   }
 
@@ -374,11 +371,9 @@ async function getOracleProviderMap() {
   if (!_oracleProviderMap) {
     const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
     const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
-    const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
     _oracleProviderMap = {
       chainlinkPriceFeed: chainlinkPriceFeedProvider.address,
       chainlinkDataStream: chainlinkDataStreamProvider.address,
-      gmOracle: gmOracleProvider.address,
     };
   }
 

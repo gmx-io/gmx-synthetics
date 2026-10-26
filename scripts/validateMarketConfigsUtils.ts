@@ -14,6 +14,8 @@ const stablecoinSymbols = {
   DAI: true,
   "DAI.e": true,
   USDe: true,
+  USDm: true,
+  USDG: true,
 };
 
 const BASIS_POINTS_DIVISOR = 10_000;
@@ -636,6 +638,129 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_000,
     },
+    XAUT: {
+      negativePositionImpactFactor: exponentToFloat("1.07e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_965,
+    },
+    "XAUT.v2": {
+      negativePositionImpactFactor: exponentToFloat("1.07e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_965,
+    },
+    IP: {
+      negativePositionImpactFactor: exponentToFloat("1.25e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_006,
+    },
+    LIT: {
+      negativePositionImpactFactor: exponentToFloat("2.51e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_940,
+    },
+    CC: {
+      negativePositionImpactFactor: exponentToFloat("5.85e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    MET: {
+      negativePositionImpactFactor: exponentToFloat("3.44e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_021,
+    },
+    // RWA and Commodities (real asset names are being used e.g. GOLD instead of XAU)
+    GOLD: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    SILVER: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    WTIOIL: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    BRENTOIL: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    NATGAS: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    MEGA: {
+      negativePositionImpactFactor: exponentToFloat("8.45e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    SPCX: {
+      negativePositionImpactFactor: exponentToFloat("1.0e-8"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    QQQ: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    SPY: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    "BTC:USDG:USDG": {
+      negativePositionImpactFactor: exponentToFloat("1.93e-7"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 11_987,
+    },
+    "WETH:USDG:USDG": {
+      negativePositionImpactFactor: exponentToFloat("3.06e-8"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "SOL:USDG:USDG": {
+      negativePositionImpactFactor: exponentToFloat("8.51e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "NEAR:USDG:USDG": {
+      negativePositionImpactFactor: exponentToFloat("2.346277e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    "XRP:USDG:USDG": {
+      negativePositionImpactFactor: exponentToFloat("1.612770e-7"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    "ZEC:USDG:USDG": {
+      negativePositionImpactFactor: exponentToFloat("4.045230e-8"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    "HYPE:USDG:USDG": {
+      negativePositionImpactFactor: exponentToFloat("1.312861e-8"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    "USDC-USDG": {
+      negativeSwapImpactFactor: exponentToFloat("7.5e-11"),
+      expectedSwapImpactRatio: 10_000,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -731,6 +856,48 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 11_600,
     },
+    // RWA and Commodities (real asset names are preferred e.g. GOLD instead of XAU)
+    XAU: {
+      // GOLD
+      negativePositionImpactFactor: exponentToFloat("3e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    XAG: {
+      // SILVER
+      negativePositionImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_015,
+    },
+    XPT: {
+      // PLATINUM
+      negativePositionImpactFactor: exponentToFloat("1e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_015,
+    },
+    XPD: {
+      // PALLADIUM
+      negativePositionImpactFactor: exponentToFloat("2e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_037,
+    },
+    WTIOIL: {
+      // CL
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    BRENTOIL: {
+      // BZ
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
+    NATGAS: {
+      negativePositionImpactFactor: exponentToFloat("4.0e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_500,
+    },
   },
   botanix: {
     "BTC:pBTC:pBTC": {
@@ -747,9 +914,52 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 10_000,
     },
+    // disabled dev market
+    "BTC:stBTC:USDC.e (Archived)": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 10_000,
+    },
     stBTC: {
       expectedSwapImpactRatio: 10_000,
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+    },
+  },
+  megaEth: {
+    "WETH:WETH:WETH": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    BTC: {
+      negativePositionImpactFactor: exponentToFloat("1.93e-7"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 11_987,
+    },
+    "WETH:USDm:USDm": {
+      negativePositionImpactFactor: exponentToFloat("3.06e-8"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    SOL: {
+      negativePositionImpactFactor: exponentToFloat("8.51e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    MEGA: {
+      negativePositionImpactFactor: exponentToFloat("8.45e-8"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "WETH:USDm": {
+      negativeSwapImpactFactor: exponentToFloat("3e-7"),
+      expectedSwapImpactRatio: 12_000,
     },
   },
 };
@@ -757,6 +967,9 @@ const recommendedMarketConfig = {
 const configTokenMapping = {
   arbitrum: {
     "WBTC.e": "BTC",
+  },
+  megaEth: {
+    WETH: "WETH:USDm",
   },
 };
 
@@ -860,7 +1073,8 @@ async function validatePerpConfig({
     throw new Error(`Empty maxOpenInterestForShorts for ${marketLabel}`);
   }
 
-  if (process.env.READ_FROM_CHAIN === "true") {
+  // only read from chain when we have an on-chain market; the config-only checks have no market
+  if (process.env.READ_FROM_CHAIN === "true" && market) {
     const multicallReadParams = [];
 
     multicallReadParams.push({
@@ -1071,30 +1285,40 @@ async function validatePerpConfig({
   const maxLongTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForLongs
     .mul(FLOAT_PRECISION)
     .div(openInterestReserveFactorLongs);
-  const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
-    .mul(borrowingFactorForLongs)
-    .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
-    .mul(SECONDS_PER_YEAR);
+  // a shut-down market can have maxOpenInterest set to 1, which makes the divisor round down to
+  // zero; the borrowing-factor check is meaningless in that case, so skip it instead of dividing by zero
+  if (maxLongTokenPoolUsdBasedOnMaxOpenInterest.eq(0)) {
+    console.log(`    maxBorrowingFactorForLongsPerYear: skipped (maxOpenInterestForLongs is effectively zero)`);
+  } else {
+    const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
+      .mul(borrowingFactorForLongs)
+      .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
+      .mul(SECONDS_PER_YEAR);
 
-  if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(15, 1))) {
-    throw new Error("maxBorrowingFactorForLongsPerYear is more than 150%");
+    if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(15, 1))) {
+      throw new Error("maxBorrowingFactorForLongsPerYear is more than 150%");
+    }
+
+    console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
   }
-
-  console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
 
   const maxShortTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForShorts
     .mul(FLOAT_PRECISION)
     .div(openInterestReserveFactorShorts);
-  const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
-    .mul(borrowingFactorForShorts)
-    .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
-    .mul(SECONDS_PER_YEAR);
+  if (maxShortTokenPoolUsdBasedOnMaxOpenInterest.eq(0)) {
+    console.log(`    maxBorrowingFactorForShortsPerYear: skipped (maxOpenInterestForShorts is effectively zero)`);
+  } else {
+    const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
+      .mul(borrowingFactorForShorts)
+      .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
+      .mul(SECONDS_PER_YEAR);
 
-  if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(15, 1))) {
-    throw new Error("maxBorrowingFactorForShortsPerYear is more than 150%");
+    if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(15, 1))) {
+      throw new Error("maxBorrowingFactorForShortsPerYear is more than 150%");
+    }
+
+    console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
   }
-
-  console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
 
   for (const [key, value] of Object.entries({
     optimalUsageFactorForLongs,
@@ -1185,7 +1409,8 @@ async function validateSwapConfig({
   let positiveSwapImpactFactor = marketConfig.positiveSwapImpactFactor;
   let swapImpactExponentFactor = marketConfig.swapImpactExponentFactor;
 
-  if (process.env.READ_FROM_CHAIN === "true") {
+  // only read from chain when we have an on-chain market; the config-only checks have no market
+  if (process.env.READ_FROM_CHAIN === "true" && market) {
     const multicallReadParams = [];
 
     multicallReadParams.push({
@@ -1345,8 +1570,6 @@ export async function validateMarketConfigs() {
   const marketKeysToSkip = {
     "0x74885b4D524d497261259B38900f54e6dbAd2210:0x74885b4D524d497261259B38900f54e6dbAd2210:0xaf88d065e77c8cC2239327C5EDb3A432268e5831":
       true, // old APE market
-    "0x1B9e25f54225bcdCf347569E38C41Ade9BB686e5:0xF4586028FFdA7Eca636864F80f8a3f2589E33795:0x325eEb3AA50014f35861e3374f54B3997Aa8357d":
-      true, // old stBTC-USDC.e market
   };
 
   for (const market of markets) {

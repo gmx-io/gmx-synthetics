@@ -78,6 +78,7 @@ library LiquidationUtils {
             0, // executionFee
             dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
+            0, // uiFeeFactor (uiFeeReceiver is the zero address, so no ui fee is charged)
             Chain.currentTimestamp(), // updatedAtTime
             0, // validFromTime
             cache.lastSrcChainId // srcChainId

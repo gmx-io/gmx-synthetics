@@ -2,13 +2,13 @@
 //
 // This script verifies:
 //   - Arbitrum hub: OFTAdapter contracts (6 adapters)
-//   - Spoke networks: OFT contracts (6 OFTs × 5 networks = 30 OFTs)
+//   - Spoke networks: OFT contracts (6 OFTs × 4 networks = 24 OFTs)
 //
 // Usage:
 //   npx ts-node scripts/multichain/verify-lz-deployments/verifyContracts.ts
 //
 // RPC URLs: Uses .env variables if set, otherwise falls back to hardhat.config.ts defaults
-// Optional env vars: ARBITRUM_RPC_URL, ETHEREUM_RPC_URL, BASE_RPC_URL, BSC_RPC_URL, BERA_RPC_URL, BOTANIX_RPC_URL
+// Optional env vars: ARBITRUM_RPC_URL, ETHEREUM_RPC_URL, BASE_RPC_URL, BSC_RPC_URL, BERA_RPC_URL
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -500,7 +500,7 @@ async function main() {
   log("");
   log("  This script verifies OFTAdapter and OFT contracts:");
   log("    - Arbitrum hub: 6 OFTAdapter contracts");
-  log("    - Spoke networks: 6 OFT contracts × 5 networks = 30 OFTs");
+  log("    - Spoke networks: 6 OFT contracts × 4 networks = 24 OFTs");
   log("");
   log("  Initializing providers for all networks...");
 
@@ -516,7 +516,6 @@ async function main() {
     base: { passed: 0, failed: 0 },
     bsc: { passed: 0, failed: 0 },
     bera: { passed: 0, failed: 0 },
-    botanix: { passed: 0, failed: 0 },
   };
 
   // ==========================================================================

@@ -63,7 +63,9 @@ contract Reader {
     ) external view returns (int256, int256, uint256) {
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
-        return PositionUtils.getPositionPnlUsd(dataStore, market, prices, position, sizeDeltaUsd);
+        (int256 positionPnlUsd, int256 uncappedPositionPnlUsd, uint256 sizeDeltaInTokens, /* bool pnlWasCapped */) = PositionUtils.getPositionPnlUsd(dataStore, market, prices, position, sizeDeltaUsd);
+
+        return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens);
     }
 
     function getAccountPositions(
@@ -72,7 +74,7 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (Position.Props[] memory) {
-        return ReaderPositionUtils.getAccountPositions(dataStore, account, start, end);
+        return ReaderUtils.getAccountPositions(dataStore, account, start, end);
     }
 
     function getPositionInfo(
@@ -201,6 +203,27 @@ contract Reader {
     ) external view returns (int256, MarketPoolValueInfo.Props memory) {
         return
             MarketUtils.getMarketTokenPrice(
+                dataStore,
+                market,
+                indexTokenPrice,
+                longTokenPrice,
+                shortTokenPrice,
+                pnlFactorType,
+                maximize
+            );
+    }
+
+    function getMarketTokenPriceForDeposit(
+        DataStore dataStore,
+        Market.Props memory market,
+        Price.Props memory indexTokenPrice,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        bytes32 pnlFactorType,
+        bool maximize
+    ) external view returns (int256, MarketPoolValueInfo.Props memory) {
+        return
+            MarketUtils.getMarketTokenPriceForDeposit(
                 dataStore,
                 market,
                 indexTokenPrice,

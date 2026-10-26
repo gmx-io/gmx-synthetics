@@ -13,8 +13,12 @@ library Keys2 {
     bytes32 public constant MULTICHAIN_CONFIRMATIONS = keccak256(abi.encode("MULTICHAIN_CONFIRMATIONS"));
     // @dev key for MultichainReader guid to originator mapping
     bytes32 public constant MULTICHAIN_GUID_TO_ORIGINATOR = keccak256(abi.encode("MULTICHAIN_GUID_TO_ORIGINATOR"));
-    // @dev key for MultichainReader authorized orginators
+    // @dev key for MultichainReader authorized originators
     bytes32 public constant MULTICHAIN_AUTHORIZED_ORIGINATORS = keccak256(abi.encode("MULTICHAIN_AUTHORIZED_ORIGINATORS"));
+    // @dev key for failed multichain follow-up actions that can be retried
+    bytes32 public constant MULTICHAIN_FAILED_ACTION = keccak256(abi.encode("MULTICHAIN_FAILED_ACTION"));
+    // @dev key for compose messages whose bridged tokens were refunded
+    bytes32 public constant MULTICHAIN_REFUNDED_COMPOSE = keccak256(abi.encode("MULTICHAIN_REFUNDED_COMPOSE"));
 
     // @dev key for FeeDistributor day of the week (0 = Sunday, 6 = Saturday)
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_DAY = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_DAY"));
@@ -22,18 +26,6 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP"));
     // @dev key for the fee distribution state
     bytes32 public constant FEE_DISTRIBUTOR_STATE = keccak256(abi.encode("FEE_DISTRIBUTOR_STATE"));
-    // @dev key for FeeDistributor referral rewards for a given token
-    bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
-    // @dev key for FeeDistributor max WNT referral awards amount in USD
-    bytes32 public constant FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT"));
-    // @dev key for FeeDistributor max WNT referral rewards factor in USD
-    bytes32 public constant FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR"));
-    // @dev key for FeeDistributor max ESGMX referral awards amount
-    bytes32 public constant FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT"));
-    // @dev key for FeeDistributor GMX price for referral rewards calculations
-    bytes32 public constant FEE_DISTRIBUTOR_GMX_PRICE = keccak256(abi.encode("FEE_DISTRIBUTOR_GMX_PRICE"));
-    // @dev key for FeeDistributor WNT price for referral rewards calculations
-    bytes32 public constant FEE_DISTRIBUTOR_WNT_PRICE = keccak256(abi.encode("FEE_DISTRIBUTOR_WNT_PRICE"));
     // @dev key for FeeDistributor max read response delay in seconds from MultichainReader
     bytes32 public constant FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY"));
     // @dev key for FeeDistributor gas limit used for the MultichainReader read request
@@ -44,14 +36,14 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT_GMX"));
     // @dev key FeeDistributor total GMX fee amount for all chains combined
     bytes32 public constant FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX"));
-    // @dev key for FeeDistributor total fee amount in USD by version
-    bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT_USD = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT_USD"));
     // @dev key for FeeDistributor staked GMX for a given chain
     bytes32 public constant FEE_DISTRIBUTOR_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_STAKED_GMX"));
     // @dev key FeeDistributor total staked GMX for all chains combined
     bytes32 public constant FEE_DISTRIBUTOR_TOTAL_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_TOTAL_STAKED_GMX"));
     // @dev key for FeeDistributor bridging slippage factor
     bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR"));
+    // @dev minimum incoming GMX computed from the current distribution's dust-adjusted transfers
+    bytes32 public constant FEE_DISTRIBUTOR_MIN_INCOMING_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_MIN_INCOMING_GMX"));
     // @dev key for FeeDistributor read response timestamp
     bytes32 public constant FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP"));
     // @dev key for FeeDistributor LayerZero version of chainId
@@ -64,14 +56,34 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
     // @dev key for FeeDistributor chainlink factor used to determine total chainlink fees paid
     bytes32 public constant FEE_DISTRIBUTOR_CHAINLINK_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAINLINK_FACTOR"));
-    // @dev key for FeeDistributor total referral rewards deposited to the claim vault in a given week
-    bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED"));
-    // @dev key for max WNT amount from treasury to cover keeper costs
-    bytes32 public constant FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY"));
-    // @dev key for factor used to determine amount of total V1 fees USD that are in WNT
-    bytes32 public constant FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR"));
-    // @dev key for factor used to determine amount of total V2 fees USD that are in WNT
-    bytes32 public constant FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR"));
+    // @dev key for max secondaryFeeToken amount from treasury to cover keeper costs
+    bytes32 public constant FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_FEE_AMOUNT_FROM_TREASURY"));
+    // @dev key for whether or not weekly fees should be distributed
+    bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTE_FEES = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTE_FEES"));
+    // @dev key for the FeeDistributor snapshot epoch for a given chain
+    bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_EPOCH = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_EPOCH"));
+    // @dev key for the FeeDistributor committed snapshot GMX fee amount for a given chain
+    bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX"));
+    // @dev key for the FeeDistributor committed snapshot staked GMX for a given chain
+    bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX"));
+    // @dev key for FeeDistributor withdrawable GMX amount at the time of the snapshot
+    bytes32 public constant FEE_DISTRIBUTOR_SNAPSHOT_WITHDRAWABLE_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_SNAPSHOT_WITHDRAWABLE_GMX"));
+    // @dev key for FeeDistributor GMX that became withdrawable after the GMX fee amount was snapshotted
+    bytes32 public constant FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_POST_SNAPSHOT_FEE_AMOUNT_GMX"));
+    // @dev key for the expected LZRead response guid for the in-progress distribution
+    bytes32 public constant FEE_DISTRIBUTOR_EXPECTED_READ_GUID = keccak256(abi.encode("FEE_DISTRIBUTOR_EXPECTED_READ_GUID"));
+    // @dev key for the expected hash of the chain id list for the in-progress read
+    bytes32 public constant FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH = keccak256(abi.encode("FEE_DISTRIBUTOR_EXPECTED_CHAIN_IDS_HASH"));
+    // @dev key for the timestamp of the last distribution state transition
+    bytes32 public constant FEE_DISTRIBUTOR_STATE_UPDATED_AT = keccak256(abi.encode("FEE_DISTRIBUTOR_STATE_UPDATED_AT"));
+    // @dev key for the period after the read response after which a bridged GMX shortfall is tolerated,
+    // must be configured below FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY for the tolerance to be reachable
+    bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_GRACE_PERIOD"));
+    // @dev key for the minimum factor of the required GMX amount below which a shortfall is not tolerated
+    bytes32 public constant FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR"));
+
+    // @dev key for CreReceiver authorized workflow IDs
+    bytes32 public constant CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS = keccak256(abi.encode("CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS"));
 
     // @dev key for the multichain peers mapping (peer address stored as bytes32)
     // @param readChannel the readChannel for which to retrieve the respective peer
@@ -96,16 +108,25 @@ library Keys2 {
 
     // @dev key for the multichain authorized originators
     // @param originator the originator address to validate if authorized
-    // @return key for multichain authorized originator
+    // @return key for multichain authorized originators
     function multichainAuthorizedOriginatorsKey(address originator) internal pure returns (bytes32) {
         return keccak256(abi.encode(MULTICHAIN_AUTHORIZED_ORIGINATORS, originator));
     }
 
-    // @dev key for the FeeDistributor referral rewards amount
-    // @param token the token the referral rewards are denominated in
-    // @return key for FeeDistributor referral rewards amount
-    function feeDistributorReferralRewardsAmountKey(address token) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT, token));
+    // @dev key for a failed multichain follow-up action
+    // @param guid the guid of the compose message
+    // @param messageHash the hash of the compose message
+    // @return key for multichain failed action
+    function multichainFailedActionKey(bytes32 guid, bytes32 messageHash) internal pure returns (bytes32) {
+        return keccak256(abi.encode(MULTICHAIN_FAILED_ACTION, guid, messageHash));
+    }
+
+    // @dev key for a refunded compose message
+    // @param guid the guid of the compose message
+    // @param messageHash the hash of the compose message
+    // @return key for multichain refunded compose
+    function multichainRefundedComposeKey(bytes32 guid, bytes32 messageHash) internal pure returns (bytes32) {
+        return keccak256(abi.encode(MULTICHAIN_REFUNDED_COMPOSE, guid, messageHash));
     }
 
     // @dev key for the FeeDistributor fee amount gmx
@@ -115,18 +136,32 @@ library Keys2 {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_FEE_AMOUNT_GMX, chainId));
     }
 
-    // @dev key for the FeeDistributor fee amount in USD by version
-    // @param version the version for which to retrieve the fee amount USD
-    // @return key for FeeDistributor fee amount USD
-    function feeDistributorFeeAmountUsdKey(uint256 version) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_FEE_AMOUNT_USD, version));
-    }
-
     // @dev key for the FeeDistributor staked gmx
     // @param chainId the chainId for which to retrieve total staked
     // @return key for FeeDistributor staked gmx
     function feeDistributorStakedGmxKey(uint256 chainId) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_STAKED_GMX, chainId));
+    }
+
+    // @dev key for the FeeDistributor snapshot epoch
+    // @param chainId the chainId for which to retrieve the snapshot epoch
+    // @return key for FeeDistributor snapshot epoch
+    function feeDistributorSnapshotEpochKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_SNAPSHOT_EPOCH, chainId));
+    }
+
+    // @dev key for the FeeDistributor committed snapshot gmx fee amount
+    // @param chainId the chainId for which to retrieve the snapshot fee amount
+    // @return key for FeeDistributor snapshot gmx fee amount
+    function feeDistributorSnapshotFeeAmountGmxKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_SNAPSHOT_FEE_AMOUNT_GMX, chainId));
+    }
+
+    // @dev key for the FeeDistributor committed snapshot staked gmx
+    // @param chainId the chainId for which to retrieve the snapshot staked gmx
+    // @return key for FeeDistributor snapshot staked gmx
+    function feeDistributorSnapshotStakedGmxKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_SNAPSHOT_STAKED_GMX, chainId));
     }
 
     // @dev key for the FeeDistributor bridging slippage factor
@@ -158,10 +193,10 @@ library Keys2 {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN, chainId, addressName));
     }
 
-    // @dev key for FeeDistributor referral rewards deposited to the claim vault in a given week
-    // @param token the token for which to check the referral rewards deposited
-    // @return key for FeeDistributor referral rewards deposited in a given week
-    function feeDistributorReferralRewardsDepositedKey(address token) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED, token));
+    // @dev key for CreReceiver authorized workflow IDs
+    // @param workflowId the workflow ID to validate if authorized
+    // @return key for CreReceiver authorized workflow IDs
+    function creReceiverAuthorizedWorkflowIdsKey(bytes32 workflowId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS, workflowId));
     }
 }

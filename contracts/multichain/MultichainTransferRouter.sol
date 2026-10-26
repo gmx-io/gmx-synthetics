@@ -5,7 +5,14 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./MultichainRouter.sol";
+import "./IMultichainProvider.sol";
 import "./IMultichainTransferRouter.sol";
+import "../router/relay/MultichainRelayUtils.sol";
+
+import "../feature/FeatureUtils.sol";
+import "../market/MarketUtils.sol";
+import "../swap/ISwapUtils.sol";
+import "../pricing/ISwapPricingUtils.sol";
 
 contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
     IMultichainProvider public multichainProvider;
@@ -61,10 +68,16 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         uint256 srcChainId,
         IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
+        bytes32 structHash = MultichainRelayUtils.getBridgeOutStructHash(relayParams, account, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        _bridgeOut(account, srcChainId, params);
+        if (params.bridgeFee.feeAmount > 0 && params.bridgeFee.feeSwapPath.length > 0) {
+            // re-set oracle prices for the bridge fee swap
+            // prices from withRelay were cleared after _handleRelayBeforeAction returned
+            _bridgeOutWithOraclePrices(relayParams.oracleParams, account, srcChainId, params);
+        } else {
+            _bridgeOut(account, srcChainId, params);
+        }
     }
 
     /*
@@ -103,6 +116,15 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         _bridgeOut(account, block.chainid, params);
     }
 
+    function _bridgeOutWithOraclePrices(
+        OracleUtils.SetPricesParams calldata oracleParams,
+        address account,
+        uint256 srcChainId,
+        IRelayUtils.BridgeOutParams calldata params
+    ) internal withOraclePricesForAtomicAction(oracleParams) {
+        _bridgeOut(account, srcChainId, params);
+    }
+
     function _bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams calldata params) internal {
         if (params.amount == 0) {
             return;
@@ -133,18 +155,16 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
             // cross-chain withdrawal: using the multichain provider, funds are bridged to the src chain
             MultichainUtils.validateMultichainProvider(dataStore, params.provider);
 
+            // if bridge fee is specified in a non-WNT token, swap it to WNT first
+            // so that LayerZeroProvider can unwrap WNT to pay the native LZ messaging fee
+            _swapBridgeFeeIfNeeded(account, srcChainId, params);
+
             // transfer funds (amount + bridging fee) from user's multichain balance to multichainProvider
             // and execute the bridge out to srcChain
             uint256 amountOut = multichainProvider.bridgeOut(
                 account,
                 srcChainId,
-                IRelayUtils.BridgeOutParams({
-                    token: params.token,
-                    amount: params.amount,
-                    minAmountOut: params.minAmountOut,
-                    provider: params.provider,
-                    data: params.data
-                })
+                params
             );
 
             MultichainEventUtils.emitMultichainBridgeOut(
@@ -156,5 +176,93 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
                 srcChainId
             );
         }
+    }
+
+    /**
+     * @dev Swaps the bridge fee token to WNT if the fee token is not WNT
+     * This allows users to pay LayerZero bridging fees in USDC/USDT
+     * The swap uses the atomic swaps through configured market pools
+     * After the swap, the resulting WNT is credited to the user's multichain balance
+     * so that LayerZeroProvider.bridgeOut() can deduct it as usual
+     */
+    function _swapBridgeFeeIfNeeded(
+        address account,
+        uint256 srcChainId,
+        IRelayUtils.BridgeOutParams calldata params
+    ) internal {
+        IRelayUtils.BridgeFeeParams calldata bridgeFee = params.bridgeFee;
+
+        if (bridgeFee.feeAmount == 0 || bridgeFee.feeSwapPath.length == 0) {
+            return;
+        }
+
+        address wnt = TokenUtils.wnt(dataStore);
+        if (bridgeFee.feeToken == wnt) {
+            return;
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.bridgeFeeSwapFeatureDisabledKey(address(this)));
+
+        // shared USD size cap with relay fee swaps to limit oracle mispricing extraction
+        RelayUtils.validateMaxFeeSwapUsd(
+            dataStore,
+            oracle,
+            bridgeFee.feeToken,
+            bridgeFee.feeAmount,
+            false // isSubaccount
+        );
+
+        // additionally bound the signed feeAmount to a multiple of the provider's live messaging fee quote
+        RelayUtils.validateBridgeFeeAgainstQuote(dataStore, oracle, multichainProvider, account, params, wnt);
+
+        // transfer fee token from user's multichain balance to OrderVault for swap
+        MultichainUtils.transferOut(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            bridgeFee.feeToken,
+            account,
+            address(orderVault),
+            bridgeFee.feeAmount,
+            srcChainId
+        );
+
+        // swap fee token to WNT via an atomic swap
+        MarketUtils.validateSwapPath(dataStore, bridgeFee.feeSwapPath);
+        Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(dataStore, bridgeFee.feeSwapPath);
+
+        (address outputToken, ) = swapHandler.swap(
+            ISwapUtils.SwapParams({
+                dataStore: dataStore,
+                eventEmitter: eventEmitter,
+                oracle: oracle,
+                bank: orderVault,
+                key: bytes32(0),
+                tokenIn: bridgeFee.feeToken,
+                amountIn: bridgeFee.feeAmount,
+                swapPathMarkets: swapPathMarkets,
+                minOutputAmount: bridgeFee.minOutputAmount,
+                receiver: address(multichainVault),
+                uiFeeReceiver: address(0),
+                uiFeeFactor: 0, // uiFeeReceiver is the zero address, so no ui fee is charged
+                tokenInPoolAmountBeforeAction: 0,
+                shouldUnwrapNativeToken: false,
+                swapPricingType: ISwapPricingUtils.SwapPricingType.AtomicSwap
+            })
+        );
+
+        if (outputToken != wnt) {
+            revert Errors.UnexpectedBridgeFeeTokenAfterSwap(outputToken, wnt);
+        }
+
+        // record the swapped WNT in user's multichain balance
+        MultichainUtils.recordTransferIn(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            wnt,
+            account,
+            srcChainId
+        );
     }
 }

@@ -6,10 +6,12 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../data/Keys2.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
 import "../utils/Precision.sol";
 import "../market/MarketUtils.sol";
+import "../oracle/IPriceFeed.sol";
 
 library ConfigUtils {
     using SafeCast for int256;
@@ -45,7 +47,9 @@ library ConfigUtils {
     }
 
     // 0.00001% per second, ~315% per year
-    uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
+    uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 2000000000000000000000000;
+    // 0.00001% per second, ~315% per year
+    uint256 public constant MAX_ALLOWED_MAX_BORROWING_FACTOR_PER_SECOND = 100000000000000000000000;
     // at this rate max allowed funding rate will be reached in 1 hour at 100% imbalance if max funding rate is 315%
     uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
     // at this rate zero funding rate will be reached in 24 hours if max funding rate is 315%
@@ -73,6 +77,13 @@ library ConfigUtils {
 
         if (dataStore.getBytes32(Keys.edgeDataStreamIdKey(params.token)) != bytes32(0)) {
             revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
+        }
+
+        (bytes memory payload) = abi.encodeWithSelector(IPriceFeed.latestRoundData.selector);
+        (bool ok, bytes memory data) = params.priceFeed.feedAddress.staticcall(payload);
+        // data length is 160 bytes: uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
+        if (!ok || data.length < 160) {
+            revert Errors.InvalidPriceFeed(params.priceFeed.feedAddress);
         }
 
         dataStore.setAddress(Keys.priceFeedKey(params.token), params.priceFeed.feedAddress);
@@ -296,6 +307,14 @@ library ConfigUtils {
         }
 
         if (
+            baseKey == Keys.MAX_BORROWING_FACTOR_PER_SECOND
+        ) {
+            if (value > MAX_ALLOWED_MAX_BORROWING_FACTOR_PER_SECOND) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
             baseKey == Keys.MIN_FUNDING_FACTOR_PER_SECOND
         ) {
             bytes32 maxFundingFactorPerSecondKey = Keys.getFullKey(Keys.MAX_FUNDING_FACTOR_PER_SECOND, data);
@@ -309,6 +328,15 @@ library ConfigUtils {
             baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND
         ) {
             if (value > MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND
+        ) {
+            // revert if nominal increase rate per second > max funding factor per second
+            if (value > MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
@@ -430,13 +458,22 @@ library ConfigUtils {
             baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.PRO_DISCOUNT_FACTOR ||
-            baseKey == Keys.BUYBACK_GMX_FACTOR ||
-            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR
+            baseKey == Keys.BUYBACK_PRIMARY_TOKEN_FACTOR ||
+            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR ||
+            baseKey == Keys2.FEE_DISTRIBUTOR_MIN_BRIDGED_FACTOR
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
+        }
+
+        // Keep the deposit and withdrawal caps at or below the trader cap for each market and side.
+        // Deposits use the deposit cap, while swaps validate both sides with the withdrawal cap.
+        // Neither cap should allow pool growth that releases trader pnl capped by the trader cap.
+        if (baseKey == Keys.MAX_PNL_FACTOR) {
+            (bytes32 pnlFactorType, address market, bool isLong) = abi.decode(data, (bytes32, address, bool));
+            _validateMaxPnlFactorOrdering(dataStore, baseKey, pnlFactorType, market, isLong, value);
         }
 
         if (baseKey == Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR) {
@@ -451,6 +488,39 @@ library ConfigUtils {
         ) {
             // revert if value > 10
             if (value > 10 * Precision.FLOAT_PRECISION) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+    }
+
+    function _validateMaxPnlFactorOrdering(
+        DataStore dataStore,
+        bytes32 baseKey,
+        bytes32 pnlFactorType,
+        address market,
+        bool isLong,
+        uint256 value
+    ) private view {
+        if (
+            pnlFactorType == Keys.MAX_PNL_FACTOR_FOR_DEPOSITS ||
+            pnlFactorType == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
+        ) {
+            uint256 maxPnlFactorForTraders = dataStore.getUint(
+                Keys.maxPnlFactorKey(Keys.MAX_PNL_FACTOR_FOR_TRADERS, market, isLong)
+            );
+            if (value > maxPnlFactorForTraders) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (pnlFactorType == Keys.MAX_PNL_FACTOR_FOR_TRADERS) {
+            uint256 maxPnlFactorForDeposits = dataStore.getUint(
+                Keys.maxPnlFactorKey(Keys.MAX_PNL_FACTOR_FOR_DEPOSITS, market, isLong)
+            );
+            uint256 maxPnlFactorForWithdrawals = dataStore.getUint(
+                Keys.maxPnlFactorKey(Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, market, isLong)
+            );
+            if (value < maxPnlFactorForDeposits || value < maxPnlFactorForWithdrawals) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }

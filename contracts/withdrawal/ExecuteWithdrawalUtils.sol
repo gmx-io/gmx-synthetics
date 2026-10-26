@@ -15,6 +15,7 @@ import "../pricing/SwapPricingUtils.sol";
 import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
 import "../fee/FeeUtils.sol";
+import "../feature/FeatureUtils.sol";
 import "../swap/SwapUtils.sol";
 
 import "../multichain/BridgeOutFromControllerUtils.sol";
@@ -44,6 +45,7 @@ library ExecuteWithdrawalUtils {
         uint256 maxOracleTimestamp;
         uint256 marketTokensBalance;
         uint256 oraclePriceCount;
+        uint256 bridgeFeeSwapCount;
         Market.Props market;
         MarketUtils.MarketPrices prices;
         IExecuteWithdrawalUtils.ExecuteWithdrawalResult result;
@@ -57,6 +59,8 @@ library ExecuteWithdrawalUtils {
         SwapPricingUtils.SwapFees shortTokenFees;
         uint256 longTokenPoolAmountDelta;
         uint256 shortTokenPoolAmountDelta;
+        uint256 longTokenPoolAmountBeforeAction;
+        uint256 shortTokenPoolAmountBeforeAction;
     }
 
     struct SwapCache {
@@ -97,6 +101,10 @@ library ExecuteWithdrawalUtils {
             revert Errors.EmptyWithdrawalAmount();
         }
 
+        if (withdrawal.longTokenSwapPath().length != 0 || withdrawal.shortTokenSwapPath().length != 0) {
+            FeatureUtils.validateFeature(params.dataStore, Keys.withdrawalSwapFeatureDisabledKey(address(this)));
+        }
+
         if (params.oracle.minTimestamp() < withdrawal.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
                 params.oracle.minTimestamp(),
@@ -122,7 +130,14 @@ library ExecuteWithdrawalUtils {
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
         cache.prices = MarketUtils.getMarketPrices(params.oracle, cache.market);
 
-        PositionUtils.updateFundingAndBorrowingState(params.dataStore, params.eventEmitter, cache.market, cache.prices);
+        PositionUtils.updateFundingAndBorrowingState(
+            params.dataStore,
+            params.eventEmitter,
+            cache.market,
+            cache.prices,
+            false, // allowZeroPoolBorrowingFactorForLongs
+            false // allowZeroPoolBorrowingFactorForShorts
+        );
 
         cache.marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(
             address(params.withdrawalVault)
@@ -148,7 +163,7 @@ library ExecuteWithdrawalUtils {
         cache.eventData.uintItems.setItem(1, "secondaryOutputAmount", cache.result.secondaryOutputAmount);
         CallbackUtils.afterWithdrawalExecution(params.key, withdrawal, cache.eventData);
 
-        BridgeOutFromControllerUtils.bridgeOutFromController(
+        cache.bridgeFeeSwapCount = BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
             BridgeOutFromControllerUtils.BridgeOutFromControllerParams({
@@ -164,7 +179,7 @@ library ExecuteWithdrawalUtils {
         );
 
         cache.oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(
-            withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length
+            withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length + cache.bridgeFeeSwapCount
         );
 
         GasUtils.payExecutionFee(
@@ -213,6 +228,7 @@ library ExecuteWithdrawalUtils {
             cache.longTokenOutputAmount,
             false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
+            withdrawal.uiFeeFactor(),
             params.swapPricingType
         );
 
@@ -241,6 +257,7 @@ library ExecuteWithdrawalUtils {
             cache.shortTokenOutputAmount,
             false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
+            withdrawal.uiFeeFactor(),
             params.swapPricingType
         );
 
@@ -269,6 +286,9 @@ library ExecuteWithdrawalUtils {
 
         cache.shortTokenPoolAmountDelta = cache.shortTokenOutputAmount - cache.shortTokenFees.feeAmountForPool;
         cache.shortTokenOutputAmount = cache.shortTokenFees.amountAfterFees;
+
+        cache.longTokenPoolAmountBeforeAction = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
+        cache.shortTokenPoolAmountBeforeAction = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
 
         // it is rare but possible for withdrawals to be blocked because pending borrowing fees
         // have not yet been deducted from position collateral and credited to the poolAmount value
@@ -309,26 +329,24 @@ library ExecuteWithdrawalUtils {
         IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory result;
         (result.outputToken, result.outputAmount) = _swap(
             params,
+            withdrawal,
             market,
             market.longToken,
             cache.longTokenOutputAmount,
             withdrawal.longTokenSwapPath(),
             withdrawal.minLongTokenAmount(),
-            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
-            withdrawal.uiFeeReceiver(),
-            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
+            cache.longTokenPoolAmountBeforeAction
         );
 
         (result.secondaryOutputToken, result.secondaryOutputAmount) = _swap(
             params,
+            withdrawal,
             market,
             market.shortToken,
             cache.shortTokenOutputAmount,
             withdrawal.shortTokenSwapPath(),
             withdrawal.minShortTokenAmount(),
-            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
-            withdrawal.uiFeeReceiver(),
-            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
+            cache.shortTokenPoolAmountBeforeAction
         );
 
         // for multichain action, receiver is the multichainVault; increase user's multichain balances
@@ -383,7 +401,8 @@ library ExecuteWithdrawalUtils {
             prices.longTokenPrice,
             prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            false
+            false, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
 
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
@@ -402,14 +421,13 @@ library ExecuteWithdrawalUtils {
 
     function _swap(
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
+        Withdrawal.Props memory withdrawal,
         Market.Props memory market,
         address tokenIn,
         uint256 amountIn,
         address[] memory swapPath,
         uint256 minOutputAmount,
-        address receiver,
-        address uiFeeReceiver,
-        bool shouldUnwrapNativeToken
+        uint256 tokenInPoolAmountBeforeAction
     ) internal returns (address, uint256) {
         SwapCache memory cache;
 
@@ -425,10 +443,14 @@ library ExecuteWithdrawalUtils {
             amountIn: amountIn,
             swapPathMarkets: cache.swapPathMarkets,
             minOutputAmount: minOutputAmount,
-            receiver: receiver,
-            uiFeeReceiver: uiFeeReceiver,
-            shouldUnwrapNativeToken: shouldUnwrapNativeToken,
-            swapPricingType: params.swapPricingType
+            receiver: withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
+            uiFeeReceiver: withdrawal.uiFeeReceiver(),
+            uiFeeFactor: withdrawal.uiFeeFactor(),
+            tokenInPoolAmountBeforeAction: tokenInPoolAmountBeforeAction,
+            shouldUnwrapNativeToken: withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false,
+            // the swap-path hops are ordinary swaps and must be priced with the swap fee factor;
+            // the GM redemption fee is charged separately in _executeWithdrawal using the withdrawal pricing type
+            swapPricingType: ISwapPricingUtils.SwapPricingType.Swap
         });
 
         (cache.outputToken, cache.outputAmount) = params.swapHandler.swap(cache.swapParams);
@@ -458,7 +480,8 @@ library ExecuteWithdrawalUtils {
             prices.longTokenPrice,
             prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            false
+            false, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
 
         if (poolValueInfo.poolValue <= 0) {

@@ -227,13 +227,13 @@ describe("Guardian.PriceImpact", () => {
     });
 
     // Check that User0 got Positive PI
-    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq("100889999999000000000000"); // $100,889
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq("100882961078000000000000"); // $100,882
 
     // Check that the price impact pools didn't receive anything
     expect(await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("0");
 
     // Check that the impact pool got decreased
-    expect(await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("4110000001");
+    expect(await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("4117038922");
   });
 
   it("0 price impact for deposit", async () => {

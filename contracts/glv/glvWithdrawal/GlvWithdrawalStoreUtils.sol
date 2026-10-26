@@ -26,6 +26,7 @@ library GlvWithdrawalStoreUtils {
     bytes32 public constant GLV_TOKEN_AMOUNT = keccak256(abi.encode("GLV_TOKEN_AMOUNT"));
     bytes32 public constant MIN_LONG_TOKEN_AMOUNT = keccak256(abi.encode("MIN_LONG_TOKEN_AMOUNT"));
     bytes32 public constant MIN_SHORT_TOKEN_AMOUNT = keccak256(abi.encode("MIN_SHORT_TOKEN_AMOUNT"));
+    bytes32 public constant UI_FEE_FACTOR = keccak256(abi.encode("UI_FEE_FACTOR"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
     bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
@@ -83,6 +84,10 @@ library GlvWithdrawalStoreUtils {
 
         withdrawal.setMinShortTokenAmount(dataStore.getUint(
             keccak256(abi.encode(key, MIN_SHORT_TOKEN_AMOUNT))
+        ));
+
+        withdrawal.setUiFeeFactor(dataStore.getUint(
+            keccak256(abi.encode(key, UI_FEE_FACTOR))
         ));
 
         withdrawal.setUpdatedAtTime(dataStore.getUint(
@@ -179,6 +184,11 @@ library GlvWithdrawalStoreUtils {
         );
 
         dataStore.setUint(
+            keccak256(abi.encode(key, UI_FEE_FACTOR)),
+            withdrawal.uiFeeFactor()
+        );
+
+        dataStore.setUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME)),
             withdrawal.updatedAtTime()
         );
@@ -266,6 +276,10 @@ library GlvWithdrawalStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, MIN_SHORT_TOKEN_AMOUNT))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, UI_FEE_FACTOR))
         );
 
         dataStore.removeUint(

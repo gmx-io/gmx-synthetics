@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../order/IBaseOrderUtils.sol";
+import "../order/Order.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IOrderHandler {
@@ -13,6 +14,15 @@ interface IOrderHandler {
         bool shouldCapMaxExecutionFee
     ) external returns (bytes32);
 
+    function createTwapOrder(
+        address account,
+        uint256 srcChainId,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool shouldCapMaxExecutionFee,
+        uint256 twapCount,
+        uint256 interval
+    ) external returns (bytes32[] memory orderKeys);
+
     function simulateExecuteOrder(bytes32 key, OracleUtils.SimulatePricesParams memory params) external;
 
     function updateOrder(
@@ -22,6 +32,7 @@ interface IOrderHandler {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         uint256 validFromTime,
+        Order.DecreasePositionSwapType decreasePositionSwapType,
         bool autoCancel,
         Order.Props memory order,
         bool shouldCapMaxExecutionFee

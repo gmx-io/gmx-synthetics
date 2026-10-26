@@ -51,6 +51,7 @@ library GlvDeposit {
         uint256 initialLongTokenAmount;
         uint256 initialShortTokenAmount;
         uint256 minGlvTokens;
+        uint256 uiFeeFactor;
         uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
@@ -175,6 +176,14 @@ library GlvDeposit {
 
     function setMinGlvTokens(Props memory props, uint256 value) internal pure {
         props.numbers.minGlvTokens = value;
+    }
+
+    function uiFeeFactor(Props memory props) internal pure returns (uint256) {
+        return props.numbers.uiFeeFactor;
+    }
+
+    function setUiFeeFactor(Props memory props, uint256 value) internal pure {
+        props.numbers.uiFeeFactor = value;
     }
 
     function updatedAtTime(Props memory props) internal pure returns (uint256) {

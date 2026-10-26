@@ -1,0 +1,125 @@
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { expect } from "chai";
+import { afterEach } from "mocha";
+import hre from "hardhat";
+import { utils } from "ethers";
+import { createSafeBatchOutputDir, writeSafeBatchJson } from "../../utils/safeTx";
+
+describe("Safe batch output", () => {
+  let originalCwd: string;
+  let temp: string;
+  const scriptName = "updateRoles";
+  const label = "cancelGrantRole";
+  const safeAddress = "0x0000000000000000000000000000000000000001";
+  const timelockAddress = "0x0000000000000000000000000000000000000002";
+  const operationId = utils.id("grant to cancel");
+  const cancelInterface = new utils.Interface(["function cancelAction(bytes32 id)"]);
+  const transactions = [
+    {
+      to: timelockAddress,
+      value: "0",
+      data: cancelInterface.encodeFunctionData("cancelAction", [operationId]),
+      contractMethod: {
+        name: "cancelAction",
+        payable: false,
+        inputs: [{ name: "id", type: "bytes32", internalType: "bytes32" }],
+      },
+      contractInputsValues: { id: operationId },
+    },
+  ];
+
+  beforeEach(() => {
+    originalCwd = process.cwd();
+    temp = fs.mkdtempSync(path.join(os.tmpdir(), "safe-batch-output-test-"));
+    process.chdir(temp);
+  });
+
+  afterEach(() => {
+    process.chdir(originalCwd);
+    fs.rmSync(temp, { recursive: true, force: true });
+  });
+
+  it("creates a separate directory for each run even when timestamps collide", () => {
+    const params = {
+      scriptName,
+      label: label,
+      createdAt: new Date("2026-10-20T12:34:56.123Z").getTime(),
+    };
+    const first = createSafeBatchOutputDir(params);
+    fs.writeFileSync(path.join(first, "report.json"), "first run");
+    const second = createSafeBatchOutputDir(params);
+    const third = createSafeBatchOutputDir(params);
+
+    expect(first).eq(path.join("out", `updateRoles-cancelGrantRole-${hre.network.name}-2026-10-20T12-34-56-123Z`));
+    expect(second).eq(`${first}-1`);
+    expect(third).eq(`${first}-2`);
+    expect(fs.readFileSync(path.join(first, "report.json"), "utf8")).eq("first run");
+    expect(fs.readdirSync(second)).deep.eq([]);
+    expect(fs.readdirSync(third)).deep.eq([]);
+  });
+
+  it("writes the verified chain, Safe, snapshot metadata and encoded cancellation in the run directory", () => {
+    const outputDir = createSafeBatchOutputDir({ scriptName, label: label });
+    const filename = writeSafeBatchJson({
+      scriptName,
+      label: `${label}-1of2`,
+      transactions,
+      outputDir,
+      chainId: 42161,
+      createdFromSafeAddress: safeAddress,
+      name: "Cancel paired role grants 1/2",
+      description: "Snapshot block 123 (0xabc); review report.json",
+    });
+
+    expect(filename).eq(path.join(outputDir, `safe-batch-updateRoles-cancelGrantRole-1of2-${hre.network.name}.json`));
+    const batch = JSON.parse(fs.readFileSync(filename, "utf8"));
+    expect(batch.version).eq("1.0");
+    expect(batch.chainId).eq("42161");
+    expect(batch.createdAt).to.be.a("number");
+    expect(batch.meta).deep.eq({
+      name: "Cancel paired role grants 1/2",
+      description: "Snapshot block 123 (0xabc); review report.json",
+      txBuilderVersion: "1.16.5",
+      createdFromSafeAddress: safeAddress,
+      createdFromOwnerAddress: "",
+      checksum: "",
+    });
+    expect(batch.transactions).deep.eq(transactions);
+    expect(cancelInterface.decodeFunctionData("cancelAction", batch.transactions[0].data).id).eq(operationId);
+  });
+
+  it("refuses to overwrite a batch in an explicit output directory", () => {
+    const outputDir = createSafeBatchOutputDir({ scriptName, label });
+    const params = { scriptName, label, transactions, outputDir };
+    const filename = writeSafeBatchJson(params);
+    const original = fs.readFileSync(filename, "utf8");
+    expect(() => writeSafeBatchJson({ ...params, transactions: [{ ...transactions[0], to: safeAddress }] })).to.throw(
+      "EEXIST"
+    );
+    expect(fs.readFileSync(filename, "utf8")).eq(original);
+  });
+
+  it("does not create files or directories for an empty batch", () => {
+    expect(writeSafeBatchJson({ scriptName, transactions: [] })).eq(undefined);
+    expect(writeSafeBatchJson({ scriptName, transactions: [], outputDir: "unused" })).eq(undefined);
+    expect(fs.readdirSync(".")).deep.eq([]);
+  });
+
+  it("preserves the legacy flat filename and metadata defaults", () => {
+    const filename = writeSafeBatchJson({ scriptName, label, transactions });
+    expect(path.dirname(filename)).eq("out");
+    expect(path.basename(filename)).to.match(
+      new RegExp(
+        `^safe-batch-${scriptName}-${label}-${hre.network.name}-\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}\\.json$`
+      )
+    );
+    const batch = JSON.parse(fs.readFileSync(filename, "utf8"));
+    expect(batch.chainId).eq(String(hre.network.config.chainId));
+    expect(batch.meta.name).eq(`${scriptName} ${label} (1 txs)`);
+    expect(batch.meta.description).eq(`Generated by scripts/${scriptName}.ts on ${hre.network.name}`);
+    expect(batch.meta.createdFromSafeAddress).eq("");
+    expect(batch.transactions).deep.eq(transactions);
+  });
+});

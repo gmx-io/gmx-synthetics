@@ -13,12 +13,14 @@ export type RolesConfig = {
 };
 
 const requiredRolesForContracts = {
-  CONFIG_KEEPER: ["ConfigSyncer"],
+  DONATION_KEEPER: ["DonationBatcher"],
   CONTROLLER: [
     "Config",
-    "ConfigSyncer",
     "ConfigTimelockController",
     "ContributorHandler",
+    "GlvDonationHandler",
+    "MarketPoolDonationHandler",
+    "RiskOracleConfig",
 
     "MarketFactory",
     "GlvFactory",
@@ -31,6 +33,7 @@ const requiredRolesForContracts = {
     "GlvRouter",
     "GelatoRelayRouter",
     "SubaccountGelatoRelayRouter",
+    "SimulationRouter",
 
     "OrderHandler",
     "JitOrderHandler",
@@ -58,6 +61,14 @@ const requiredRolesForContracts = {
     "MultichainOrderRouter",
     "MultichainSubaccountRouter",
     "MultichainTransferRouter",
+
+    "RewardRouterV3",
+    "EsGmxIssuer",
+    "SeasonRatioVester",
+    "OrphanRatioVester",
+    "GmxVesterCapZeroer",
+    "GlpVesterCapZeroer",
+    "ReferralVesterCapZeroer",
   ],
   ROUTER_PLUGIN: [
     "ExchangeRouter",
@@ -65,6 +76,7 @@ const requiredRolesForContracts = {
     "GlvRouter",
     "GelatoRelayRouter",
     "SubaccountGelatoRelayRouter",
+    "SimulationRouter",
 
     "MultichainGlvRouter",
     "MultichainGmRouter",
@@ -73,6 +85,7 @@ const requiredRolesForContracts = {
     "MultichainTransferRouter",
   ],
   ROLE_ADMIN: ["TimelockConfig", "ConfigTimelockController"],
+  GOV_TOKEN_CONTROLLER: ["RewardRouterV3"],
 };
 
 // roles are granted in deploy/configureRoles.ts
@@ -127,10 +140,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
   const generalConfigKeepers = {
     mainnet: {
       "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
-      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
       "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107": true, // general_keeper_4
       "0xB10e24b211D2321B12B21C52EaC38AC6e00799Cc": true, // general_keeper_5
+      "0xc5e038d696d9cB757fFdf53AA34e515D0e42f7cd": true, // general_keeper_6
     },
   };
 
@@ -138,7 +151,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     mainnet: {
       "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
       "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3": true, // claim_admin_2
-      "0xc5e038d696d9cB757fFdf53AA34e515D0e42f7cd": true, // claim_admin_3
     },
   };
 
@@ -153,13 +165,18 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
     "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
     "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
-    "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
+    "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true, // Hubert
     "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
     "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+    "0xC2bBF836C0F23F40e9E379BF1c23FaA82B4cD151": true, // Sol
+    "0xf2113e1afbdc3fd82417394d138a7550368218e5": true, // Jiang
+    "0x04E88c50cED18d71B7E4F865De3b5cFFc0aD211d": true, // Axis
+    "0xf344AF19843FDac541775a012BcAE2cDCa89ab5E": true, // S1
   };
 
   const testnetConfig = {
     CONTROLLER: testnetAdmins,
+    DONATION_KEEPER: testnetAdmins,
     ORDER_KEEPER: {
       "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
       "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
@@ -198,6 +215,18 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
   } = {
     hardhat: {
       CONTROLLER: { [deployer]: true },
+      DONATION_KEEPER: { [deployer]: true },
+      ORDER_KEEPER: { [deployer]: true },
+      ADL_KEEPER: { [deployer]: true },
+      LIQUIDATION_KEEPER: { [deployer]: true },
+      MARKET_KEEPER: { [deployer]: true },
+      FROZEN_ORDER_KEEPER: { [deployer]: true },
+      CONFIG_KEEPER: { [deployer]: true },
+      LIMITED_CONFIG_KEEPER: { [deployer]: true },
+      TIMELOCK_ADMIN: { [deployer]: true },
+    },
+    localhost: {
+      CONTROLLER: { [deployer]: true },
       ORDER_KEEPER: { [deployer]: true },
       ADL_KEEPER: { [deployer]: true },
       LIQUIDATION_KEEPER: { [deployer]: true },
@@ -217,6 +246,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
         "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
+        "0xC2bBF836C0F23F40e9E379BF1c23FaA82B4cD151": true, // Sol
         [deployer]: true,
       },
       LIMITED_CONFIG_KEEPER: {
@@ -230,19 +260,30 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
       },
       ...testnetConfig,
+      ORDER_KEEPER: {
+        ...testnetConfig.ORDER_KEEPER,
+        [deployer]: true,
+      },
     },
     arbitrumSepolia: {
       CONFIG_KEEPER: {
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
         "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
         "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+        "0xC2bBF836C0F23F40e9E379BF1c23FaA82B4cD151": true, // Solar
+        "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true, // Hubert
         [deployer]: true,
       },
       ROLE_ADMIN: {
         "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
         "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+        "0xC2bBF836C0F23F40e9E379BF1c23FaA82B4cD151": true, // Solar
       },
       ...testnetConfig,
+      INCENTIVE_DISTRIBUTOR: {
+        ...testnetAdmins,
+        "0x2BE7f46c991dEFF90936fDbEdf987d6bb629BC51": true, //Qwinn
+      },
     },
   };
 

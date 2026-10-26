@@ -1,0 +1,83 @@
+{
+  "comment": "Legacy cap writers that cannot be derived from on-chain getters. EsGmxBatchSender and VesterCap were recovered from gmx-contracts scripts and verified live (both still hold grants). DistributorTimelock is the reward distributors' gov Timelock, which holds a standing esGMX minter flag of its own (found by the inventory's gov check). LegacyGmxTimelock (2021) and LegacyTimelock2022 are Timelocks that govern nothing in scope but still hold esGMX minter flags, from the on-chain permissions review; the 2022 one's full address was recovered from the deployer key's contract creations. The referral vester has no distributor contract: its bonusRewards were written through its gov Timelock's batchSetBonusRewards and batchIncreaseBonusRewards (self-granting handler in-call), so the exposure is that Timelock's live contract handlers, listed under referralTimelockHandlers from its setContractHandler history. routerGenerations lists prior RewardRouter deployments whose acceptTransfer history feeds the cap enumeration, recovered from the Timelock grant histories; the current router is always scanned. timelocks lists every Timelock that has governed a legacy vester, past and present, for the bonus-credit history scan in recoverCapWriterRecords (both bonus functions, top-level and inside multicall); LegacyTimelockOct2022 governed the gmx and glp vesters between the 2021 Timelock and LegacyTimelock2022 and holds no live flags. VesterCap2024Feb is an earlier VesterCap that still holds handler status on feeGmxTracker, the new vesters' pair token, where its gov can move a vester's collateral through syncFeeGmxTrackerBalance; the three BatchSender contracts still hold esGMX handler status. These four were found on 29 September by reading the flags of every contract the deployer key created, since grants were also made by migrator contracts holding gov for one transaction and appear in no Timelock history. Each candidate can list grants to hold under hold: the two VesterCaps keep their feeGmxTracker handler flag until the legacy gmxVester holds the sbfGMX its pairSupply records, since VesterCap.syncFeeGmxTrackerBalance returns the unbacked excess through it; step 3 omits those revocations and the status gate reports them as held.",
+  "candidates": [
+    {
+      "name": "EsGmxBatchSender",
+      "address": "0xc3828fa579996090Dc7767E051341338e60207eF"
+    },
+    {
+      "name": "VesterCap",
+      "address": "0x57866d65ACbb7Ba3269807Bf7af4019366789b60",
+      "hold": ["feeGmxTracker handler"]
+    },
+    {
+      "name": "DistributorTimelock",
+      "address": "0xe7E740Fa40CA16b15B621B49de8E9F0D69CF4858"
+    },
+    {
+      "name": "LegacyGmxTimelock",
+      "address": "0x3F3E77421E30271568eF7A0ab5c5F2667675341e"
+    },
+    {
+      "name": "LegacyTimelock2022",
+      "address": "0x4339B1D36c5B7aED73859d4758a99308DF767071"
+    },
+    {
+      "name": "VesterCap2024Feb",
+      "address": "0x6C507B00Ef0266de345548974A3A05182Bf62696",
+      "hold": ["feeGmxTracker handler"]
+    },
+    {
+      "name": "BatchSender2021",
+      "address": "0x401Ab96410BcdCA81b79c68D0D664D478906C184"
+    },
+    {
+      "name": "BatchSender2022A",
+      "address": "0x1070f775e8eb466154BBa8FA0076C4Adc7FE17e8"
+    },
+    {
+      "name": "BatchSender2022B",
+      "address": "0x5179D7Ee1B8eCeCb9ECF279b435Bd03f8d3107A6"
+    }
+  ],
+  "timelocks": [
+    {
+      "name": "TeamTimelock",
+      "address": "0x718507c37AA801A4b37aAE70dF8B2cB0bd4674b5"
+    },
+    {
+      "name": "MainTimelock",
+      "address": "0x460e1A727c9CAE785314994D54bde0804582bc6e"
+    },
+    {
+      "name": "ReferralTimelock",
+      "address": "0x9Fd825166311545EaB45690Ab5dEF0D992Fdaa44"
+    },
+    {
+      "name": "DistributorTimelock",
+      "address": "0xe7E740Fa40CA16b15B621B49de8E9F0D69CF4858"
+    },
+    {
+      "name": "LegacyTimelock2022",
+      "address": "0x4339B1D36c5B7aED73859d4758a99308DF767071"
+    },
+    {
+      "name": "LegacyTimelockOct2022",
+      "address": "0x6A9215C9c148ca68E11aA8534A413B099fd6798f"
+    },
+    {
+      "name": "LegacyGmxTimelock",
+      "address": "0x3F3E77421E30271568eF7A0ab5c5F2667675341e"
+    }
+  ],
+  "routerGenerations": ["0xA906F338CB21815cBc4Bc87ace9e68c87eF8d8F1", "0x159854e14A862Df9E39E1D128b8e5F70B4A3cE9B"],
+  "referralTimelockHandlers": [
+    "0x5F799f365Fa8A2B60ac0429C48B153cA5a6f0Cf8",
+    "0xb87a436B93fFE9D75c5cFA7bAcFff96430b09868",
+    "0x75E42e6f01baf1D6022bEa862A28774a9f8a4A0C",
+    "0x82429089e7c86B7047b793A9E7E7311C93d2b7a6",
+    "0xD7941C4Ca57a511F21853Bbc7FBF8149d5eCb398",
+    "0xfb481D70f8d987c1AE3ADc90B7046e39eb6Ad64B",
+    "0x6091646D0354b03DD1e9697D33A7341d8C93a6F5"
+  ]
+}

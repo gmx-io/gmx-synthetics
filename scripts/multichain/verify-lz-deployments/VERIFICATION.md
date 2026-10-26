@@ -28,15 +28,15 @@ yarn verify:lz
 
 1. **verifyContracts.ts** - Combined OFTAdapter and OFT verification (multi-network)
    - Checks Arbitrum hub: 6 OFTAdapter contracts (deployment, underlying, peers, DVN config, enforced options, quotes)
-   - Checks spoke networks: 6 OFT contracts × 5 networks = 30 OFTs (deployment, token props, peers, enforced options, quotes)
-   - Total: 474 checks across all 6 networks
+   - Checks spoke networks: 6 OFT contracts × 4 networks = 24 OFTs (deployment, token props, peers, enforced options, quotes)
+   - Total: 360 checks across all 5 networks
    - RPC URLs: Uses `.env` variables if set, otherwise hardhat.config.ts defaults
    ```bash
    npx ts-node scripts/multichain/verify-lz-deployments/verifyContracts.ts
    ```
 
 2. **verifyDvnConfigs.ts** - DVN configuration verification (multi-network, all directions)
-   - Checks 6 contracts × 6 networks × 5 destinations = 180 checks
+   - Checks 6 contracts × 5 networks × 4 destinations = 120 checks
    - Validates: Required DVNs (LZ Labs + Canary), Optional DVNs (1 of Deutsche + Horizen)
    - Uses per-network DVN addresses from [LZ docs](https://docs.layerzero.network/v2/deployments/dvn-addresses)
    - RPC URLs: Uses `.env` variables if set, otherwise hardhat.config.ts defaults
@@ -46,7 +46,7 @@ yarn verify:lz
 
 3. **verifyConfirmations.ts** - ⚠️ CRITICAL: Bidirectional confirmation verification (multi-network)
    - Prevents "bricked sends" caused by confirmation mismatches between networks
-   - Checks 6 contracts × 6 networks × 5 destinations × 2 directions (send + receive)
+   - Checks 6 contracts × 5 networks × 4 destinations × 2 directions (send + receive)
    - Validates: SendLib confirmations, ReceiveLib confirmations, bidirectional consistency
    - RPC URLs: Uses `.env` variables if set, otherwise hardhat.config.ts defaults
    ```bash
@@ -76,8 +76,7 @@ yarn verify:lz
 ### Multisigs
 | Scope | Address |
 |-------|---------|
-| All except Botanix | `0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D` |
-| Botanix | `0x656fa39BdB5984b477FA6aB443195D72D1Accc1c` |
+| All networks | `0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D` |
 
 ### Network EIDs & Endpoints
 | Network | EID | LZ Endpoint |
@@ -87,7 +86,6 @@ yarn verify:lz
 | base | 30184 | `0x1a44076050125825900e736c501f859c50fE728c` |
 | bsc | 30102 | `0x1a44076050125825900e736c501f859c50fE728c` |
 | bera | 30362 | `0x6F475642a6e85809B1c36Fa62763669b1b48DD5B` |
-| botanix | 30376 | `0x6F475642a6e85809B1c36Fa62763669b1b48DD5B` |
 
 ---
 
@@ -125,17 +123,17 @@ cast call <CONTRACT> "totalSupply()" --rpc-url <RPC>     # 0 initially
 - [ ] Underlying token addresses correct
 - [ ] Owner = multisig
 - [ ] Delegate = multisig on LZ endpoint
-- [ ] Peers configured (5 expansion networks)
-- [ ] DVN config exists for all 5 destinations
+- [ ] Peers configured (4 expansion networks)
+- [ ] DVN config exists for all 4 destinations
 - [ ] Enforced options: msgType 1 = 80k gas
-- [ ] quoteSend() works to all 5 destinations
+- [ ] quoteSend() works to all 4 destinations
 
-**OFTs (5 spoke networks × 6 OFTs = 30 OFTs):**
+**OFTs (4 spoke networks × 6 OFTs = 24 OFTs):**
 - [ ] All OFTs deployed per network
 - [ ] Token properties: decimals=18, sharedDecimals=6
-- [ ] Owner = multisig (Botanix uses different multisig)
+- [ ] Owner = multisig
 - [ ] Delegate = multisig on LZ endpoint
-- [ ] Peers configured (5 other networks including Arbitrum)
+- [ ] Peers configured (4 other networks including Arbitrum)
 - [ ] Enforced options: msgType 1 = 80k, msgType 2 = 80k + 8M compose
 - [ ] quoteSend() works to Arbitrum
 
@@ -143,13 +141,13 @@ cast call <CONTRACT> "totalSupply()" --rpc-url <RPC>     # 0 initially
 - [ ] Required DVNs: LayerZero Labs + Canary (both must verify)
 - [ ] Optional DVNs: Deutsche Telekom + Horizen (1 of 2 must verify)
 - [ ] Threshold = 3 (2 required + 1 optional)
-- [ ] Config verified for all 6 contracts × 6 networks × 5 destinations (180 checks)
+- [ ] Config verified for all 6 contracts × 5 networks × 4 destinations (120 checks)
 
 ### ⚠️ Confirmation Verification (CRITICAL) — `verifyConfirmations.ts`
 - [ ] Lib addresses match endpoint.getSendLibrary() for all networks
 - [ ] Bidirectional consistency verified for all network pairs:
   - For each pair (A → B): A's sendLib confirmations = B's receiveLib expectations from A
-- [ ] Config verified for all 6 contracts × 30 network pairs (6×5 directional pairs)
+- [ ] Config verified for all 6 contracts × 20 network pairs (5×4 directional pairs)
 
 **Why this matters:** If Network A sends with 20 confirmations but Network B expects 15, messages get stuck ("bricked") until the mismatch is fixed. This script queries actual values from contracts rather than comparing against hardcoded expectations.
 
@@ -182,6 +180,6 @@ Example for per-network addresses:
 ```typescript
 export const gmNewMarket: PerNetworkGmContract = {
   underlying: "0x...",
-  perNetwork: { arbitrum: "0x...", ethereum: "0x...", base: "0x...", bsc: "0x...", bera: "0x...", botanix: "0x..." },
+  perNetwork: { arbitrum: "0x...", ethereum: "0x...", base: "0x...", bsc: "0x...", bera: "0x..." },
 };
 ```

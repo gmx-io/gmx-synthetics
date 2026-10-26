@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ILayerZeroComposer } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroComposer.sol";
+import { IMessagingComposer } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessagingComposer.sol";
 import { MessagingFee, OFTReceipt, SendParam, MessagingReceipt } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import { OFTComposeMsgCodec } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 
@@ -15,13 +16,13 @@ import "../data/DataStore.sol";
 import "../utils/Cast.sol";
 import "../gas/GasUtils.sol";
 import "../deposit/DepositStoreUtils.sol";
-import "../glv/GlvUtils.sol";
 
 import "./IMultichainProvider.sol";
 import "./IMultichainGmRouter.sol";
 import "./IMultichainGlvRouter.sol";
 import "./IMultichainOrderRouter.sol";
 
+import "./LayerZeroProviderUtils.sol";
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
 
@@ -37,6 +38,12 @@ import "./MultichainUtils.sol";
  * - sends tokens to the Stargate executor for bridging out to the source chain
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
+    struct LzComposeCache {
+        ActionType actionType;
+        bytes actionData;
+        bool isActionSuccessful;
+    }
+
     struct BridgeOutCache {
         uint32 dstEid;
         uint256 valueToSend;
@@ -82,21 +89,33 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      * @dev It is recommended that the interface or frontend enforces that users only bridge amounts that would not
      * result in double deposits.
      *
+     * @dev A follow-up action that fails is recorded and can be retried with retryAction until its relay deadline.
+     *
+     * @dev A message refunded with refundCompose is consumed without recording any multichain balance, so the
+     * endpoint can retire it.
+     *
      * @param from The address of the sender (i.e. Stargate address, not user's address).
-     * param guid A global unique identifier for tracking the packet.
+     * @param guid A global unique identifier for tracking the packet.
      * @param message Encoded message. Contains the params needed to record the deposit (account, srcChainId)
      * param executor The address of the Executor.
      * param extraData Any extra data or options to trigger on receipt.
      */
     function lzCompose(
         address from,
-        bytes32 /*guid*/,
+        bytes32 guid,
         bytes calldata message,
         address /*executor*/,
         bytes calldata /*extraData*/
     ) external payable {
         MultichainUtils.validateMultichainProvider(dataStore, from);
         MultichainUtils.validateMultichainEndpoint(dataStore, msg.sender);
+
+        // the tokens of a refunded message were sent out already; consuming the message here
+        // lets the endpoint retire it, a revert would keep it queued
+        if (dataStore.getBool(Keys2.multichainRefundedComposeKey(guid, keccak256(message)))) {
+            MultichainEventUtils.emitMultichainRefundedComposeDelivered(eventEmitter, address(this), from, guid);
+            return;
+        }
 
         /// @dev The `account` field is user-supplied and not validated; any address may be provided by the sender
         // msg.sender and `from` need to be validated for `amountLD` and `token` to not be spoofable
@@ -144,27 +163,136 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         // need to manually call the function with the right amount of gas
         // srcChainId could be zero when returned from _decodeLzComposeMsg, skip follow up actions in this case
         if (srcChainId != 0 && data.length != 0) {
-            (ActionType actionType, , bytes memory actionData) = abi.decode(data, (ActionType, uint256, bytes));
+            LzComposeCache memory cache;
+            (cache.actionType, , cache.actionData) = abi.decode(data, (ActionType, uint256, bytes));
 
             // this event is emitted even though the actionType may not be valid
-            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType));
+            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(cache.actionType));
 
             /// @dev relayParams.fee.feeToken must default to WNT when feeSwapPath is not being used
             /// otherwise reverts with UnexpectedRelayFeeToken
-            if (actionType == ActionType.Deposit) {
-                _handleDeposit(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.GlvDeposit) {
-                _handleGlvDeposit(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.SetTraderReferralCode) {
-                _handleSetTraderReferralCode(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.RegisterCode) {
-                _handleRegisterCode(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.Withdrawal) {
-                _handleWithdrawal(account, srcChainId, actionType, actionData);
-            } else if (actionType == ActionType.GlvWithdrawal) {
-                _handleGlvWithdrawal(account, srcChainId, actionType, actionData);
+            cache.isActionSuccessful = LayerZeroProviderUtils.dispatchAction(
+                LayerZeroProviderUtils.DispatchContracts(
+                    multichainGmRouter,
+                    multichainGlvRouter,
+                    multichainOrderRouter,
+                    dataStore,
+                    eventEmitter
+                ),
+                account,
+                srcChainId,
+                cache.actionType,
+                cache.actionData
+            );
+
+            // the endpoint delivers a queued compose for whoever calls its lzCompose, at a time and in a
+            // context of their choosing (e.g. while a router's reentrancy guard is held); the checks above
+            // only prove the message is genuine, so a failed action is kept for retryAction instead of
+            // being dropped with the compose message
+            if (!cache.isActionSuccessful) {
+                dataStore.setBool(Keys2.multichainFailedActionKey(guid, keccak256(message)), true);
             }
         }
+    }
+
+    /**
+     * @notice Retries a follow-up action that failed in lzCompose, the bridged tokens were already credited
+     * @dev Callable by anyone, reverts if the action fails again so that it stays retryable
+     * @param guid The guid of the compose message
+     * @param message The compose message as received in lzCompose
+     */
+    function retryAction(bytes32 guid, bytes calldata message) external {
+        bytes32 key = Keys2.multichainFailedActionKey(guid, keccak256(message));
+        if (!dataStore.getBool(key)) {
+            revert Errors.MultichainFailedActionNotFound(guid);
+        }
+        dataStore.removeBool(key);
+
+        (address account, uint256 srcChainId, , bytes memory data) = _decodeLzComposeMsg(message);
+        (ActionType actionType, , bytes memory actionData) = abi.decode(data, (ActionType, uint256, bytes));
+
+        bool isActionSuccessful = LayerZeroProviderUtils.dispatchAction(
+            LayerZeroProviderUtils.DispatchContracts(
+                multichainGmRouter,
+                multichainGlvRouter,
+                multichainOrderRouter,
+                dataStore,
+                eventEmitter
+            ),
+            account,
+            srcChainId,
+            actionType,
+            actionData
+        );
+        if (!isActionSuccessful) {
+            revert Errors.MultichainActionRetryFailed(guid);
+        }
+    }
+
+    /**
+     * @notice Refunds the tokens Stargate delivered for a compose message that is still queued on the endpoint,
+     * e.g. because lzCompose keeps reverting for it. The message is marked as refunded before the tokens
+     * leave, so a later delivery of it credits nothing.
+     * @dev Callable through the timelock contract. The provider holds the pending deliveries of a token in one
+     * balance, so tokens may only leave it against the message they were delivered for.
+     * @dev After the refund, deliver the message once with zero value to retire it on the endpoint; value sent
+     * with that delivery stays in this contract.
+     * @param endpoint The endpoint holding the compose queue.
+     * @param from The Stargate pool that delivered the tokens and queued the message.
+     * @param guid The guid of the compose message.
+     * @param message The compose message as queued on the endpoint.
+     * @param receiver The address receiving the refunded tokens.
+     */
+    function refundCompose(
+        address endpoint,
+        address from,
+        bytes32 guid,
+        bytes calldata message,
+        address receiver
+    ) external onlyController {
+        MultichainUtils.validateMultichainProvider(dataStore, from);
+        MultichainUtils.validateMultichainEndpoint(dataStore, endpoint);
+
+        // the endpoint stores the hash of a queued message and overwrites it with a marker once the
+        // message is delivered; Stargate queues one compose per guid, at index 0
+        bytes32 messageHash = keccak256(message);
+        if (IMessagingComposer(endpoint).composeQueue(from, address(this), guid, 0) != messageHash) {
+            revert Errors.MultichainComposeNotFound(guid);
+        }
+
+        bytes32 refundedKey = Keys2.multichainRefundedComposeKey(guid, messageHash);
+        if (dataStore.getBool(refundedKey)) {
+            revert Errors.MultichainComposeAlreadyRefunded(guid);
+        }
+        dataStore.setBool(refundedKey, true);
+
+        uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
+        address token = IStargate(from).token();
+
+        if (token == address(0x0)) {
+            // `from` is StargatePoolNative
+            TokenUtils.sendNativeToken(dataStore, receiver, amountLD);
+        } else {
+            TokenUtils.transfer(dataStore, token, receiver, amountLD);
+        }
+
+        MultichainEventUtils.emitMultichainComposeRefunded(eventEmitter, address(this), from, token, receiver, guid, amountLD);
+    }
+
+    function quoteBridgeOutFee(address account, IRelayUtils.BridgeOutParams memory params) external view returns (uint256) {
+        IStargate stargate = IStargate(params.provider);
+        _validateBridgeOutToken(stargate, params.token);
+
+        uint32 dstEid = abi.decode(params.data, (uint32));
+        (, , MessagingFee memory messagingFee, ) = prepareSend(
+            stargate,
+            params.amount,
+            params.minAmountOut,
+            account,
+            dstEid
+        );
+
+        return messagingFee.nativeFee;
     }
 
     /**
@@ -190,20 +318,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      */
     function bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams memory params) external onlyController returns (uint256) {
         IStargate stargate = IStargate(params.provider);
-
         address wnt = dataStore.getAddress(Keys.WNT);
 
-        if (stargate.token() == address(0x0)) {
-            // `stargate` is StargatePoolNative
-            if (params.token != wnt) {
-                revert Errors.InvalidBridgeOutToken(params.token);
-            }
-        } else {
-            // `stargate` is e.g. StargatePoolUSDC
-            if (params.token != stargate.token()) {
-                revert Errors.InvalidBridgeOutToken(params.token);
-            }
-        }
+        _validateBridgeOutToken(stargate, params.token);
 
         BridgeOutCache memory cache;
         cache.dstEid = abi.decode(params.data, (uint32));
@@ -285,6 +402,22 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         return params.amount;
     }
 
+    function _validateBridgeOutToken(IStargate stargate, address token) private view {
+        address wnt = dataStore.getAddress(Keys.WNT);
+
+        if (stargate.token() == address(0x0)) {
+            // `stargate` is StargatePoolNative
+            if (token != wnt) {
+                revert Errors.InvalidBridgeOutToken(token);
+            }
+        } else {
+            // `stargate` is e.g. StargatePoolUSDC
+            if (token != stargate.token()) {
+                revert Errors.InvalidBridgeOutToken(token);
+            }
+        }
+    }
+
     function prepareSend(
         IStargate stargate,
         uint256 amount,
@@ -312,6 +445,11 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         });
 
         (, , receipt) = stargate.quoteOFT(sendParam);
+
+        if (receipt.amountReceivedLD < minAmountOut) {
+            revert Errors.InsufficientBridgeOutputAmount(receipt.amountReceivedLD, minAmountOut);
+        }
+
         sendParam.minAmountLD = receipt.amountReceivedLD;
 
         messagingFee = stargate.quoteSend(sendParam, false);
@@ -332,25 +470,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         (address account, bytes memory data) = abi.decode(composeMessage, (address, bytes));
 
         return (account, srcChainId, amountLD, data);
-    }
-
-    function _areValidTransferRequests(IRelayUtils.TransferRequests memory transferRequests) private pure returns (bool) {
-        if (
-            transferRequests.tokens.length != transferRequests.receivers.length ||
-            transferRequests.tokens.length != transferRequests.amounts.length
-        ) {
-            return false;
-        }
-        for (uint256 i = 0; i < transferRequests.tokens.length; i++) {
-            if (
-                transferRequests.tokens[i] == address(0) ||
-                transferRequests.receivers[i] == address(0) ||
-                transferRequests.amounts[i] == 0
-            ) {
-                return false;
-            }
-        }
-        return true;
     }
 
     function _handleNativeTopUp(
@@ -380,198 +499,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         );
     }
 
-    /// @dev long/short tokens are deposited from user's multichain balance
-    /// GM tokens are minted and transferred to user's multichain balance
-    function _handleDeposit(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            IRelayUtils.TransferRequests memory transferRequests,
-            IDepositUtils.CreateDepositParams memory depositParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
-
-        if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateDepositGasLimit(dataStore);
-            _validateGasLeft(estimatedGasLimit);
-
-            try multichainGmRouter.createDeposit(
-                relayParams,
-                account,
-                srcChainId,
-                transferRequests,
-                depositParams
-            ) {
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
-    }
-
-    /// @dev long/short/GM tokens are deposited from user's multichain balance
-    /// GLV tokens are minted and transferred to user's multichain balance
-    function _handleGlvDeposit(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            IRelayUtils.TransferRequests memory transferRequests,
-            IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvDepositUtils.CreateGlvDepositParams));
-
-        if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateGlvDepositGasLimit(dataStore);
-            _validateGasLeft(estimatedGasLimit);
-
-            try multichainGlvRouter.createGlvDeposit(
-                relayParams,
-                account,
-                srcChainId,
-                transferRequests,
-                glvDepositParams
-            ) {
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
-    }
-
-    /// @dev `account` is expected to be `msg.sender` from the source chain, as
-    /// MultichainOrderRouter would use it to validate the signature.
-    function _handleSetTraderReferralCode(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            bytes32 referralCode
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
-
-        uint256 estimatedGasLimit = GasUtils.estimateSetTraderReferralCodeGasLimit(dataStore);
-        _validateGasLeft(estimatedGasLimit);
-
-        try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
-        } catch Error(string memory reason) {
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-        }
-    }
-
-    /// @dev `account` is expected to be `msg.sender` from the source chain, as
-    /// MultichainOrderRouter would use it to validate the signature.
-    function _handleRegisterCode(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            bytes32 referralCode
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
-
-        uint256 estimatedGasLimit = GasUtils.estimateRegisterCodeGasLimit(dataStore);
-        _validateGasLeft(estimatedGasLimit);
-
-        try multichainOrderRouter.registerCode(relayParams, account, srcChainId, referralCode) {
-        } catch Error(string memory reason) {
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-        }
-    }
-
-    function _handleWithdrawal(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            IRelayUtils.TransferRequests memory transferRequests,
-            IWithdrawalUtils.CreateWithdrawalParams memory withdrawalParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IWithdrawalUtils.CreateWithdrawalParams));
-
-        if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateWithdrawalGasLimit(dataStore);
-            _validateGasLeft(estimatedGasLimit);
-
-            try multichainGmRouter.createWithdrawal(
-                relayParams,
-                account,
-                srcChainId,
-                transferRequests,
-                withdrawalParams
-            ) {
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
-    }
-
-    function _handleGlvWithdrawal(
-        address account,
-        uint256 srcChainId,
-        ActionType actionType,
-        bytes memory actionData
-    ) private {
-        (
-            IRelayUtils.RelayParams memory relayParams,
-            IRelayUtils.TransferRequests memory transferRequests,
-            IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory glvWithdrawalParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvWithdrawalUtils.CreateGlvWithdrawalParams));
-
-        if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateGlvWithdrawalGasLimit(dataStore);
-            _validateGasLeft(estimatedGasLimit);
-
-            try multichainGlvRouter.createGlvWithdrawal(
-                relayParams,
-                account,
-                srcChainId,
-                transferRequests,
-                glvWithdrawalParams
-            ) {
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
-    }
-
-    function _validateGasLeft(uint256 estimatedGasLimit) internal view {
-        uint256 gas = gasleft();
-        if (gas < estimatedGasLimit) {
-            revert Errors.InsufficientGasLeft(gas, estimatedGasLimit);
-        }
-    }
-
     /**
      * @notice Withdraws tokens which have been locked in this contract due to potential errors in lzCompose (e.g. incorrect message format).
      * @dev Callable through the timelock contract.
+     * @dev Recovery order: a stuck compose message is delivered again first, anyone can supply the missing
+     * native value or gas. A message that can never execute is refunded with refundCompose, the default
+     * recovery. This function is the last measure, only for funds that no queued compose message accounts for.
      * @param token The address of the token to withdraw.
      * @param receiver The address receiving the withdrawn tokens.
      * @param amount The amount of tokens to withdraw.

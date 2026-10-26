@@ -40,6 +40,7 @@ library GlvWithdrawalUtils {
         bool glvTokenPriceUsed;
         uint256 marketCount;
         uint256 oraclePriceCount;
+        uint256 bridgeFeeSwapCount;
         uint256 marketTokenAmount;
     }
 
@@ -102,6 +103,7 @@ library GlvWithdrawalUtils {
                 glvTokenAmount: glvTokenAmount,
                 minLongTokenAmount: params.minLongTokenAmount,
                 minShortTokenAmount: params.minShortTokenAmount,
+                uiFeeFactor: FeeUtils.getUiFeeFactor(dataStore, params.addresses.uiFeeReceiver),
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit,
@@ -114,16 +116,7 @@ library GlvWithdrawalUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
 
         uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvWithdrawal.glv());
-        GasUtils.validateExecutionFee(
-            dataStore,
-            GasUtils.estimateExecuteGlvWithdrawalGasLimit(dataStore, glvWithdrawal, marketCount), // estimatedGasLimit
-            params.executionFee,
-            GasUtils.estimateGlvWithdrawalOraclePriceCount(
-                marketCount,
-                params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length,
-                false // glvTokenPriceUsed. at this point we don't know if the GLV token price will be used
-            ) // oraclePriceCount
-        );
+        _validateExecutionFee(dataStore, glvWithdrawal, marketCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
@@ -132,6 +125,24 @@ library GlvWithdrawalUtils {
         GlvWithdrawalEventUtils.emitGlvWithdrawalCreated(eventEmitter, key, glvWithdrawal);
 
         return key;
+    }
+
+    function _validateExecutionFee(
+        DataStore dataStore,
+        GlvWithdrawal.Props memory glvWithdrawal,
+        uint256 marketCount
+    ) private view {
+        GasUtils.validateExecutionFee(
+            dataStore,
+            GasUtils.estimateExecuteGlvWithdrawalGasLimit(dataStore, glvWithdrawal, marketCount), // estimatedGasLimit
+            glvWithdrawal.executionFee(),
+            GasUtils.estimateExecuteGlvWithdrawalOraclePriceCount(
+                dataStore,
+                glvWithdrawal,
+                marketCount,
+                false // glvTokenPriceUsed. at this point we don't know if the GLV token price will be used
+            ) // oraclePriceCount
+        );
     }
 
     function executeGlvWithdrawal(
@@ -164,7 +175,8 @@ library GlvWithdrawalUtils {
             params.dataStore,
             params.oracle,
             glvWithdrawal.glv(),
-            true // maximize
+            true, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         GlvEventUtils.emitGlvValueUpdated(
             params.eventEmitter,
@@ -183,7 +195,7 @@ library GlvWithdrawalUtils {
         CallbackUtils.afterGlvWithdrawalExecution(params.key, glvWithdrawal, eventData);
 
 
-        BridgeOutFromControllerUtils.bridgeOutFromController(
+        cache.bridgeFeeSwapCount = BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
             BridgeOutFromControllerUtils.BridgeOutFromControllerParams({
@@ -201,7 +213,7 @@ library GlvWithdrawalUtils {
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
             cache.marketCount,
-            glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length,
+            glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length + cache.bridgeFeeSwapCount,
             cache.glvTokenPriceUsed
         );
 
@@ -246,6 +258,7 @@ library GlvWithdrawalUtils {
                 minLongTokenAmount: glvWithdrawal.minLongTokenAmount(),
                 minShortTokenAmount: glvWithdrawal.minShortTokenAmount(),
                 marketTokenAmount: marketTokenAmount,
+                uiFeeFactor: glvWithdrawal.uiFeeFactor(),
                 updatedAtTime: glvWithdrawal.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
@@ -297,7 +310,8 @@ library GlvWithdrawalUtils {
             dataStore,
             oracle,
             glvWithdrawal.glv(),
-            false // maximize
+            false, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         uint256 glvSupply = GlvToken(payable(glvWithdrawal.glv())).totalSupply();
         uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);
@@ -310,7 +324,8 @@ library GlvWithdrawalUtils {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            true // maximize
+            true, // maximize
+            false // allowZeroPoolBorrowingFactor
         );
         uint256 marketTokenAmount = MarketUtils.usdToMarketTokenAmount(
             glvTokenUsd,

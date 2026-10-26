@@ -65,6 +65,12 @@ async function main() {
     amount: amount,
     provider: stargatePool.address,
     data: ethers.utils.defaultAbiCoder.encode(["uint32"], [EID_SEPOLIA]), // sepolia eid
+    bridgeFee: {
+      feeToken: ethers.constants.AddressZero,
+      feeAmount: 0,
+      feeSwapPath: [],
+      minOutputAmount: 0,
+    },
   };
   const sendBridgeOutParams: Parameters<typeof sendBridgeOut>[0] = {
     sender: await hre.ethers.getSigner(account),

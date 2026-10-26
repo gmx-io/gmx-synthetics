@@ -8,6 +8,7 @@ import "../referral/ITimelock.sol";
 import "../referral/IGov.sol";
 import "./IMultichainOrderRouter.sol";
 import "./MultichainRouter.sol";
+import "../router/relay/MultichainRelayUtils.sol";
 
 contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
     IReferralStorage public immutable referralStorage;
@@ -25,7 +26,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         uint256 srcChainId,
         IRelayUtils.BatchParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32[] memory) {
-        bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
+        bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, account, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         return
@@ -45,7 +46,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
+        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, account, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         return _createOrder(account, srcChainId, params, false);
@@ -61,7 +62,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         nonReentrant
         withRelay(relayParams, account, srcChainId, false)
     {
-        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
+        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, account, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _updateOrder(account, params, false);
@@ -77,7 +78,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         nonReentrant
         withRelay(relayParams, account, srcChainId, false)
     {
-        bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
+        bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, account, key);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _cancelOrder(account, key);
@@ -89,7 +90,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         uint256 srcChainId,
         bytes32 referralCode
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = RelayUtils.getTraderReferralCodeStructHash(relayParams, referralCode);
+        bytes32 structHash = MultichainRelayUtils.getTraderReferralCodeStructHash(relayParams, account, referralCode);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         referralStorage.setTraderReferralCode(account, referralCode);
@@ -101,7 +102,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         uint256 srcChainId,
         bytes32 referralCode
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        bytes32 structHash = RelayUtils.getRegisterCodeStructHash(relayParams, referralCode);
+        bytes32 structHash = MultichainRelayUtils.getRegisterCodeStructHash(relayParams, account, referralCode);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         // Check if code already exists (govSetCodeOwner doesn't prevent overrides)

@@ -45,7 +45,8 @@ library GlvDepositCalc {
         GlvDeposit.Props memory glvDeposit,
         uint256 receivedMarketTokens,
         uint256 glvValue,
-        uint256 glvSupply
+        uint256 glvSupply,
+        bool allowZeroPoolBorrowingFactor
     ) external view returns (uint256) {
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvDeposit.market());
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
@@ -55,7 +56,8 @@ library GlvDepositCalc {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            false // maximize
+            false, // maximize
+            allowZeroPoolBorrowingFactor
         );
         uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
         uint256 receivedMarketTokensUsd = MarketUtils.marketTokenAmountToUsd(

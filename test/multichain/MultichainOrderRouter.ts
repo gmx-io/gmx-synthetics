@@ -31,6 +31,7 @@ import { errorsContract } from "../../utils/error";
 import { getRelayParams } from "../../utils/relay/helpers";
 import { getCreateOrderSignature } from "../../utils/relay/signatures";
 import { GAS_BUFFER } from "../../utils/gas";
+import { getEventData } from "../../utils/event";
 
 describe("MultichainOrderRouter", () => {
   let fixture;
@@ -156,6 +157,7 @@ describe("MultichainOrderRouter", () => {
           shortTokenAmount: usdcAmount,
         },
       });
+      await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD, decimalToFloat(10000));
     });
 
     it("creates multichain order and sends relayer fee", async () => {
@@ -183,9 +185,9 @@ describe("MultichainOrderRouter", () => {
 
       expect(await getOrderCount(dataStore)).to.eq(0);
       expect(await getPositionCount(dataStore)).to.eq(1);
-      // execution fee is ~0.002113 ETH and the excess is returned to user's multichain balance
+      // execution fee is ~0.002138 ETH and the excess is returned to user's multichain balance
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).closeTo(
-        "1922883983383072",
+        "1861788982894312",
         GAS_BUFFER.ORDER
       ); // 0.004 - ~0.0021 = ~0.0019 ETH
     });
@@ -230,9 +232,9 @@ describe("MultichainOrderRouter", () => {
 
       expect(await getOrderCount(dataStore)).to.eq(0);
       expect(await getPositionCount(dataStore)).to.eq(1);
-      // execution fee is ~0.002113 ETH and the excess is returned to user's multichain balance
+      // execution fee is ~0.002138 ETH and the excess is returned to user's multichain balance
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).closeTo(
-        "1922643983381152",
+        "1861548982892392",
         GAS_BUFFER.ORDER
       ); // 0.004 - ~0.0021 = ~0.0019 ETH
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
@@ -338,11 +340,15 @@ describe("MultichainOrderRouter", () => {
       await sendCreateOrder({ ...createOrderParams });
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
 
-      await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).closeTo(
-        "1922883983383072",
-        GAS_BUFFER.ORDER
-      ); // ~ 0.0019 ETH
+      const { logs } = await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+      const refundAmount = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
+      expect(refundAmount).closeTo("1861788982894312", GAS_BUFFER.ORDER); // ~ 0.0019 ETH
+
+      const keeperFeeEvent = getEventData(logs, "KeeperExecutionFee");
+      const refundEvent = getEventData(logs, "ExecutionFeeRefund");
+      expect(refundEvent.receiver).to.eq(user1.address);
+      expect(refundEvent.refundFeeAmount).to.eq(refundAmount);
+      expect(refundAmount.add(keeperFeeEvent.executionFeeAmount)).to.eq(executionFee);
     });
 
     it("should revert if signature is invalid due to incorrect signer", async () => {
@@ -469,6 +475,7 @@ describe("MultichainOrderRouter", () => {
           triggerPrice: decimalToFloat(3),
           minOutputAmount: 4,
           validFromTime: 5,
+          decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
           autoCancel: true,
           executionFeeIncrease: 0,
         },
@@ -511,6 +518,7 @@ describe("MultichainOrderRouter", () => {
       expect(order.numbers.triggerPrice).eq(decimalToFloat(3));
       expect(order.numbers.minOutputAmount).eq(4);
       expect(order.numbers.validFromTime).eq(5);
+      expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.NoSwap);
       expect(order.flags.autoCancel).eq(true);
       // relayFeeAmount was paid twice in total: once for create order and once for update order
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, relayFeeAmount.mul(2));

@@ -32,7 +32,7 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
     const { address, newlyDeployed } = await deploy(tokenSymbol, {
       from: deployer,
       log: true,
-      contract: token.wrappedNative ? "WNT" : "MintableToken",
+      contract: token.wrappedNative ? "WNT" : token.contractName ?? "MintableToken",
       args: token.wrappedNative ? [] : [tokenSymbol, tokenSymbol, token.decimals],
     });
 

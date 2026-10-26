@@ -15,6 +15,8 @@ const baseConstructorContracts = [
 ];
 
 const requireMockTimelock = !["arbitrum", "avalanche", "botanix", "megaEth"].includes(hre.network.name);
+const SKIP_TIMELOCK_ACTIONS = process.env.SKIP_TIMELOCK_ACTIONS || false;
+
 const orderConstructorContracts = ["ReferralStorage"];
 
 const func = createDeployFunction({
@@ -36,13 +38,20 @@ const func = createDeployFunction({
 
     return [baseParams, dependencyContracts.ReferralStorage.address];
   },
-  libraryNames: ["GasUtils", "MultichainUtils", "OrderStoreUtils", "RelayUtils"],
+  libraryNames: [
+    "GasUtils",
+    "MultichainRelayUtils",
+    "MultichainUtils",
+    "OrderStoreUtils",
+    "RelayUtils",
+    "SignatureUtils",
+  ],
 
   afterDeploy: async ({ deployedContract, deployments }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
 
-    if (requireMockTimelock) {
+    if (SKIP_TIMELOCK_ACTIONS !== "true" && requireMockTimelock) {
       const { get } = deployments;
 
       const mockTimelockV1 = await get("MockTimelockV1");

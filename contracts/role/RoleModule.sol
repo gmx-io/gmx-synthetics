@@ -126,6 +126,17 @@ contract RoleModule {
     }
 
     /**
+    * @dev Only allows addresses with the ORDER_KEEPER or CONTROLLER role to call the function.
+     */
+    modifier onlyOrderKeeperOrController() {
+        if (!roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) &&
+            !roleStore.hasRole(msg.sender, Role.CONTROLLER)) {
+            revert Errors.Unauthorized(msg.sender, "ORDER_KEEPER|CONTROLLER");
+        }
+        _;
+    }
+
+    /**
      * @dev Only allows addresses with the PRICING_KEEPER role to call the function.
      */
     modifier onlyPricingKeeper() {
@@ -178,6 +189,46 @@ contract RoleModule {
      */
     modifier onlyMultichainReader() {
         _validateRole(Role.MULTICHAIN_READER, "MULTICHAIN_READER");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the CRE_FORWARDER role to call the function.
+     */
+    modifier onlyCreForwarder() {
+        _validateRole(Role.CRE_FORWARDER, "CRE_FORWARDER");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the EVENT_CONTROLLER role to call the function.
+     */
+    modifier onlyEventController() {
+        _validateRole(Role.EVENT_CONTROLLER, "EVENT_CONTROLLER");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the INCENTIVE_ADMIN role to call the function.
+     */
+    modifier onlyIncentiveAdmin() {
+        _validateRole(Role.INCENTIVE_ADMIN, "INCENTIVE_ADMIN");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the INCENTIVE_GUARDIAN role to call the function.
+     */
+    modifier onlyIncentiveGuardian() {
+        _validateRole(Role.INCENTIVE_GUARDIAN, "INCENTIVE_GUARDIAN");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the INCENTIVE_DISTRIBUTOR role to call the function.
+     */
+    modifier onlyIncentiveDistributor() {
+        _validateRole(Role.INCENTIVE_DISTRIBUTOR, "INCENTIVE_DISTRIBUTOR");
         _;
     }
 

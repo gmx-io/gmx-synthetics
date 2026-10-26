@@ -62,6 +62,25 @@ export async function bridgeInTokens(
     .sendToken(layerZeroProvider.address, amount, encodedMessageEth, { value: msgValue });
 }
 
+// the guid the mock Stargate pools pass to lzCompose in sendToken
+export const MOCK_COMPOSE_GUID = "0x0000000000000000000000000000000000000000000000000000000000000001";
+
+// rebuilds the compose message a mock Stargate pool passed to lzCompose in sendToken,
+// the mock uses the block timestamp of that transaction as the nonce
+export async function getMockComposeMessage(
+  stargatePool: Contract,
+  txReceipt,
+  composeFrom: string,
+  amount: BigNumberish,
+  message: string
+): Promise<string> {
+  const { timestamp } = await ethers.provider.getBlock(txReceipt.blockNumber);
+  return ethers.utils.solidityPack(
+    ["uint64", "uint32", "uint256", "bytes32", "bytes"],
+    [timestamp, await stargatePool.SRC_EID(), amount, ethers.utils.hexZeroPad(composeFrom, 32), message]
+  );
+}
+
 const relayParamsType = `tuple(
     tuple(
       address[] tokens,
@@ -91,7 +110,8 @@ const relayParamsType = `tuple(
     uint256 userNonce,
     uint256 deadline,
     bytes signature,
-    uint256 desChainId
+    uint256 desChainId,
+    bytes32 eip6492SignatureWrapperHash
   )`;
 
 const transferRequestsType = `tuple(
@@ -358,13 +378,28 @@ export function encodeBridgeOutDataList(
   minAmountOut: BigNumberish,
   secondaryProvider?: string,
   secondaryProviderData?: string,
-  secondaryMinAmountOut?: BigNumberish
+  secondaryMinAmountOut?: BigNumberish,
+  bridgeFee?: { feeToken: string; feeAmount: BigNumberish; feeSwapPath: string[]; minOutputAmount: BigNumberish },
+  secondaryBridgeFee?: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+    minOutputAmount: BigNumberish;
+  }
 ): string[] {
+  const defaultBridgeFee = {
+    feeToken: ethers.constants.AddressZero,
+    feeAmount: 0,
+    feeSwapPath: [],
+    minOutputAmount: 0,
+  };
   let actionData;
   if (secondaryProviderData) {
+    const _bridgeFee = bridgeFee || defaultBridgeFee;
+    const _secondaryBridgeFee = secondaryBridgeFee || defaultBridgeFee;
     actionData = ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(uint256 desChainId, uint256 deadline, address provider, bytes providerData, uint256 minAmountOut, address secondaryProvider, bytes secondaryProviderData, uint256 secondaryMinAmountOut)",
+        "tuple(uint256 desChainId, uint256 deadline, address provider, bytes providerData, uint256 minAmountOut, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath, uint256 minOutputAmount) bridgeFee, address secondaryProvider, bytes secondaryProviderData, uint256 secondaryMinAmountOut, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath, uint256 minOutputAmount) secondaryBridgeFee)",
       ],
       [
         [
@@ -373,16 +408,38 @@ export function encodeBridgeOutDataList(
           provider,
           providerData,
           minAmountOut,
+          [_bridgeFee.feeToken, _bridgeFee.feeAmount, _bridgeFee.feeSwapPath, _bridgeFee.minOutputAmount],
           secondaryProvider,
           secondaryProviderData,
           secondaryMinAmountOut,
+          [
+            _secondaryBridgeFee.feeToken,
+            _secondaryBridgeFee.feeAmount,
+            _secondaryBridgeFee.feeSwapPath,
+            _secondaryBridgeFee.minOutputAmount,
+          ],
         ],
       ]
     );
   } else {
+    const _bridgeFee = bridgeFee || defaultBridgeFee;
     actionData = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "uint256", "address", "bytes", "uint256"],
-      [desChainId, deadline, provider, providerData, minAmountOut]
+      [
+        "uint256",
+        "uint256",
+        "address",
+        "bytes",
+        "uint256",
+        "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath, uint256 minOutputAmount)",
+      ],
+      [
+        desChainId,
+        deadline,
+        provider,
+        providerData,
+        minAmountOut,
+        [_bridgeFee.feeToken, _bridgeFee.feeAmount, _bridgeFee.feeSwapPath, _bridgeFee.minOutputAmount],
+      ]
     );
   }
 

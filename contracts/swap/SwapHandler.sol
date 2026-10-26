@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "../data/Keys.sol";
+import "../feature/FeatureUtils.sol";
+import "../pricing/ISwapPricingUtils.sol";
 import "../role/RoleModule.sol";
 import "./SwapUtils.sol";
 import "./ISwapHandler.sol";
@@ -28,6 +31,10 @@ contract SwapHandler is ISwapHandler, ReentrancyGuard, RoleModule {
         onlyController
         returns (address, uint256)
     {
+        if (params.swapPricingType == ISwapPricingUtils.SwapPricingType.AtomicSwap) {
+            FeatureUtils.validateFeature(params.dataStore, Keys.atomicSwapFeatureDisabledKey(address(this)));
+        }
+
         return SwapUtils.swap(params);
     }
 }

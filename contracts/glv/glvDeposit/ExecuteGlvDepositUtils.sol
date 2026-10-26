@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../../deposit/ExecuteDepositUtils.sol";
 import "../../nonce/NonceUtils.sol";
 import "../../exchange/IDepositHandler.sol";
+import "../../fee/FeeUtils.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
@@ -40,6 +41,7 @@ library ExecuteGlvDepositUtils {
         uint256 mintAmount;
         uint256 marketCount;
         uint256 oraclePriceCount;
+        uint256 bridgeFeeSwapCount;
         uint256 glvValue;
         bool glvTokenPriceUsed;
         uint256 glvSupply;
@@ -57,6 +59,9 @@ library ExecuteGlvDepositUtils {
         // should be called before any tokens are minted
         GlvDepositCalc.validateFirstGlvDeposit(params.dataStore, glvDeposit);
 
+        // shouldBeEnabled=false so a disabled-but-still-listed market can finish pending deposits fairly
+        GlvUtils.validateGlvMarket(params.dataStore, glvDeposit.glv(), glvDeposit.market(), false);
+
         ExecuteGlvDepositCache memory cache;
 
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
@@ -65,7 +70,8 @@ library ExecuteGlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true // maximize
+            true, // maximize
+            true // allowZeroPoolBorrowingFactor
         );
         GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
 
@@ -76,7 +82,8 @@ library ExecuteGlvDepositUtils {
             glvDeposit,
             cache.receivedMarketTokens,
             cache.glvValue,
-            cache.glvSupply
+            cache.glvSupply,
+            true // allowZeroPoolBorrowingFactor
         );
         if (cache.mintAmount < glvDeposit.minGlvTokens()) {
             revert Errors.MinGlvTokens(cache.mintAmount, glvDeposit.minGlvTokens());
@@ -97,7 +104,8 @@ library ExecuteGlvDepositUtils {
             params.oracle.getPrimaryPrice(cache.market.longToken),
             params.oracle.getPrimaryPrice(cache.market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true // maximize
+            true, // maximize
+            true // allowZeroPoolBorrowingFactor
         );
         cache.marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(glvDeposit.market())));
 
@@ -120,7 +128,8 @@ library ExecuteGlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true // maximize
+            true, // maximize
+            true // allowZeroPoolBorrowingFactor
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
@@ -131,7 +140,7 @@ library ExecuteGlvDepositUtils {
         CallbackUtils.afterGlvDepositExecution(params.key, glvDeposit, eventData);
 
         // use glvDeposit.dataList to determine if the GLV tokens minted should be bridged out to src chain
-        BridgeOutFromControllerUtils.bridgeOutFromController(
+        cache.bridgeFeeSwapCount = BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
             glvDeposit.account(),
@@ -145,7 +154,7 @@ library ExecuteGlvDepositUtils {
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             cache.marketCount,
-            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length,
+            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length + cache.bridgeFeeSwapCount,
             cache.glvTokenPriceUsed
         );
         GasUtils.payExecutionFee(
@@ -190,6 +199,22 @@ library ExecuteGlvDepositUtils {
         );
 
         if (glvDeposit.isMarketTokenDeposit()) {
+            if (params.oracle.minTimestamp() < glvDeposit.updatedAtTime()) {
+                revert Errors.OracleTimestampsAreSmallerThanRequired(
+                    params.oracle.minTimestamp(),
+                    glvDeposit.updatedAtTime()
+                );
+            }
+
+            uint256 requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+            if (params.oracle.maxTimestamp() > glvDeposit.updatedAtTime() + requestExpirationTime) {
+                revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                    params.oracle.maxTimestamp(),
+                    glvDeposit.updatedAtTime(),
+                    requestExpirationTime
+                );
+            }
+
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
             return glvDeposit.marketTokenAmount();
@@ -211,6 +236,7 @@ library ExecuteGlvDepositUtils {
                 initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
                 initialShortTokenAmount: glvDeposit.initialShortTokenAmount(),
                 minMarketTokens: 0,
+                uiFeeFactor: glvDeposit.uiFeeFactor(),
                 updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,

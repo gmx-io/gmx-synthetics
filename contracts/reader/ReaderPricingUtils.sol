@@ -171,7 +171,7 @@ library ReaderPricingUtils {
                 prices
             );
         } else {
-            (/* basePnlUsd */, /* uncappedBasePnlUsd */, uint256 sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
+            (/* basePnlUsd */, /* uncappedBasePnlUsd */, uint256 sizeDeltaInTokens, /* pnlWasCapped */) = PositionUtils.getPositionPnlUsd(
                 dataStore,
                 market,
                 prices,

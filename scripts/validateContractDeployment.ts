@@ -24,6 +24,7 @@ const roleLabels = {
   [encodeRole("MARKET_KEEPER")]: "MARKET_KEEPER",
   [encodeRole("FEE_KEEPER")]: "FEE_KEEPER",
   [encodeRole("FEE_DISTRIBUTION_KEEPER")]: "FEE_DISTRIBUTION_KEEPER",
+  [encodeRole("DONATION_KEEPER")]: "DONATION_KEEPER",
   [encodeRole("ORDER_KEEPER")]: "ORDER_KEEPER",
   [encodeRole("FROZEN_ORDER_KEEPER")]: "FROZEN_ORDER_KEEPER",
   [encodeRole("PRICING_KEEPER")]: "PRICING_KEEPER",
@@ -31,6 +32,7 @@ const roleLabels = {
   [encodeRole("ADL_KEEPER")]: "ADL_KEEPER",
   [encodeRole("CONTRIBUTOR_KEEPER")]: "CONTRIBUTOR_KEEPER",
   [encodeRole("CLAIM_ADMIN")]: "CLAIM_ADMIN",
+  [encodeRole("RISK_ORACLE")]: "RISK_ORACLE",
 };
 
 async function main() {

@@ -165,7 +165,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address subaccount
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
         // isSubaccount=false is passed to `withRelay` modifier because this action is signed by the main account
-        bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, subaccount);
+        bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, account, subaccount);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
